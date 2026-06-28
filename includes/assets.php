@@ -74,6 +74,23 @@ class Assets {
 			'is_rtl'           => is_rtl(),
 			'is_admin'         => is_admin(),
 			'version'          => GEMSECURITY_VERSION,
+			'roles'            => $this->get_editable_roles(),
 		];
+	}
+
+	/**
+	 * Role slug => display name, for the 2FA enforce-by-role selector.
+	 *
+	 * @return array
+	 */
+	private function get_editable_roles() {
+		if ( ! function_exists( 'get_editable_roles' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+		}
+		$out = [];
+		foreach ( get_editable_roles() as $slug => $role ) {
+			$out[ $slug ] = translate_user_role( $role['name'] );
+		}
+		return $out;
 	}
 }

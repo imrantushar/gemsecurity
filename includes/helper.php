@@ -35,6 +35,30 @@ class Helper {
 			'capability'  => 'manage_options',
 		];
 
+		$menu[ GEMSECURITY_PLUGIN_SLUG . '-two-factor' ] = [
+			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+			'title'       => __( 'Two-Factor', 'gemsecurity' ),
+			'capability'  => 'manage_options',
+		];
+
+		$menu[ GEMSECURITY_PLUGIN_SLUG . '-social-login' ] = [
+			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+			'title'       => __( 'Social Login', 'gemsecurity' ),
+			'capability'  => 'manage_options',
+		];
+
+		$menu[ GEMSECURITY_PLUGIN_SLUG . '-geolocation' ] = [
+			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+			'title'       => __( 'Geolocation', 'gemsecurity' ),
+			'capability'  => 'manage_options',
+		];
+
+		$menu[ GEMSECURITY_PLUGIN_SLUG . '-admin-guard' ] = [
+			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+			'title'       => __( 'Admin Guard', 'gemsecurity' ),
+			'capability'  => 'manage_options',
+		];
+
 		$menu[ GEMSECURITY_PLUGIN_SLUG . '-scanner' ] = [
 			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
 			'title'       => __( 'Scanner', 'gemsecurity' ),

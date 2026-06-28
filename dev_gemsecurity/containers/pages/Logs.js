@@ -1,0 +1,131 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { __ } from '@wordpress/i18n';
+import api from '@Utils/api';
+import { Card, Badge, Button, Select, TextInput, Loading, EmptyState } from '@Components/ui/Controls';
+import { useToast } from '@Components/ui/Toast';
+
+const SEVERITY_TONE = { info: 'info', notice: 'info', warning: 'warning', critical: 'danger' };
+
+export default function Logs() {
+	const toast = useToast();
+	const [ state, setState ] = useState( { logs: [], total: 0, total_pages: 1 } );
+	const [ loading, setLoading ] = useState( true );
+	const [ page, setPage ] = useState( 1 );
+	const [ severity, setSeverity ] = useState( '' );
+	const [ category, setCategory ] = useState( '' );
+	const [ search, setSearch ] = useState( '' );
+
+	const load = useCallback( () => {
+		setLoading( true );
+		api.get( 'logs', { params: { page, severity, category, search, per_page: 20 } } )
+			.then( ( r ) => setState( r.data ) )
+			.catch( () => {} )
+			.finally( () => setLoading( false ) );
+	}, [ page, severity, category, search ] );
+
+	useEffect( () => {
+		const t = setTimeout( load, search ? 350 : 0 );
+		return () => clearTimeout( t );
+	}, [ load, search ] );
+
+	const clearLogs = async () => {
+		// eslint-disable-next-line no-alert
+		if ( ! window.confirm( __( 'Clear all activity logs? This cannot be undone.', 'gemsecurity' ) ) ) {
+			return;
+		}
+		await api.delete( 'logs' );
+		toast( __( 'Logs cleared.', 'gemsecurity' ), 'success' );
+		setPage( 1 );
+		load();
+	};
+
+	return (
+		<div className="gs-page">
+			<Card
+				title={ __( 'Activity log', 'gemsecurity' ) }
+				description={ `${ state.total } ${ __( 'events', 'gemsecurity' ) }` }
+				actions={
+					<Button variant="danger" onClick={ clearLogs }>{ __( 'Clear logs', 'gemsecurity' ) }</Button>
+				}
+			>
+				<div className="gs-filters">
+					<Select
+						value={ category }
+						onChange={ ( e ) => { setCategory( e.target.value ); setPage( 1 ); } }
+						options={ [
+							{ value: '', label: __( 'All categories', 'gemsecurity' ) },
+							{ value: 'login', label: __( 'Login & 2FA', 'gemsecurity' ) },
+							{ value: 'firewall', label: __( 'Firewall', 'gemsecurity' ) },
+							{ value: 'admin_guard', label: __( 'Admin Guard', 'gemsecurity' ) },
+							{ value: 'scanner', label: __( 'Scanner', 'gemsecurity' ) },
+							{ value: 'content', label: __( 'Content', 'gemsecurity' ) },
+							{ value: 'plugins_themes', label: __( 'Plugins & themes', 'gemsecurity' ) },
+							{ value: 'users', label: __( 'Users', 'gemsecurity' ) },
+							{ value: 'settings', label: __( 'Settings', 'gemsecurity' ) },
+							{ value: 'geolocation', label: __( 'Geolocation', 'gemsecurity' ) },
+						] }
+					/>
+					<Select
+						value={ severity }
+						onChange={ ( e ) => { setSeverity( e.target.value ); setPage( 1 ); } }
+						options={ [
+							{ value: '', label: __( 'All severities', 'gemsecurity' ) },
+							{ value: 'info', label: __( 'Info', 'gemsecurity' ) },
+							{ value: 'notice', label: __( 'Notice', 'gemsecurity' ) },
+							{ value: 'warning', label: __( 'Warning', 'gemsecurity' ) },
+							{ value: 'critical', label: __( 'Critical', 'gemsecurity' ) },
+						] }
+					/>
+					<TextInput
+						placeholder={ __( 'Search message or IP…', 'gemsecurity' ) }
+						value={ search }
+						onChange={ ( e ) => { setSearch( e.target.value ); setPage( 1 ); } }
+					/>
+				</div>
+
+				{ loading ? (
+					<Loading />
+				) : state.logs.length === 0 ? (
+					<EmptyState title={ __( 'No events', 'gemsecurity' ) } description={ __( 'Nothing matches your filters yet.', 'gemsecurity' ) } />
+				) : (
+					<table className="gs-table gs-table--logs">
+						<thead>
+							<tr>
+								<th>{ __( 'Severity', 'gemsecurity' ) }</th>
+								<th>{ __( 'Event', 'gemsecurity' ) }</th>
+								<th>{ __( 'Message', 'gemsecurity' ) }</th>
+								<th>{ __( 'User', 'gemsecurity' ) }</th>
+								<th>{ __( 'IP', 'gemsecurity' ) }</th>
+								<th>{ __( 'When', 'gemsecurity' ) }</th>
+							</tr>
+						</thead>
+						<tbody>
+							{ state.logs.map( ( l ) => (
+								<tr key={ l.id }>
+									<td><Badge tone={ SEVERITY_TONE[ l.severity ] || 'info' }>{ l.severity }</Badge></td>
+									<td><code>{ l.event_type }</code></td>
+									<td className="gs-table__msg">{ l.message }</td>
+									<td>{ l.user_display || '—' }</td>
+									<td>{ l.ip_address || '—' }</td>
+									<td className="gs-nowrap">{ l.created_at }</td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
+				) }
+
+				{ state.total_pages > 1 && (
+					<div className="gs-pager">
+						<Button variant="secondary" disabled={ page <= 1 } onClick={ () => setPage( page - 1 ) }>
+							{ __( 'Previous', 'gemsecurity' ) }
+						</Button>
+						<span>{ page } / { state.total_pages }</span>
+						<Button variant="secondary" disabled={ page >= state.total_pages } onClick={ () => setPage( page + 1 ) }>
+							{ __( 'Next', 'gemsecurity' ) }
+						</Button>
+					</div>
+				) }
+			</Card>
+		</div>
+	);
+}

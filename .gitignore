@@ -1,0 +1,22 @@
+.DS_Store
+node_modules/
+.git
+**/*.map
+assets/build/*.txt
+
+# Editors
+.idea
+.vscode
+
+# Playwright (local debugging only)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# AI tooling
+.claude/
+.agents/
+openspec/
+CLAUDE.md
+AGENTS.md

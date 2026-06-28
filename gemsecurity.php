@@ -39,7 +39,7 @@ final class GemSecurity {
 
 	public function define_constants() {
 		define( 'GEMSECURITY_VERSION', '1.0.0' );
-		define( 'GEMSECURITY_DB_VERSION', '1.0' );
+		define( 'GEMSECURITY_DB_VERSION', '1.4' );
 		define( 'GEMSECURITY_SETTINGS_NAME', 'gemsecurity_settings' );
 		define( 'GEMSECURITY_PLUGIN_FILE', __FILE__ );
 		define( 'GEMSECURITY_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -65,6 +65,19 @@ final class GemSecurity {
 	public function dispatch_hooks() {
 		GemSecurity\Database::init();
 		GemSecurity\Assets::init();
+		GemSecurity\Api::init();
+
+		// Security modules run on both front-end and admin requests.
+		GemSecurity\Modules\Firewall::init();
+		GemSecurity\Modules\LoginSecurity::init();
+		GemSecurity\Modules\AdminGuard::init();
+		GemSecurity\Modules\SecurityHeaders::init();
+		GemSecurity\Modules\Captcha::init();
+		GemSecurity\Modules\TwoFactor::init();
+		GemSecurity\Modules\AuditLog::init();
+		GemSecurity\Modules\SocialLogin::init();
+		GemSecurity\Modules\Geolocation::init();
+
 		if ( is_admin() ) {
 			GemSecurity\Admin::init();
 		}

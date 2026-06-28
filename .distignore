@@ -1,0 +1,47 @@
+# VCS / editor / OS
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# This file itself
+.distignore
+
+# JS toolchain — only the compiled output under assets/build ships
+node_modules
+package.json
+package-lock.json
+yarn.lock
+webpack.config.js
+.babelrc
+.eslintrc*
+.eslintignore
+.prettierrc*
+.prettierignore
+jsconfig.json
+*.map
+
+# React / SCSS source
+dev_gemsecurity
+
+# Dev docs & build artifacts
+docs
+*.zip
+*.tar
+*.tar.gz
+
+# Tooling / tests
+phpcs.xml*
+phpunit.xml*
+tests
+
+# AI tooling
+.claude
+.agents
+openspec
+CLAUDE.md
+AGENTS.md

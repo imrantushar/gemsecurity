@@ -10,6 +10,11 @@ class Database {
 	public static function init() {
 		$self = new self();
 		add_action( 'init', [ $self, 'register_tables' ], 5 );
+		add_action( 'init', [ Installer::class, 'maybe_upgrade' ], 6 );
+
+		// Cron callbacks.
+		add_action( Installer::CRON_PRUNE_LOGS, [ Logger::class, 'prune' ] );
+		add_action( Installer::CRON_DAILY_SCAN, [ $self, 'maybe_run_daily_scan' ] );
 	}
 
 	/**
@@ -19,5 +24,14 @@ class Database {
 	public function register_tables() {
 		global $wpdb;
 		$wpdb->gemsecurity_logs = $wpdb->prefix . 'gemsecurity_logs';
+	}
+
+	/**
+	 * Daily cron: run the integrity scan only when auto-scan is enabled.
+	 */
+	public function maybe_run_daily_scan() {
+		if ( Helper::get_setting( 'scanner_auto_scan', false ) ) {
+			Modules\Scanner::run_and_store();
+		}
 	}
 }
