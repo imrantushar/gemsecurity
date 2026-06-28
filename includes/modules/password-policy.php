@@ -27,6 +27,7 @@ class PasswordPolicy {
 
 		add_action( 'user_profile_update_errors', [ $self, 'validate_profile' ], 10, 3 );
 		add_action( 'validate_password_reset', [ $self, 'validate_reset' ], 10, 2 );
+		add_filter( 'registration_errors', [ $self, 'validate_registration' ], 10, 1 );
 		add_action( 'after_password_reset', [ $self, 'stamp' ], 10, 1 );
 		add_action( 'profile_update', [ $self, 'stamp_on_update' ], 10, 1 );
 		add_action( 'admin_notices', [ $self, 'expiry_notice' ] );
@@ -41,7 +42,7 @@ class PasswordPolicy {
 	 */
 	public function validate_profile( $errors, $update, $user ) {
 		$pw = isset( $_POST['pass1'] ) ? (string) $_POST['pass1'] : '';
-		if ( '' === $pw || $errors->get_error_code() ) {
+		if ( '' === $pw ) {
 			return;
 		}
 		$this->check( $pw, $errors );
@@ -57,6 +58,21 @@ class PasswordPolicy {
 			return;
 		}
 		$this->check( $pw, $errors );
+	}
+
+	/**
+	 * Enforce policy on the self-registration form (Settings > General > Anyone can register).
+	 *
+	 * @param \WP_Error $errors
+	 * @return \WP_Error
+	 */
+	public function validate_registration( $errors ) {
+		$pw = isset( $_POST['user_pass'] ) ? (string) $_POST['user_pass'] : '';
+		if ( '' === $pw ) {
+			return $errors;
+		}
+		$this->check( $pw, $errors );
+		return $errors;
 	}
 
 	/**

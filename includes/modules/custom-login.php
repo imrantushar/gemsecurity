@@ -90,6 +90,11 @@ class CustomLogin {
 		}
 		if ( ! is_user_logged_in() ) {
 			$this->deny();
+		} else {
+			// Logged-in users who land on wp-login.php directly should go to admin,
+			// not be served the login form (which would expose the default URL).
+			wp_safe_redirect( admin_url() );
+			exit;
 		}
 	}
 
