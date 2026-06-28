@@ -28,6 +28,19 @@ class Firewall {
 		if ( Helper::get_setting( 'xmlrpc_disabled', false ) ) {
 			add_filter( 'xmlrpc_enabled', '__return_false' );
 			add_filter( 'xmlrpc_methods', '__return_empty_array' );
+			// xmlrpc_call only fires inside individual WP method handlers;
+			// system.* IXR built-ins bypass it entirely. Killing the request
+			// at plugins_loaded (XMLRPC_REQUEST is defined before wp-load.php
+			// runs) blocks everything before IXR_Server dispatches any method.
+			if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
+				status_header( 403 );
+				nocache_headers();
+				wp_die(
+					esc_html__( 'XML-RPC services are disabled on this site.', 'gemsecurity' ),
+					esc_html__( 'Disabled', 'gemsecurity' ),
+					[ 'response' => 403 ]
+				);
+			}
 		}
 
 		if ( Helper::get_setting( 'hide_wp_version', true ) ) {
@@ -40,7 +53,9 @@ class Firewall {
 		}
 
 		if ( Helper::get_setting( 'disable_application_passwords', false ) ) {
-			add_filter( 'wp_is_application_passwords_available', '__return_false' );
+			// Priority 20: WordPress core registers __return_true at priority 10
+			// on `init`; running after it ensures our false wins.
+			add_filter( 'wp_is_application_passwords_available', '__return_false', 20 );
 		}
 	}
 
