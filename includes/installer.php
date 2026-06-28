@@ -9,6 +9,7 @@ class Installer {
 
 	const CRON_PRUNE_LOGS = 'gemsecurity_prune_logs';
 	const CRON_DAILY_SCAN = 'gemsecurity_daily_scan';
+	const CRON_WEEKLY_DIGEST = 'gemsecurity_weekly_digest';
 
 	public static function activate() {
 		self::create_tables();
@@ -20,6 +21,9 @@ class Installer {
 
 	public static function deactivate() {
 		self::clear_events();
+		// Remove the extended-protection mu-plugin so a deactivated plugin
+		// never leaves an orphaned early firewall behind.
+		\GemSecurity\Security\MuLoader::uninstall();
 		flush_rewrite_rules();
 	}
 
@@ -54,6 +58,19 @@ class Installer {
 			KEY severity (severity),
 			KEY user_id (user_id),
 			KEY created_at (created_at)
+		) {$charset_collate};";
+
+		$bans_table = $wpdb->prefix . 'gemsecurity_bans';
+		$sql .= "CREATE TABLE {$bans_table} (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			ip VARCHAR(45) NOT NULL,
+			reason VARCHAR(255) DEFAULT NULL,
+			strikes INT(10) UNSIGNED NOT NULL DEFAULT 1,
+			expires_at DATETIME DEFAULT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY ip (ip),
+			KEY expires_at (expires_at)
 		) {$charset_collate};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -149,6 +166,59 @@ class Installer {
 			'social_twitter_client_id'     => '',
 			'social_twitter_client_secret' => '',
 
+			// Vulnerability scanner.
+			'vuln_scan_enabled'            => true,
+
+			// WAF / threat defense (aggressive — default off; bans always enforced).
+			'waf_enabled'                  => false,
+			'waf_block_sqli'               => true,
+			'waf_block_xss'                => true,
+			'waf_block_lfi'                => true,
+			'waf_block_rce'                => true,
+			'waf_inspect_body'             => false,
+			'rate_limit_enabled'           => false,
+			'rate_limit_max'               => 240,
+			'rate_limit_window'            => 1,
+			'throttle_404_enabled'         => false,
+			'throttle_404_max'             => 20,
+			'throttle_404_window'          => 5,
+			'block_bad_bots'               => false,
+			'mu_loader_enabled'            => false,
+			'autoban_enabled'              => true,
+			'autoban_threshold'            => 10,
+			'autoban_window'               => 60,
+			'autoban_duration'             => 1440,
+
+			// Password policy.
+			'password_policy_enabled'      => false,
+			'password_min_length'          => 10,
+			'password_require_complexity'  => true,
+			'password_check_breached'      => true,
+			'password_expiry_days'         => 0,
+
+			// Sessions.
+			'idle_timeout_enabled'         => false,
+			'idle_timeout_minutes'         => 30,
+
+			// Custom login URL.
+			'custom_login_enabled'         => false,
+			'custom_login_slug'            => '',
+
+			// Alerts + digest.
+			'alerts_enabled'               => false,
+			'alert_min_severity'           => 'critical',
+			'alert_to_email'               => '',
+			'alert_slack_webhook'          => '',
+			'alert_telegram_token'         => '',
+			'alert_telegram_chat'          => '',
+			'alert_webhook_url'            => '',
+			'digest_enabled'               => false,
+
+			// Lockdown + backup.
+			'lockdown_enabled'             => false,
+			'lockdown_message'             => '',
+			'backup_before_updates'        => false,
+
 			// Geolocation (all off by default — a wrong rule can lock everyone out).
 			'geo_enabled'                  => false,
 			'geo_whitelist_login_enabled'  => false,
@@ -200,10 +270,14 @@ class Installer {
 		if ( ! wp_next_scheduled( self::CRON_DAILY_SCAN ) ) {
 			wp_schedule_event( time() + 2 * HOUR_IN_SECONDS, 'daily', self::CRON_DAILY_SCAN );
 		}
+		if ( ! wp_next_scheduled( self::CRON_WEEKLY_DIGEST ) ) {
+			wp_schedule_event( time() + 3 * HOUR_IN_SECONDS, 'weekly', self::CRON_WEEKLY_DIGEST );
+		}
 	}
 
 	private static function clear_events() {
 		wp_clear_scheduled_hook( self::CRON_PRUNE_LOGS );
 		wp_clear_scheduled_hook( self::CRON_DAILY_SCAN );
+		wp_clear_scheduled_hook( self::CRON_WEEKLY_DIGEST );
 	}
 }

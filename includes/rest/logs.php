@@ -85,6 +85,59 @@ class Logs {
 	}
 
 	/**
+	 * GET /logs/export — return the (optionally filtered) log as CSV text.
+	 *
+	 * @param \WP_REST_Request $request
+	 */
+	public static function export( $request ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'gemsecurity_logs';
+
+		$severity = sanitize_text_field( (string) $request->get_param( 'severity' ) );
+		$category = sanitize_text_field( (string) $request->get_param( 'category' ) );
+		$search   = sanitize_text_field( (string) $request->get_param( 'search' ) );
+
+		$where  = [ '1=1' ];
+		$params = [];
+		if ( $severity ) {
+			$where[]  = 'severity = %s';
+			$params[] = $severity;
+		}
+		if ( $category ) {
+			$map = AuditLog::category_map();
+			if ( ! empty( $map[ $category ] ) ) {
+				$ph       = implode( ',', array_fill( 0, count( $map[ $category ] ), '%s' ) );
+				$where[]  = "event_type IN ({$ph})";
+				$params   = array_merge( $params, $map[ $category ] );
+			}
+		}
+		if ( $search ) {
+			$like     = '%' . $wpdb->esc_like( $search ) . '%';
+			$where[]  = '(message LIKE %s OR ip_address LIKE %s)';
+			$params[] = $like;
+			$params[] = $like;
+		}
+		$where_sql = implode( ' AND ', $where );
+		$sql       = "SELECT id, created_at, severity, event_type, message, ip_address, user_id FROM {$table} WHERE {$where_sql} ORDER BY id DESC LIMIT 5000";
+		$rows      = $params ? $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A ) : $wpdb->get_results( $sql, ARRAY_A );
+
+		$out = "id,created_at,severity,event_type,message,ip_address,user_id\n";
+		foreach ( (array) $rows as $r ) {
+			$out .= implode( ',', array_map( [ __CLASS__, 'csv_cell' ], $r ) ) . "\n";
+		}
+
+		return rest_ensure_response( [ 'success' => true, 'csv' => $out, 'count' => count( (array) $rows ) ] );
+	}
+
+	private static function csv_cell( $value ) {
+		$value = (string) $value;
+		if ( preg_match( '/[",\r\n]/', $value ) ) {
+			$value = '"' . str_replace( '"', '""', $value ) . '"';
+		}
+		return $value;
+	}
+
+	/**
 	 * DELETE /logs — clears the activity log.
 	 */
 	public static function clear() {

@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchSettings } from '@Redux/settingsSlice';
 import { useActivePage, NAV_ITEMS, pageUrl, pageFromHref } from '@Utils/nav';
-import Sidebar from '@Components/Layout/Sidebar';
 import { Loading } from '@Components/ui/Controls';
 
 import Dashboard from '@Containers/pages/Dashboard';
 import Firewall from '@Containers/pages/Firewall';
+import ThreatDefense from '@Containers/pages/ThreatDefense';
 import LoginSecurity from '@Containers/pages/LoginSecurity';
 import TwoFactor from '@Containers/pages/TwoFactor';
 import SocialLogin from '@Containers/pages/SocialLogin';
@@ -20,6 +20,7 @@ import Settings from '@Containers/pages/Settings';
 const PAGES = {
 	gemsecurity: Dashboard,
 	'gemsecurity-firewall': Firewall,
+	'gemsecurity-threats': ThreatDefense,
 	'gemsecurity-login-security': LoginSecurity,
 	'gemsecurity-two-factor': TwoFactor,
 	'gemsecurity-social-login': SocialLogin,
@@ -109,8 +110,7 @@ export default function App() {
 	const navItem = NAV_ITEMS.find( ( i ) => i.key === page );
 
 	return (
-		<div className="gs-app">
-			<Sidebar />
+		<div className="gs-app gs-app--nosidebar">
 			<main className="gs-main">
 				<header className="gs-topbar">
 					<h1 className="gs-topbar__title">{ navItem ? navItem.label : 'GemSecurity' }</h1>

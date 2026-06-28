@@ -27,9 +27,11 @@ class Dashboard {
 			'logins_24h'        => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE event_type IN ('admin_login','user_login') AND created_at >= %s", $since_24h ) ),
 			'failed_logins_24h' => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE event_type = 'login_failed' AND created_at >= %s", $since_24h ) ),
 			'lockouts_7d'       => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE event_type = 'login_lockout' AND created_at >= %s", $since_7d ) ),
-			'blocks_7d'         => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE event_type IN ('firewall_block','author_enumeration_blocked') AND created_at >= %s", $since_7d ) ),
+			'blocks_7d'         => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE event_type IN ('firewall_block','author_enumeration_blocked','waf_block','waf_bad_bot','waf_rate_limited','waf_404_flood') AND created_at >= %s", $since_7d ) ),
 			'rogue_admins_7d'   => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE event_type IN ('rogue_admin_deleted','rogue_admin_demoted') AND created_at >= %s", $since_7d ) ),
 			'critical_7d'       => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE severity = 'critical' AND created_at >= %s", $since_7d ) ),
+			'banned_ips'        => \GemSecurity\Security\BanList::count_active(),
+			'vulnerabilities'   => is_array( $vuln = \GemSecurity\Security\Vulnerability::get_last_result() ) ? (int) $vuln['count'] : 0,
 		];
 
 		// Activity sparkline: events per day for the last 7 days.

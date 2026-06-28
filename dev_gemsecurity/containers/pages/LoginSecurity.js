@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { __ } from '@wordpress/i18n';
+import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
+import { useToast } from '@Components/ui/Toast';
 
 const KEYS = [
 	'login_attempts_enabled',
@@ -20,10 +22,64 @@ const KEYS = [
 	'captcha_on_register',
 	'captcha_on_lostpassword',
 	'captcha_v3_threshold',
+	// Password policy.
+	'password_policy_enabled',
+	'password_min_length',
+	'password_require_complexity',
+	'password_check_breached',
+	'password_expiry_days',
+	// Custom login URL.
+	'custom_login_enabled',
+	'custom_login_slug',
+	// Idle timeout.
+	'idle_timeout_enabled',
+	'idle_timeout_minutes',
 ];
+
+function ActiveSessions() {
+	const toast = useToast();
+	const [ sessions, setSessions ] = useState( null );
+	const [ busy, setBusy ] = useState( false );
+	const load = () => api.get( 'sessions' ).then( ( r ) => setSessions( r.data.sessions ) ).catch( () => setSessions( [] ) );
+	useEffect( () => { load(); }, [] );
+
+	const revoke = async () => {
+		setBusy( true );
+		try {
+			const r = await api.post( 'sessions/revoke-others' );
+			setSessions( r.data.sessions );
+			toast( __( 'Other sessions ended.', 'gemsecurity' ), 'success' );
+		} catch ( e ) { toast( __( 'Failed.', 'gemsecurity' ), 'error' ); }
+		setBusy( false );
+	};
+
+	return (
+		<Card
+			title={ __( 'Your active sessions', 'gemsecurity' ) }
+			actions={ <Button variant="secondary" onClick={ revoke } loading={ busy }>{ __( 'Log out other sessions', 'gemsecurity' ) }</Button> }
+		>
+			{ sessions === null ? <p className="gs-muted">{ __( 'Loading…', 'gemsecurity' ) }</p> : (
+				<table className="gs-table">
+					<thead><tr><th>{ __( 'IP', 'gemsecurity' ) }</th><th>{ __( 'Browser', 'gemsecurity' ) }</th><th>{ __( 'Signed in', 'gemsecurity' ) }</th><th>{ __( 'Expires', 'gemsecurity' ) }</th></tr></thead>
+					<tbody>
+						{ sessions.map( ( s, i ) => (
+							<tr key={ i }>
+								<td><code>{ s.ip || '—' }</code></td>
+								<td className="gs-table__msg">{ s.ua || '—' }</td>
+								<td className="gs-nowrap">{ s.login }</td>
+								<td className="gs-nowrap">{ s.expiration }</td>
+							</tr>
+						) ) }
+					</tbody>
+				</table>
+			) }
+		</Card>
+	);
+}
 
 export default function LoginSecurity() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
+	const loginBase = ( GS.site_url || '' ).replace( /\/$/, '' ) + '/';
 
 	return (
 		<div className="gs-page">
@@ -148,11 +204,63 @@ export default function LoginSecurity() {
 				) }
 			</Card>
 
+			<Card
+				title={ __( 'Password policy', 'gemsecurity' ) }
+				description={ __( 'Enforce strong passwords on every account and reject leaked ones.', 'gemsecurity' ) }
+			>
+				<Toggle label={ __( 'Enforce password policy', 'gemsecurity' ) } checked={ form.password_policy_enabled } onChange={ ( v ) => setField( 'password_policy_enabled', v ) } />
+				{ form.password_policy_enabled && (
+					<>
+						<div className="gs-row">
+							<Field label={ __( 'Minimum length', 'gemsecurity' ) } suffix={ __( 'characters', 'gemsecurity' ) }>
+								<NumberInput min="6" value={ form.password_min_length ?? 10 } onChange={ ( e ) => setField( 'password_min_length', Number( e.target.value ) ) } />
+							</Field>
+							<Field label={ __( 'Expire passwords after', 'gemsecurity' ) } suffix={ __( 'days (0 = never)', 'gemsecurity' ) }>
+								<NumberInput min="0" value={ form.password_expiry_days ?? 0 } onChange={ ( e ) => setField( 'password_expiry_days', Number( e.target.value ) ) } />
+							</Field>
+						</div>
+						<Toggle label={ __( 'Require mixed case, number & symbol', 'gemsecurity' ) } checked={ form.password_require_complexity } onChange={ ( v ) => setField( 'password_require_complexity', v ) } />
+						<Toggle label={ __( 'Reject passwords found in data breaches', 'gemsecurity' ) } description={ __( 'Checks Have I Been Pwned using k-anonymity (the password is never sent).', 'gemsecurity' ) } checked={ form.password_check_breached } onChange={ ( v ) => setField( 'password_check_breached', v ) } />
+					</>
+				) }
+			</Card>
+
+			<Card
+				title={ __( 'Custom login URL', 'gemsecurity' ) }
+				description={ __( 'Hide wp-login.php behind a secret address to stop automated login attacks.', 'gemsecurity' ) }
+			>
+				<Toggle label={ __( 'Enable custom login URL', 'gemsecurity' ) } checked={ form.custom_login_enabled } onChange={ ( v ) => setField( 'custom_login_enabled', v ) } />
+				{ form.custom_login_enabled && (
+					<>
+						<Field label={ __( 'Login slug', 'gemsecurity' ) } description={ `${ __( 'Your login page will be:', 'gemsecurity' ) } ${ loginBase }${ form.custom_login_slug || 'your-slug' }` }>
+							<TextInput value={ form.custom_login_slug ?? '' } onChange={ ( e ) => setField( 'custom_login_slug', e.target.value ) } placeholder="secret-login" />
+						</Field>
+						<div className="gs-alert gs-alert--warning">
+							<span>{ __( 'Bookmark the new URL. If you get locked out, remove custom_login_enabled from the gemsecurity_settings option via the database.', 'gemsecurity' ) }</span>
+						</div>
+					</>
+				) }
+			</Card>
+
+			<Card
+				title={ __( 'Idle session timeout', 'gemsecurity' ) }
+				description={ __( 'Automatically log users out after a period of inactivity.', 'gemsecurity' ) }
+			>
+				<Toggle label={ __( 'Enable idle timeout', 'gemsecurity' ) } checked={ form.idle_timeout_enabled } onChange={ ( v ) => setField( 'idle_timeout_enabled', v ) } />
+				{ form.idle_timeout_enabled && (
+					<Field label={ __( 'Log out after', 'gemsecurity' ) } suffix={ __( 'minutes idle', 'gemsecurity' ) }>
+						<NumberInput min="1" value={ form.idle_timeout_minutes ?? 30 } onChange={ ( e ) => setField( 'idle_timeout_minutes', Number( e.target.value ) ) } />
+					</Field>
+				) }
+			</Card>
+
 			<div className="gs-savebar">
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
 					{ __( 'Save changes', 'gemsecurity' ) }
 				</Button>
 			</div>
+
+			<ActiveSessions />
 		</div>
 	);
 }

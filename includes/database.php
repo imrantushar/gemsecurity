@@ -14,6 +14,7 @@ class Database {
 
 		// Cron callbacks.
 		add_action( Installer::CRON_PRUNE_LOGS, [ Logger::class, 'prune' ] );
+		add_action( Installer::CRON_PRUNE_LOGS, [ Security\BanList::class, 'prune' ] );
 		add_action( Installer::CRON_DAILY_SCAN, [ $self, 'maybe_run_daily_scan' ] );
 	}
 
@@ -24,6 +25,7 @@ class Database {
 	public function register_tables() {
 		global $wpdb;
 		$wpdb->gemsecurity_logs = $wpdb->prefix . 'gemsecurity_logs';
+		$wpdb->gemsecurity_bans = $wpdb->prefix . 'gemsecurity_bans';
 	}
 
 	/**
@@ -32,6 +34,9 @@ class Database {
 	public function maybe_run_daily_scan() {
 		if ( Helper::get_setting( 'scanner_auto_scan', false ) ) {
 			Modules\Scanner::run_and_store();
+		}
+		if ( Helper::get_setting( 'vuln_scan_enabled', true ) ) {
+			\GemSecurity\Security\Vulnerability::run_and_store();
 		}
 	}
 }

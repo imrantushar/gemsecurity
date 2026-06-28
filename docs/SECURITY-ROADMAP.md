@@ -18,6 +18,24 @@ Status legend: ✅ shipped · 🔜 next sprint · ⭐ value (1–3) · ⚙️ ef
 - ✅ **Social/OAuth login** — Google, Facebook, GitHub, Twitter (OAuth 2.0 + PKCE for Twitter); single fixed redirect URI, link-by-email, auto-provisioning, fires `wp_login` so 2FA/alerts apply. Page: *Social Login*.
 - ✅ **Geolocation access control** — self-contained IP→country resolver (CDN headers → free API, 24h cache, fail-open). Country whitelist as a login gate and/or whole-site 403; per-user location lock (admin-assigned countries) with email-verify on a new country. Defaults off; unknown/local IPs allowed; admins exempt; `GEMSEC_GEO_DISABLE` kill-switch. Page: *Geolocation*. (Supersedes the Tier-1 "Country/GeoIP blocking" item.)
 
+## Shipped in v1.3 ("build it all" — active threat protection, accounts, ops)
+- ✅ **Known-vulnerability scanner** — core/plugins/themes vs the free wpvulnerability.net feed (cached, fail-soft), shown on *Scanner* + daily cron. (Tier-0)
+- ✅ **WAF** — request inspection (SQLi/XSS/LFI/RCE), rate limiting, 404-flood throttle, bad-bot blocking. (Tier-0/1)
+- ✅ **Escalating auto-bans + ban ledger** — strikes → temporary/permanent bans (custom table), manual ban manager. Page: *Threat Defense*. (Tier-1)
+- ✅ **Extended protection (mu-plugin)** — early firewall that blocks banned/malicious requests before other plugins load; auto-installed/removed, fail-open.
+- ✅ **Password policy + breached-password** — length/complexity/expiry + Have I Been Pwned (k-anonymity). (Tier-1)
+- ✅ **Session management + idle timeout** — list/end your sessions, force-logout users. (Tier-1)
+- ✅ **Custom login URL** — rename wp-login.php (404 the default). (Tier-1)
+- ✅ **Alert channels + weekly digest** — Slack / Telegram / webhook + weekly email summary. (Tier-1/2)
+- ✅ **Lockdown/maintenance mode + pre-update backup** — 503 for non-admins; triggers GemBackup before updates. (Tier-2)
+- ✅ **CSV log export** + **full uninstall cleanup** (`uninstall.php`).
+
+## Still open (lower priority)
+- File-change baseline/diff + quarantine/repair of modified core files.
+- Plugin/theme file integrity vs WP.org repo.
+- Two-factor for non-admin roles via a front-end enrollment page.
+- Multisite support, full i18n pass, granular capabilities (currently `manage_options`), SIEM streaming.
+
 ---
 
 ## Tier 0 — Highest impact, fills the biggest credibility gaps

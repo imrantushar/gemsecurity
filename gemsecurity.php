@@ -39,7 +39,7 @@ final class GemSecurity {
 
 	public function define_constants() {
 		define( 'GEMSECURITY_VERSION', '1.0.0' );
-		define( 'GEMSECURITY_DB_VERSION', '1.4' );
+		define( 'GEMSECURITY_DB_VERSION', '1.6' );
 		define( 'GEMSECURITY_SETTINGS_NAME', 'gemsecurity_settings' );
 		define( 'GEMSECURITY_PLUGIN_FILE', __FILE__ );
 		define( 'GEMSECURITY_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -68,6 +68,7 @@ final class GemSecurity {
 		GemSecurity\Api::init();
 
 		// Security modules run on both front-end and admin requests.
+		GemSecurity\Modules\Waf::init();
 		GemSecurity\Modules\Firewall::init();
 		GemSecurity\Modules\LoginSecurity::init();
 		GemSecurity\Modules\AdminGuard::init();
@@ -77,6 +78,11 @@ final class GemSecurity {
 		GemSecurity\Modules\AuditLog::init();
 		GemSecurity\Modules\SocialLogin::init();
 		GemSecurity\Modules\Geolocation::init();
+		GemSecurity\Modules\PasswordPolicy::init();
+		GemSecurity\Modules\Sessions::init();
+		GemSecurity\Modules\CustomLogin::init();
+		GemSecurity\Modules\Alerts::init();
+		GemSecurity\Modules\Lockdown::init();
 
 		if ( is_admin() ) {
 			GemSecurity\Admin::init();

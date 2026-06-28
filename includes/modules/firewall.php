@@ -49,6 +49,9 @@ class Firewall {
 	/* --------------------------------------------------------------------- */
 
 	public function enforce_ip_blocklist() {
+		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+			return;
+		}
 		if ( ! Helper::get_setting( 'firewall_enabled', true ) ) {
 			return;
 		}

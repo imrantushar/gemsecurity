@@ -10,6 +10,7 @@ const SLUG = 'gemsecurity';
 export const NAV_ITEMS = [
 	{ key: SLUG, label: __( 'Dashboard', 'gemsecurity' ), icon: 'grid' },
 	{ key: `${ SLUG }-firewall`, label: __( 'Firewall', 'gemsecurity' ), icon: 'shield' },
+	{ key: `${ SLUG }-threats`, label: __( 'Threat Defense', 'gemsecurity' ), icon: 'zap' },
 	{ key: `${ SLUG }-login-security`, label: __( 'Login Security', 'gemsecurity' ), icon: 'lock' },
 	{ key: `${ SLUG }-two-factor`, label: __( 'Two-Factor', 'gemsecurity' ), icon: 'key' },
 	{ key: `${ SLUG }-social-login`, label: __( 'Social Login', 'gemsecurity' ), icon: 'users' },

@@ -28,6 +28,19 @@ export default function Logs() {
 		return () => clearTimeout( t );
 	}, [ load, search ] );
 
+	const exportCsv = async () => {
+		try {
+			const r = await api.get( 'logs/export', { params: { severity, category, search } } );
+			const blob = new Blob( [ r.data.csv ], { type: 'text/csv' } );
+			const a = document.createElement( 'a' );
+			a.href = URL.createObjectURL( blob );
+			a.download = 'gemsecurity-logs.csv';
+			a.click();
+		} catch ( e ) {
+			toast( __( 'Export failed.', 'gemsecurity' ), 'error' );
+		}
+	};
+
 	const clearLogs = async () => {
 		// eslint-disable-next-line no-alert
 		if ( ! window.confirm( __( 'Clear all activity logs? This cannot be undone.', 'gemsecurity' ) ) ) {
@@ -45,7 +58,10 @@ export default function Logs() {
 				title={ __( 'Activity log', 'gemsecurity' ) }
 				description={ `${ state.total } ${ __( 'events', 'gemsecurity' ) }` }
 				actions={
-					<Button variant="danger" onClick={ clearLogs }>{ __( 'Clear logs', 'gemsecurity' ) }</Button>
+					<div style={ { display: 'flex', gap: 8 } }>
+						<Button variant="secondary" onClick={ exportCsv }>{ __( 'Export CSV', 'gemsecurity' ) }</Button>
+						<Button variant="danger" onClick={ clearLogs }>{ __( 'Clear logs', 'gemsecurity' ) }</Button>
+					</div>
 				}
 			>
 				<div className="gs-filters">
@@ -58,6 +74,7 @@ export default function Logs() {
 							{ value: 'firewall', label: __( 'Firewall', 'gemsecurity' ) },
 							{ value: 'admin_guard', label: __( 'Admin Guard', 'gemsecurity' ) },
 							{ value: 'scanner', label: __( 'Scanner', 'gemsecurity' ) },
+							{ value: 'vulnerability', label: __( 'Vulnerabilities', 'gemsecurity' ) },
 							{ value: 'content', label: __( 'Content', 'gemsecurity' ) },
 							{ value: 'plugins_themes', label: __( 'Plugins & themes', 'gemsecurity' ) },
 							{ value: 'users', label: __( 'Users', 'gemsecurity' ) },

@@ -7,13 +7,14 @@ import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
 
 export default function Scanner() {
-	const { form, setField, save, saving, dirty } = useSettingsForm( [ 'scanner_auto_scan' ] );
+	const { form, setField, save, saving, dirty } = useSettingsForm( [ 'scanner_auto_scan', 'vuln_scan_enabled' ] );
 	const toast = useToast();
 	const [ result, setResult ] = useState( null );
+	const [ vuln, setVuln ] = useState( null );
 	const [ running, setRunning ] = useState( false );
 
 	useEffect( () => {
-		api.get( 'scan' ).then( ( r ) => setResult( r.data.result ) ).catch( () => {} );
+		api.get( 'scan' ).then( ( r ) => { setResult( r.data.result ); setVuln( r.data.vuln ); } ).catch( () => {} );
 	}, [] );
 
 	const runScan = async () => {
@@ -21,12 +22,16 @@ export default function Scanner() {
 		try {
 			const r = await api.post( 'scan' );
 			setResult( r.data.result );
-			toast( __( 'Scan complete.', 'gemsecurity' ), r.data.result.issue_count ? 'warning' : 'success' );
+			setVuln( r.data.vuln );
+			const issues = ( r.data.result?.issue_count || 0 ) + ( r.data.vuln?.count || 0 );
+			toast( __( 'Scan complete.', 'gemsecurity' ), issues ? 'warning' : 'success' );
 		} catch ( e ) {
 			toast( __( 'Scan failed.', 'gemsecurity' ), 'error' );
 		}
 		setRunning( false );
 	};
+
+	const SEV_TONE = { critical: 'danger', high: 'danger', medium: 'warning', low: 'info', none: 'info' };
 
 	return (
 		<div className="gs-page">
@@ -43,6 +48,12 @@ export default function Scanner() {
 					label={ __( 'Run a scan automatically every day', 'gemsecurity' ) }
 					checked={ form.scanner_auto_scan }
 					onChange={ ( v ) => setField( 'scanner_auto_scan', v ) }
+				/>
+				<Toggle
+					label={ __( 'Check core, plugins & themes for known vulnerabilities', 'gemsecurity' ) }
+					description={ __( 'Compares installed versions against a public vulnerability database during the daily scan.', 'gemsecurity' ) }
+					checked={ form.vuln_scan_enabled }
+					onChange={ ( v ) => setField( 'vuln_scan_enabled', v ) }
 				/>
 				{ dirty && (
 					<div className="gs-savebar gs-savebar--inline">
@@ -110,6 +121,42 @@ export default function Scanner() {
 						) }
 					</Card>
 				</>
+			) }
+
+			{ vuln && (
+				<Card
+					title={ __( 'Known vulnerabilities', 'gemsecurity' ) }
+					description={ vuln.scanned_at ? `${ __( 'Scanned', 'gemsecurity' ) } ${ vuln.scanned_at }` : '' }
+				>
+					{ ! vuln.items || vuln.items.length === 0 ? (
+						<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No known vulnerabilities in your installed core, plugins or themes.', 'gemsecurity' ) }</p>
+					) : (
+						<table className="gs-table">
+							<thead><tr>
+								<th>{ __( 'Component', 'gemsecurity' ) }</th>
+								<th>{ __( 'Vulnerability', 'gemsecurity' ) }</th>
+								<th>{ __( 'Severity', 'gemsecurity' ) }</th>
+								<th>{ __( 'Fixed in', 'gemsecurity' ) }</th>
+							</tr></thead>
+							<tbody>
+								{ vuln.items.map( ( item ) => item.vulnerabilities.map( ( v, i ) => (
+									<tr key={ item.slug + i }>
+										<td>
+											<strong>{ item.name }</strong>
+											<span className="gs-muted"> { item.type } · { item.version }</span>
+										</td>
+										<td>
+											{ v.link ? <a href={ v.link } target="_blank" rel="noreferrer">{ v.title }</a> : v.title }
+											{ v.cve && <div className="gs-muted"><code>{ v.cve }</code></div> }
+										</td>
+										<td><Badge tone={ SEV_TONE[ v.severity ] || 'warning' }>{ v.severity }</Badge></td>
+										<td>{ v.fixed_in ? v.fixed_in : '—' }</td>
+									</tr>
+								) ) ) }
+							</tbody>
+						</table>
+					) }
+				</Card>
 			) }
 		</div>
 	);

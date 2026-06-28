@@ -29,6 +29,12 @@ class Helper {
 			'capability'  => 'manage_options',
 		];
 
+		$menu[ GEMSECURITY_PLUGIN_SLUG . '-threats' ] = [
+			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+			'title'       => __( 'Threat Defense', 'gemsecurity' ),
+			'capability'  => 'manage_options',
+		];
+
 		$menu[ GEMSECURITY_PLUGIN_SLUG . '-login-security' ] = [
 			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
 			'title'       => __( 'Login Security', 'gemsecurity' ),

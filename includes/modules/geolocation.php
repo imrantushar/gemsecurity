@@ -52,6 +52,9 @@ class Geolocation {
 	/* ------------------------------------------------------------------ */
 
 	public function enforce_site_country() {
+		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+			return;
+		}
 		// Never block an authenticated administrator.
 		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
 			return;

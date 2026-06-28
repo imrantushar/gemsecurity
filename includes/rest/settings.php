@@ -100,6 +100,59 @@ class Settings {
 			'social_twitter_client_id'      => 'text',
 			'social_twitter_client_secret'  => 'text',
 
+			// Vulnerability scanner.
+			'vuln_scan_enabled'             => 'bool',
+
+			// WAF / threat defense.
+			'waf_enabled'                   => 'bool',
+			'waf_block_sqli'                => 'bool',
+			'waf_block_xss'                 => 'bool',
+			'waf_block_lfi'                 => 'bool',
+			'waf_block_rce'                 => 'bool',
+			'waf_inspect_body'              => 'bool',
+			'rate_limit_enabled'            => 'bool',
+			'rate_limit_max'                => 'int',
+			'rate_limit_window'             => 'int',
+			'throttle_404_enabled'          => 'bool',
+			'throttle_404_max'              => 'int',
+			'throttle_404_window'           => 'int',
+			'block_bad_bots'                => 'bool',
+			'mu_loader_enabled'             => 'bool',
+			'autoban_enabled'               => 'bool',
+			'autoban_threshold'             => 'int',
+			'autoban_window'                => 'int',
+			'autoban_duration'              => 'int',
+
+			// Password policy.
+			'password_policy_enabled'       => 'bool',
+			'password_min_length'           => 'int',
+			'password_require_complexity'   => 'bool',
+			'password_check_breached'       => 'bool',
+			'password_expiry_days'          => 'int',
+
+			// Sessions.
+			'idle_timeout_enabled'          => 'bool',
+			'idle_timeout_minutes'          => 'int',
+
+			// Custom login URL.
+			'custom_login_enabled'          => 'bool',
+			'custom_login_slug'             => 'text',
+
+			// Alerts + digest.
+			'alerts_enabled'                => 'bool',
+			'alert_min_severity'            => 'enum:critical,warning,notice',
+			'alert_to_email'                => 'email',
+			'alert_slack_webhook'           => 'text',
+			'alert_telegram_token'          => 'text',
+			'alert_telegram_chat'           => 'text',
+			'alert_webhook_url'             => 'text',
+			'digest_enabled'                => 'bool',
+
+			// Lockdown + backup.
+			'lockdown_enabled'              => 'bool',
+			'lockdown_message'              => 'textarea',
+			'backup_before_updates'         => 'bool',
+
 			// Geolocation.
 			'geo_enabled'                   => 'bool',
 			'geo_whitelist_login_enabled'   => 'bool',
@@ -147,6 +200,7 @@ class Settings {
 		$current = array_merge( Installer::default_settings(), $current );
 
 		$was_whitelist_enabled = ! empty( $current['admin_whitelist_enabled'] );
+		$was_mu_enabled        = ! empty( $current['mu_loader_enabled'] );
 
 		$clean = [];
 		foreach ( self::schema() as $key => $type ) {
@@ -163,6 +217,16 @@ class Settings {
 		$now_enabled = ! empty( $merged['admin_whitelist_enabled'] );
 		if ( $now_enabled && ! $was_whitelist_enabled && empty( $merged['admin_whitelist'] ) ) {
 			$merged['admin_whitelist'] = AdminGuard::current_admin_emails();
+		}
+
+		// Install/remove the extended-protection mu-plugin when toggled.
+		$now_mu = ! empty( $merged['mu_loader_enabled'] );
+		if ( $now_mu !== $was_mu_enabled ) {
+			$ok = \GemSecurity\Security\MuLoader::sync( $now_mu );
+			if ( ! $ok ) {
+				// Couldn't write the file — reflect reality so the UI doesn't lie.
+				$merged['mu_loader_enabled'] = \GemSecurity\Security\MuLoader::is_installed();
+			}
 		}
 
 		update_option( GEMSECURITY_SETTINGS_NAME, $merged );

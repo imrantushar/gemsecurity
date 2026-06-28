@@ -193,7 +193,8 @@ class AuditLog {
 	public static function category_map() {
 		return [
 			'login'           => [ 'admin_login', 'user_login', 'login_failed', 'login_lockout', 'admin_session_expired', 'user_logout', '2fa_challenge', '2fa_failed', '2fa_success' ],
-			'firewall'        => [ 'firewall_block', 'author_enumeration_blocked', 'captcha_failed' ],
+			'firewall'        => [ 'firewall_block', 'author_enumeration_blocked', 'captcha_failed', 'waf_block', 'waf_bad_bot', 'waf_rate_limited', 'waf_404_flood', 'ip_banned' ],
+			'vulnerability'   => [ 'vuln_found' ],
 			'admin_guard'     => [ 'rogue_admin_deleted', 'rogue_admin_demoted' ],
 			'scanner'         => [ 'scan_completed' ],
 			'content'         => [ 'content_published', 'content_updated', 'content_trashed', 'content_deleted' ],

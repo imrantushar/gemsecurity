@@ -65,6 +65,11 @@ class Api {
 				'permission_callback' => $perm,
 			],
 		] );
+		register_rest_route( $ns, '/logs/export', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Logs::class, 'export' ],
+			'permission_callback' => $perm,
+		] );
 
 		// Administrators (whitelist management UI).
 		register_rest_route( $ns, '/admins', [
@@ -124,6 +129,42 @@ class Api {
 			'methods'             => 'GET',
 			'callback'            => [ Rest\Social::class, 'config' ],
 			'permission_callback' => $perm,
+		] );
+
+		// Sessions.
+		register_rest_route( $ns, '/sessions', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Sessions::class, 'get' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/sessions/revoke-others', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Sessions::class, 'revoke_others' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/sessions/force-logout', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Sessions::class, 'force_logout' ],
+			'permission_callback' => $perm,
+		] );
+
+		// Banned IPs.
+		register_rest_route( $ns, '/bans', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Bans::class, 'get' ],
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Bans::class, 'add' ],
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'DELETE',
+				'callback'            => [ Rest\Bans::class, 'remove' ],
+				'permission_callback' => $perm,
+			],
 		] );
 
 		// Geolocation.

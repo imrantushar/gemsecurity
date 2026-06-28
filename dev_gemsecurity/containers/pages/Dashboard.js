@@ -41,6 +41,8 @@ const STAT_META = [
 	{ key: 'lockouts_7d', label: __( 'Lockouts (7d)', 'gemsecurity' ), icon: 'shield' },
 	{ key: 'blocks_7d', label: __( 'Blocked requests (7d)', 'gemsecurity' ), icon: 'shield' },
 	{ key: 'rogue_admins_7d', label: __( 'Rogue admins stopped (7d)', 'gemsecurity' ), icon: 'crown' },
+	{ key: 'banned_ips', label: __( 'Banned IPs', 'gemsecurity' ), icon: 'zap' },
+	{ key: 'vulnerabilities', label: __( 'Known vulnerabilities', 'gemsecurity' ), icon: 'bug' },
 	{ key: 'critical_7d', label: __( 'Critical events (7d)', 'gemsecurity' ), icon: 'alert' },
 ];
 
