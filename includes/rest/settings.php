@@ -202,15 +202,7 @@ class Settings {
 		$was_whitelist_enabled = ! empty( $current['admin_whitelist_enabled'] );
 		$was_mu_enabled        = ! empty( $current['mu_loader_enabled'] );
 
-		$clean = [];
-		foreach ( self::schema() as $key => $type ) {
-			if ( ! array_key_exists( $key, (array) $incoming ) ) {
-				continue;
-			}
-			$clean[ $key ] = self::sanitize( $type, $incoming[ $key ] );
-		}
-
-		$merged = array_merge( $current, $clean );
+		$merged = array_merge( $current, self::sanitize_all( $incoming ) );
 
 		// When the whitelist guard is switched on and the list is empty, seed it
 		// with every current administrator so no legitimate admin is removed.
@@ -237,9 +229,87 @@ class Settings {
 		] );
 	}
 
+	/**
+	 * GET /settings/export
+	 */
+	public static function export() {
+		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		if ( ! is_array( $settings ) ) {
+			$settings = [];
+		}
+		$settings = array_merge( Installer::default_settings(), $settings );
+
+		$payload = [
+			'plugin_version' => GEMSECURITY_VERSION,
+			'exported_at'    => gmdate( 'c' ),
+			'settings'       => $settings,
+		];
+
+		$response = rest_ensure_response( $payload );
+		$response->header( 'Content-Disposition', 'attachment; filename="gemsecurity-settings-' . gmdate( 'Y-m-d' ) . '.json"' );
+		return $response;
+	}
+
+	/**
+	 * POST /settings/import
+	 *
+	 * @param \WP_REST_Request $request
+	 */
+	public static function import( $request ) {
+		$body = $request->get_json_params();
+
+		if ( empty( $body['settings'] ) || ! is_array( $body['settings'] ) ) {
+			return new \WP_Error( 'invalid_structure', __( 'Import file must contain a "settings" object.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+
+		if ( ! empty( $body['plugin_version'] ) && version_compare( $body['plugin_version'], GEMSECURITY_VERSION, '>' ) ) {
+			return new \WP_Error(
+				'version_mismatch',
+				sprintf(
+					/* translators: 1: file version, 2: installed version */
+					__( 'This settings file was exported from plugin version %1$s, but this site runs %2$s. Please upgrade the plugin before importing.', 'gemsecurity' ),
+					sanitize_text_field( $body['plugin_version'] ),
+					GEMSECURITY_VERSION
+				),
+				[ 'status' => 422 ]
+			);
+		}
+
+		$current = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		if ( ! is_array( $current ) ) {
+			$current = [];
+		}
+		$current = array_merge( Installer::default_settings(), $current );
+
+		$merged = array_merge( $current, self::sanitize_all( $body['settings'] ) );
+		update_option( GEMSECURITY_SETTINGS_NAME, $merged );
+
+		return rest_ensure_response( [
+			'success'  => true,
+			'settings' => $merged,
+		] );
+	}
+
 	/* --------------------------------------------------------------------- */
 	/* Sanitisers                                                             */
 	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Run all incoming values through the schema sanitizers, returning only known keys.
+	 *
+	 * @param array $incoming
+	 * @return array
+	 */
+	private static function sanitize_all( array $incoming ): array {
+		$clean = [];
+		foreach ( self::schema() as $key => $type ) {
+			if ( ! array_key_exists( $key, $incoming ) ) {
+				continue;
+			}
+			$clean[ $key ] = self::sanitize( $type, $incoming[ $key ] );
+		}
+		return $clean;
+	}
 
 	private static function sanitize( $type, $value ) {
 		if ( 0 === strpos( $type, 'enum:' ) ) {

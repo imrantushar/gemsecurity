@@ -45,6 +45,18 @@ class Api {
 			],
 		] );
 
+		// Settings export / import.
+		register_rest_route( $ns, '/settings/export', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Settings::class, 'export' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/settings/import', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Settings::class, 'import' ],
+			'permission_callback' => $perm,
+		] );
+
 		// Dashboard overview.
 		register_rest_route( $ns, '/dashboard', [
 			'methods'             => 'GET',
