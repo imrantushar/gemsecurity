@@ -171,12 +171,6 @@ class Helper {
 			'capability'  => 'manage_options',
 		];
 
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-transfer' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Import / Export', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
 		return apply_filters( 'gemsecurity/admin_menu_list', $menu );
 	}
 

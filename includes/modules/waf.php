@@ -171,7 +171,10 @@ class Waf {
 		if ( preg_match( '#(' . $bad . ')#i', $ua, $m ) ) {
 			return [ 'ua' => $ua, 'matched' => '(built-in: ' . $m[1] . ')' ];
 		}
-		foreach ( (array) Helper::get_setting( 'bot_blocklist', [] ) as $entry ) {
+		// Custom bot blocklist patterns are a Pro feature; built-in bad-bot
+		// blocking and the empty-UA check above stay free.
+		$custom = Helper::is_pro_active() ? (array) Helper::get_setting( 'bot_blocklist', [] ) : [];
+		foreach ( $custom as $entry ) {
 			$entry = (string) $entry;
 			if ( '' === $entry ) {
 				continue;
@@ -193,6 +196,10 @@ class Waf {
 	 * Returns false or array{ ua, reason, suggested_pattern }.
 	 */
 	private function is_suspicious_bot() {
+		// Suspicious-bot review (seems_bot) is a Pro feature.
+		if ( ! Helper::is_pro_active() ) {
+			return false;
+		}
 		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		if ( '' === $ua ) {
 			return false; // Empty UA handled by is_bad_bot.

@@ -66,18 +66,6 @@ class Api {
 			],
 		] );
 
-		// Settings export / import.
-		register_rest_route( $ns, '/settings/export', [
-			'methods'             => 'GET',
-			'callback'            => [ Rest\Settings::class, 'export' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/settings/import', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\Settings::class, 'import' ],
-			'permission_callback' => $perm,
-		] );
-
 		// Dashboard overview.
 		register_rest_route( $ns, '/dashboard', [
 			'methods'             => 'GET',
@@ -104,18 +92,18 @@ class Api {
 			'permission_callback' => $perm,
 		] );
 
-		// Bot stats.
+		// Bot stats + blocklist (Threat Defense — Pro).
 		register_rest_route( $ns, '/bots/stats', [
 			'methods'             => 'GET',
 			'callback'            => [ Rest\Bots::class, 'stats' ],
-			'permission_callback' => $perm,
+			'permission_callback' => $pro_perm,
 		] );
 
 		// Add pattern to bot blocklist.
 		register_rest_route( $ns, '/bots/blocklist', [
 			'methods'             => 'POST',
 			'callback'            => [ Rest\Bots::class, 'add_to_blocklist' ],
-			'permission_callback' => $perm,
+			'permission_callback' => $pro_perm,
 		] );
 
 		// Administrators (whitelist management UI).

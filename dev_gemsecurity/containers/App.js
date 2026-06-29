@@ -19,7 +19,6 @@ import Logs from '@Containers/pages/Logs';
 import MalwareScan from '@Containers/pages/MalwareScan';
 import ProTools from '@Containers/pages/ProTools';
 import Settings from '@Containers/pages/Settings';
-import Transfer from '@Containers/pages/Transfer';
 
 const PAGES = {
 	gemsecurity: Dashboard,
@@ -35,7 +34,6 @@ const PAGES = {
 	'gemsecurity-logs': Logs,
 	'gemsecurity-pro-tools': ProTools,
 	'gemsecurity-settings': Settings,
-	'gemsecurity-transfer': Transfer,
 };
 
 const PAGE_KEYS = Object.keys( PAGES );
