@@ -7,8 +7,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Helper {
 
+	/**
+	 * In-request cache of the settings option. The plugin reads settings ~100×
+	 * per request across its modules; caching avoids re-resolving the option
+	 * each time. Invalidated on save via update_option_/add_option_ hooks.
+	 *
+	 * @var array|null
+	 */
+	private static $settings_cache = null;
+
 	public static function get_time() {
 		return time() + ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * The full settings array, resolved once per request.
+	 *
+	 * @return array
+	 */
+	public static function get_settings() {
+		if ( null === self::$settings_cache ) {
+			$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+			self::$settings_cache = is_array( $settings ) ? $settings : [];
+		}
+		return self::$settings_cache;
+	}
+
+	/**
+	 * Drop the in-request settings cache (hooked on the option update/add).
+	 */
+	public static function flush_settings_cache() {
+		self::$settings_cache = null;
 	}
 
 	/**
@@ -200,7 +229,7 @@ class Helper {
 	 * @return mixed
 	 */
 	public static function get_setting( $key, $default = null ) {
-		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		$settings = self::get_settings();
 		return isset( $settings[ $key ] ) ? $settings[ $key ] : $default;
 	}
 

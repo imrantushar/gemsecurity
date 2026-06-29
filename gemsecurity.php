@@ -65,6 +65,10 @@ final class GemSecurity {
 	}
 
 	public function dispatch_hooks() {
+		// Keep the in-request settings cache fresh when the option changes.
+		add_action( 'update_option_' . GEMSECURITY_SETTINGS_NAME, [ GemSecurity\Helper::class, 'flush_settings_cache' ] );
+		add_action( 'add_option_' . GEMSECURITY_SETTINGS_NAME, [ GemSecurity\Helper::class, 'flush_settings_cache' ] );
+
 		GemSecurity\Database::init();
 		GemSecurity\Assets::init();
 		GemSecurity\Api::init();
