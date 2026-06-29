@@ -60,7 +60,7 @@ export default function BackupSchedule() {
 	};
 
 	if ( items === null ) {
-		return <div className="gs-page"><Loading /></div>;
+		return <Loading />;
 	}
 
 	const atFreeLimit = ! pro && items.length >= 1;
@@ -72,7 +72,7 @@ export default function BackupSchedule() {
 	];
 
 	return (
-		<div className="gs-page">
+		<>
 			<Card title={ __( 'Scheduled backups', 'gemsecurity' ) }>
 				{ items.length === 0 ? (
 					<EmptyState title={ __( 'No schedules yet.', 'gemsecurity' ) } description={ __( 'Create an automatic backup schedule below.', 'gemsecurity' ) } />
@@ -131,6 +131,6 @@ export default function BackupSchedule() {
 					<TextInput value={ form.run_time } onChange={ ( e ) => set( 'run_time', e.target.value ) } placeholder="02:00" />
 				</Field>
 			</Card>
-		</div>
+		</>
 	);
 }

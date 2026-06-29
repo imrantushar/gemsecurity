@@ -150,7 +150,7 @@ export default function BackupStorage() {
 	};
 
 	if ( drivers === null ) {
-		return <div className="gs-page"><Loading /></div>;
+		return <Loading />;
 	}
 
 	const renderConfig = ( d ) => {
@@ -192,7 +192,7 @@ export default function BackupStorage() {
 	};
 
 	return (
-		<div className="gs-page">
+		<>
 			<Card
 				title={ __( 'Storage destinations', 'gemsecurity' ) }
 				description={ __( 'Local storage is included. Cloud destinations are available in Pro.', 'gemsecurity' ) }
@@ -249,6 +249,6 @@ export default function BackupStorage() {
 					</p>
 				) }
 			</Card>
-		</div>
+		</>
 	);
 }

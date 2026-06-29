@@ -193,18 +193,6 @@ class Helper {
 			'capability'  => 'manage_options',
 		];
 
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-backup-schedule' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Backup Schedule', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-backup-storage' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Backup Storage', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
 		$menu[ GEMSECURITY_PLUGIN_SLUG . '-pro-tools' ] = [
 			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
 			'title'       => __( 'Pro Tools', 'gemsecurity' ),

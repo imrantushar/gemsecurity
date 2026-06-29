@@ -2,6 +2,8 @@ import React from 'react';
 import { __ } from '@wordpress/i18n';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Field, Toggle, NumberInput, TextInput, Select, ListInput, Button } from '@Components/ui/Controls';
+import BackupSchedule from '@Containers/pages/BackupSchedule';
+import BackupStorage from '@Containers/pages/BackupStorage';
 
 const KEYS = [
 	'logs_retention_days',
@@ -108,6 +110,10 @@ export default function Settings() {
 					{ __( 'Save changes', 'gemsecurity' ) }
 				</Button>
 			</div>
+
+			{ /* Backup configuration — schedules and storage destinations. */ }
+			<BackupSchedule />
+			<BackupStorage />
 		</div>
 	);
 }
