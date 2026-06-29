@@ -71,6 +71,13 @@ class Api {
 			'permission_callback' => $perm,
 		] );
 
+		// Bot stats.
+		register_rest_route( $ns, '/bots/stats', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Bots::class, 'stats' ],
+			'permission_callback' => $perm,
+		] );
+
 		// Administrators (whitelist management UI).
 		register_rest_route( $ns, '/admins', [
 			'methods'             => 'GET',

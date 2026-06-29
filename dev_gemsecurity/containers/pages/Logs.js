@@ -72,6 +72,7 @@ export default function Logs() {
 							{ value: '', label: __( 'All categories', 'gemsecurity' ) },
 							{ value: 'login', label: __( 'Login & 2FA', 'gemsecurity' ) },
 							{ value: 'firewall', label: __( 'Firewall', 'gemsecurity' ) },
+							{ value: 'bots', label: __( 'Bots', 'gemsecurity' ) },
 							{ value: 'admin_guard', label: __( 'Admin Guard', 'gemsecurity' ) },
 							{ value: 'scanner', label: __( 'Scanner', 'gemsecurity' ) },
 							{ value: 'vulnerability', label: __( 'Vulnerabilities', 'gemsecurity' ) },
@@ -111,22 +112,32 @@ export default function Logs() {
 								<th>{ __( 'Severity', 'gemsecurity' ) }</th>
 								<th>{ __( 'Event', 'gemsecurity' ) }</th>
 								<th>{ __( 'Message', 'gemsecurity' ) }</th>
-								<th>{ __( 'User', 'gemsecurity' ) }</th>
+								<th>{ __( 'User / UA', 'gemsecurity' ) }</th>
 								<th>{ __( 'IP', 'gemsecurity' ) }</th>
 								<th>{ __( 'When', 'gemsecurity' ) }</th>
 							</tr>
 						</thead>
 						<tbody>
-							{ state.logs.map( ( l ) => (
-								<tr key={ l.id }>
-									<td><Badge tone={ SEVERITY_TONE[ l.severity ] || 'info' }>{ l.severity }</Badge></td>
-									<td><code>{ l.event_type }</code></td>
-									<td className="gs-table__msg">{ l.message }</td>
-									<td>{ l.user_display || '—' }</td>
-									<td>{ l.ip_address || '—' }</td>
-									<td className="gs-nowrap">{ l.created_at }</td>
-								</tr>
-							) ) }
+							{ state.logs.map( ( l ) => {
+								const ctx = l.context ? ( () => { try { return JSON.parse( l.context ); } catch { return null; } } )() : null;
+								return (
+									<tr key={ l.id }>
+										<td><Badge tone={ SEVERITY_TONE[ l.severity ] || 'info' }>{ l.severity }</Badge></td>
+										<td><code>{ l.event_type }</code></td>
+										<td className="gs-table__msg">{ l.message }
+											{ ctx?.matched && <span className="gs-muted"> · { ctx.matched }</span> }
+										</td>
+										<td className="gs-table__msg">
+											{ l.event_type === 'waf_bad_bot' && ctx?.ua
+												? <code title={ ctx.ua }>{ ctx.ua.length > 40 ? ctx.ua.slice( 0, 40 ) + '…' : ctx.ua }</code>
+												: ( l.user_display || '—' )
+											}
+										</td>
+										<td>{ l.ip_address || '—' }</td>
+										<td className="gs-nowrap">{ l.created_at }</td>
+									</tr>
+								);
+							} ) }
 						</tbody>
 					</table>
 				) }

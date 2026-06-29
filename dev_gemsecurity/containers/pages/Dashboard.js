@@ -40,6 +40,7 @@ const STAT_META = [
 	{ key: 'failed_logins_24h', label: __( 'Failed logins (24h)', 'gemsecurity' ), icon: 'alert' },
 	{ key: 'lockouts_7d', label: __( 'Lockouts (7d)', 'gemsecurity' ), icon: 'shield' },
 	{ key: 'blocks_7d', label: __( 'Blocked requests (7d)', 'gemsecurity' ), icon: 'shield' },
+	{ key: 'bots_blocked_24h', label: __( 'Bots blocked (24h)', 'gemsecurity' ), icon: 'zap' },
 	{ key: 'rogue_admins_7d', label: __( 'Rogue admins stopped (7d)', 'gemsecurity' ), icon: 'crown' },
 	{ key: 'banned_ips', label: __( 'Banned IPs', 'gemsecurity' ), icon: 'zap' },
 	{ key: 'vulnerabilities', label: __( 'Known vulnerabilities', 'gemsecurity' ), icon: 'bug' },

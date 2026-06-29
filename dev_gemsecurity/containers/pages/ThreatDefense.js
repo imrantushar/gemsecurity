@@ -82,6 +82,61 @@ function BannedIps() {
 	);
 }
 
+function BotStats() {
+	const [ stats, setStats ] = useState( null );
+
+	useEffect( () => {
+		api.get( 'bots/stats' ).then( ( r ) => setStats( r.data ) ).catch( () => setStats( false ) );
+	}, [] );
+
+	if ( ! stats ) {
+		return stats === false ? null : <Loading />;
+	}
+
+	const maxDay = Math.max( 1, ...stats.per_day.map( ( d ) => d.count ) );
+
+	return (
+		<Card title={ __( 'Bot activity (last 7 days)', 'gemsecurity' ) }>
+			<div className="gs-row" style={ { marginBottom: 16 } }>
+				<div className="gs-stat">
+					<span className="gs-stat__value">{ stats.total_24h }</span>
+					<span className="gs-stat__label">{ __( 'Blocked (24h)', 'gemsecurity' ) }</span>
+				</div>
+				<div className="gs-stat">
+					<span className="gs-stat__value">{ stats.total_7d }</span>
+					<span className="gs-stat__label">{ __( 'Blocked (7d)', 'gemsecurity' ) }</span>
+				</div>
+			</div>
+
+			<div className="gs-bars" style={ { height: 60, marginBottom: 16 } }>
+				{ stats.per_day.map( ( d ) => (
+					<div key={ d.date } className="gs-bars__col" title={ `${ d.date }: ${ d.count }` }>
+						<div className="gs-bars__bar" style={ { height: `${ ( d.count / maxDay ) * 100 }%` } } />
+						<span className="gs-bars__label">{ d.date.slice( 5 ) }</span>
+					</div>
+				) ) }
+			</div>
+
+			{ stats.top_patterns.length > 0 && (
+				<>
+					<p className="gs-label">{ __( 'Top triggered patterns (7d)', 'gemsecurity' ) }</p>
+					<table className="gs-table">
+						<thead><tr><th>{ __( 'Pattern', 'gemsecurity' ) }</th><th>{ __( 'Hits', 'gemsecurity' ) }</th></tr></thead>
+						<tbody>
+							{ stats.top_patterns.map( ( p ) => (
+								<tr key={ p.pattern }>
+									<td><code>{ p.pattern }</code></td>
+									<td>{ p.count }</td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
+				</>
+			) }
+		</Card>
+	);
+}
+
 function BotBlocklist( { blockBadBots, onBlockBadBotsChange, blockEmptyUa, onBlockEmptyUaChange, patterns, onPatternsChange } ) {
 	const [ newPattern, setNewPattern ] = useState( '' );
 
@@ -193,6 +248,8 @@ export default function ThreatDefense() {
 					</div>
 				) }
 			</Card>
+
+			<BotStats />
 
 			<BotBlocklist
 				blockBadBots={ form.block_bad_bots }

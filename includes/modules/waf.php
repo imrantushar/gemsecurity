@@ -47,10 +47,25 @@ class Waf {
 		}
 
 		// 2. Bad / malicious bots.
-		if ( Helper::get_setting( 'block_bad_bots', false ) && $this->is_bad_bot() ) {
-			Logger::log( 'waf_bad_bot', sprintf( 'Blocked malicious user-agent from %s.', $ip ), Logger::SEVERITY_WARNING, [ 'user_id' => 0, 'ip_address' => $ip ] );
-			BanList::record_strike( $ip, 'bad bot' );
-			$this->deny( __( 'Access denied.', 'gemsecurity' ) );
+		if ( Helper::get_setting( 'block_bad_bots', false ) ) {
+			$bot = $this->is_bad_bot();
+			if ( $bot ) {
+				Logger::log(
+					'waf_bad_bot',
+					sprintf( 'Blocked malicious user-agent from %s.', $ip ),
+					Logger::SEVERITY_WARNING,
+					[
+						'user_id'    => 0,
+						'ip_address' => $ip,
+						'context'    => [
+							'ua'      => $bot['ua'],
+							'matched' => $bot['matched'],
+						],
+					]
+				);
+				BanList::record_strike( $ip, 'bad bot' );
+				$this->deny( __( 'Access denied.', 'gemsecurity' ) );
+			}
 		}
 
 		// 3. Rate limiting.
@@ -124,12 +139,14 @@ class Waf {
 	private function is_bad_bot() {
 		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		if ( '' === $ua ) {
-			return Helper::get_setting( 'block_empty_ua', true );
+			return Helper::get_setting( 'block_empty_ua', true )
+				? [ 'ua' => '', 'matched' => '(empty user-agent)' ]
+				: false;
 		}
 		$bad = 'sqlmap|nikto|nmap|masscan|zgrab|nuclei|acunetix|netsparker|fimap|dirbuster|gobuster|wpscan|hydra|libwww-perl|python-requests|curl/|wget/';
 		$bad = apply_filters( 'gemsecurity/bad_bot_pattern', $bad );
-		if ( preg_match( '#(' . $bad . ')#i', $ua ) ) {
-			return true;
+		if ( preg_match( '#(' . $bad . ')#i', $ua, $m ) ) {
+			return [ 'ua' => $ua, 'matched' => '(built-in: ' . $m[1] . ')' ];
 		}
 		foreach ( (array) Helper::get_setting( 'bot_blocklist', [] ) as $entry ) {
 			$entry = (string) $entry;
@@ -139,10 +156,10 @@ class Waf {
 			if ( false !== strpos( $entry, '*' ) ) {
 				$regex = '#^' . str_replace( '\*', '.*', preg_quote( $entry, '#' ) ) . '$#i';
 				if ( preg_match( $regex, $ua ) ) {
-					return true;
+					return [ 'ua' => $ua, 'matched' => $entry ];
 				}
 			} elseif ( false !== stripos( $ua, $entry ) ) {
-				return true;
+				return [ 'ua' => $ua, 'matched' => $entry ];
 			}
 		}
 		return false;
