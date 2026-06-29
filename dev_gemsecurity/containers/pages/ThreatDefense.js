@@ -82,49 +82,66 @@ function BannedIps() {
 	);
 }
 
-function BotBlocklist( { patterns, onChange } ) {
+function BotBlocklist( { blockBadBots, onBlockBadBotsChange, blockEmptyUa, onBlockEmptyUaChange, patterns, onPatternsChange } ) {
 	const [ newPattern, setNewPattern ] = useState( '' );
 
 	const add = () => {
 		const trimmed = newPattern.trim();
 		if ( ! trimmed ) { return; }
-		onChange( [ ...( patterns || [] ), trimmed ] );
+		onPatternsChange( [ ...( patterns || [] ), trimmed ] );
 		setNewPattern( '' );
 	};
 
 	const remove = ( entry ) => {
-		onChange( ( patterns || [] ).filter( ( p ) => p !== entry ) );
+		onPatternsChange( ( patterns || [] ).filter( ( p ) => p !== entry ) );
 	};
 
 	const list = patterns || [];
 
 	return (
-		<Card title={ __( 'Custom bot / scanner blocklist', 'gemsecurity' ) } description={ __( 'Additional user-agent patterns to block (case-insensitive). Use * as a wildcard — e.g. bot* blocks any UA starting with "bot", *crawler* blocks any UA containing "crawler". No wildcard = substring match anywhere in the UA.', 'gemsecurity' ) }>
-			<div className="gs-addrow">
-				<TextInput
-					placeholder={ __( 'e.g. *crawler* or badbot*', 'gemsecurity' ) }
-					value={ newPattern }
-					onChange={ ( e ) => setNewPattern( e.target.value ) }
-					onKeyDown={ ( e ) => { if ( e.key === 'Enter' ) { add(); } } }
-				/>
-				<Button onClick={ add }>{ __( 'Add pattern', 'gemsecurity' ) }</Button>
-			</div>
-			{ list.length === 0 ? (
-				<EmptyState title={ __( 'No custom patterns', 'gemsecurity' ) } description={ __( 'Requests matching these substrings will be blocked with a 403.', 'gemsecurity' ) } />
-			) : (
-				<table className="gs-table">
-					<thead><tr>
-						<th>{ __( 'Pattern (* = wildcard)', 'gemsecurity' ) }</th><th></th>
-					</tr></thead>
-					<tbody>
-						{ list.map( ( entry ) => (
-							<tr key={ entry }>
-								<td><code>{ entry }</code></td>
-								<td><Button variant="secondary" onClick={ () => remove( entry ) }>{ __( 'Remove', 'gemsecurity' ) }</Button></td>
-							</tr>
-						) ) }
-					</tbody>
-				</table>
+		<Card title={ __( 'Block malicious bots & scanners', 'gemsecurity' ) } description={ __( 'Blocks known-bad user agents (sqlmap, nikto, nuclei…) plus your custom patterns. Use * as a wildcard — e.g. bot* blocks any UA starting with "bot", *crawler* blocks any UA containing "crawler". No wildcard = substring match anywhere in the UA.', 'gemsecurity' ) }>
+			<Toggle
+				label={ __( 'Enable bot & scanner blocking', 'gemsecurity' ) }
+				checked={ blockBadBots }
+				onChange={ onBlockBadBotsChange }
+			/>
+			{ blockBadBots && (
+				<>
+					<div className="gs-toggle-list">
+						<Toggle
+							label={ __( 'Always block empty / missing user agents', 'gemsecurity' ) }
+							description={ __( 'Block requests that send no User-Agent header (almost always bots or scanners).', 'gemsecurity' ) }
+							checked={ blockEmptyUa ?? true }
+							onChange={ onBlockEmptyUaChange }
+						/>
+					</div>
+					<div className="gs-addrow">
+						<TextInput
+							placeholder={ __( 'e.g. *crawler* or badbot*', 'gemsecurity' ) }
+							value={ newPattern }
+							onChange={ ( e ) => setNewPattern( e.target.value ) }
+							onKeyDown={ ( e ) => { if ( e.key === 'Enter' ) { add(); } } }
+						/>
+						<Button onClick={ add }>{ __( 'Add pattern', 'gemsecurity' ) }</Button>
+					</div>
+					{ list.length === 0 ? (
+						<EmptyState title={ __( 'No custom patterns', 'gemsecurity' ) } description={ __( 'Add a pattern above to block additional user agents.', 'gemsecurity' ) } />
+					) : (
+						<table className="gs-table">
+							<thead><tr>
+								<th>{ __( 'Pattern (* = wildcard)', 'gemsecurity' ) }</th><th></th>
+							</tr></thead>
+							<tbody>
+								{ list.map( ( entry ) => (
+									<tr key={ entry }>
+										<td><code>{ entry }</code></td>
+										<td><Button variant="secondary" onClick={ () => remove( entry ) }>{ __( 'Remove', 'gemsecurity' ) }</Button></td>
+									</tr>
+								) ) }
+							</tbody>
+						</table>
+					) }
+				</>
 			) }
 		</Card>
 	);
@@ -163,12 +180,6 @@ export default function ThreatDefense() {
 						<Field label={ __( 'Per window', 'gemsecurity' ) } suffix={ __( 'minutes', 'gemsecurity' ) }><NumberInput min="1" value={ form.throttle_404_window ?? 5 } onChange={ ( e ) => setField( 'throttle_404_window', Number( e.target.value ) ) } /></Field>
 					</div>
 				) }
-				<Toggle label={ __( 'Block malicious bots & scanners', 'gemsecurity' ) } description={ __( 'Blocks empty and known-bad user agents (sqlmap, nikto, nuclei…).', 'gemsecurity' ) } checked={ form.block_bad_bots } onChange={ ( v ) => setField( 'block_bad_bots', v ) } />
-				{ form.block_bad_bots && (
-					<div className="gs-toggle-list">
-						<Toggle label={ __( 'Always block empty / missing user agents', 'gemsecurity' ) } description={ __( 'Block requests that send no User-Agent header (almost always bots or scanners).', 'gemsecurity' ) } checked={ form.block_empty_ua ?? true } onChange={ ( v ) => setField( 'block_empty_ua', v ) } />
-					</div>
-				) }
 				<Toggle label={ __( 'Extended protection (run firewall before other plugins)', 'gemsecurity' ) } description={ __( 'Installs a must-use plugin so banned IPs and obvious attacks are blocked earlier, before WordPress fully loads.', 'gemsecurity' ) } checked={ form.mu_loader_enabled } onChange={ ( v ) => setField( 'mu_loader_enabled', v ) } />
 			</Card>
 
@@ -183,16 +194,18 @@ export default function ThreatDefense() {
 				) }
 			</Card>
 
+			<BotBlocklist
+				blockBadBots={ form.block_bad_bots }
+				onBlockBadBotsChange={ ( v ) => setField( 'block_bad_bots', v ) }
+				blockEmptyUa={ form.block_empty_ua ?? true }
+				onBlockEmptyUaChange={ ( v ) => setField( 'block_empty_ua', v ) }
+				patterns={ Array.isArray( form.bot_blocklist ) ? form.bot_blocklist : [] }
+				onPatternsChange={ ( v ) => { setField( 'bot_blocklist', v ); save( { bot_blocklist: v } ); } }
+			/>
+
 			<div className="gs-savebar">
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
 			</div>
-
-			{ form.block_bad_bots && (
-				<BotBlocklist
-					patterns={ Array.isArray( form.bot_blocklist ) ? form.bot_blocklist : [] }
-					onChange={ ( v ) => { setField( 'bot_blocklist', v ); save( { bot_blocklist: v } ); } }
-				/>
-			) }
 
 			<BannedIps />
 		</div>
