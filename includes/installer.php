@@ -183,6 +183,8 @@ class Installer {
 			'throttle_404_max'             => 20,
 			'throttle_404_window'          => 5,
 			'block_bad_bots'               => false,
+			'block_empty_ua'               => true,
+			'bot_blocklist'                => [],
 			'mu_loader_enabled'            => false,
 			'autoban_enabled'              => true,
 			'autoban_threshold'            => 10,

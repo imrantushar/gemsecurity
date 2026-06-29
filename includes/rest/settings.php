@@ -117,6 +117,8 @@ class Settings {
 			'throttle_404_max'              => 'int',
 			'throttle_404_window'           => 'int',
 			'block_bad_bots'                => 'bool',
+			'block_empty_ua'                => 'bool',
+			'bot_blocklist'                 => 'array',
 			'mu_loader_enabled'             => 'bool',
 			'autoban_enabled'               => 'bool',
 			'autoban_threshold'             => 'int',
@@ -257,6 +259,17 @@ class Settings {
 
 			case 'float':
 				return max( 0, (float) $value );
+
+			case 'array':
+				$list = is_array( $value ) ? $value : [];
+				$out  = [];
+				foreach ( $list as $item ) {
+					$item = sanitize_text_field( (string) $item );
+					if ( '' !== $item ) {
+						$out[] = $item;
+					}
+				}
+				return array_values( $out );
 
 			case 'textarea':
 				return sanitize_textarea_field( (string) $value );
