@@ -4,6 +4,8 @@
  * Plugin URI:		http://gemsecurity.net
  * Description:		All-in-one WordPress security dashboard — firewall, login protection, malware scanner, and activity logs.
  * Version:			1.0.0
+ * Requires at least:	6.4
+ * Requires PHP:		7.4
  * Author:			GemSecurity
  * Author URI:		http://gemsecurity.net
  * License:			GPL-3.0+
