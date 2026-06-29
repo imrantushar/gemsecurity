@@ -90,6 +90,9 @@ final class GemSecurity {
 		GemSecurity\Modules\Alerts::init();
 		GemSecurity\Modules\Lockdown::init();
 
+		// Backup subsystem (re-homed GemBackup engine).
+		GemSecurity\Backup::init();
+
 		if ( is_admin() ) {
 			GemSecurity\Admin::init();
 		}
@@ -101,10 +104,12 @@ final class GemSecurity {
 
 	public function activate() {
 		GemSecurity\Installer::activate();
+		GemSecurity\Backup::activate();
 	}
 
 	public function deactivate() {
 		GemSecurity\Installer::deactivate();
+		GemSecurity\Backup::deactivate();
 	}
 
 }
