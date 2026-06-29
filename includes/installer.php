@@ -83,6 +83,14 @@ class Installer {
 	 * Default settings. Existing values always win on merge.
 	 */
 	public static function default_settings() {
+		// Memoized per request — the defaults are static and the
+		// gemsecurity/default_settings filter is registered at plugins_loaded,
+		// before any settings read/save runs.
+		static $cache = null;
+		if ( null !== $cache ) {
+			return $cache;
+		}
+
 		$defaults = [
 			// General / firewall.
 			'firewall_enabled'             => true,
@@ -238,7 +246,7 @@ class Installer {
 		 *
 		 * @param array $defaults
 		 */
-		return apply_filters( 'gemsecurity/default_settings', $defaults );
+		return $cache = apply_filters( 'gemsecurity/default_settings', $defaults );
 	}
 
 	private static function set_default_options() {

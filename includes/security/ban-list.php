@@ -18,6 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class BanList {
 
 	const STRIKE_PREFIX = 'gemsec_strike_';
+	const CACHE_GROUP   = 'gemsecurity_bans';
+	const CACHE_TTL     = 300; // 5 min; busted on ban/unban.
 
 	private static $cache = [];
 
@@ -37,6 +39,18 @@ class BanList {
 		if ( isset( self::$cache[ $ip ] ) ) {
 			return self::$cache[ $ip ];
 		}
+
+		// Cross-request cache — a real win with a persistent object cache
+		// (Redis/Memcached), where it avoids the per-request bans query
+		// entirely. Without one, wp_cache is per-request and this collapses
+		// to the in-request static cache above. Busted on ban()/unban().
+		$ckey  = md5( $ip );
+		$found = false;
+		$hit   = wp_cache_get( $ckey, self::CACHE_GROUP, false, $found );
+		if ( $found ) {
+			return self::$cache[ $ip ] = (bool) $hit;
+		}
+
 		global $wpdb;
 		$row = $wpdb->get_var(
 			$wpdb->prepare(
@@ -45,7 +59,9 @@ class BanList {
 				current_time( 'mysql' )
 			)
 		);
-		return self::$cache[ $ip ] = (bool) $row;
+		$banned = (bool) $row;
+		wp_cache_set( $ckey, $banned ? 1 : 0, self::CACHE_GROUP, self::CACHE_TTL );
+		return self::$cache[ $ip ] = $banned;
 	}
 
 	/**
@@ -75,6 +91,7 @@ class BanList {
 			)
 		);
 		unset( self::$cache[ $ip ] );
+		wp_cache_delete( md5( $ip ), self::CACHE_GROUP );
 
 		Logger::log(
 			'ip_banned',
@@ -92,6 +109,7 @@ class BanList {
 		global $wpdb;
 		$wpdb->delete( self::table(), [ 'ip' => $ip ], [ '%s' ] );
 		unset( self::$cache[ $ip ] );
+		wp_cache_delete( md5( $ip ), self::CACHE_GROUP );
 		delete_transient( self::STRIKE_PREFIX . md5( $ip ) );
 	}
 
