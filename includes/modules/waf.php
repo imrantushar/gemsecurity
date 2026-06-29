@@ -124,11 +124,28 @@ class Waf {
 	private function is_bad_bot() {
 		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		if ( '' === $ua ) {
-			return true; // No user-agent — almost always a bot/scanner.
+			return Helper::get_setting( 'block_empty_ua', true );
 		}
 		$bad = 'sqlmap|nikto|nmap|masscan|zgrab|nuclei|acunetix|netsparker|fimap|dirbuster|gobuster|wpscan|hydra|libwww-perl|python-requests|curl/|wget/';
 		$bad = apply_filters( 'gemsecurity/bad_bot_pattern', $bad );
-		return (bool) preg_match( '#(' . $bad . ')#i', $ua );
+		if ( preg_match( '#(' . $bad . ')#i', $ua ) ) {
+			return true;
+		}
+		foreach ( (array) Helper::get_setting( 'bot_blocklist', [] ) as $entry ) {
+			$entry = (string) $entry;
+			if ( '' === $entry ) {
+				continue;
+			}
+			if ( false !== strpos( $entry, '*' ) ) {
+				$regex = '#^' . str_replace( '\*', '.*', preg_quote( $entry, '#' ) ) . '$#i';
+				if ( preg_match( $regex, $ua ) ) {
+					return true;
+				}
+			} elseif ( false !== stripos( $ua, $entry ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

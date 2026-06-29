@@ -9,7 +9,7 @@ const KEYS = [
 	'waf_enabled', 'waf_block_sqli', 'waf_block_xss', 'waf_block_lfi', 'waf_block_rce', 'waf_inspect_body',
 	'rate_limit_enabled', 'rate_limit_max', 'rate_limit_window',
 	'throttle_404_enabled', 'throttle_404_max', 'throttle_404_window',
-	'block_bad_bots', 'mu_loader_enabled',
+	'block_bad_bots', 'block_empty_ua', 'bot_blocklist', 'mu_loader_enabled',
 	'autoban_enabled', 'autoban_threshold', 'autoban_window', 'autoban_duration',
 ];
 
@@ -82,6 +82,54 @@ function BannedIps() {
 	);
 }
 
+function BotBlocklist( { patterns, onChange } ) {
+	const [ newPattern, setNewPattern ] = useState( '' );
+
+	const add = () => {
+		const trimmed = newPattern.trim();
+		if ( ! trimmed ) { return; }
+		onChange( [ ...( patterns || [] ), trimmed ] );
+		setNewPattern( '' );
+	};
+
+	const remove = ( entry ) => {
+		onChange( ( patterns || [] ).filter( ( p ) => p !== entry ) );
+	};
+
+	const list = patterns || [];
+
+	return (
+		<Card title={ __( 'Custom bot / scanner blocklist', 'gemsecurity' ) } description={ __( 'Additional user-agent patterns to block (case-insensitive). Use * as a wildcard — e.g. bot* blocks any UA starting with "bot", *crawler* blocks any UA containing "crawler". No wildcard = substring match anywhere in the UA.', 'gemsecurity' ) }>
+			<div className="gs-addrow">
+				<TextInput
+					placeholder={ __( 'e.g. *crawler* or badbot*', 'gemsecurity' ) }
+					value={ newPattern }
+					onChange={ ( e ) => setNewPattern( e.target.value ) }
+					onKeyDown={ ( e ) => { if ( e.key === 'Enter' ) { add(); } } }
+				/>
+				<Button onClick={ add }>{ __( 'Add pattern', 'gemsecurity' ) }</Button>
+			</div>
+			{ list.length === 0 ? (
+				<EmptyState title={ __( 'No custom patterns', 'gemsecurity' ) } description={ __( 'Requests matching these substrings will be blocked with a 403.', 'gemsecurity' ) } />
+			) : (
+				<table className="gs-table">
+					<thead><tr>
+						<th>{ __( 'Pattern (* = wildcard)', 'gemsecurity' ) }</th><th></th>
+					</tr></thead>
+					<tbody>
+						{ list.map( ( entry ) => (
+							<tr key={ entry }>
+								<td><code>{ entry }</code></td>
+								<td><Button variant="secondary" onClick={ () => remove( entry ) }>{ __( 'Remove', 'gemsecurity' ) }</Button></td>
+							</tr>
+						) ) }
+					</tbody>
+				</table>
+			) }
+		</Card>
+	);
+}
+
 export default function ThreatDefense() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
 
@@ -116,6 +164,11 @@ export default function ThreatDefense() {
 					</div>
 				) }
 				<Toggle label={ __( 'Block malicious bots & scanners', 'gemsecurity' ) } description={ __( 'Blocks empty and known-bad user agents (sqlmap, nikto, nuclei…).', 'gemsecurity' ) } checked={ form.block_bad_bots } onChange={ ( v ) => setField( 'block_bad_bots', v ) } />
+				{ form.block_bad_bots && (
+					<div className="gs-toggle-list">
+						<Toggle label={ __( 'Always block empty / missing user agents', 'gemsecurity' ) } description={ __( 'Block requests that send no User-Agent header (almost always bots or scanners).', 'gemsecurity' ) } checked={ form.block_empty_ua ?? true } onChange={ ( v ) => setField( 'block_empty_ua', v ) } />
+					</div>
+				) }
 				<Toggle label={ __( 'Extended protection (run firewall before other plugins)', 'gemsecurity' ) } description={ __( 'Installs a must-use plugin so banned IPs and obvious attacks are blocked earlier, before WordPress fully loads.', 'gemsecurity' ) } checked={ form.mu_loader_enabled } onChange={ ( v ) => setField( 'mu_loader_enabled', v ) } />
 			</Card>
 
@@ -133,6 +186,13 @@ export default function ThreatDefense() {
 			<div className="gs-savebar">
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
 			</div>
+
+			{ form.block_bad_bots && (
+				<BotBlocklist
+					patterns={ Array.isArray( form.bot_blocklist ) ? form.bot_blocklist : [] }
+					onChange={ ( v ) => { setField( 'bot_blocklist', v ); save( { bot_blocklist: v } ); } }
+				/>
+			) }
 
 			<BannedIps />
 		</div>

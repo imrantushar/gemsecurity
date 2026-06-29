@@ -118,7 +118,19 @@ if ( ! defined( 'ABSPATH' ) ) { return; }
 		// 2) Bad bots.
 		if ( ! empty( \$opt['block_bad_bots'] ) ) {
 			\$ua = isset( \$_SERVER['HTTP_USER_AGENT'] ) ? (string) \$_SERVER['HTTP_USER_AGENT'] : '';
-			if ( '' === \$ua || preg_match( '#(sqlmap|nikto|nmap|masscan|zgrab|nuclei|acunetix|netsparker|fimap|dirbuster|gobuster|wpscan)#i', \$ua ) ) { \$deny(); }
+			if ( '' === \$ua ) {
+				if ( ! isset( \$opt['block_empty_ua'] ) || \$opt['block_empty_ua'] ) { \$deny(); }
+			} else {
+				if ( preg_match( '#(sqlmap|nikto|nmap|masscan|zgrab|nuclei|acunetix|netsparker|fimap|dirbuster|gobuster|wpscan)#i', \$ua ) ) { \$deny(); }
+				foreach ( ( is_array( \$opt['bot_blocklist'] ?? null ) ? \$opt['bot_blocklist'] : array() ) as \$entry ) {
+					\$entry = (string) \$entry;
+					if ( '' === \$entry ) { continue; }
+					if ( false !== strpos( \$entry, '*' ) ) {
+						\$regex = '#^' . str_replace( '\*', '.*', preg_quote( \$entry, '#' ) ) . '$#i';
+						if ( preg_match( \$regex, \$ua ) ) { \$deny(); }
+					} elseif ( false !== stripos( \$ua, \$entry ) ) { \$deny(); }
+				}
+			}
 		}
 
 		// 3) Core malicious-request patterns (URI + query only).
