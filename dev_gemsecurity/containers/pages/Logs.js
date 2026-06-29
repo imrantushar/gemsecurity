@@ -6,10 +6,12 @@ import { useToast } from '@Components/ui/Toast';
 
 const SEVERITY_TONE = { info: 'info', notice: 'info', warning: 'warning', critical: 'danger' };
 
-function AddToBlocklist( { pattern } ) {
+function AddToBlocklist( { pattern, alreadyBlocked } ) {
 	const toast = useToast();
 	const [ added, setAdded ] = useState( false );
 	const [ busy, setBusy ] = useState( false );
+
+	const isBlocked = alreadyBlocked || added;
 
 	const handle = async () => {
 		setBusy( true );
@@ -23,8 +25,13 @@ function AddToBlocklist( { pattern } ) {
 		setBusy( false );
 	};
 
-	if ( added ) {
-		return <Badge tone="success">{ __( 'Blocked', 'gemsecurity' ) }</Badge>;
+	if ( isBlocked ) {
+		return (
+			<span className="gs-block-action">
+				<code className="gs-block-action__pattern">{ pattern }</code>
+				<Badge tone="success">{ __( 'Blocked', 'gemsecurity' ) }</Badge>
+			</span>
+		);
 	}
 	return (
 		<span className="gs-block-action">
@@ -44,6 +51,14 @@ export default function Logs() {
 	const [ severity, setSeverity ] = useState( '' );
 	const [ category, setCategory ] = useState( '' );
 	const [ search, setSearch ] = useState( '' );
+	const [ botBlocklist, setBotBlocklist ] = useState( [] );
+
+	useEffect( () => {
+		api.get( 'settings' ).then( ( r ) => {
+			const list = r.data?.settings?.bot_blocklist;
+			setBotBlocklist( Array.isArray( list ) ? list : [] );
+		} ).catch( () => {} );
+	}, [] );
 
 	const load = useCallback( () => {
 		setLoading( true );
@@ -160,7 +175,10 @@ export default function Logs() {
 											{ ctx?.reason && <span className="gs-muted"> · { ctx.reason }</span> }
 											{ l.event_type === 'seems_bot' && ctx?.suggested_pattern && (
 												<div style={ { marginTop: 6 } }>
-													<AddToBlocklist pattern={ ctx.suggested_pattern } />
+													<AddToBlocklist
+														pattern={ ctx.suggested_pattern }
+														alreadyBlocked={ botBlocklist.includes( ctx.suggested_pattern ) }
+													/>
 												</div>
 											) }
 										</td>
