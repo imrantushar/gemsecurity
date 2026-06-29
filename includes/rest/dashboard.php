@@ -89,6 +89,13 @@ class Dashboard {
 			}
 		}
 
+		// Backup posture: a recent successful backup is part of good security
+		// hygiene now that GemSecurity includes backups.
+		$total += 10;
+		if ( self::has_recent_backup() ) {
+			$score += 10;
+		}
+
 		$percent = (int) round( ( $score / $total ) * 100 );
 		$grade   = 'F';
 		if ( $percent >= 90 ) {
@@ -102,6 +109,27 @@ class Dashboard {
 		}
 
 		return [ 'score' => $percent, 'grade' => $grade ];
+	}
+
+	/**
+	 * Is there a successful backup within the last 7 days?
+	 *
+	 * @return bool
+	 */
+	private static function has_recent_backup() {
+		global $wpdb;
+		if ( empty( $wpdb->gembackup_backups ) ) {
+			return false; // Backup subsystem inactive (e.g. standalone conflict).
+		}
+		$table = $wpdb->gembackup_backups;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE status = 'completed' AND created_at >= %s",
+				gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS )
+			)
+		);
+		return $count > 0;
 	}
 
 	/**

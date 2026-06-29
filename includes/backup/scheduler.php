@@ -120,8 +120,15 @@ class Scheduler {
 	 * @param array  $drivers
 	 * @param array  $opts
 	 */
-	public function enqueue_backup( $backup_type, $drivers = [ 'local' ], $opts = [] ) {
-		if ( ! is_array( $drivers ) ) {
+	public function enqueue_backup( $backup_type = 'full', $drivers = [ 'local' ], $opts = [] ) {
+		// Pre-update backups (the gemsecurity Lockdown integration) fire this
+		// action with no arguments — default to a full backup to local.
+		if ( empty( $backup_type ) ) {
+			$backup_type = 'full';
+		}
+		if ( empty( $drivers ) ) {
+			$drivers = [ 'local' ];
+		} elseif ( ! is_array( $drivers ) ) {
 			$drivers = [ $drivers ];
 		}
 		Backup_Runner::start( $backup_type, $drivers, $opts );
