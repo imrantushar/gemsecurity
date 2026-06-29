@@ -78,6 +78,13 @@ class Api {
 			'permission_callback' => $perm,
 		] );
 
+		// Add pattern to bot blocklist.
+		register_rest_route( $ns, '/bots/blocklist', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Bots::class, 'add_to_blocklist' ],
+			'permission_callback' => $perm,
+		] );
+
 		// Administrators (whitelist management UI).
 		register_rest_route( $ns, '/admins', [
 			'methods'             => 'GET',

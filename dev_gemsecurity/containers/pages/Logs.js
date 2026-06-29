@@ -1,10 +1,37 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 import api from '@Utils/api';
 import { Card, Badge, Button, Select, TextInput, Loading, EmptyState } from '@Components/ui/Controls';
 import { useToast } from '@Components/ui/Toast';
 
 const SEVERITY_TONE = { info: 'info', notice: 'info', warning: 'warning', critical: 'danger' };
+
+function AddToBlocklist( { pattern } ) {
+	const toast = useToast();
+	const [ added, setAdded ] = useState( false );
+	const [ busy, setBusy ] = useState( false );
+
+	const handle = async () => {
+		setBusy( true );
+		try {
+			await api.post( 'bots/blocklist', { pattern } );
+			setAdded( true );
+			toast( __( 'Pattern added to blocklist.', 'gemsecurity' ), 'success' );
+		} catch {
+			toast( __( 'Could not add pattern.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( false );
+	};
+
+	if ( added ) {
+		return <Badge tone="success">{ __( 'Added', 'gemsecurity' ) }</Badge>;
+	}
+	return (
+		<Button variant="secondary" onClick={ handle } loading={ busy }>
+			{ __( '+ Block', 'gemsecurity' ) } <code style={ { marginLeft: 4, fontSize: 11 } }>{ pattern }</code>
+		</Button>
+	);
+}
 
 export default function Logs() {
 	const toast = useToast();
@@ -126,12 +153,18 @@ export default function Logs() {
 										<td><code>{ l.event_type }</code></td>
 										<td className="gs-table__msg">{ l.message }
 											{ ctx?.matched && <span className="gs-muted"> · { ctx.matched }</span> }
+											{ ctx?.reason && <span className="gs-muted"> · { ctx.reason }</span> }
 										</td>
 										<td className="gs-table__msg">
-											{ l.event_type === 'waf_bad_bot' && ctx?.ua
+											{ ( l.event_type === 'waf_bad_bot' || l.event_type === 'seems_bot' ) && ctx?.ua
 												? <code title={ ctx.ua }>{ ctx.ua.length > 40 ? ctx.ua.slice( 0, 40 ) + '…' : ctx.ua }</code>
 												: ( l.user_display || '—' )
 											}
+											{ l.event_type === 'seems_bot' && ctx?.suggested_pattern && (
+												<div style={ { marginTop: 4 } }>
+													<AddToBlocklist pattern={ ctx.suggested_pattern } />
+												</div>
+											) }
 										</td>
 										<td>{ l.ip_address || '—' }</td>
 										<td className="gs-nowrap">{ l.created_at }</td>

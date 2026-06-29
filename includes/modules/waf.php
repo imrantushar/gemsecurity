@@ -68,6 +68,29 @@ class Waf {
 			}
 		}
 
+		// 2b. Suspicious (not blocked) — log once per UA/IP per hour for admin review.
+		$suspicious = $this->is_suspicious_bot();
+		if ( $suspicious ) {
+			$throttle_key = 'gemsec_sbot_' . md5( $ip . $suspicious['ua'] );
+			if ( ! get_transient( $throttle_key ) ) {
+				set_transient( $throttle_key, 1, HOUR_IN_SECONDS );
+				Logger::log(
+					'seems_bot',
+					sprintf( 'Suspicious user-agent from %s.', $ip ),
+					Logger::SEVERITY_NOTICE,
+					[
+						'user_id'    => 0,
+						'ip_address' => $ip,
+						'context'    => [
+							'ua'               => $suspicious['ua'],
+							'reason'           => $suspicious['reason'],
+							'suggested_pattern' => $suspicious['suggested_pattern'],
+						],
+					]
+				);
+			}
+		}
+
 		// 3. Rate limiting.
 		if ( Helper::get_setting( 'rate_limit_enabled', false ) && $this->rate_limited( $ip ) ) {
 			Logger::log( 'waf_rate_limited', sprintf( 'Rate limit exceeded by %s.', $ip ), Logger::SEVERITY_WARNING, [ 'user_id' => 0, 'ip_address' => $ip ] );
@@ -163,6 +186,64 @@ class Waf {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Detect programmatic HTTP clients that aren't in the block list but look non-human.
+	 * Returns false or array{ ua, reason, suggested_pattern }.
+	 */
+	private function is_suspicious_bot() {
+		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		if ( '' === $ua ) {
+			return false; // Empty UA handled by is_bad_bot.
+		}
+
+		// Programmatic HTTP client signatures not already in the block list.
+		$patterns = [
+			'go-http-client'    => 'Go HTTP client',
+			'python-urllib'     => 'Python urllib',
+			'okhttp'            => 'OkHttp (Android/Java)',
+			'apache-httpclient' => 'Apache HttpClient',
+			'java/'             => 'Java HTTP client',
+			'axios/'            => 'Axios (Node.js)',
+			'node-fetch'        => 'node-fetch',
+			'node-superagent'   => 'SuperAgent (Node.js)',
+			'got/'              => 'Got (Node.js)',
+			'undici'            => 'Undici (Node.js)',
+			'faraday'           => 'Faraday (Ruby)',
+			'restsharp'         => 'RestSharp (.NET)',
+			'aiohttp'           => 'aiohttp (Python)',
+			'httpx/'            => 'HTTPX (Python)',
+			'mechanize'         => 'Mechanize',
+		];
+
+		foreach ( $patterns as $needle => $label ) {
+			if ( false !== stripos( $ua, $needle ) ) {
+				return [
+					'ua'               => $ua,
+					'reason'           => $label,
+					'suggested_pattern' => $this->suggest_pattern( $ua ),
+				];
+			}
+		}
+
+		// Bare "Mozilla/5.0" with no browser/OS detail — minimal spoofing attempt.
+		if ( preg_match( '/^Mozilla\/5\.0\s*$/', $ua ) ) {
+			return [
+				'ua'               => $ua,
+				'reason'           => 'Bare Mozilla/5.0 (no browser/OS info)',
+				'suggested_pattern' => 'Mozilla/5.0',
+			];
+		}
+
+		return false;
+	}
+
+	private function suggest_pattern( $ua ) {
+		if ( preg_match( '/^([A-Za-z][A-Za-z0-9._-]+)\//i', $ua, $m ) ) {
+			return '*' . strtolower( $m[1] ) . '*';
+		}
+		return '*' . strtolower( substr( trim( $ua ), 0, 30 ) ) . '*';
 	}
 
 	/**

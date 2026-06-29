@@ -84,4 +84,37 @@ class Bots {
 			'top_uas'      => $top_uas,
 		] );
 	}
+
+	/**
+	 * POST /bots/blocklist
+	 *
+	 * Atomically appends a pattern to bot_blocklist without overwriting other settings.
+	 *
+	 * @param \WP_REST_Request $request
+	 */
+	public static function add_to_blocklist( $request ) {
+		$pattern = sanitize_text_field( (string) $request->get_param( 'pattern' ) );
+		if ( '' === $pattern ) {
+			return new \WP_Error( 'missing_pattern', __( 'Pattern is required.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+
+		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		if ( ! is_array( $settings ) ) {
+			$settings = [];
+		}
+		$list = isset( $settings['bot_blocklist'] ) && is_array( $settings['bot_blocklist'] )
+			? $settings['bot_blocklist']
+			: [];
+
+		if ( ! in_array( $pattern, $list, true ) ) {
+			$list[]                   = $pattern;
+			$settings['bot_blocklist'] = array_values( $list );
+			update_option( GEMSECURITY_SETTINGS_NAME, $settings );
+		}
+
+		return rest_ensure_response( [
+			'success'      => true,
+			'bot_blocklist' => $list,
+		] );
+	}
 }
