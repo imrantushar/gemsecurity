@@ -103,6 +103,10 @@ class BanList {
 	 * @return bool True if this strike resulted in a ban.
 	 */
 	public static function record_strike( $ip, $reason = '' ) {
+		// Escalating auto-bans (Threat Defense) are a Pro feature.
+		if ( ! Helper::is_pro_active() ) {
+			return false;
+		}
 		if ( ! Helper::get_setting( 'autoban_enabled', true ) || ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 			return false;
 		}

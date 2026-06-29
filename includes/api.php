@@ -27,9 +27,30 @@ class Api {
 		return current_user_can( 'manage_options' );
 	}
 
+	/**
+	 * Capability gate for Pro-only routes: manage_options AND Pro active.
+	 * Returns a 403 with a machine code the UI can detect.
+	 *
+	 * @return bool|\WP_Error
+	 */
+	public static function pro_permission() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return false;
+		}
+		if ( ! Helper::is_pro_active() ) {
+			return new \WP_Error(
+				'gemsecurity_pro_required',
+				__( 'This feature requires GemSecurity Pro.', 'gemsecurity' ),
+				[ 'status' => 403 ]
+			);
+		}
+		return true;
+	}
+
 	public function register_routes() {
-		$ns   = self::NAMESPACE;
-		$perm = [ __CLASS__, 'permission' ];
+		$ns       = self::NAMESPACE;
+		$perm     = [ __CLASS__, 'permission' ];
+		$pro_perm = [ __CLASS__, 'pro_permission' ];
 
 		// Settings.
 		register_rest_route( $ns, '/settings', [
@@ -174,7 +195,8 @@ class Api {
 			'permission_callback' => $perm,
 		] );
 
-		// Banned IPs.
+		// Banned IPs (Threat Defense — Pro). Reading the ledger stays open so
+		// the dashboard count works; mutating bans requires Pro.
 		register_rest_route( $ns, '/bans', [
 			[
 				'methods'             => 'GET',
@@ -184,30 +206,38 @@ class Api {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ Rest\Bans::class, 'add' ],
-				'permission_callback' => $perm,
+				'permission_callback' => $pro_perm,
 			],
 			[
 				'methods'             => 'DELETE',
 				'callback'            => [ Rest\Bans::class, 'remove' ],
-				'permission_callback' => $perm,
+				'permission_callback' => $pro_perm,
 			],
 		] );
 
-		// Geolocation.
+		// Geolocation (Pro).
 		register_rest_route( $ns, '/geo/test', [
 			'methods'             => 'GET',
 			'callback'            => [ Rest\Geolocation::class, 'test' ],
-			'permission_callback' => $perm,
+			'permission_callback' => $pro_perm,
 		] );
 		register_rest_route( $ns, '/geo/users', [
 			'methods'             => 'GET',
 			'callback'            => [ Rest\Geolocation::class, 'users' ],
-			'permission_callback' => $perm,
+			'permission_callback' => $pro_perm,
 		] );
 		register_rest_route( $ns, '/geo/user', [
 			'methods'             => 'POST',
 			'callback'            => [ Rest\Geolocation::class, 'set_user' ],
-			'permission_callback' => $perm,
+			'permission_callback' => $pro_perm,
 		] );
+
+		/**
+		 * Let the Pro addon (or any extension) register its own routes under
+		 * the same namespace without re-hooking rest_api_init.
+		 *
+		 * @param string $ns Namespace, e.g. "gemsecurity/v1".
+		 */
+		do_action( 'gemsecurity/register_rest_routes', $ns );
 	}
 }

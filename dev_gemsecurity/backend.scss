@@ -310,4 +310,77 @@ $gs-shadow:    0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
 		&--warning { background: $gs-warning; }
 	}
 	@keyframes gs-slide { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+	/* ---------------- Pro badges & gating ---------------- */
+	.gs-pro-badge {
+		display: inline-block;
+		margin-left: 8px;
+		padding: 1px 7px;
+		font-size: 10px;
+		font-weight: 700;
+		letter-spacing: .5px;
+		line-height: 1.5;
+		border-radius: 9px;
+		background: linear-gradient(135deg, #f59e0b, #d97706);
+		color: #1f2937;
+		vertical-align: middle;
+		text-transform: uppercase;
+	}
+
+	.gs-pro-gate {
+		position: relative;
+		min-height: 360px;
+
+		&__preview {
+			filter: blur(3px) saturate(.7);
+			opacity: .5;
+			pointer-events: none;
+			user-select: none;
+		}
+
+		&__overlay {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			align-items: flex-start;
+			justify-content: center;
+			padding-top: 64px;
+			background: rgba(244, 246, 251, .35);
+		}
+
+		&__card {
+			width: 100%;
+			max-width: 440px;
+			text-align: center;
+			background: $gs-surface;
+			border: 1px solid $gs-border;
+			border-radius: $gs-radius;
+			box-shadow: 0 12px 32px rgba(16, 24, 40, .12);
+			padding: 32px 28px;
+		}
+
+		&__mark {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 52px;
+			height: 52px;
+			margin-bottom: 12px;
+			border-radius: 50%;
+			background: rgba(245, 158, 11, .14);
+			color: $gs-warning;
+		}
+
+		&__title {
+			margin: 12px 0 6px;
+			font-size: 18px;
+			font-weight: 600;
+			color: $gs-text;
+		}
+
+		&__desc {
+			margin: 0 0 20px;
+			color: $gs-muted;
+		}
+	}
 }

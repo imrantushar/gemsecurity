@@ -75,6 +75,9 @@ class Assets {
 			'is_admin'         => is_admin(),
 			'version'          => GEMSECURITY_VERSION,
 			'roles'            => $this->get_editable_roles(),
+			'is_pro'           => Helper::is_pro_active(),
+			'pro_features'     => Helper::get_pro_features(),
+			'upgrade_url'      => Helper::upgrade_url(),
 		];
 	}
 

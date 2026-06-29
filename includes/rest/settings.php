@@ -17,7 +17,7 @@ class Settings {
 	 * Field type map used for sanitisation. Anything not listed is ignored.
 	 */
 	private static function schema() {
-		return [
+		$schema = [
 			// Firewall / hardening.
 			'firewall_enabled'              => 'bool',
 			'ip_blocklist'                  => 'ip_list',
@@ -165,6 +165,15 @@ class Settings {
 			'geo_user_lock_enabled'         => 'bool',
 			'geo_user_lock_action'          => 'enum:verify,block',
 		];
+
+		/**
+		 * Allow addons (Pro) to register their own settings keys + sanitiser
+		 * types. Values use the same type tokens as the core schema
+		 * (bool, int, float, text, textarea, email, *_list, enum:a,b).
+		 *
+		 * @param array $schema
+		 */
+		return apply_filters( 'gemsecurity/settings_schema', $schema );
 	}
 
 	/**
