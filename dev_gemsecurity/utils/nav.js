@@ -17,6 +17,7 @@ export const NAV_ITEMS = [
 	{ key: `${ SLUG }-geolocation`, label: __( 'Geolocation', 'gemsecurity' ), icon: 'globe' },
 	{ key: `${ SLUG }-admin-guard`, label: __( 'Admin Guard', 'gemsecurity' ), icon: 'crown' },
 	{ key: `${ SLUG }-scanner`, label: __( 'Scanner', 'gemsecurity' ), icon: 'radar' },
+	{ key: `${ SLUG }-malware`, label: __( 'Malware Scan', 'gemsecurity' ), icon: 'bug' },
 	{ key: `${ SLUG }-logs`, label: __( 'Logs', 'gemsecurity' ), icon: 'list' },
 	{ key: `${ SLUG }-pro-tools`, label: __( 'Pro Tools', 'gemsecurity' ), icon: 'crown' },
 	{ key: `${ SLUG }-settings`, label: __( 'Settings', 'gemsecurity' ), icon: 'cog' },

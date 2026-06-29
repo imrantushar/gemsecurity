@@ -16,6 +16,7 @@ import Geolocation from '@Containers/pages/Geolocation';
 import AdminGuard from '@Containers/pages/AdminGuard';
 import Scanner from '@Containers/pages/Scanner';
 import Logs from '@Containers/pages/Logs';
+import MalwareScan from '@Containers/pages/MalwareScan';
 import ProTools from '@Containers/pages/ProTools';
 import Settings from '@Containers/pages/Settings';
 
@@ -29,6 +30,7 @@ const PAGES = {
 	'gemsecurity-geolocation': Geolocation,
 	'gemsecurity-admin-guard': AdminGuard,
 	'gemsecurity-scanner': Scanner,
+	'gemsecurity-malware': MalwareScan,
 	'gemsecurity-logs': Logs,
 	'gemsecurity-pro-tools': ProTools,
 	'gemsecurity-settings': Settings,

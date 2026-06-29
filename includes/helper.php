@@ -40,6 +40,10 @@ class Helper {
 				'title' => __( 'Geolocation', 'gemsecurity' ),
 				'desc'  => __( 'Country access control and per-user location lock.', 'gemsecurity' ),
 			],
+			GEMSECURITY_PLUGIN_SLUG . '-malware'     => [
+				'title' => __( 'Malware Scan', 'gemsecurity' ),
+				'desc'  => __( 'Signature malware scan, database injection scan, quarantine/restore and the post-hack recovery toolkit.', 'gemsecurity' ),
+			],
 			GEMSECURITY_PLUGIN_SLUG . '-pro-tools'   => [
 				'title' => __( 'Pro Tools', 'gemsecurity' ),
 				'desc'  => __( 'Hardening pack, file-change baseline, auto-update enforcement and settings import/export.', 'gemsecurity' ),
@@ -139,6 +143,13 @@ class Helper {
 			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
 			'title'       => __( 'Scanner', 'gemsecurity' ),
 			'capability'  => 'manage_options',
+		];
+
+		$menu[ GEMSECURITY_PLUGIN_SLUG . '-malware' ] = [
+			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+			'title'       => __( 'Malware Scan', 'gemsecurity' ),
+			'capability'  => 'manage_options',
+			'is_pro'      => true,
 		];
 
 		$menu[ GEMSECURITY_PLUGIN_SLUG . '-logs' ] = [
