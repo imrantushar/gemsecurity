@@ -49,11 +49,17 @@ class Job_Queue {
 
 	public static function unlock( $job_id, $state = null ) {
 		global $wpdb;
-		$wpdb->update( $wpdb->gembackup_jobs, [
+		// Only overwrite state when an explicit state is given; otherwise leave
+		// the column as the runner persisted it (release the lock only). This
+		// prevents the processor from resetting a job to its pre-tick state.
+		$data = [
 			'locked_until' => null,
-			'state'        => $state !== null ? wp_json_encode( $state ) : null,
 			'updated_at'   => current_time( 'mysql' ),
-		], [ 'id' => $job_id ] );
+		];
+		if ( null !== $state ) {
+			$data['state'] = wp_json_encode( $state );
+		}
+		$wpdb->update( $wpdb->gembackup_jobs, $data, [ 'id' => $job_id ] );
 	}
 
 	public static function complete( $job_id, $state = null ) {

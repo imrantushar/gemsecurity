@@ -30,7 +30,9 @@ class Job_Processor {
 			try {
 				$result = self::process( $job );
 				if ( $result === 'continue' ) {
-					Job_Queue::unlock( (int) $job['id'], $job['state'] ? json_decode( $job['state'], true ) : null );
+					// The runner persists the advanced state itself; just release
+					// the lock (don't write back the pre-tick state).
+					Job_Queue::unlock( (int) $job['id'] );
 					Job_Queue::reschedule( (int) $job['id'], 2 );
 					return; // yield this tick
 				} elseif ( $result === 'done' ) {
