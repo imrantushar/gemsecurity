@@ -17,6 +17,32 @@ class Backup {
 
 	const BACKUP_DIR = 'gemsecurity-backups';
 
+	/** Storage drivers available on the free tier. Everything else is Pro. */
+	const FREE_DRIVERS = [ 'local' ];
+
+	/** Whether Pro is active. */
+	public static function is_pro() {
+		return Helper::is_pro_active();
+	}
+
+	/**
+	 * Are all the given storage drivers allowed on the current tier?
+	 *
+	 * @param array|string $drivers
+	 * @return bool
+	 */
+	public static function drivers_allowed( $drivers ) {
+		if ( self::is_pro() ) {
+			return true;
+		}
+		foreach ( (array) $drivers as $d ) {
+			if ( ! in_array( $d, self::FREE_DRIVERS, true ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/**
 	 * Runtime bootstrap (called from GemSecurity::dispatch_hooks).
 	 */

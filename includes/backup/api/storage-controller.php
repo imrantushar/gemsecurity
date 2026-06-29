@@ -66,6 +66,12 @@ class Storage_Controller extends Rest_Controller {
 
 	public function update_driver( $request ) {
 		$key   = sanitize_key( $request['driver'] );
+
+		// Configuring cloud storage requires Pro; local stays free.
+		if ( ! \GemSecurity\Backup::drivers_allowed( [ $key ] ) ) {
+			return $this->fail( 'gembackup_pro_required', __( 'Cloud storage requires GemSecurity Pro.', 'gembackup' ), 403 );
+		}
+
 		$body  = $request->get_json_params();
 		$settings = get_option( GEMBACKUP_SETTINGS_NAME, [] );
 

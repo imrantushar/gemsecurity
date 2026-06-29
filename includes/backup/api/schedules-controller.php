@@ -70,16 +70,33 @@ class Schedules_Controller extends Rest_Controller {
 		if ( ! is_array( $drivers ) ) {
 			$drivers = [ $drivers ];
 		}
+		$drivers   = array_map( 'sanitize_key', $drivers );
+		$is_pro    = \GemSecurity\Backup::is_pro();
+		$frequency = in_array( ( $params['frequency'] ?? 'daily' ), [ 'daily', 'weekly', 'monthly' ], true ) ? $params['frequency'] : 'daily';
+
+		// Free tier: a single daily schedule to local storage, no encryption.
+		if ( ! $is_pro ) {
+			if ( ! \GemSecurity\Backup::drivers_allowed( $drivers ) ) {
+				return $this->fail( 'gembackup_pro_required', __( 'Cloud storage requires GemSecurity Pro.', 'gembackup' ), 403 );
+			}
+			if ( 'daily' !== $frequency ) {
+				return $this->fail( 'gembackup_pro_required', __( 'Weekly and monthly schedules require GemSecurity Pro.', 'gembackup' ), 403 );
+			}
+			$existing = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->gembackup_schedules}" );
+			if ( $existing >= 1 ) {
+				return $this->fail( 'gembackup_pro_required', __( 'Multiple schedules require GemSecurity Pro.', 'gembackup' ), 403 );
+			}
+		}
 
 		$data = [
 			'schedule_name'   => sanitize_text_field( $params['schedule_name'] ?? 'Schedule' ),
 			'backup_type'     => sanitize_key( $params['backup_type'] ?? 'full' ),
-			'storage_drivers' => wp_json_encode( array_map( 'sanitize_key', $drivers ) ),
-			'frequency'       => in_array( ($params['frequency'] ?? 'daily'), [ 'daily', 'weekly', 'monthly' ], true ) ? $params['frequency'] : 'daily',
+			'storage_drivers' => wp_json_encode( $drivers ),
+			'frequency'       => $frequency,
 			'run_time'        => preg_match( '/^\d{2}:\d{2}$/', $params['run_time'] ?? '02:00' ) ? $params['run_time'] : '02:00',
 			'retention'       => max( 1, (int) ( $params['retention'] ?? 10 ) ),
 			'label'           => isset( $params['label'] ) ? sanitize_text_field( $params['label'] ) : null,
-			'encrypted'       => ! empty( $params['encrypted'] ) ? 1 : 0,
+			'encrypted'       => ( $is_pro && ! empty( $params['encrypted'] ) ) ? 1 : 0,
 			'incremental'     => ! empty( $params['incremental'] ) ? 1 : 0,
 			'status'          => ! empty( $params['active'] ) || ! isset( $params['active'] ) ? 'active' : 'paused',
 			'next_run'        => current_time( 'mysql' ),

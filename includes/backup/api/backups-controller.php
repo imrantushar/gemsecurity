@@ -124,11 +124,16 @@ class Backups_Controller extends Rest_Controller {
 		}
 		$drivers = array_map( 'sanitize_key', $drivers );
 
+		// Free tier: local storage only, no encryption.
+		if ( ! \GemSecurity\Backup::drivers_allowed( $drivers ) ) {
+			return $this->fail( 'gembackup_pro_required', __( 'Cloud storage requires GemSecurity Pro.', 'gembackup' ), 403 );
+		}
+
 		$opts = [
 			'origin'    => 'manual',
 			'label'     => isset( $params['label'] ) ? sanitize_text_field( $params['label'] ) : null,
 			'name'      => isset( $params['name'] ) ? sanitize_text_field( $params['name'] ) : null,
-			'encrypted' => ! empty( $params['encrypted'] ),
+			'encrypted' => \GemSecurity\Backup::is_pro() && ! empty( $params['encrypted'] ),
 		];
 
 		$backup_id = Backup_Runner::start( $type, $drivers, $opts );
@@ -177,7 +182,8 @@ class Backups_Controller extends Rest_Controller {
 		$params = $request->get_json_params();
 		$opts = [
 			'parts'         => $params['parts'] ?? [ 'database', 'files' ],
-			'search'        => $params['search_replace'] ?? [],
+			// Search-replace (migration) is a Pro feature.
+			'search'        => \GemSecurity\Backup::is_pro() ? ( $params['search_replace'] ?? [] ) : [],
 			'skip_snapshot' => ! empty( $params['skip_snapshot'] ),
 		];
 		$result = Restore_Runner::start( $id, $opts );
