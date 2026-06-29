@@ -280,6 +280,13 @@ $gs-shadow:    0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
 	.gs-rs__multi-value__label { color: $gs-primary !important; font-weight: 600; }
 
 	/* ---------------- Misc ---------------- */
+	.gs-block-action {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		&__pattern { font-size: 11px; background: #f0f2f7; padding: 2px 6px; border-radius: 4px; color: $gs-text; }
+		.gs-btn { padding: 3px 10px; font-size: 12px; }
+	}
 	.gs-muted { color: $gs-muted; }
 	.gs-loading { display: flex; align-items: center; gap: 12px; justify-content: center; padding: 60px; color: $gs-muted; }
 	.gs-empty { text-align: center; padding: 40px 20px; color: $gs-muted; h4 { margin: 0 0 6px; color: $gs-text; font-size: 15px; } p { margin: 0; } }

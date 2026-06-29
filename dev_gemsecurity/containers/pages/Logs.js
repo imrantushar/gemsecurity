@@ -24,12 +24,15 @@ function AddToBlocklist( { pattern } ) {
 	};
 
 	if ( added ) {
-		return <Badge tone="success">{ __( 'Added', 'gemsecurity' ) }</Badge>;
+		return <Badge tone="success">{ __( 'Blocked', 'gemsecurity' ) }</Badge>;
 	}
 	return (
-		<Button variant="secondary" onClick={ handle } loading={ busy }>
-			{ __( '+ Block', 'gemsecurity' ) } <code style={ { marginLeft: 4, fontSize: 11 } }>{ pattern }</code>
-		</Button>
+		<span className="gs-block-action">
+			<code className="gs-block-action__pattern">{ pattern }</code>
+			<Button variant="secondary" onClick={ handle } loading={ busy }>
+				{ __( 'Block', 'gemsecurity' ) }
+			</Button>
+		</span>
 	);
 }
 
@@ -151,20 +154,21 @@ export default function Logs() {
 									<tr key={ l.id }>
 										<td><Badge tone={ SEVERITY_TONE[ l.severity ] || 'info' }>{ l.severity }</Badge></td>
 										<td><code>{ l.event_type }</code></td>
-										<td className="gs-table__msg">{ l.message }
+										<td className="gs-table__msg">
+											{ l.message }
 											{ ctx?.matched && <span className="gs-muted"> · { ctx.matched }</span> }
 											{ ctx?.reason && <span className="gs-muted"> · { ctx.reason }</span> }
-										</td>
-										<td className="gs-table__msg">
-											{ ( l.event_type === 'waf_bad_bot' || l.event_type === 'seems_bot' ) && ctx?.ua
-												? <code title={ ctx.ua }>{ ctx.ua.length > 40 ? ctx.ua.slice( 0, 40 ) + '…' : ctx.ua }</code>
-												: ( l.user_display || '—' )
-											}
 											{ l.event_type === 'seems_bot' && ctx?.suggested_pattern && (
-												<div style={ { marginTop: 4 } }>
+												<div style={ { marginTop: 6 } }>
 													<AddToBlocklist pattern={ ctx.suggested_pattern } />
 												</div>
 											) }
+										</td>
+										<td className="gs-table__msg">
+											{ ( l.event_type === 'waf_bad_bot' || l.event_type === 'seems_bot' ) && ctx?.ua
+												? <code title={ ctx.ua }>{ ctx.ua.length > 48 ? ctx.ua.slice( 0, 48 ) + '…' : ctx.ua }</code>
+												: ( l.user_display || '—' )
+											}
 										</td>
 										<td>{ l.ip_address || '—' }</td>
 										<td className="gs-nowrap">{ l.created_at }</td>
