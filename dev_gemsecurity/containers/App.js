@@ -17,6 +17,9 @@ import AdminGuard from '@Containers/pages/AdminGuard';
 import Scanner from '@Containers/pages/Scanner';
 import Logs from '@Containers/pages/Logs';
 import MalwareScan from '@Containers/pages/MalwareScan';
+import Backup from '@Containers/pages/Backup';
+import BackupSchedule from '@Containers/pages/BackupSchedule';
+import BackupStorage from '@Containers/pages/BackupStorage';
 import ProTools from '@Containers/pages/ProTools';
 import Settings from '@Containers/pages/Settings';
 
@@ -32,6 +35,9 @@ const PAGES = {
 	'gemsecurity-scanner': Scanner,
 	'gemsecurity-malware': MalwareScan,
 	'gemsecurity-logs': Logs,
+	'gemsecurity-backup': Backup,
+	'gemsecurity-backup-schedule': BackupSchedule,
+	'gemsecurity-backup-storage': BackupStorage,
 	'gemsecurity-pro-tools': ProTools,
 	'gemsecurity-settings': Settings,
 };

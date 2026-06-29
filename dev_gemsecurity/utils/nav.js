@@ -19,6 +19,9 @@ export const NAV_ITEMS = [
 	{ key: `${ SLUG }-scanner`, label: __( 'Scanner', 'gemsecurity' ), icon: 'radar' },
 	{ key: `${ SLUG }-malware`, label: __( 'Malware Scan', 'gemsecurity' ), icon: 'bug' },
 	{ key: `${ SLUG }-logs`, label: __( 'Logs', 'gemsecurity' ), icon: 'list' },
+	{ key: `${ SLUG }-backup`, label: __( 'Backup', 'gemsecurity' ), icon: 'refresh' },
+	{ key: `${ SLUG }-backup-schedule`, label: __( 'Backup Schedule', 'gemsecurity' ), icon: 'clock' },
+	{ key: `${ SLUG }-backup-storage`, label: __( 'Backup Storage', 'gemsecurity' ), icon: 'link' },
 	{ key: `${ SLUG }-pro-tools`, label: __( 'Pro Tools', 'gemsecurity' ), icon: 'crown' },
 	{ key: `${ SLUG }-settings`, label: __( 'Settings', 'gemsecurity' ), icon: 'cog' },
 ];
