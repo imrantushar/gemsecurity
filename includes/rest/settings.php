@@ -17,7 +17,7 @@ class Settings {
 	 * Field type map used for sanitisation. Anything not listed is ignored.
 	 */
 	private static function schema() {
-		return [
+		$schema = [
 			// Firewall / hardening.
 			'firewall_enabled'              => 'bool',
 			'ip_blocklist'                  => 'ip_list',
@@ -165,6 +165,15 @@ class Settings {
 			'geo_user_lock_enabled'         => 'bool',
 			'geo_user_lock_action'          => 'enum:verify,block',
 		];
+
+		/**
+		 * Allow addons (Pro) to register their own settings keys + sanitiser
+		 * types. Values use the same type tokens as the core schema
+		 * (bool, int, float, text, textarea, email, *_list, enum:a,b).
+		 *
+		 * @param array $schema
+		 */
+		return apply_filters( 'gemsecurity/settings_schema', $schema );
 	}
 
 	/**
@@ -223,67 +232,6 @@ class Settings {
 			}
 		}
 
-		update_option( GEMSECURITY_SETTINGS_NAME, $merged );
-
-		return rest_ensure_response( [
-			'success'  => true,
-			'settings' => $merged,
-		] );
-	}
-
-	/**
-	 * GET /settings/export
-	 */
-	public static function export() {
-		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
-		if ( ! is_array( $settings ) ) {
-			$settings = [];
-		}
-		$settings = array_merge( Installer::default_settings(), $settings );
-
-		$payload = [
-			'plugin_version' => GEMSECURITY_VERSION,
-			'exported_at'    => gmdate( 'c' ),
-			'settings'       => $settings,
-		];
-
-		$response = rest_ensure_response( $payload );
-		$response->header( 'Content-Disposition', 'attachment; filename="gemsecurity-settings-' . gmdate( 'Y-m-d' ) . '.json"' );
-		return $response;
-	}
-
-	/**
-	 * POST /settings/import
-	 *
-	 * @param \WP_REST_Request $request
-	 */
-	public static function import( $request ) {
-		$body = $request->get_json_params();
-
-		if ( empty( $body['settings'] ) || ! is_array( $body['settings'] ) ) {
-			return new \WP_Error( 'invalid_structure', __( 'Import file must contain a "settings" object.', 'gemsecurity' ), [ 'status' => 400 ] );
-		}
-
-		if ( ! empty( $body['plugin_version'] ) && version_compare( $body['plugin_version'], GEMSECURITY_VERSION, '>' ) ) {
-			return new \WP_Error(
-				'version_mismatch',
-				sprintf(
-					/* translators: 1: file version, 2: installed version */
-					__( 'This settings file was exported from plugin version %1$s, but this site runs %2$s. Please upgrade the plugin before importing.', 'gemsecurity' ),
-					sanitize_text_field( $body['plugin_version'] ),
-					GEMSECURITY_VERSION
-				),
-				[ 'status' => 422 ]
-			);
-		}
-
-		$current = get_option( GEMSECURITY_SETTINGS_NAME, [] );
-		if ( ! is_array( $current ) ) {
-			$current = [];
-		}
-		$current = array_merge( Installer::default_settings(), $current );
-
-		$merged = array_merge( $current, self::sanitize_all( $body['settings'] ) );
 		update_option( GEMSECURITY_SETTINGS_NAME, $merged );
 
 		return rest_ensure_response( [

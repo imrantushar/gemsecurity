@@ -83,7 +83,15 @@ class Installer {
 	 * Default settings. Existing values always win on merge.
 	 */
 	public static function default_settings() {
-		return [
+		// Memoized per request — the defaults are static and the
+		// gemsecurity/default_settings filter is registered at plugins_loaded,
+		// before any settings read/save runs.
+		static $cache = null;
+		if ( null !== $cache ) {
+			return $cache;
+		}
+
+		$defaults = [
 			// General / firewall.
 			'firewall_enabled'             => true,
 			'ip_blocklist'                 => [],
@@ -231,6 +239,14 @@ class Installer {
 			'geo_user_lock_enabled'        => false,
 			'geo_user_lock_action'         => 'verify',
 		];
+
+		/**
+		 * Allow addons (Pro) to register default values for their own settings
+		 * keys so they merge cleanly on save and read.
+		 *
+		 * @param array $defaults
+		 */
+		return $cache = apply_filters( 'gemsecurity/default_settings', $defaults );
 	}
 
 	private static function set_default_options() {

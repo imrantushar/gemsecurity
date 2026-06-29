@@ -35,10 +35,6 @@ class Assets {
 			);
 		}
 
-		if ( ! did_action( 'wp_enqueue_media' ) ) {
-			wp_enqueue_media();
-		}
-
 		$asset_file = GEMSECURITY_ASSETS_DIR_PATH . sprintf( 'build/backend.%s.asset.php', GEMSECURITY_VERSION );
 		if ( ! file_exists( $asset_file ) ) {
 			return;
@@ -75,6 +71,9 @@ class Assets {
 			'is_admin'         => is_admin(),
 			'version'          => GEMSECURITY_VERSION,
 			'roles'            => $this->get_editable_roles(),
+			'is_pro'           => Helper::is_pro_active(),
+			'pro_features'     => Helper::get_pro_features(),
+			'upgrade_url'      => Helper::upgrade_url(),
 		];
 	}
 
