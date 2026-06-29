@@ -16,6 +16,7 @@ import AdminGuard from '@Containers/pages/AdminGuard';
 import Scanner from '@Containers/pages/Scanner';
 import Logs from '@Containers/pages/Logs';
 import Settings from '@Containers/pages/Settings';
+import Transfer from '@Containers/pages/Transfer';
 
 const PAGES = {
 	gemsecurity: Dashboard,
@@ -29,6 +30,7 @@ const PAGES = {
 	'gemsecurity-scanner': Scanner,
 	'gemsecurity-logs': Logs,
 	'gemsecurity-settings': Settings,
+	'gemsecurity-transfer': Transfer,
 };
 
 const PAGE_KEYS = Object.keys( PAGES );
