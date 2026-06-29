@@ -30,6 +30,10 @@ class Geolocation {
 	private static $passed = false;
 
 	public static function init() {
+		// Geolocation access control is a Pro feature.
+		if ( ! Helper::is_pro_active() ) {
+			return;
+		}
 		if ( ! Helper::get_setting( 'geo_enabled', false ) || Geo::is_bypassed() ) {
 			return;
 		}
