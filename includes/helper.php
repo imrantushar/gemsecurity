@@ -21,6 +21,24 @@ class Helper {
 	}
 
 	/**
+	 * Decode a hex-encoded scanner signature / WAF pattern.
+	 *
+	 * The malware-scanner, file-scanner and WAF rule tables necessarily contain
+	 * the same plain-text markers that real malware does (web-shell names,
+	 * obfuscation chains, attack regexes). Shipped verbatim, those literals make
+	 * the plugin archive itself trip third-party antivirus/heuristic scanners
+	 * (e.g. Google Drive, Slack), so we store them hex-encoded and reassemble
+	 * the patterns here at runtime. This changes nothing about how the scanners
+	 * behave — it only keeps the distributable from self-flagging.
+	 *
+	 * @param string $hex Hex-encoded literal.
+	 * @return string Decoded pattern.
+	 */
+	public static function sig( $hex ) {
+		return (string) hex2bin( $hex );
+	}
+
+	/**
 	 * The full settings array, resolved once per request.
 	 *
 	 * @return array
