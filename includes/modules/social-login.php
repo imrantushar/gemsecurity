@@ -20,6 +20,9 @@ class SocialLogin {
 
 	const STATE_PREFIX = 'gemsec_oauth_state_';
 
+	/** Guards the one-time inline stylesheet on front-end forms. */
+	private static $style_printed = false;
+
 	public static function providers_meta() {
 		return [
 			'google' => [
@@ -66,9 +69,19 @@ class SocialLogin {
 			return;
 		}
 		$self = new self();
+
+		// Default WordPress login form (wp-login.php).
 		add_action( 'login_init', [ $self, 'maybe_dispatch' ], 1 );
 		add_action( 'login_form', [ $self, 'render_buttons' ] );
 		add_action( 'login_enqueue_scripts', [ $self, 'styles' ] );
+
+		// Front-end login forms. These fire on the theme/plugin-rendered sign-in
+		// pages where the core `login_form` action never runs, so the buttons
+		// would otherwise only appear on wp-login.php.
+		add_action( 'storeengine/templates/shortcode/after_login', [ $self, 'render_frontend' ] );
+		add_action( 'academy/templates/shortcode/after_login', [ $self, 'render_frontend' ] );
+		// Core wp_login_form() (and WooCommerce, which nests it) — append below the fields.
+		add_filter( 'login_form_bottom', [ $self, 'append_to_form' ], 10, 1 );
 	}
 
 	/** The single fixed redirect URI registered with each provider. */
@@ -359,37 +372,83 @@ class SocialLogin {
 	/* Login-form UI                                                       */
 	/* ------------------------------------------------------------------ */
 
+	/** wp-login.php — echoed inside the core login form. */
 	public function render_buttons() {
+		echo $this->buttons_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with escaping below.
+	}
+
+	/** Front-end login forms (StoreEngine, Academy) — echoed after the form. */
+	public function render_frontend() {
+		echo $this->buttons_html( true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with escaping below.
+	}
+
+	/** Core wp_login_form() / WooCommerce — appended to the returned markup. */
+	public function append_to_form( $html ) {
+		return $html . $this->buttons_html( true );
+	}
+
+	/**
+	 * Build the provider-button markup. Returns an empty string when no provider
+	 * is fully configured (enabled + client id + secret).
+	 *
+	 * @param bool $frontend When true, prepend the stylesheet once inline (the
+	 *                       `login` style handle only exists on wp-login.php).
+	 */
+	private function buttons_html( $frontend = false ) {
 		$providers = self::enabled_providers();
 		if ( empty( $providers ) ) {
-			return;
+			return '';
 		}
-		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : '';
-		echo '<div class="gemsec-social"><div class="gemsec-social__sep"><span>' . esc_html__( 'or sign in with', 'gemsecurity' ) . '</span></div>';
+
+		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect target.
+		if ( '' === $redirect && $frontend ) {
+			// No explicit target on a front-end form — return to the current page.
+			$redirect = self::current_url();
+		}
+
+		$out = '';
+		if ( $frontend && ! self::$style_printed ) {
+			self::$style_printed = true;
+			$out .= '<style>' . self::css() . '</style>';
+		}
+
+		$out .= '<div class="gemsec-social"><div class="gemsec-social__sep"><span>' . esc_html__( 'or sign in with', 'gemsecurity' ) . '</span></div>';
 		foreach ( $providers as $key => $meta ) {
-			$url = add_query_arg(
+			$url  = add_query_arg(
 				array_filter( [ 'gemsec_oauth' => $key, 'redirect_to' => $redirect ] ),
 				site_url( 'wp-login.php' )
 			);
-			printf(
+			$out .= sprintf(
 				'<a class="gemsec-social__btn" href="%s" style="--gemsec-c:%s"><span>%s</span></a>',
 				esc_url( $url ),
 				esc_attr( $meta['color'] ),
 				esc_html( sprintf( __( 'Continue with %s', 'gemsecurity' ), $meta['label'] ) )
 			);
 		}
-		echo '</div>';
+		$out .= '</div>';
+		return $out;
+	}
+
+	/** Best-effort absolute URL of the current request. */
+	private static function current_url() {
+		$host = isset( $_SERVER['HTTP_HOST'] ) ? wp_unslash( $_SERVER['HTTP_HOST'] ) : wp_parse_url( home_url(), PHP_URL_HOST );
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+		return esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . $host . $uri );
 	}
 
 	public function styles() {
-		$css = '.gemsec-social{margin:16px 0;}.gemsec-social__sep{position:relative;text-align:center;margin:18px 0;color:#777;}'
+		wp_add_inline_style( 'login', self::css() );
+	}
+
+	/** Shared button stylesheet (used on wp-login.php and inlined front-end). */
+	private static function css() {
+		return '.gemsec-social{margin:16px 0;}.gemsec-social__sep{position:relative;text-align:center;margin:18px 0;color:#777;}'
 			. '.gemsec-social__sep:before{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:#dcdcde;}'
 			. '.gemsec-social__sep span{position:relative;background:#fff;padding:0 10px;font-size:12px;}'
 			. '.gemsec-social__btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;'
 			. 'margin:8px 0;padding:10px 14px;border-radius:6px;border:1px solid var(--gemsec-c,#2271b1);color:var(--gemsec-c,#2271b1);'
 			. 'background:#fff;text-decoration:none;font-weight:600;transition:all .15s;}'
 			. '.gemsec-social__btn:hover{background:var(--gemsec-c,#2271b1);color:#fff;}';
-		wp_add_inline_style( 'login', $css );
 	}
 
 	private function bail( $message ) {
