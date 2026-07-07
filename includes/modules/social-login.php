@@ -70,7 +70,10 @@ class SocialLogin {
 		}
 		$self = new self();
 
-		// Default WordPress login form (wp-login.php).
+		// Default WordPress login form (wp-login.php). The buttons are echoed
+		// inside the form via `login_form` (which fires *before* the submit
+		// button) and then relocated directly after the "Log In" button by the
+		// inline script in styles().
 		add_action( 'login_init', [ $self, 'maybe_dispatch' ], 1 );
 		add_action( 'login_form', [ $self, 'render_buttons' ] );
 		add_action( 'login_enqueue_scripts', [ $self, 'styles' ] );
@@ -437,14 +440,34 @@ class SocialLogin {
 	}
 
 	public function styles() {
-		wp_add_inline_style( 'login', self::css() );
+		// Hide the block until the inline script below has moved it into its
+		// final spot (after the "Log In" button). Without this, the `login_form`
+		// action renders it above the submit button first and it visibly jumps,
+		// which breaks the "or sign in with" divider layout. Scoped to the
+		// wp-login page only — the front-end forms don't use this hide rule.
+		wp_add_inline_style( 'login', self::css() . '.gemsec-social{opacity:0;transition:opacity .12s;}' );
+
+		// The core `login_form` action fires before the "Log In" submit button,
+		// so the provider buttons would render above it. Slide the block to sit
+		// directly after the submit button, then reveal it. If JS is unavailable
+		// the block is revealed anyway (graceful degradation).
+		$js = "document.addEventListener('DOMContentLoaded',function(){"
+			. "var s=document.querySelector('.gemsec-social');"
+			. "var f=document.getElementById('loginform');"
+			. "var sub=f?f.querySelector('p.submit'):null;"
+			. "if(s){"
+			. "if(sub){sub.parentNode.insertBefore(s,sub.nextSibling);}"
+			. "s.style.opacity='1';"
+			. "}"
+			. "});";
+		wp_add_inline_script( 'jquery', $js );
 	}
 
 	/** Shared button stylesheet (used on wp-login.php and inlined front-end). */
 	private static function css() {
-		return '.gemsec-social{margin:16px 0;}.gemsec-social__sep{position:relative;text-align:center;margin:18px 0;color:#777;}'
+		return '.gemsec-social{clear:both;margin:24px 0 16px 0;display:block;width:100%;}.gemsec-social__sep{position:relative;text-align:center;margin:18px 0;color:#777;}'
 			. '.gemsec-social__sep:before{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:#dcdcde;}'
-			. '.gemsec-social__sep span{position:relative;background:#fff;padding:0 10px;font-size:12px;}'
+			. '.gemsec-social__sep span{position:relative;background:#fff;padding:0 10px;font-size:12px;display:inline-block;}'
 			. '.gemsec-social__btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;'
 			. 'margin:8px 0;padding:10px 14px;border-radius:6px;border:1px solid var(--gemsec-c,#2271b1);color:var(--gemsec-c,#2271b1);'
 			. 'background:#fff;text-decoration:none;font-weight:600;transition:all .15s;}'
