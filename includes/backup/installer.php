@@ -40,7 +40,17 @@ class Installer {
 		self::schedule_heartbeat();
 	}
 
-	private static function schedule_heartbeat() {
+	public static function schedule_heartbeat() {
+		// wp_schedule_event() calls wp_get_schedules() internally, which fires
+		// the `cron_schedules` filter. maybe_upgrade() runs at plugins_loaded,
+		// so resolving schedules here forces every other plugin's interval
+		// callback (SureCart, Bit Flows, GemBooking, …) to translate its label
+		// before `init`, tripping WP 6.7+'s `_load_textdomain_just_in_time`
+		// notice. Defer to `init` so schedules resolve after translations load.
+		if ( ! did_action( 'init' ) ) {
+			add_action( 'init', [ __CLASS__, 'schedule_heartbeat' ] );
+			return;
+		}
 		if ( ! wp_next_scheduled( 'gembackup_job_tick' ) ) {
 			wp_schedule_event( time() + 60, 'gembackup_minute', 'gembackup_job_tick' );
 		}
