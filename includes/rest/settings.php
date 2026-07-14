@@ -42,6 +42,8 @@ class Settings {
 			'admin_whitelist'               => 'email_list',
 			'rogue_admin_action'            => 'enum:demote,delete',
 			'notify_on_rogue_admin'         => 'bool',
+			'hidden_admin_detection'        => 'bool',
+			'notify_on_hidden_admin'        => 'bool',
 
 			// Scanner.
 			'scanner_auto_scan'             => 'bool',

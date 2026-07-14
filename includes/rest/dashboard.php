@@ -33,6 +33,7 @@ class Dashboard {
 			'critical_7d'       => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE severity = 'critical' AND created_at >= %s", $since_7d ) ),
 			'banned_ips'        => \GemSecurity\Security\BanList::count_active(),
 			'vulnerabilities'   => is_array( $vuln = \GemSecurity\Security\Vulnerability::get_last_result() ) ? (int) $vuln['count'] : 0,
+			'hidden_admins'     => is_array( $ha = \GemSecurity\Modules\HiddenAdmin::get_last_result() ) ? count( $ha['hidden_ids'] ) : 0,
 		];
 
 		// Activity sparkline: events per day for the last 7 days.

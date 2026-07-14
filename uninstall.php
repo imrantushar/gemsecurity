@@ -15,6 +15,8 @@ $options = [
 	'gemsecurity_db_version',
 	'gemsecurity_last_scan',
 	'gemsecurity_vuln_scan',
+	'gemsecurity_hidden_admin_scan',
+	'gemsecurity_hidden_admin_state',
 	// Backup subsystem.
 	'gemsecurity_backup_settings',
 	'gembackup_db_version',

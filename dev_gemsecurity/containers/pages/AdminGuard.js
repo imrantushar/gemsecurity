@@ -1,19 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, Select, TextInput, Button, Loading, Badge } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
 
-const KEYS = [ 'admin_whitelist_enabled', 'admin_whitelist', 'rogue_admin_action', 'notify_on_rogue_admin' ];
+const KEYS = [
+	'admin_whitelist_enabled',
+	'admin_whitelist',
+	'rogue_admin_action',
+	'notify_on_rogue_admin',
+	'hidden_admin_detection',
+	'notify_on_hidden_admin',
+];
 
 export default function AdminGuard() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
 	const [ admins, setAdmins ] = useState( null );
+	const [ audit, setAudit ] = useState( null );
 	const [ newEmail, setNewEmail ] = useState( '' );
+	const [ busyId, setBusyId ] = useState( 0 );
 
 	useEffect( () => {
-		api.get( 'admins' ).then( ( r ) => setAdmins( r.data.admins ) ).catch( () => setAdmins( [] ) );
+		api.get( 'admins' )
+			.then( ( r ) => {
+				setAdmins( r.data.admins );
+				setAudit( r.data.audit );
+			} )
+			.catch( () => setAdmins( [] ) );
 	}, [] );
 
 	const whitelist = ( form.admin_whitelist || [] ).map( ( e ) => e.toLowerCase() );
@@ -34,6 +48,57 @@ export default function AdminGuard() {
 		setNewEmail( '' );
 	};
 
+	// Remove (delete/demote) a hidden, suspicious or unapproved administrator.
+	const removeAdmin = ( admin, action ) => {
+		const verb = action === 'delete' ? __( 'delete', 'gemsecurity' ) : __( 'demote', 'gemsecurity' );
+		// eslint-disable-next-line no-alert
+		if ( ! window.confirm( sprintf(
+			/* translators: 1: action verb, 2: username. */
+			__( 'Are you sure you want to %1$s the administrator "%2$s"? This cannot be undone.', 'gemsecurity' ),
+			verb,
+			admin.login
+		) ) ) {
+			return;
+		}
+		setBusyId( admin.id );
+		api.post( 'admins/remove', { user_id: admin.id, action } )
+			.then( ( r ) => {
+				setAdmins( r.data.admins );
+				setAudit( r.data.audit );
+			} )
+			.catch( ( err ) => {
+				// eslint-disable-next-line no-alert
+				window.alert( err?.response?.data?.message || __( 'Could not remove that administrator.', 'gemsecurity' ) );
+			} )
+			.finally( () => setBusyId( 0 ) );
+	};
+
+	// Reusable Demote / Delete controls for a flagged account.
+	const RemoveActions = ( { admin } ) => (
+		admin.protected ? (
+			<span className="gs-muted">{ __( 'Protected account', 'gemsecurity' ) }</span>
+		) : (
+			<span className="gs-admins__actions">
+				<Button
+					variant="secondary"
+					loading={ busyId === admin.id }
+					disabled={ busyId !== 0 }
+					onClick={ () => removeAdmin( admin, 'demote' ) }
+				>
+					{ __( 'Demote', 'gemsecurity' ) }
+				</Button>
+				<Button
+					variant="danger"
+					loading={ busyId === admin.id }
+					disabled={ busyId !== 0 }
+					onClick={ () => removeAdmin( admin, 'delete' ) }
+				>
+					{ __( 'Delete', 'gemsecurity' ) }
+				</Button>
+			</span>
+		)
+	);
+
 	// Whitelist emails that don't match any current administrator.
 	const adminEmails = ( admins || [] ).map( ( a ) => a.email.toLowerCase() );
 	const extraEmails = whitelist.filter( ( e ) => ! adminEmails.includes( e ) );
@@ -43,8 +108,88 @@ export default function AdminGuard() {
 	const selfLockoutRisk =
 		form.admin_whitelist_enabled && currentAdmin && ! inList( currentAdmin.email );
 
+	const hiddenAdmins = ( admins || [] ).filter( ( a ) => a.hidden );
+	// Suspicious but not already listed as hidden.
+	const suspiciousAdmins = ( admins || [] ).filter( ( a ) => a.suspicious && ! a.hidden );
+	const allClear = audit && hiddenAdmins.length === 0 && suspiciousAdmins.length === 0 && ! audit.mismatch;
+
 	return (
 		<div className="gs-page">
+			{ /* Critical: administrators concealed from the Users screen. */ }
+			{ hiddenAdmins.length > 0 && (
+				<Card className="gs-breach">
+					<div className="gs-alert gs-alert--danger">
+						<Icon name="alert" size={ 20 } />
+						<div>
+							<strong>{ __( 'Hidden administrator detected', 'gemsecurity' ) }</strong>
+							<p>
+								{ audit && sprintf(
+									/* translators: 1: database admin count, 2: count visible in wp-admin. */
+									__( 'Your database contains %1$d administrator account(s) but only %2$d are visible on the WordPress Users screen. An account that is present but hidden from the list is a strong sign the site has been compromised — malicious code is filtering it out so it cannot be removed the normal way.', 'gemsecurity' ),
+									audit.raw_count,
+									audit.visible_count
+								) }
+							</p>
+						</div>
+					</div>
+
+					<ul className="gs-admins gs-admins--hidden">
+						{ hiddenAdmins.map( ( a ) => (
+							<li key={ a.id } className="gs-admins__row gs-admins__row--hidden">
+								<span className="gs-admins__info">
+									<span className="gs-admins__name">
+										{ a.display_name } <span className="gs-muted">({ a.login })</span>
+										<Badge tone="danger">{ __( 'Hidden', 'gemsecurity' ) }</Badge>
+										{ a.protected && <Badge tone="info">{ __( 'Protected', 'gemsecurity' ) }</Badge> }
+									</span>
+									<span className="gs-admins__email">
+										{ a.email } · { sprintf( __( 'ID %d', 'gemsecurity' ), a.id ) } · { sprintf( __( 'registered %s', 'gemsecurity' ), a.registered ) }
+									</span>
+								</span>
+								<RemoveActions admin={ a } />
+							</li>
+						) ) }
+					</ul>
+
+					<p className="gs-breach__hint">
+						{ __( 'After removing the account, run a full malware scan (Malware Scan detects the code that hides admins) and rotate every administrator password — the entry point that created this account is likely still present.', 'gemsecurity' ) }
+					</p>
+				</Card>
+			) }
+
+			{ /* Warning: accounts that look planted even if not proven hidden. */ }
+			{ suspiciousAdmins.length > 0 && (
+				<Card className="gs-breach gs-breach--warn">
+					<div className="gs-alert gs-alert--warning">
+						<Icon name="alert" size={ 20 } />
+						<div>
+							<strong>{ __( 'Suspicious administrator account', 'gemsecurity' ) }</strong>
+							<p>
+								{ __( 'These administrator accounts have hallmarks of an injected back-door (for example a non-routable e-mail address). Review each one — if you do not recognise it, remove it and run a malware scan.', 'gemsecurity' ) }
+							</p>
+						</div>
+					</div>
+
+					<ul className="gs-admins gs-admins--hidden">
+						{ suspiciousAdmins.map( ( a ) => (
+							<li key={ a.id } className="gs-admins__row gs-admins__row--hidden">
+								<span className="gs-admins__info">
+									<span className="gs-admins__name">
+										{ a.display_name } <span className="gs-muted">({ a.login })</span>
+										<Badge tone="warning">{ __( 'Suspicious', 'gemsecurity' ) }</Badge>
+										{ a.protected && <Badge tone="info">{ __( 'Protected', 'gemsecurity' ) }</Badge> }
+									</span>
+									<span className="gs-admins__email">
+										{ a.email }{ a.suspicious_reason ? ` · ${ a.suspicious_reason }` : '' }
+									</span>
+								</span>
+								<RemoveActions admin={ a } />
+							</li>
+						) ) }
+					</ul>
+				</Card>
+			) }
+
 			<Card>
 				<div className="gs-callout">
 					<Icon name="crown" size={ 20 } />
@@ -98,8 +243,37 @@ export default function AdminGuard() {
 			</Card>
 
 			<Card
+				title={ __( 'Hidden administrator detection', 'gemsecurity' ) }
+				description={ __( 'Reconciles the real administrator list in the database against what the Users screen shows, exposing back-door accounts that malware hides with a query filter.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Detect hidden administrators', 'gemsecurity' ) }
+					description={ __( 'Runs on the daily scan, when the Users screen is opened, and whenever this page is loaded.', 'gemsecurity' ) }
+					checked={ form.hidden_admin_detection }
+					onChange={ ( v ) => setField( 'hidden_admin_detection', v ) }
+				/>
+				<Toggle
+					label={ __( 'Email the site owner when a hidden admin is detected', 'gemsecurity' ) }
+					checked={ form.notify_on_hidden_admin }
+					onChange={ ( v ) => setField( 'notify_on_hidden_admin', v ) }
+				/>
+				{ allClear && (
+					<div className="gs-ok">
+						<Icon name="check" size={ 18 } />
+						<span>
+							{ sprintf(
+								/* translators: %d: administrator count. */
+								__( 'All %d administrator account(s) are accounted for — none are hidden or suspicious.', 'gemsecurity' ),
+								audit.raw_count
+							) }
+						</span>
+					</div>
+				) }
+			</Card>
+
+			<Card
 				title={ __( 'Approved administrators', 'gemsecurity' ) }
-				description={ __( 'Check every administrator that should be allowed to keep their role.', 'gemsecurity' ) }
+				description={ __( 'Check every administrator that should be allowed to keep their role. Unapproved accounts you do not recognise can be removed directly.', 'gemsecurity' ) }
 			>
 				{ admins === null ? (
 					<Loading />
@@ -117,15 +291,29 @@ export default function AdminGuard() {
 										<span className="gs-admins__name">
 											{ a.display_name } <span className="gs-muted">({ a.login })</span>
 											{ a.is_current && <Badge tone="info">{ __( 'You', 'gemsecurity' ) }</Badge> }
+											{ a.hidden && <Badge tone="danger">{ __( 'Hidden', 'gemsecurity' ) }</Badge> }
+											{ a.suspicious && ! a.hidden && <Badge tone="warning">{ __( 'Suspicious', 'gemsecurity' ) }</Badge> }
 										</span>
 										<span className="gs-admins__email">{ a.email }</span>
 									</span>
 								</label>
-								{ inList( a.email ) ? (
-									<Badge tone="success">{ __( 'Approved', 'gemsecurity' ) }</Badge>
-								) : (
-									<Badge tone="warning">{ __( 'Not approved', 'gemsecurity' ) }</Badge>
-								) }
+								<span className="gs-admins__trailing">
+									{ inList( a.email ) ? (
+										<Badge tone="success">{ __( 'Approved', 'gemsecurity' ) }</Badge>
+									) : (
+										<Badge tone="warning">{ __( 'Not approved', 'gemsecurity' ) }</Badge>
+									) }
+									{ ! inList( a.email ) && ! a.protected && ! a.hidden && ! a.suspicious && (
+										<Button
+											variant="secondary"
+											loading={ busyId === a.id }
+											disabled={ busyId !== 0 }
+											onClick={ () => removeAdmin( a, 'delete' ) }
+										>
+											{ __( 'Delete', 'gemsecurity' ) }
+										</Button>
+									) }
+								</span>
 							</li>
 						) ) }
 					</ul>

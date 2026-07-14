@@ -38,5 +38,8 @@ class Database {
 		if ( Helper::get_setting( 'vuln_scan_enabled', true ) ) {
 			\GemSecurity\Security\Vulnerability::run_and_store();
 		}
+		if ( Modules\HiddenAdmin::enabled() ) {
+			Modules\HiddenAdmin::scan_and_store();
+		}
 	}
 }

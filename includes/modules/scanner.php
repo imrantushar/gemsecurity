@@ -66,7 +66,7 @@ class Scanner {
 		@set_time_limit( 0 );
 
 		$core_issues = self::scan_core_integrity();
-		$suspicious  = self::scan_suspicious_files();
+		$suspicious  = array_merge( self::scan_admin_concealment(), self::scan_suspicious_files() );
 
 		$issue_count = count( $core_issues ) + count( $suspicious );
 
@@ -162,6 +162,119 @@ class Scanner {
 	/* --------------------------------------------------------------------- */
 	/* Suspicious files                                                       */
 	/* --------------------------------------------------------------------- */
+
+	/* --------------------------------------------------------------------- */
+	/* Hidden-admin concealment code                                          */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Hunt for the code that hides a back-door administrator from the Users
+	 * screen. The classic implant hooks the user query and appends an exclusion
+	 * (often guarded so it only fires inside wp-admin). We look for that hook in
+	 * the highest-signal injection points — mu-plugins, wp-content drop-ins and
+	 * the active theme's functions.php — flagging a file only when the query
+	 * hook co-occurs with a row-exclusion or an admin-context guard, so ordinary
+	 * user-query customisation is not mistaken for malware.
+	 *
+	 * Needle literals are hex-encoded (decoded at runtime) so this file cannot
+	 * self-match an integrity/AV scan.
+	 *
+	 * @return array List of { file, reason, severity }.
+	 */
+	private static function scan_admin_concealment() {
+		$hook       = Helper::sig( '7072655f757365725f7175657279' ); // the user-query filter.
+		$where      = Helper::sig( '71756572795f7768657265' );       // query_where manipulation.
+		$exclusions = [
+			Helper::sig( '494420213d' ),        // ID !=
+			Helper::sig( '4944204e4f5420494e' ), // ID NOT IN
+		];
+		$guards = [
+			Helper::sig( '69735f61646d696e' ), // is_admin
+			Helper::sig( '24706167656e6f77' ), // $pagenow
+			Helper::sig( '75736572732e706870' ), // users.php
+		];
+
+		$findings = [];
+		foreach ( self::concealment_candidate_files() as $rel => $path ) {
+			$contents = @file_get_contents( $path );
+			if ( false === $contents || false === strpos( $contents, $hook ) ) {
+				continue;
+			}
+
+			$has_exclusion = false;
+			foreach ( $exclusions as $needle ) {
+				if ( false !== strpos( $contents, $needle ) ) {
+					$has_exclusion = true;
+					break;
+				}
+			}
+			$has_guard = false;
+			foreach ( $guards as $needle ) {
+				if ( false !== strpos( $contents, $needle ) ) {
+					$has_guard = true;
+					break;
+				}
+			}
+
+			// The query hook alone is legitimate; require it to co-occur with a
+			// row exclusion, or with query_where rewriting under an admin guard.
+			if ( $has_exclusion || ( false !== strpos( $contents, $where ) && $has_guard ) ) {
+				$findings[] = [
+					'file'     => $rel,
+					'reason'   => __( 'Code that filters administrators out of the Users list — the signature of a hidden-admin back-door.', 'gemsecurity' ),
+					'severity' => 'critical',
+				];
+			}
+
+			if ( count( $findings ) >= 50 ) {
+				break;
+			}
+		}
+
+		return $findings;
+	}
+
+	/**
+	 * The files most commonly used to plant a concealment filter, keyed by their
+	 * ABSPATH-relative path.
+	 *
+	 * @return array<string,string> rel => absolute path.
+	 */
+	private static function concealment_candidate_files() {
+		$files = [];
+
+		// wp-content drop-ins (auto-loaded, a favourite hiding spot).
+		foreach ( [ 'db.php', 'object-cache.php', 'advanced-cache.php', 'sunrise.php', 'maintenance.php' ] as $dropin ) {
+			$files[ WP_CONTENT_DIR . '/' . $dropin ] = true;
+		}
+
+		// Active theme (parent + child) functions.php.
+		$files[ get_stylesheet_directory() . '/functions.php' ] = true;
+		$files[ get_template_directory() . '/functions.php' ]   = true;
+
+		// Every PHP file under mu-plugins.
+		$mu = WP_CONTENT_DIR . '/mu-plugins';
+		if ( is_dir( $mu ) ) {
+			try {
+				$it = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $mu, \FilesystemIterator::SKIP_DOTS ) );
+				foreach ( $it as $f ) {
+					if ( $f->isFile() && 'php' === strtolower( $f->getExtension() ) ) {
+						$files[ $f->getPathname() ] = true;
+					}
+				}
+			} catch ( \Exception $e ) {
+				// Unreadable directory — skip.
+			}
+		}
+
+		$out = [];
+		foreach ( array_keys( $files ) as $path ) {
+			if ( is_readable( $path ) ) {
+				$out[ str_replace( ABSPATH, '', $path ) ] = $path;
+			}
+		}
+		return $out;
+	}
 
 	/**
 	 * @return array List of { file, reason, severity }.

@@ -117,6 +117,11 @@ class Installer {
 			'rogue_admin_action'           => 'demote', // delete | demote (applies to promotions of existing users).
 			'notify_on_rogue_admin'        => true,
 
+			// Hidden-administrator detection (reconciles the true admin set
+			// against the filtered wp-admin view to expose concealed back-doors).
+			'hidden_admin_detection'       => true,
+			'notify_on_hidden_admin'       => true,
+
 			// Scanner.
 			'scanner_auto_scan'            => false,
 

@@ -106,10 +106,15 @@ class Api {
 			'permission_callback' => $pro_perm,
 		] );
 
-		// Administrators (whitelist management UI).
+		// Administrators (whitelist management + hidden-admin detection).
 		register_rest_route( $ns, '/admins', [
 			'methods'             => 'GET',
 			'callback'            => [ Rest\Admins::class, 'get' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/admins/remove', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Admins::class, 'remove' ],
 			'permission_callback' => $perm,
 		] );
 

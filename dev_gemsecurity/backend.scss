@@ -218,7 +218,16 @@ $gs-shadow:    0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
 	.gs-alert {
 		display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 9px; margin: 12px 0; font-size: 13px;
 		&--warning { background: #fdf3e3; color: #92500a; border: 1px solid #f5dcae; .gs-icon { color: $gs-warning; } }
+		&--danger { align-items: flex-start; background: #fdeceb; color: #8a1c13; border: 1px solid #f3c6c1; .gs-icon { color: #d63a2b; margin-top: 1px; } p { margin: 4px 0 0; } strong { font-size: 14px; } }
 	}
+	.gs-breach { border: 1px solid #f3c6c1; box-shadow: 0 0 0 3px rgba( 214, 58, 43, .07 ); }
+	.gs-breach--warn { border-color: #f5dcae; box-shadow: 0 0 0 3px rgba( 234, 160, 40, .08 ); }
+	.gs-breach__hint { margin: 12px 0 0; font-size: 12.5px; color: $gs-muted; }
+	.gs-admins--hidden { margin-top: 14px; }
+	.gs-admins__row--hidden { background: #fdf6f5; border-radius: 8px; padding: 11px 12px; border-bottom: 0; margin-bottom: 8px; }
+	.gs-breach--warn .gs-admins__row--hidden { background: #fdf8ee; }
+	.gs-admins__actions { display: flex; gap: 8px; }
+	.gs-admins__trailing { display: flex; align-items: center; gap: 10px; }
 	.gs-admins { list-style: none; margin: 0; padding: 0; }
 	.gs-admins__row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f0f2f7; &:last-child { border-bottom: 0; } }
 	.gs-check { display: flex; align-items: center; gap: 12px; cursor: pointer; input { width: 18px; height: 18px; } }
