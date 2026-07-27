@@ -12,6 +12,7 @@ const KEYS = [
 	'disable_user_rest',
 	'hide_wp_version',
 	'disable_application_passwords',
+	'comments_disabled',
 	// Security headers.
 	'security_headers_enabled',
 	'header_x_frame_options',
@@ -34,6 +35,7 @@ const HARDENING = [
 	{ key: 'xmlrpc_disabled', label: __( 'Disable XML-RPC', 'gemsecurity' ), desc: __( 'Closes a common brute-force and DDoS vector.', 'gemsecurity' ) },
 	{ key: 'hide_wp_version', label: __( 'Hide WordPress version', 'gemsecurity' ), desc: __( 'Removes the generator meta tag and version from feeds.', 'gemsecurity' ) },
 	{ key: 'disable_application_passwords', label: __( 'Disable application passwords', 'gemsecurity' ), desc: __( 'Turns off the REST application-password feature.', 'gemsecurity' ) },
+	{ key: 'comments_disabled', label: __( 'Disable comments entirely', 'gemsecurity' ), desc: __( 'Closes comments & pingbacks everywhere, hides existing ones, and removes the comment UI. Comments are a common spam / malicious-content vector.', 'gemsecurity' ) },
 ];
 
 export default function Firewall() {

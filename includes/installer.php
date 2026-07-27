@@ -10,6 +10,7 @@ class Installer {
 	const CRON_PRUNE_LOGS = 'gemsecurity_prune_logs';
 	const CRON_DAILY_SCAN = 'gemsecurity_daily_scan';
 	const CRON_WEEKLY_DIGEST = 'gemsecurity_weekly_digest';
+	const CRON_POST_UPDATE_SCAN = 'gemsecurity_post_update_scan';
 
 	public static function activate() {
 		self::create_tables();
@@ -101,6 +102,7 @@ class Installer {
 			'disable_user_rest'            => true,
 			'hide_wp_version'              => true,
 			'disable_application_passwords' => false,
+			'comments_disabled'            => false,
 
 			// Login security.
 			'login_attempts_enabled'       => true,
@@ -159,7 +161,9 @@ class Installer {
 			'captcha_on_login'             => true,
 			'captcha_on_register'          => true,
 			'captcha_on_lostpassword'      => false,
+			'captcha_on_comments'          => false,
 			'captcha_v3_threshold'         => 0.5,
+			'comment_honeypot_enabled'     => true,
 
 			// Two-factor.
 			'two_factor_enabled'           => false,
@@ -306,5 +310,6 @@ class Installer {
 		wp_clear_scheduled_hook( self::CRON_PRUNE_LOGS );
 		wp_clear_scheduled_hook( self::CRON_DAILY_SCAN );
 		wp_clear_scheduled_hook( self::CRON_WEEKLY_DIGEST );
+		wp_clear_scheduled_hook( self::CRON_POST_UPDATE_SCAN );
 	}
 }

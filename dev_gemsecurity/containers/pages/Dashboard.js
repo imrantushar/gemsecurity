@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '@Utils/api';
 import { Card, Loading, Badge } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
@@ -62,6 +62,9 @@ export default function Dashboard() {
 	}
 
 	const maxTrend = Math.max( 1, ...data.trend.map( ( t ) => t.count ) );
+	const posture = data.posture || { threats: [], checks: [], summary: { passed: 0, failed: 0, threats: 0 } };
+	const failingChecks = posture.checks.filter( ( c ) => c.status === 'fail' );
+	const allClear = posture.threats.length === 0 && failingChecks.length === 0;
 
 	return (
 		<div className="gs-dashboard">
@@ -70,15 +73,39 @@ export default function Dashboard() {
 					<div className="gs-hero">
 						<ScoreRing score={ data.security_score.score } grade={ data.security_score.grade } />
 						<div className="gs-hero__protections">
-							<h3>{ __( 'Protection status', 'gemsecurity' ) }</h3>
-							<ul className="gs-checklist">
-								{ data.protections.map( ( p ) => (
-									<li key={ p.key } className={ p.enabled ? 'is-on' : 'is-off' }>
-										<Icon name={ p.enabled ? 'check' : 'alert' } size={ 15 } />
-										<span>{ p.label }</span>
-									</li>
-								) ) }
-							</ul>
+							<h3>{ __( 'What needs your attention', 'gemsecurity' ) }</h3>
+							{ allClear ? (
+								<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No active threats and every recommended protection is on. Nicely done.', 'gemsecurity' ) }</p>
+							) : (
+								<ul className="gs-actionlist">
+									{ posture.threats.map( ( t ) => (
+										<li key={ t.key } className="gs-actionlist__item is-threat">
+											<Badge tone={ t.severity === 'critical' ? 'danger' : 'warning' }>{ t.severity }</Badge>
+											<div>
+												<strong>{ t.label }</strong>
+												<span className="gs-actionlist__fix">{ t.fix }</span>
+											</div>
+										</li>
+									) ) }
+									{ failingChecks.map( ( c ) => (
+										<li key={ c.key } className="gs-actionlist__item is-todo">
+											<Icon name="alert" size={ 15 } />
+											<div>
+												<strong>{ c.label }</strong>
+												<span className="gs-actionlist__fix">{ c.fix }</span>
+											</div>
+										</li>
+									) ) }
+								</ul>
+							) }
+							<p className="gs-muted gs-actionlist__foot">
+								{ sprintf(
+									/* translators: 1: active protections, 2: total protections. */
+									__( '%1$d of %2$d protections active', 'gemsecurity' ),
+									posture.summary.passed,
+									posture.summary.passed + posture.summary.failed
+								) }
+							</p>
 						</div>
 					</div>
 				</Card>

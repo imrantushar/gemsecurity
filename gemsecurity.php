@@ -76,6 +76,7 @@ final class GemSecurity {
 		// Security modules run on both front-end and admin requests.
 		GemSecurity\Modules\Waf::init();
 		GemSecurity\Modules\Firewall::init();
+		GemSecurity\Modules\Comments::init();
 		GemSecurity\Modules\LoginSecurity::init();
 		GemSecurity\Modules\AdminGuard::init();
 		GemSecurity\Modules\HiddenAdmin::init();

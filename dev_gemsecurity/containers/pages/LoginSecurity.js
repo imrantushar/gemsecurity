@@ -21,7 +21,9 @@ const KEYS = [
 	'captcha_on_login',
 	'captcha_on_register',
 	'captcha_on_lostpassword',
+	'captcha_on_comments',
 	'captcha_v3_threshold',
+	'comment_honeypot_enabled',
 	// Password policy.
 	'password_policy_enabled',
 	'password_min_length',
@@ -199,9 +201,16 @@ export default function LoginSecurity() {
 							<Toggle label={ __( 'On login form', 'gemsecurity' ) } checked={ form.captcha_on_login } onChange={ ( v ) => setField( 'captcha_on_login', v ) } />
 							<Toggle label={ __( 'On registration form', 'gemsecurity' ) } checked={ form.captcha_on_register } onChange={ ( v ) => setField( 'captcha_on_register', v ) } />
 							<Toggle label={ __( 'On lost-password form', 'gemsecurity' ) } checked={ form.captcha_on_lostpassword } onChange={ ( v ) => setField( 'captcha_on_lostpassword', v ) } />
+							<Toggle label={ __( 'On comment form', 'gemsecurity' ) } checked={ form.captcha_on_comments } onChange={ ( v ) => setField( 'captcha_on_comments', v ) } />
 						</div>
 					</>
 				) }
+				<Toggle
+					label={ __( 'Comment spam honeypot', 'gemsecurity' ) }
+					description={ __( 'Silently blocks bot comments with a hidden decoy field and a too-fast-submit check. Needs no CAPTCHA keys and skips logged-in users.', 'gemsecurity' ) }
+					checked={ form.comment_honeypot_enabled }
+					onChange={ ( v ) => setField( 'comment_honeypot_enabled', v ) }
+				/>
 			</Card>
 
 			<Card

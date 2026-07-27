@@ -27,6 +27,7 @@ class Settings {
 			'disable_user_rest'             => 'bool',
 			'hide_wp_version'               => 'bool',
 			'disable_application_passwords' => 'bool',
+			'comments_disabled'             => 'bool',
 
 			// Login security.
 			'login_attempts_enabled'        => 'bool',
@@ -82,7 +83,9 @@ class Settings {
 			'captcha_on_login'              => 'bool',
 			'captcha_on_register'           => 'bool',
 			'captcha_on_lostpassword'       => 'bool',
+			'captcha_on_comments'           => 'bool',
 			'captcha_v3_threshold'          => 'float',
+			'comment_honeypot_enabled'      => 'bool',
 
 			// Two-factor.
 			'two_factor_enabled'            => 'bool',
