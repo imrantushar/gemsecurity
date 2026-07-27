@@ -186,17 +186,12 @@ class Helper {
 			'capability'  => 'manage_options',
 		];
 
+		// Scanner hosts every scan surface in one place: the free integrity /
+		// file-change tools and the Pro malware + recovery toolkit (as tabs).
 		$menu[ GEMSECURITY_PLUGIN_SLUG . '-scanner' ] = [
 			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
 			'title'       => __( 'Scanner', 'gemsecurity' ),
 			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-malware' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Malware Scan', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
 		];
 
 		$menu[ GEMSECURITY_PLUGIN_SLUG . '-logs' ] = [

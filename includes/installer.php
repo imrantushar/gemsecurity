@@ -124,6 +124,10 @@ class Installer {
 
 			// Scanner.
 			'scanner_auto_scan'            => false,
+			'file_watcher_enabled'         => true,
+			'link_scanner_enabled'         => true,
+			'link_blocklist'               => [],
+			'link_allowlist'               => [],
 
 			// Logs / audit.
 			'logs_retention_days'          => 30,

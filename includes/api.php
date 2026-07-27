@@ -118,6 +118,13 @@ class Api {
 			'permission_callback' => $perm,
 		] );
 
+		// Must-Use plugin inventory (exposes headerless auto-loaded droppers).
+		register_rest_route( $ns, '/mu-plugins', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\MuPlugins::class, 'get' ],
+			'permission_callback' => $perm,
+		] );
+
 		// Scanner.
 		register_rest_route( $ns, '/scan', [
 			[
@@ -130,6 +137,20 @@ class Api {
 				'callback'            => [ Rest\Scanner::class, 'run' ],
 				'permission_callback' => $perm,
 			],
+		] );
+
+		// File change watcher — capture a fresh known-good baseline.
+		register_rest_route( $ns, '/scan/baseline', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Scanner::class, 'reset_baseline' ],
+			'permission_callback' => $perm,
+		] );
+
+		// Code & database finder ("grep from the dashboard").
+		register_rest_route( $ns, '/search', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Finder::class, 'search' ],
+			'permission_callback' => $perm,
 		] );
 
 		// Two-factor (current user enrollment).

@@ -47,6 +47,10 @@ class Settings {
 
 			// Scanner.
 			'scanner_auto_scan'             => 'bool',
+			'file_watcher_enabled'          => 'bool',
+			'link_scanner_enabled'          => 'bool',
+			'link_blocklist'                => 'domain_list',
+			'link_allowlist'                => 'domain_list',
 
 			// Logs / audit.
 			'logs_retention_days'           => 'int',
@@ -301,6 +305,18 @@ class Settings {
 					$slug = sanitize_key( trim( (string) $item ) );
 					if ( '' !== $slug ) {
 						$out[] = $slug;
+					}
+				}
+				return array_values( array_unique( $out ) );
+
+			case 'domain_list':
+				$list = self::to_array( $value );
+				$out  = [];
+				foreach ( $list as $item ) {
+					$host = \GemSecurity\Modules\LinkScanner::normalise_host( (string) $item );
+					// Keep only plausible hostnames (a dot and valid characters).
+					if ( '' !== $host && false !== strpos( $host, '.' ) && preg_match( '/^[a-z0-9.\-]+$/', $host ) ) {
+						$out[] = $host;
 					}
 				}
 				return array_values( array_unique( $out ) );

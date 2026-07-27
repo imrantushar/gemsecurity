@@ -16,7 +16,6 @@ import Geolocation from '@Containers/pages/Geolocation';
 import AdminGuard from '@Containers/pages/AdminGuard';
 import Scanner from '@Containers/pages/Scanner';
 import Logs from '@Containers/pages/Logs';
-import MalwareScan from '@Containers/pages/MalwareScan';
 import Backup from '@Containers/pages/Backup';
 import ProTools from '@Containers/pages/ProTools';
 import Settings from '@Containers/pages/Settings';
@@ -31,7 +30,8 @@ const PAGES = {
 	'gemsecurity-geolocation': Geolocation,
 	'gemsecurity-admin-guard': AdminGuard,
 	'gemsecurity-scanner': Scanner,
-	'gemsecurity-malware': MalwareScan,
+	// Legacy alias — the malware scanner is now a tab inside Scanner.
+	'gemsecurity-malware': Scanner,
 	'gemsecurity-logs': Logs,
 	'gemsecurity-backup': Backup,
 	'gemsecurity-pro-tools': ProTools,
