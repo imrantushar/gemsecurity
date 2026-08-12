@@ -197,18 +197,22 @@ html {
 	.gs-content { flex: 1; min-width: 0; }
 
 	.gs-subnav {
-		flex: 0 0 212px; width: 212px;
+		flex: 0 0 240px; width: 240px;
 		position: sticky; top: 24px;
 		background: $gs-surface; border: 1px solid $gs-border;
 		border-radius: $gs-radius; box-shadow: $gs-shadow; padding: 8px;
 		display: flex; flex-direction: column; gap: 2px;
 		&__item {
-			display: flex; align-items: center; gap: 11px;
+			display: flex; align-items: center; gap: 10px;
 			padding: 9px 12px; border-radius: 9px;
 			color: $gs-muted; text-decoration: none; font-weight: 500; font-size: 13.5px;
 			transition: background .15s, color .15s;
 			.gs-icon { opacity: .85; flex-shrink: 0; }
-			span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			// Label sits snug (doesn't grow), ellipsizes only if ever too long,
+			// so the PRO pill stays right beside it instead of stretching away.
+			span { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			// PRO pill: tight, never clipped, never stretched.
+			.gs-pro-badge { flex: 0 0 auto; margin-left: 0; }
 			&:hover { background: $gs-soft; color: $gs-text; }
 			&.is-active { background: $gs-accent-soft; color: $gs-primary; font-weight: 600; .gs-icon { opacity: 1; } }
 		}
@@ -251,7 +255,9 @@ html {
 		display: inline-flex; align-items: center; gap: 7px;
 		padding: 9px 16px; border-radius: 9px; border: 1px solid transparent;
 		font-size: 13px; font-weight: 600; cursor: pointer; line-height: 1;
+		text-decoration: none;
 		transition: background .15s, box-shadow .15s, opacity .15s;
+		&:hover, &:focus { text-decoration: none; }
 		&--primary { background: $gs-primary; color: #fff; &:hover:not(:disabled){ background: $gs-primary-d; } }
 		&--secondary { background: var(--gs-soft); color: $gs-text; border-color: $gs-border; &:hover:not(:disabled){ background: var(--gs-soft-hover); } }
 		&--danger { background: #fdecec; color: $gs-danger; border-color: #f6caca; &:hover:not(:disabled){ background: #fbdcdc; } }
@@ -524,15 +530,17 @@ html {
 	/* ---------------- Pro badges & gating ---------------- */
 	.gs-pro-badge {
 		display: inline-block;
+		flex: 0 0 auto;
 		margin-left: 8px;
-		padding: 1px 7px;
+		padding: 2px 8px;
 		font-size: 10px;
 		font-weight: 700;
 		letter-spacing: .5px;
-		line-height: 1.5;
+		line-height: 1.4;
 		border-radius: 9px;
 		background: linear-gradient(135deg, #f59e0b, #d97706);
-		color: #1f2937;
+		color: #fff;
+		white-space: nowrap;
 		vertical-align: middle;
 		text-transform: uppercase;
 	}
