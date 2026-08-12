@@ -131,93 +131,26 @@ class Helper {
 	}
 
 	/**
-	 * Admin menu definition — filterable.
+	 * Admin menu definition — derived from the module registry so only visible
+	 * modules produce a menu item. Core and Pro modules are always visible (Pro
+	 * as a locked upsell); other modules appear only when active. Shape is kept
+	 * stable (page_slug => [parent_slug,title,capability,is_pro]) for menu.php
+	 * and the localized React payload.
 	 */
 	public static function get_admin_menu_list() {
 		$menu = [];
 
-		$menu[ GEMSECURITY_PLUGIN_SLUG ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Dashboard', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-firewall' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Firewall', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-threats' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Threat Defense', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-login-security' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Login Security', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-two-factor' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Two-Factor', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-social-login' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Social Login', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-geolocation' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Geolocation', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-admin-guard' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Admin Guard', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		// Scanner hosts every scan surface in one place: the free integrity /
-		// file-change tools and the Pro malware + recovery toolkit (as tabs).
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-scanner' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Scanner', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-logs' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Logs', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-backup' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Backup', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-pro-tools' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Pro Tools', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-settings' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Settings', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
+		foreach ( \GemSecurity\Modules\Registry::all() as $id => $module ) {
+			if ( ! \GemSecurity\Modules\Registry::is_visible( $id ) ) {
+				continue;
+			}
+			$menu[ $module['page_slug'] ] = [
+				'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+				'title'       => $module['title'],
+				'capability'  => 'manage_options',
+				'is_pro'      => $module['is_pro'],
+			];
+		}
 
 		return apply_filters( 'gemsecurity/admin_menu_list', $menu );
 	}

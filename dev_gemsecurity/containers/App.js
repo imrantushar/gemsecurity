@@ -1,12 +1,17 @@
 import React, { useEffect } from 'react';
+import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchSettings } from '@Redux/settingsSlice';
-import { useActivePage, NAV_ITEMS, pageUrl, pageFromHref } from '@Utils/nav';
-import { Loading } from '@Components/ui/Controls';
-import { isLocked, proFeatures, ProBadge, ProGate } from '@Components/ui/Pro';
+import { useActivePage, NAV_ITEMS, MODULES, pageUrl } from '@Utils/nav';
+import { Loading, EmptyState, Button } from '@Components/ui/Controls';
+import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/Pro';
+import ErrorBoundary from '@Components/ui/ErrorBoundary';
+import Icon from '@Components/ui/Icon';
+import { useThemeMode } from '@Utils/theme';
 
 import Dashboard from '@Containers/pages/Dashboard';
+import ModulesPage from '@Containers/pages/Modules';
 import Firewall from '@Containers/pages/Firewall';
 import ThreatDefense from '@Containers/pages/ThreatDefense';
 import LoginSecurity from '@Containers/pages/LoginSecurity';
@@ -22,6 +27,7 @@ import Settings from '@Containers/pages/Settings';
 
 const PAGES = {
 	gemsecurity: Dashboard,
+	'gemsecurity-modules': ModulesPage,
 	'gemsecurity-firewall': Firewall,
 	'gemsecurity-threats': ThreatDefense,
 	'gemsecurity-login-security': LoginSecurity,
@@ -38,67 +44,12 @@ const PAGES = {
 	'gemsecurity-settings': Settings,
 };
 
-const PAGE_KEYS = Object.keys( PAGES );
-
-/**
- * Make the native WordPress sidebar (left admin menu) navigate client-side:
- * intercept clicks on our submenu links and route them, and keep the active
- * highlight in sync as the in-app route changes — no page reloads.
- */
-function useWpMenuSync( page ) {
-	const navigate = useNavigate();
-
-	// Intercept native menu clicks once.
-	useEffect( () => {
-		const root = document.getElementById( 'toplevel_page_gemsecurity' );
-		if ( ! root ) {
-			return undefined;
-		}
-		const onClick = ( e ) => {
-			const link = e.target.closest( 'a' );
-			if ( ! link ) {
-				return;
-			}
-			const slug = pageFromHref( link.getAttribute( 'href' ) || '' );
-			if ( slug && PAGE_KEYS.includes( slug ) ) {
-				e.preventDefault();
-				navigate( pageUrl( slug ) );
-			}
-		};
-		root.addEventListener( 'click', onClick );
-		return () => root.removeEventListener( 'click', onClick );
-	}, [ navigate ] );
-
-	// Keep the WP menu highlight in sync with the active route.
-	useEffect( () => {
-		const root = document.getElementById( 'toplevel_page_gemsecurity' );
-		if ( ! root ) {
-			return;
-		}
-		root.querySelectorAll( '.wp-submenu li' ).forEach( ( li ) => {
-			const link = li.querySelector( 'a' );
-			const slug = link ? pageFromHref( link.getAttribute( 'href' ) || '' ) : null;
-			const active = slug === page;
-			li.classList.toggle( 'current', active );
-			if ( link ) {
-				if ( active ) {
-					link.classList.add( 'current' );
-					link.setAttribute( 'aria-current', 'page' );
-				} else {
-					link.classList.remove( 'current' );
-					link.removeAttribute( 'aria-current' );
-				}
-			}
-		} );
-	}, [ page ] );
-}
-
 export default function App() {
 	const dispatch = useDispatch();
+	const navigate = useNavigate();
+	const { theme, toggle } = useThemeMode();
 	const { data, loading } = useSelector( ( s ) => s.settings );
 	const page = useActivePage();
-
-	useWpMenuSync( page );
 
 	useEffect( () => {
 		dispatch( fetchSettings() );
@@ -113,14 +64,36 @@ export default function App() {
 		window.scrollTo?.( 0, 0 );
 	}, [ page ] );
 
-	const PageComponent = PAGES[ page ] || Dashboard;
-	const navItem = NAV_ITEMS.find( ( i ) => i.key === page );
-	const locked = isLocked( page );
-	const feature = proFeatures()[ page ] || {};
+	// The malware scanner is now a tab inside Scanner — resolve the old slug.
+	const resolvedPage = page === 'gemsecurity-malware' ? 'gemsecurity-scanner' : page;
+	const PageComponent = PAGES[ resolvedPage ] || Dashboard;
+	const navItem = NAV_ITEMS.find( ( i ) => i.key === resolvedPage );
+	const locked = isLocked( resolvedPage );
+	const feature = proFeatures()[ resolvedPage ] || {};
+
+	// A module the user has turned off: its page is unreachable. Show a prompt
+	// to re-activate it rather than a broken/empty page.
+	const module = MODULES.find( ( m ) => m.page_slug === resolvedPage );
+	const inactive = module && ! module.visible;
 
 	const renderPage = () => {
 		if ( loading && ! data ) {
 			return <Loading />;
+		}
+		if ( inactive ) {
+			return (
+				<div className="gs-page">
+					<EmptyState
+						title={ __( 'This module is turned off', 'gemsecurity' ) }
+						description={ __( 'Activate it from the Modules page to use this feature.', 'gemsecurity' ) }
+					/>
+					<div style={ { marginTop: 16 } }>
+						<Button onClick={ () => navigate( pageUrl( 'gemsecurity-modules' ) ) }>
+							{ __( 'Go to Modules', 'gemsecurity' ) }
+						</Button>
+					</div>
+				</div>
+			);
 		}
 		if ( locked ) {
 			return (
@@ -133,16 +106,63 @@ export default function App() {
 	};
 
 	return (
-		<div className="gs-app gs-app--nosidebar">
+		<div className="gs-app">
 			<main className="gs-main">
 				<header className="gs-topbar">
-					<h1 className="gs-topbar__title">
-						{ navItem ? navItem.label : 'GemSecurity' }
-						{ locked && <ProBadge /> }
-					</h1>
+					<div className="gs-topbar__inner">
+						<div className="gs-topbar__left">
+							<span className="gs-topbar__logo" aria-hidden="true">
+								<Icon name="shield" size={ 20 } />
+							</span>
+							<h1 className="gs-topbar__title">
+								{ navItem ? navItem.label : 'GemSecurity' }
+								{ locked && <ProBadge /> }
+							</h1>
+						</div>
+						<button
+							type="button"
+							className="gs-topbar__theme"
+							onClick={ toggle }
+							aria-label={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
+							title={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
+						>
+							<Icon name={ theme === 'dark' ? 'sun' : 'moon' } size={ 18 } />
+						</button>
+					</div>
 				</header>
-				<div className="gs-content">
-					{ renderPage() }
+				<div className="gs-shell">
+					<nav className="gs-subnav">
+						{ NAV_ITEMS.map( ( item ) => {
+							const href = pageUrl( item.key );
+							return (
+								<a
+									key={ item.key }
+									href={ href }
+									className={ `gs-subnav__item ${ item.key === resolvedPage ? 'is-active' : '' }` }
+									onClick={ ( e ) => {
+										// Let modifier-clicks (new tab/window) behave normally;
+										// otherwise route client-side. No e.button gate — some
+										// environments don't report button===0 reliably, which
+										// would silently swallow the click.
+										if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+											return;
+										}
+										e.preventDefault();
+										navigate( href );
+									} }
+								>
+									<Icon name={ item.icon } size={ 17 } />
+									<span>{ item.label }</span>
+									{ item.isPro && ! isPro() && <ProBadge /> }
+								</a>
+							);
+						} ) }
+					</nav>
+					<div className="gs-content">
+						<ErrorBoundary key={ resolvedPage }>
+							{ renderPage() }
+						</ErrorBoundary>
+					</div>
 				</div>
 			</main>
 		</div>

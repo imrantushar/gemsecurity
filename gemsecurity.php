@@ -41,7 +41,7 @@ final class GemSecurity {
 
 	public function define_constants() {
 		define( 'GEMSECURITY_VERSION', '1.0.0' );
-		define( 'GEMSECURITY_DB_VERSION', '1.7' );
+		define( 'GEMSECURITY_DB_VERSION', '1.8' );
 		define( 'GEMSECURITY_SETTINGS_NAME', 'gemsecurity_settings' );
 		define( 'GEMSECURITY_PLUGIN_FILE', __FILE__ );
 		define( 'GEMSECURITY_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -69,31 +69,29 @@ final class GemSecurity {
 		add_action( 'update_option_' . GEMSECURITY_SETTINGS_NAME, [ GemSecurity\Helper::class, 'flush_settings_cache' ] );
 		add_action( 'add_option_' . GEMSECURITY_SETTINGS_NAME, [ GemSecurity\Helper::class, 'flush_settings_cache' ] );
 
+		// Keep the in-request module-activation cache fresh when it changes.
+		add_action( 'update_option_' . GemSecurity\Modules\Registry::OPTION, [ GemSecurity\Modules\Registry::class, 'flush_state_cache' ] );
+		add_action( 'add_option_' . GemSecurity\Modules\Registry::OPTION, [ GemSecurity\Modules\Registry::class, 'flush_state_cache' ] );
+
 		GemSecurity\Database::init();
 		GemSecurity\Assets::init();
 		GemSecurity\Api::init();
 
-		// Security modules run on both front-end and admin requests.
-		GemSecurity\Modules\Waf::init();
-		GemSecurity\Modules\Firewall::init();
-		GemSecurity\Modules\Comments::init();
-		GemSecurity\Modules\LoginSecurity::init();
-		GemSecurity\Modules\AdminGuard::init();
-		GemSecurity\Modules\HiddenAdmin::init();
-		GemSecurity\Modules\SecurityHeaders::init();
-		GemSecurity\Modules\Captcha::init();
-		GemSecurity\Modules\TwoFactor::init();
-		GemSecurity\Modules\AuditLog::init();
-		GemSecurity\Modules\SocialLogin::init();
-		GemSecurity\Modules\Geolocation::init();
-		GemSecurity\Modules\PasswordPolicy::init();
-		GemSecurity\Modules\Sessions::init();
-		GemSecurity\Modules\CustomLogin::init();
-		GemSecurity\Modules\Alerts::init();
-		GemSecurity\Modules\Lockdown::init();
+		// Boot only the modules that are active. An inactive module never loads
+		// its classes, so it costs nothing (no menu, no REST, no hooks). Each
+		// booted class still runs its own granular *_enabled checks internally.
+		foreach ( GemSecurity\Modules\Registry::active_modules() as $module ) {
+			foreach ( $module['classes'] as $class ) {
+				if ( is_callable( [ $class, 'init' ] ) ) {
+					$class::init();
+				}
+			}
+		}
 
-		// Backup subsystem (re-homed GemBackup engine).
-		GemSecurity\Backup::init();
+		// Backup subsystem (re-homed GemBackup engine) — gated on its module.
+		if ( GemSecurity\Modules\Registry::is_active( 'backup' ) ) {
+			GemSecurity\Backup::init();
+		}
 
 		if ( is_admin() ) {
 			GemSecurity\Admin::init();

@@ -15,6 +15,9 @@ class Installer {
 	public static function activate() {
 		self::create_tables();
 		self::set_default_options();
+		// Seed the module-activation map from current settings so a fresh install
+		// boots core + recommended modules and an existing site keeps its behavior.
+		\GemSecurity\Modules\Registry::seed_if_missing();
 		self::schedule_events();
 		self::snapshot_admin_whitelist();
 		flush_rewrite_rules();
@@ -36,6 +39,9 @@ class Installer {
 		if ( get_option( 'gemsecurity_db_version' ) !== GEMSECURITY_DB_VERSION ) {
 			self::create_tables();
 			self::set_default_options();
+			// Derive module activation from the existing settings on first
+			// upgrade to the module system — no behavior change for the site.
+			\GemSecurity\Modules\Registry::seed_if_missing();
 			self::schedule_events();
 		}
 	}

@@ -65,15 +65,40 @@ export default function Dashboard() {
 	const posture = data.posture || { threats: [], checks: [], summary: { passed: 0, failed: 0, threats: 0 } };
 	const failingChecks = posture.checks.filter( ( c ) => c.status === 'fail' );
 	const allClear = posture.threats.length === 0 && failingChecks.length === 0;
+	const attentionCount = posture.threats.length + failingChecks.length;
+
+	const score = data.security_score.score;
+	const status =
+		score >= 75
+			? { tone: 'good', label: __( 'Good', 'gemsecurity' ) }
+			: score >= 50
+			? { tone: 'warn', label: __( 'Fair', 'gemsecurity' ) }
+			: { tone: 'bad', label: __( 'Needs attention', 'gemsecurity' ) };
 
 	return (
 		<div className="gs-dashboard">
 			<div className="gs-grid gs-grid--hero">
 				<Card className="gs-card--score">
 					<div className="gs-hero">
-						<ScoreRing score={ data.security_score.score } grade={ data.security_score.grade } />
+						<div className="gs-hero__score">
+							<ScoreRing score={ score } grade={ data.security_score.grade } />
+							<span className={ `gs-hero__status gs-hero__status--${ status.tone }` }>
+								{ status.label }
+							</span>
+							<p className="gs-hero__count">
+								{ sprintf(
+									/* translators: 1: active protections, 2: total protections. */
+									__( '%1$d of %2$d protections active', 'gemsecurity' ),
+									posture.summary.passed,
+									posture.summary.passed + posture.summary.failed
+								) }
+							</p>
+						</div>
 						<div className="gs-hero__protections">
-							<h3>{ __( 'What needs your attention', 'gemsecurity' ) }</h3>
+							<div className="gs-hero__protections-head">
+								<h3>{ __( 'What needs your attention', 'gemsecurity' ) }</h3>
+								{ ! allClear && <Badge tone="danger">{ attentionCount }</Badge> }
+							</div>
 							{ allClear ? (
 								<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No active threats and every recommended protection is on. Nicely done.', 'gemsecurity' ) }</p>
 							) : (
@@ -98,14 +123,6 @@ export default function Dashboard() {
 									) ) }
 								</ul>
 							) }
-							<p className="gs-muted gs-actionlist__foot">
-								{ sprintf(
-									/* translators: 1: active protections, 2: total protections. */
-									__( '%1$d of %2$d protections active', 'gemsecurity' ),
-									posture.summary.passed,
-									posture.summary.passed + posture.summary.failed
-								) }
-							</p>
 						</div>
 					</div>
 				</Card>
