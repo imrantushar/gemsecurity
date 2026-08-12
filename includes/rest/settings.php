@@ -60,6 +60,11 @@ class Settings {
 			'audit_plugins_themes'          => 'bool',
 			'audit_users'                   => 'bool',
 			'audit_settings'                => 'bool',
+			'log_hash_chain_enabled'        => 'bool',
+			'siem_enabled'                  => 'bool',
+			'siem_endpoint'                 => 'text',
+			'siem_syslog'                   => 'bool',
+			'siem_min_severity'             => 'enum:info,notice,warning,critical',
 
 			// Security headers.
 			'security_headers_enabled'      => 'bool',
@@ -74,6 +79,11 @@ class Settings {
 			'header_csp_enabled'            => 'bool',
 			'header_csp_value'              => 'textarea',
 			'header_csp_report_only'        => 'bool',
+			'header_csp_report'             => 'bool',
+			'securitytxt_enabled'           => 'bool',
+			'securitytxt_contact'           => 'text',
+			'securitytxt_expires'           => 'text',
+			'securitytxt_policy'            => 'text',
 
 			// CAPTCHA.
 			'captcha_enabled'               => 'bool',
@@ -86,6 +96,11 @@ class Settings {
 			'captcha_on_comments'           => 'bool',
 			'captcha_v3_threshold'          => 'float',
 			'comment_honeypot_enabled'      => 'bool',
+			'antispam_enabled'              => 'bool',
+			'antispam_min_seconds'          => 'int',
+			'antispam_heuristics'           => 'bool',
+			'antispam_max_links'            => 'int',
+			'antispam_keywords'             => 'array',
 
 			// Two-factor.
 			'two_factor_enabled'            => 'bool',
@@ -109,6 +124,26 @@ class Settings {
 			'social_twitter_client_id'      => 'text',
 			'social_twitter_client_secret'  => 'text',
 
+			// API & access hardening.
+			'rest_rate_limit_enabled'       => 'bool',
+			'rest_rate_limit_max'           => 'int',
+			'rest_rate_limit_window'        => 'int',
+			'app_pw_disabled'               => 'bool',
+			'app_pw_alert_on_create'        => 'bool',
+			'app_pw_max_age_days'           => 'int',
+			'login_errors_generic'          => 'bool',
+
+			// Virtual patching.
+			'virtual_patch_enabled'         => 'bool',
+
+			// Payment-page integrity.
+			'payment_integrity_enabled'     => 'bool',
+			'payment_page_ids'              => 'array',
+
+			// Monitoring.
+			'monitoring_enabled'            => 'bool',
+			'monitor_alert_email'           => 'email',
+
 			// Vulnerability scanner.
 			'vuln_scan_enabled'             => 'bool',
 
@@ -127,12 +162,19 @@ class Settings {
 			'throttle_404_window'           => 'int',
 			'block_bad_bots'                => 'bool',
 			'block_empty_ua'                => 'bool',
+			'block_ai_crawlers'             => 'bool',
+			'verify_search_bots'            => 'bool',
 			'bot_blocklist'                 => 'array',
 			'mu_loader_enabled'             => 'bool',
 			'autoban_enabled'               => 'bool',
 			'autoban_threshold'             => 'int',
 			'autoban_window'                => 'int',
 			'autoban_duration'              => 'int',
+			'anomaly_detection_enabled'     => 'bool',
+			'anomaly_threshold'             => 'int',
+			'credential_stuffing_enabled'   => 'bool',
+			'credential_stuffing_threshold' => 'int',
+			'live_traffic_enabled'          => 'bool',
 
 			// Password policy.
 			'password_policy_enabled'       => 'bool',
@@ -148,6 +190,10 @@ class Settings {
 			// Custom login URL.
 			'custom_login_enabled'          => 'bool',
 			'custom_login_slug'             => 'text',
+			'login_honeypot_enabled'        => 'bool',
+			'trusted_devices_enabled'       => 'bool',
+			'trusted_devices_alert'         => 'bool',
+			'magic_link_enabled'            => 'bool',
 
 			// Alerts + digest.
 			'alerts_enabled'                => 'bool',

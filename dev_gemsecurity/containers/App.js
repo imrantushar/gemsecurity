@@ -14,14 +14,20 @@ import Dashboard from '@Containers/pages/Dashboard';
 import ModulesPage from '@Containers/pages/Modules';
 import Firewall from '@Containers/pages/Firewall';
 import ThreatDefense from '@Containers/pages/ThreatDefense';
+import VirtualPatch from '@Containers/pages/VirtualPatch';
 import LoginSecurity from '@Containers/pages/LoginSecurity';
 import TwoFactor from '@Containers/pages/TwoFactor';
 import SocialLogin from '@Containers/pages/SocialLogin';
 import Geolocation from '@Containers/pages/Geolocation';
 import AdminGuard from '@Containers/pages/AdminGuard';
+import ApiHardening from '@Containers/pages/ApiHardening';
+import AntiSpam from '@Containers/pages/AntiSpam';
 import Scanner from '@Containers/pages/Scanner';
+import PaymentIntegrity from '@Containers/pages/PaymentIntegrity';
+import IncidentResponse from '@Containers/pages/IncidentResponse';
 import Logs from '@Containers/pages/Logs';
 import Backup from '@Containers/pages/Backup';
+import Monitoring from '@Containers/pages/Monitoring';
 import ProTools from '@Containers/pages/ProTools';
 import Settings from '@Containers/pages/Settings';
 
@@ -30,16 +36,22 @@ const PAGES = {
 	'gemsecurity-modules': ModulesPage,
 	'gemsecurity-firewall': Firewall,
 	'gemsecurity-threats': ThreatDefense,
+	'gemsecurity-virtual-patch': VirtualPatch,
 	'gemsecurity-login-security': LoginSecurity,
 	'gemsecurity-two-factor': TwoFactor,
 	'gemsecurity-social-login': SocialLogin,
 	'gemsecurity-geolocation': Geolocation,
 	'gemsecurity-admin-guard': AdminGuard,
+	'gemsecurity-api-hardening': ApiHardening,
+	'gemsecurity-anti-spam': AntiSpam,
 	'gemsecurity-scanner': Scanner,
+	'gemsecurity-payment-integrity': PaymentIntegrity,
+	'gemsecurity-incident-response': IncidentResponse,
 	// Legacy alias — the malware scanner is now a tab inside Scanner.
 	'gemsecurity-malware': Scanner,
 	'gemsecurity-logs': Logs,
 	'gemsecurity-backup': Backup,
+	'gemsecurity-monitoring': Monitoring,
 	'gemsecurity-pro-tools': ProTools,
 	'gemsecurity-settings': Settings,
 };

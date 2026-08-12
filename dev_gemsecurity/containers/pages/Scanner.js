@@ -20,6 +20,73 @@ function initialTab() {
 	}
 }
 
+function SupplyChainReport() {
+	const [ data, setData ] = useState( null );
+	const [ busy, setBusy ] = useState( false );
+	const load = () => {
+		setBusy( true );
+		api.get( 'supply-chain' ).then( ( r ) => setData( r.data ) ).catch( () => setData( { plugins: [], persistence: [] } ) ).finally( () => setBusy( false ) );
+	};
+	useEffect( load, [] );
+
+	const risky = data ? data.plugins.filter( ( p ) => p.status !== 'ok' ) : [];
+
+	return (
+		<>
+			<Card
+				title={ __( 'Supply chain', 'gemsecurity' ) }
+				description={ __( 'Installed plugins cross-checked against the WordPress.org directory — removed (possible takedown), abandoned, or outdated.', 'gemsecurity' ) }
+				actions={ <Button variant="secondary" onClick={ load } loading={ busy }>{ __( 'Re-check', 'gemsecurity' ) }</Button> }
+			>
+				{ ! data ? (
+					<p className="gs-muted">{ __( 'Checking…', 'gemsecurity' ) }</p>
+				) : risky.length === 0 ? (
+					<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'Every installed plugin is current and present in the directory.', 'gemsecurity' ) }</p>
+				) : (
+					<table className="gs-table">
+						<thead><tr><th>{ __( 'Plugin', 'gemsecurity' ) }</th><th>{ __( 'Version', 'gemsecurity' ) }</th><th>{ __( 'Status', 'gemsecurity' ) }</th><th>{ __( 'Note', 'gemsecurity' ) }</th></tr></thead>
+						<tbody>
+							{ risky.map( ( p ) => (
+								<tr key={ p.slug }>
+									<td>{ p.name }</td>
+									<td className="gs-nowrap">{ p.version }</td>
+									<td><Badge tone={ p.status === 'closed' ? 'danger' : p.status === 'abandoned' ? 'warning' : 'info' }>{ p.status }</Badge></td>
+									<td>{ p.note }</td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
+				) }
+			</Card>
+
+			<Card
+				title={ __( 'Persistence checks', 'gemsecurity' ) }
+				description={ __( 'Places attackers hide to survive a cleanup: must-use plugins, drop-ins, obfuscated code and suspicious cron.', 'gemsecurity' ) }
+			>
+				{ ! data ? (
+					<p className="gs-muted">{ __( 'Checking…', 'gemsecurity' ) }</p>
+				) : data.persistence.length === 0 ? (
+					<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No must-use plugins, drop-ins, obfuscated code or suspicious cron found.', 'gemsecurity' ) }</p>
+				) : (
+					<table className="gs-table">
+						<thead><tr><th>{ __( 'Type', 'gemsecurity' ) }</th><th>{ __( 'Path / hook', 'gemsecurity' ) }</th><th>{ __( 'Reason', 'gemsecurity' ) }</th><th>{ __( 'Severity', 'gemsecurity' ) }</th></tr></thead>
+						<tbody>
+							{ data.persistence.map( ( r, i ) => (
+								<tr key={ i }>
+									<td className="gs-nowrap">{ r.type }</td>
+									<td><code>{ r.path }</code></td>
+									<td>{ r.reason }</td>
+									<td><Badge tone={ r.severity === 'critical' ? 'danger' : r.severity === 'warning' ? 'warning' : 'info' }>{ r.severity }</Badge></td>
+								</tr>
+							) ) }
+						</tbody>
+					</table>
+				) }
+			</Card>
+		</>
+	);
+}
+
 export default function Scanner() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( [ 'scanner_auto_scan', 'vuln_scan_enabled', 'file_watcher_enabled', 'link_scanner_enabled', 'link_blocklist', 'link_allowlist' ] );
 	const toast = useToast();
@@ -487,6 +554,8 @@ export default function Scanner() {
 							) }
 						</Card>
 					) }
+
+					<SupplyChainReport />
 				</>
 			) }
 		</div>

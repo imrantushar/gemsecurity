@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { __ } from '@wordpress/i18n';
+import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Toggle, Field, ListInput, Select, TextInput, NumberInput, Button } from '@Components/ui/Controls';
+import { Card, Toggle, Field, ListInput, Select, TextInput, NumberInput, Button, Badge, EmptyState } from '@Components/ui/Controls';
 
 const KEYS = [
 	'firewall_enabled',
@@ -26,7 +27,88 @@ const KEYS = [
 	'header_csp_enabled',
 	'header_csp_value',
 	'header_csp_report_only',
+	'header_csp_report',
+	// Bot control.
+	'block_ai_crawlers',
+	'verify_search_bots',
+	// security.txt.
+	'securitytxt_enabled',
+	'securitytxt_contact',
+	'securitytxt_expires',
+	'securitytxt_policy',
 ];
+
+/** Read-only file-permission audit. */
+function FilePermissions() {
+	const [ rows, setRows ] = useState( null );
+	useEffect( () => {
+		api.get( 'file-permissions' ).then( ( r ) => setRows( r.data.items ) ).catch( () => setRows( [] ) );
+	}, [] );
+	return (
+		<Card
+			title={ __( 'File permissions', 'gemsecurity' ) }
+			description={ __( 'Over-permissive files let a compromised process rewrite your site. World-writable paths are flagged.', 'gemsecurity' ) }
+		>
+			{ ! rows ? (
+				<p className="gs-muted">{ __( 'Checking…', 'gemsecurity' ) }</p>
+			) : (
+				<table className="gs-table">
+					<thead><tr>
+						<th>{ __( 'Path', 'gemsecurity' ) }</th>
+						<th>{ __( 'Current', 'gemsecurity' ) }</th>
+						<th>{ __( 'Recommended', 'gemsecurity' ) }</th>
+						<th>{ __( 'Status', 'gemsecurity' ) }</th>
+					</tr></thead>
+					<tbody>
+						{ rows.map( ( r ) => (
+							<tr key={ r.path }>
+								<td><code>{ r.path }</code></td>
+								<td className="gs-nowrap">{ r.perms }</td>
+								<td className="gs-nowrap">{ r.recommended }</td>
+								<td><Badge tone={ r.status === 'critical' ? 'danger' : r.status === 'warning' ? 'warning' : 'success' }>{ r.status === 'ok' ? __( 'OK', 'gemsecurity' ) : r.status }</Badge></td>
+							</tr>
+						) ) }
+					</tbody>
+				</table>
+			) }
+		</Card>
+	);
+}
+
+/** Recent CSP violations collected from the report endpoint. */
+function CspViolations() {
+	const [ rows, setRows ] = useState( null );
+	useEffect( () => {
+		api.get( 'csp-violations' ).then( ( r ) => setRows( r.data.items ) ).catch( () => setRows( [] ) );
+	}, [] );
+	if ( rows && rows.length === 0 ) {
+		return null;
+	}
+	return (
+		<Card title={ __( 'Recent CSP violations', 'gemsecurity' ) }>
+			{ ! rows ? (
+				<p className="gs-muted">{ __( 'Loading…', 'gemsecurity' ) }</p>
+			) : (
+				<table className="gs-table">
+					<thead><tr>
+						<th>{ __( 'Blocked', 'gemsecurity' ) }</th>
+						<th>{ __( 'Directive', 'gemsecurity' ) }</th>
+						<th>{ __( 'When', 'gemsecurity' ) }</th>
+					</tr></thead>
+					<tbody>
+						{ rows.map( ( r, i ) => (
+							<tr key={ i }>
+								<td><code>{ r.blocked || '—' }</code></td>
+								<td className="gs-nowrap">{ r.directive }</td>
+								<td className="gs-nowrap">{ r.time }</td>
+							</tr>
+						) ) }
+					</tbody>
+				</table>
+			) }
+		</Card>
+	);
+}
 
 const HARDENING = [
 	{ key: 'disable_file_editing', label: __( 'Disable theme & plugin file editor', 'gemsecurity' ), desc: __( 'Stops attackers editing PHP from wp-admin (DISALLOW_FILE_EDIT).', 'gemsecurity' ) },
@@ -154,11 +236,60 @@ export default function Firewall() {
 								</Field>
 								<Toggle
 									label={ __( 'Report-only (do not enforce)', 'gemsecurity' ) }
+									description={ __( 'Log violations without blocking. Turn off to enforce the policy.', 'gemsecurity' ) }
 									checked={ form.header_csp_report_only }
 									onChange={ ( v ) => setField( 'header_csp_report_only', v ) }
 								/>
+								<Toggle
+									label={ __( 'Collect violation reports', 'gemsecurity' ) }
+									description={ __( 'Send browser CSP violations to GemSecurity and list them below.', 'gemsecurity' ) }
+									checked={ form.header_csp_report }
+									onChange={ ( v ) => setField( 'header_csp_report', v ) }
+								/>
 							</>
 						) }
+					</>
+				) }
+			</Card>
+
+			<Card
+				title={ __( 'Bot control', 'gemsecurity' ) }
+				description={ __( 'Govern automated traffic: block AI scrapers and reject crawlers that impersonate search engines.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Block AI crawlers & scrapers', 'gemsecurity' ) }
+					description={ __( 'Deny GPTBot, ClaudeBot, CCBot, PerplexityBot, Bytespider and other AI/scraper user-agents.', 'gemsecurity' ) }
+					checked={ form.block_ai_crawlers }
+					onChange={ ( v ) => setField( 'block_ai_crawlers', v ) }
+				/>
+				<Toggle
+					label={ __( 'Verify search-engine bots', 'gemsecurity' ) }
+					description={ __( 'Confirm Googlebot / Bingbot / YandexBot / Applebot via reverse DNS and block spoofed impostors (a common way to bypass firewalls).', 'gemsecurity' ) }
+					checked={ form.verify_search_bots }
+					onChange={ ( v ) => setField( 'verify_search_bots', v ) }
+				/>
+			</Card>
+
+			<Card
+				title={ __( 'security.txt', 'gemsecurity' ) }
+				description={ __( 'Publish /.well-known/security.txt (RFC 9116) so researchers know how to report vulnerabilities.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Serve security.txt', 'gemsecurity' ) }
+					checked={ form.securitytxt_enabled }
+					onChange={ ( v ) => setField( 'securitytxt_enabled', v ) }
+				/>
+				{ form.securitytxt_enabled && (
+					<>
+						<Field label={ __( 'Contact', 'gemsecurity' ) } description={ __( 'Email or URL. Defaults to the admin email.', 'gemsecurity' ) }>
+							<TextInput value={ form.securitytxt_contact ?? '' } onChange={ ( e ) => setField( 'securitytxt_contact', e.target.value ) } placeholder="security@example.com" />
+						</Field>
+						<Field label={ __( 'Expires', 'gemsecurity' ) } description={ __( 'ISO 8601 date. Defaults to one year out.', 'gemsecurity' ) }>
+							<TextInput value={ form.securitytxt_expires ?? '' } onChange={ ( e ) => setField( 'securitytxt_expires', e.target.value ) } placeholder="2027-01-01T00:00:00Z" />
+						</Field>
+						<Field label={ __( 'Policy URL (optional)', 'gemsecurity' ) }>
+							<TextInput value={ form.securitytxt_policy ?? '' } onChange={ ( e ) => setField( 'securitytxt_policy', e.target.value ) } placeholder="https://example.com/security-policy" />
+						</Field>
 					</>
 				) }
 			</Card>
@@ -168,6 +299,9 @@ export default function Firewall() {
 					{ __( 'Save changes', 'gemsecurity' ) }
 				</Button>
 			</div>
+
+			<FilePermissions />
+			<CspViolations />
 		</div>
 	);
 }

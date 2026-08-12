@@ -59,6 +59,7 @@ class Installer {
 			ip_address VARCHAR(45) DEFAULT NULL,
 			user_id BIGINT(20) UNSIGNED DEFAULT NULL,
 			context LONGTEXT DEFAULT NULL,
+			hash VARCHAR(64) DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY event_type (event_type),
@@ -145,6 +146,13 @@ class Installer {
 			'audit_users'                  => true,
 			'audit_settings'               => true,
 
+			// Compliance / SIEM.
+			'log_hash_chain_enabled'       => false,
+			'siem_enabled'                 => false,
+			'siem_endpoint'                => '',
+			'siem_syslog'                  => false,
+			'siem_min_severity'            => 'warning',
+
 			// Security headers (master off; safe individual defaults).
 			'security_headers_enabled'     => false,
 			'header_x_frame_options'       => 'SAMEORIGIN',
@@ -158,6 +166,13 @@ class Installer {
 			'header_csp_enabled'           => false,
 			'header_csp_value'             => "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
 			'header_csp_report_only'       => true,
+			'header_csp_report'            => false,
+
+			// security.txt (RFC 9116).
+			'securitytxt_enabled'          => false,
+			'securitytxt_contact'          => '',
+			'securitytxt_expires'          => '',
+			'securitytxt_policy'           => '',
 
 			// CAPTCHA.
 			'captcha_enabled'              => false,
@@ -170,6 +185,13 @@ class Installer {
 			'captcha_on_comments'          => false,
 			'captcha_v3_threshold'         => 0.5,
 			'comment_honeypot_enabled'     => true,
+
+			// Anti-spam.
+			'antispam_enabled'             => true,
+			'antispam_min_seconds'         => 3,
+			'antispam_heuristics'          => false,
+			'antispam_max_links'           => 3,
+			'antispam_keywords'            => [],
 
 			// Two-factor.
 			'two_factor_enabled'           => false,
@@ -193,6 +215,26 @@ class Installer {
 			'social_twitter_client_id'     => '',
 			'social_twitter_client_secret' => '',
 
+			// API & access hardening.
+			'rest_rate_limit_enabled'      => false,
+			'rest_rate_limit_max'          => 120,
+			'rest_rate_limit_window'       => 1, // minutes.
+			'app_pw_disabled'              => false,
+			'app_pw_alert_on_create'       => true,
+			'app_pw_max_age_days'          => 0, // 0 = never auto-expire.
+			'login_errors_generic'         => false,
+
+			// Virtual patching.
+			'virtual_patch_enabled'        => true,
+
+			// Payment-page integrity.
+			'payment_integrity_enabled'    => false,
+			'payment_page_ids'             => [],
+
+			// Monitoring.
+			'monitoring_enabled'           => false,
+			'monitor_alert_email'          => '',
+
 			// Vulnerability scanner.
 			'vuln_scan_enabled'            => true,
 
@@ -211,12 +253,21 @@ class Installer {
 			'throttle_404_window'          => 5,
 			'block_bad_bots'               => false,
 			'block_empty_ua'               => true,
+			'block_ai_crawlers'            => false,
+			'verify_search_bots'           => false,
 			'bot_blocklist'                => [],
 			'mu_loader_enabled'            => false,
 			'autoban_enabled'              => true,
 			'autoban_threshold'            => 10,
 			'autoban_window'               => 60,
 			'autoban_duration'             => 1440,
+
+			// Advanced threat detection.
+			'anomaly_detection_enabled'    => false,
+			'anomaly_threshold'            => 4,
+			'credential_stuffing_enabled'  => false,
+			'credential_stuffing_threshold' => 5,
+			'live_traffic_enabled'         => false,
 
 			// Password policy.
 			'password_policy_enabled'      => false,
@@ -232,6 +283,12 @@ class Installer {
 			// Custom login URL.
 			'custom_login_enabled'         => false,
 			'custom_login_slug'            => '',
+
+			// Login extras.
+			'login_honeypot_enabled'       => true,
+			'trusted_devices_enabled'      => false,
+			'trusted_devices_alert'        => true,
+			'magic_link_enabled'           => false,
 
 			// Alerts + digest.
 			'alerts_enabled'               => false,

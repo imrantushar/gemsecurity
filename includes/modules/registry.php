@@ -110,7 +110,19 @@ class Registry {
 					'block_author_enumeration', 'disable_user_rest', 'hide_wp_version',
 					'comments_disabled', 'security_headers_enabled', 'waf_enabled',
 					'rate_limit_enabled', 'throttle_404_enabled', 'block_bad_bots',
+					'block_ai_crawlers', 'verify_search_bots',
 				],
+			],
+			'anti-spam' => [
+				'title'         => __( 'Anti-Spam', 'gemsecurity' ),
+				'desc'          => __( 'Frictionless bot checks on comments and registration, plus heuristic comment filtering.', 'gemsecurity' ),
+				'icon'          => 'check',
+				'category'      => 'firewall',
+				'recommended'   => true,
+				'page_slug'     => $slug . '-anti-spam',
+				'classes'       => [ AntiSpam::class ],
+				'rest'          => [],
+				'settings_keys' => [ 'antispam_enabled', 'antispam_heuristics' ],
 			],
 			'threats' => [
 				'title'         => __( 'Threat Defense', 'gemsecurity' ),
@@ -119,8 +131,18 @@ class Registry {
 				'category'      => 'firewall',
 				'is_pro'        => true,
 				'page_slug'     => $slug . '-threats',
-				'classes'       => [], // Enforcement lives in Waf (firewall); this is the Pro view.
-				'rest'          => [ 'bans', 'bots' ],
+				'classes'       => [ ThreatIntel::class ], // Auto-ban enforcement lives in Waf; this adds detection.
+				'rest'          => [ 'bans', 'bots', 'live-traffic' ],
+			],
+			'virtual-patch' => [
+				'title'         => __( 'Virtual Patch', 'gemsecurity' ),
+				'desc'          => __( 'Mitigate known plugin/theme vulnerabilities in place — even before a fix ships.', 'gemsecurity' ),
+				'icon'          => 'shield',
+				'category'      => 'firewall',
+				'is_pro'        => true,
+				'page_slug'     => $slug . '-virtual-patch',
+				'classes'       => [ VirtualPatch::class ],
+				'rest'          => [ 'vpatch' ],
 			],
 
 			// ---- Login & access ------------------------------------------
@@ -137,8 +159,9 @@ class Registry {
 					PasswordPolicy::class,
 					CustomLogin::class,
 					Lockdown::class,
+					LoginExtras::class,
 				],
-				'rest'          => [ 'sessions' ],
+				'rest'          => [ 'sessions', 'magic-link' ],
 				'settings_keys' => [
 					'login_attempts_enabled', 'admin_session_timeout_enabled',
 					'password_policy_enabled', 'idle_timeout_enabled',
@@ -193,6 +216,20 @@ class Registry {
 				'rest'          => [ 'admins' ],
 				'settings_keys' => [ 'admin_whitelist_enabled', 'hidden_admin_detection' ],
 			],
+			'api-hardening' => [
+				'title'         => __( 'API & Access', 'gemsecurity' ),
+				'desc'          => __( 'REST API rate limiting, application-password governance and username-enumeration hardening.', 'gemsecurity' ),
+				'icon'          => 'key',
+				'category'      => 'access',
+				'recommended'   => true,
+				'page_slug'     => $slug . '-api-hardening',
+				'classes'       => [ ApiHardening::class ],
+				'rest'          => [ 'app-passwords' ],
+				'settings_keys' => [
+					'rest_rate_limit_enabled', 'app_pw_disabled',
+					'app_pw_max_age_days', 'login_errors_generic',
+				],
+			],
 
 			// ---- Scanning ------------------------------------------------
 			'scanner' => [
@@ -206,11 +243,34 @@ class Registry {
 				// engines (driven by REST + cron) with no init() hooks, so there
 				// is nothing to boot here — the module is its page + REST routes.
 				'classes'       => [],
-				'rest'          => [ 'scan', 'mu-plugins' ],
+				'rest'          => [ 'scan', 'mu-plugins', 'supply-chain' ],
 				'settings_keys' => [
 					'file_watcher_enabled', 'link_scanner_enabled',
 					'scanner_auto_scan', 'vuln_scan_enabled',
 				],
+			],
+
+			'payment-integrity' => [
+				'title'         => __( 'Payment Integrity', 'gemsecurity' ),
+				'desc'          => __( 'Monitor checkout-page scripts for Magecart-style tampering (PCI-DSS 4.0 §6.4.3 / §11.6.1).', 'gemsecurity' ),
+				'icon'          => 'lock',
+				'category'      => 'scanning',
+				'is_pro'        => true,
+				'page_slug'     => $slug . '-payment-integrity',
+				'classes'       => [ PaymentIntegrity::class ],
+				'rest'          => [ 'payment-scripts' ],
+				'settings_keys' => [ 'payment_integrity_enabled' ],
+			],
+
+			'incident-response' => [
+				'title'         => __( 'Incident Response', 'gemsecurity' ),
+				'desc'          => __( 'Forensic timeline, file quarantine and one-click recovery for after a breach.', 'gemsecurity' ),
+				'icon'          => 'alert',
+				'category'      => 'scanning',
+				'is_pro'        => true,
+				'page_slug'     => $slug . '-incident-response',
+				'classes'       => [], // On-demand; all work via REST.
+				'rest'          => [ 'incident' ],
 			],
 
 			// ---- Logging -------------------------------------------------
@@ -224,6 +284,7 @@ class Registry {
 				'classes'       => [
 					AuditLog::class,
 					Alerts::class,
+					Compliance::class,
 				],
 				'rest'          => [ 'logs' ],
 			],
@@ -240,6 +301,17 @@ class Registry {
 				// gated on this module. No plain module class here.
 				'classes'       => [],
 				'rest'          => [],
+			],
+			'monitoring' => [
+				'title'         => __( 'Monitoring', 'gemsecurity' ),
+				'desc'          => __( 'Uptime, TLS-certificate expiry, DNS-change and email-authentication (SPF/DMARC) monitoring.', 'gemsecurity' ),
+				'icon'          => 'globe',
+				'category'      => 'maintenance',
+				'is_pro'        => true,
+				'page_slug'     => $slug . '-monitoring',
+				'classes'       => [ Monitoring::class ],
+				'rest'          => [ 'monitoring' ],
+				'settings_keys' => [ 'monitoring_enabled' ],
 			],
 			'pro-tools' => [
 				'title'         => __( 'Pro Tools', 'gemsecurity' ),

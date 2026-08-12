@@ -121,11 +121,43 @@ class Api {
 			'callback'            => [ Rest\Logs::class, 'export' ],
 			'permission_callback' => $perm,
 		] );
+		// Compliance: tamper-evident chain verification + summary report.
+		register_rest_route( $ns, '/logs/verify', [
+			'methods'             => 'GET',
+			'callback'            => static function () {
+				return rest_ensure_response( [ 'success' => true ] + Modules\Compliance::verify() );
+			},
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/logs/report', [
+			'methods'             => 'GET',
+			'callback'            => static function ( $req ) {
+				return rest_ensure_response( [ 'success' => true, 'report' => Modules\Compliance::report( (int) $req->get_param( 'days' ) ?: 30, sanitize_key( (string) $req->get_param( 'framework' ) ) ?: 'general' ) ] );
+			},
+			'permission_callback' => $perm,
+		] );
 
 		// Code & database finder ("grep from the dashboard") — global tool.
 		register_rest_route( $ns, '/search', [
 			'methods'             => 'POST',
 			'callback'            => [ Rest\Finder::class, 'search' ],
+			'permission_callback' => $perm,
+		] );
+
+		// CSP violation collector — public (browsers post here directly).
+		register_rest_route( $ns, '/csp-report', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Firewall::class, 'csp_report' ],
+			'permission_callback' => '__return_true',
+		] );
+		register_rest_route( $ns, '/csp-violations', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Firewall::class, 'csp_violations' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/file-permissions', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Firewall::class, 'file_permissions' ],
 			'permission_callback' => $perm,
 		] );
 
@@ -160,6 +192,20 @@ class Api {
 			register_rest_route( $ns, '/bots/blocklist', [
 				'methods'             => 'POST',
 				'callback'            => [ Rest\Bots::class, 'add_to_blocklist' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/live-traffic', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\ThreatIntel::class, 'rest_traffic' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
+
+		// Virtual patching (Pro) — CVEs currently mitigated on this site.
+		if ( self::module( 'virtual-patch' ) ) {
+			register_rest_route( $ns, '/vpatch', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Vpatch::class, 'get' ],
 				'permission_callback' => $pro_perm,
 			] );
 		}
@@ -202,6 +248,64 @@ class Api {
 				'callback'            => [ Rest\MuPlugins::class, 'get' ],
 				'permission_callback' => $perm,
 			] );
+			register_rest_route( $ns, '/supply-chain', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\SupplyChain::class, 'rest' ],
+				'permission_callback' => $perm,
+			] );
+		}
+
+		// Payment-page script integrity (Pro). The collector is public (browsers
+		// on the checkout page post here); reads/authorise are admin-gated.
+		register_rest_route( $ns, '/payment-scripts', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ Rest\PaymentScripts::class, 'ingest' ],
+				'permission_callback' => '__return_true',
+			],
+			[
+				'methods'             => 'GET',
+				'callback'            => [ Rest\PaymentScripts::class, 'get' ],
+				'permission_callback' => $pro_perm,
+			],
+		] );
+		if ( self::module( 'payment-integrity' ) ) {
+			register_rest_route( $ns, '/payment-scripts/authorize', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\PaymentScripts::class, 'authorize' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
+
+		// Incident response (Pro): timeline, quarantine, recovery.
+		if ( self::module( 'incident-response' ) ) {
+			register_rest_route( $ns, '/incident/timeline', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\IncidentResponse::class, 'rest_timeline' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/incident/quarantine', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Modules\IncidentResponse::class, 'rest_quarantine_list' ],
+					'permission_callback' => $pro_perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Modules\IncidentResponse::class, 'rest_quarantine' ],
+					'permission_callback' => $pro_perm,
+				],
+			] );
+			register_rest_route( $ns, '/incident/restore', [
+				'methods'             => 'POST',
+				'callback'            => [ Modules\IncidentResponse::class, 'rest_restore' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/incident/recover', [
+				'methods'             => 'POST',
+				'callback'            => [ Modules\IncidentResponse::class, 'rest_recover' ],
+				'permission_callback' => $pro_perm,
+			] );
 		}
 
 		// Two-Factor (current-user enrollment) + login CAPTCHA module.
@@ -238,6 +342,20 @@ class Api {
 			] );
 		}
 
+		// Application-password governance (API & Access module).
+		if ( self::module( 'api-hardening' ) ) {
+			register_rest_route( $ns, '/app-passwords', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\AppPasswords::class, 'get' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/app-passwords/revoke', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\AppPasswords::class, 'revoke' ],
+				'permission_callback' => $perm,
+			] );
+		}
+
 		// Social login config (provider list + redirect URI).
 		if ( self::module( 'social-login' ) ) {
 			register_rest_route( $ns, '/social', [
@@ -263,6 +381,21 @@ class Api {
 				'methods'             => 'POST',
 				'callback'            => [ Rest\Sessions::class, 'force_logout' ],
 				'permission_callback' => $perm,
+			] );
+			// Magic-link recovery (Pro) — issue a one-time login link for a user.
+			register_rest_route( $ns, '/magic-link', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\MagicLink::class, 'issue' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
+
+		// Monitoring (Pro).
+		if ( self::module( 'monitoring' ) ) {
+			register_rest_route( $ns, '/monitoring', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\Monitoring::class, 'rest' ],
+				'permission_callback' => $pro_perm,
 			] );
 		}
 

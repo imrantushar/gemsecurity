@@ -4,6 +4,7 @@ import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
 import { useToast } from '@Components/ui/Toast';
+import { ProSection, isPro } from '@Components/ui/Pro';
 
 const KEYS = [
 	'login_attempts_enabled',
@@ -36,7 +37,39 @@ const KEYS = [
 	// Idle timeout.
 	'idle_timeout_enabled',
 	'idle_timeout_minutes',
+	// Login extras.
+	'login_honeypot_enabled',
+	'trusted_devices_enabled',
+	'trusted_devices_alert',
+	'magic_link_enabled',
 ];
+
+/** Admin control to email a one-time login link (Pro). */
+function MagicLinkSender() {
+	const toast = useToast();
+	const [ who, setWho ] = useState( '' );
+	const [ busy, setBusy ] = useState( false );
+	const send = async () => {
+		if ( ! who.trim() ) {
+			return;
+		}
+		setBusy( true );
+		try {
+			await api.post( 'magic-link', { user: who.trim() } );
+			toast( __( 'Login link emailed.', 'gemsecurity' ), 'success' );
+			setWho( '' );
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not send.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( false );
+	};
+	return (
+		<div className="gs-addrow">
+			<TextInput value={ who } onChange={ ( e ) => setWho( e.target.value ) } placeholder={ __( 'username or email', 'gemsecurity' ) } />
+			<Button variant="secondary" onClick={ send } loading={ busy }>{ __( 'Send login link', 'gemsecurity' ) }</Button>
+		</div>
+	);
+}
 
 function ActiveSessions() {
 	const toast = useToast();
@@ -262,6 +295,39 @@ export default function LoginSecurity() {
 					</Field>
 				) }
 			</Card>
+
+			<Card
+				title={ __( 'Login honeypot', 'gemsecurity' ) }
+				description={ __( 'A hidden field bots fill in but humans never see — an instant, frictionless bot trap that feeds the ban ledger.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Enable login honeypot', 'gemsecurity' ) }
+					checked={ form.login_honeypot_enabled }
+					onChange={ ( v ) => setField( 'login_honeypot_enabled', v ) }
+				/>
+			</Card>
+
+			<ProSection
+				title={ __( 'Trusted devices & recovery', 'gemsecurity' ) }
+				description={ __( 'New-device sign-in alerts and one-time magic-link recovery.', 'gemsecurity' ) }
+			>
+				<Card
+					title={ __( 'Trusted devices', 'gemsecurity' ) }
+					description={ __( 'Fingerprint each successful login and alert on unrecognised devices.', 'gemsecurity' ) }
+				>
+					<Toggle label={ __( 'Track devices & detect new ones', 'gemsecurity' ) } checked={ form.trusted_devices_enabled } onChange={ ( v ) => setField( 'trusted_devices_enabled', v ) } />
+					{ form.trusted_devices_enabled && (
+						<Toggle label={ __( 'Email the user on a new-device sign-in', 'gemsecurity' ) } checked={ form.trusted_devices_alert } onChange={ ( v ) => setField( 'trusted_devices_alert', v ) } />
+					) }
+				</Card>
+				<Card
+					title={ __( 'Magic-link recovery', 'gemsecurity' ) }
+					description={ __( 'Email a legitimate user a one-time, 15-minute login link — even if their IP is locked out.', 'gemsecurity' ) }
+				>
+					<Toggle label={ __( 'Enable magic-link recovery', 'gemsecurity' ) } checked={ form.magic_link_enabled } onChange={ ( v ) => setField( 'magic_link_enabled', v ) } />
+					{ form.magic_link_enabled && isPro() && <MagicLinkSender /> }
+				</Card>
+			</ProSection>
 
 			<div className="gs-savebar">
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
