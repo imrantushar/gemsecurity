@@ -77,17 +77,25 @@ export default function PaymentIntegrity() {
 				) : data.inventory.length === 0 ? (
 					<EmptyState title={ __( 'No inventory yet', 'gemsecurity' ) } description={ __( 'Load your checkout page once to populate this.', 'gemsecurity' ) } />
 				) : (
-					<table className="gs-table">
-						<thead><tr><th>{ __( 'Script', 'gemsecurity' ) }</th><th>{ __( 'Status', 'gemsecurity' ) }</th></tr></thead>
-						<tbody>
-							{ data.inventory.map( ( it, i ) => (
-								<tr key={ i }>
-									<td><code>{ it.src }</code></td>
-									<td><Badge tone={ it.authorised ? 'success' : ( data.has_baseline ? 'danger' : 'info' ) }>{ it.authorised ? __( 'authorised', 'gemsecurity' ) : ( data.has_baseline ? __( 'unauthorised', 'gemsecurity' ) : __( 'pending', 'gemsecurity' ) ) }</Badge></td>
-								</tr>
-							) ) }
-						</tbody>
-					</table>
+					<>
+						{ data.seen_page && (
+							<p className="gs-muted" style={ { marginTop: 0 } }>
+								{ __( 'Captured from:', 'gemsecurity' ) } <code>{ data.seen_page }</code>{ ' — ' }
+								{ __( 'check this is really your checkout page before authorising.', 'gemsecurity' ) }
+							</p>
+						) }
+						<table className="gs-table">
+							<thead><tr><th>{ __( 'Script', 'gemsecurity' ) }</th><th>{ __( 'Status', 'gemsecurity' ) }</th></tr></thead>
+							<tbody>
+								{ data.inventory.map( ( it, i ) => (
+									<tr key={ i }>
+										<td><code>{ it.src }</code></td>
+										<td><Badge tone={ it.authorised ? 'success' : ( data.has_baseline ? 'danger' : 'info' ) }>{ it.authorised ? __( 'authorised', 'gemsecurity' ) : ( data.has_baseline ? __( 'unauthorised', 'gemsecurity' ) : __( 'pending', 'gemsecurity' ) ) }</Badge></td>
+									</tr>
+								) ) }
+							</tbody>
+						</table>
+					</>
 				) }
 			</Card>
 		</div>
