@@ -246,9 +246,25 @@ class SocialLogin {
 
 		switch ( $provider ) {
 			case 'google':
-				return [ 'id' => $d['sub'] ?? '', 'email' => $d['email'] ?? '', 'name' => $d['name'] ?? '', 'avatar' => $d['picture'] ?? '' ];
+				// email_verified gates whether login_user() may auto-link this
+				// profile to an existing WP account by email match — an
+				// unverified email is never trustworthy enough for that, so it's
+				// dropped here rather than threading a verified flag through the
+				// rest of the flow. Google sends this as a real boolean, but
+				// normalise defensively since some OIDC-compatible providers
+				// send "true"/"false" strings instead.
+				$verified = filter_var( $d['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN );
+				return [
+					'id'     => $d['sub'] ?? '',
+					'email'  => $verified ? ( $d['email'] ?? '' ) : '',
+					'name'   => $d['name'] ?? '',
+					'avatar' => $d['picture'] ?? '',
+				];
 
 			case 'facebook':
+				// No per-field verified flag exists in the Graph API response —
+				// Facebook only ever returns an email here once it has verified
+				// it at the account level, so there's nothing more to check.
 				return [
 					'id'     => $d['id'] ?? '',
 					'email'  => $d['email'] ?? '',
@@ -257,10 +273,11 @@ class SocialLogin {
 				];
 
 			case 'github':
-				$email = $d['email'] ?? '';
-				if ( ! $email ) {
-					$email = $this->github_primary_email( $token );
-				}
+				// The bare /user "email" field is just the public-profile email
+				// and isn't guaranteed verified — always resolve through
+				// /user/emails instead, which is explicitly verified+primary
+				// (see github_primary_email()).
+				$email = $this->github_primary_email( $token );
 				return [ 'id' => (string) ( $d['id'] ?? '' ), 'email' => $email, 'name' => $d['name'] ?: ( $d['login'] ?? '' ), 'avatar' => $d['avatar_url'] ?? '' ];
 
 			case 'twitter':
