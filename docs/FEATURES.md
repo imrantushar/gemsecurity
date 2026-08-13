@@ -92,6 +92,15 @@ Dashboard · Firewall · Threat Defense · Login Security · Two-Factor · Socia
 ### Lifecycle
 - Full uninstall cleanup (`uninstall.php`).
 
+### Integrations
+GemSecurity itself has no Academy-specific code — no module, no hooks into Academy's actions. Instead it exposes a small public API surface any companion plugin can call:
+- `GemSecurity\Modules\LoginSecurity::is_locked_out( $ip )` — the shared brute-force ban ledger, callable directly.
+- `GemSecurity\Modules\Captcha::verify_token( $token )` — verifies an explicit token against the configured CAPTCHA provider.
+- `GemSecurity\Modules\Waf::scan_string( $value )` — runs the SQLi/XSS/LFI/RCE pattern check against an arbitrary string.
+- Public filter `gemsecurity/module_active` (`bool apply_filters( 'gemsecurity/module_active', false, string $module_id )`) — lets a companion plugin query whether a given GemSecurity module is active. Registered unconditionally whenever GemSecurity is active — no gating module required.
+
+Academy LMS's own `Academy\Integration\GemSecurity` class (in the `academy` plugin, not this one) is the first consumer: brute-force lockout on Academy's login (Free), plus WAF content scanning on Q&A/lesson comments, geo-blocking on Academy's public REST routes, enrollment-fraud alerting, and AJAX rate limiting (Pro, checked at runtime via `is_pro_active()`). It no-ops entirely when GemSecurity isn't active. CAPTCHA for Academy is intentionally not part of this surface — Academy Pro already has its own complete reCAPTCHA implementation.
+
 ---
 
 ## Not Yet Done (open / lower priority)

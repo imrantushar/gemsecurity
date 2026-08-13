@@ -66,6 +66,7 @@ class Assets {
 			'site_url'         => site_url(),
 			'route_path'       => wp_parse_url( admin_url(), PHP_URL_PATH ),
 			'menu'             => wp_json_encode( Helper::get_admin_menu_list() ),
+			'modules'          => Modules\Registry::for_js(),
 			'current_user_id'  => get_current_user_id(),
 			'is_rtl'           => is_rtl(),
 			'is_admin'         => is_admin(),

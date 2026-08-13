@@ -2,6 +2,7 @@
 namespace GemSecurity\Rest;
 
 use GemSecurity\Modules\Scanner as ScannerModule;
+use GemSecurity\Modules\FileWatcher;
 use GemSecurity\Security\Vulnerability;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -35,6 +36,21 @@ class Scanner {
 			'success' => true,
 			'result'  => $result,
 			'vuln'    => $vuln,
+		] );
+	}
+
+	/**
+	 * POST /scan/baseline — capture a fresh known-good file baseline.
+	 *
+	 * Use this after cleaning a site so the change watcher measures drift from
+	 * the clean state forward (the previous baseline is overwritten).
+	 */
+	public static function reset_baseline() {
+		$baseline = FileWatcher::establish_baseline();
+
+		return rest_ensure_response( [
+			'success'  => true,
+			'baseline' => $baseline,
 		] );
 	}
 }

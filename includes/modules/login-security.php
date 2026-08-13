@@ -58,7 +58,7 @@ class LoginSecurity {
 		}
 
 		$ip = Helper::get_ip_address();
-		if ( $this->is_locked_out( $ip ) ) {
+		if ( self::is_locked_out( $ip ) ) {
 			$minutes = (int) Helper::get_setting( 'login_lockout_duration', 30 );
 			return new \WP_Error(
 				'gemsecurity_locked_out',
@@ -86,7 +86,7 @@ class LoginSecurity {
 		$ip    = Helper::get_ip_address();
 		$limit = max( 1, (int) Helper::get_setting( 'login_attempts_limit', 5 ) );
 
-		if ( $this->is_locked_out( $ip ) ) {
+		if ( self::is_locked_out( $ip ) ) {
 			return;
 		}
 
@@ -117,10 +117,15 @@ class LoginSecurity {
 	}
 
 	/**
+	 * Whether an IP is currently locked out. Public so other integrations
+	 * (e.g. GemSecurity's Academy integration, which enforces this ledger on
+	 * a REST login endpoint that never touches $_POST) can check the same
+	 * ban ledger standard `wp-login.php` uses, without duplicating it.
+	 *
 	 * @param string $ip
 	 * @return bool
 	 */
-	private function is_locked_out( $ip ) {
+	public static function is_locked_out( $ip ) {
 		return (bool) get_transient( self::LOCK_TRANSIENT_PREFIX . md5( $ip ) );
 	}
 

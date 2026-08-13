@@ -203,6 +203,7 @@ class AuditLog {
 			'users'           => [ 'user_deleted', 'password_reset', 'user_registered', 'user_role_changed' ],
 			'settings'        => [ 'option_changed' ],
 			'geolocation'     => [ 'geo_login_blocked', 'geo_site_blocked', 'geo_new_location', 'geo_verified', 'geo_verify_failed' ],
+			'academy'         => [ 'academy_login_blocked', 'academy_captcha_failed', 'academy_registration', 'academy_instructor_status', 'academy_content_blocked', 'academy_geo_blocked', 'academy_enrollment_abuse', 'academy_ajax_rate_limited' ],
 		];
 	}
 }

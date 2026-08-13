@@ -1,28 +1,25 @@
-import { __ } from '@wordpress/i18n';
 import { useLocation } from 'react-router-dom';
 import { GS } from '@Utils/api';
 
 const SLUG = 'gemsecurity';
 
 /**
- * The plugin navigation. `key` maps to the ?page= slug used by WordPress.
+ * The plugin navigation, derived from the module registry the server localizes
+ * as `GS.modules`. Only *visible* modules appear (core + Pro always; other
+ * modules only when active), so deactivating a module removes its nav item.
+ * Each item's `key` maps to the ?page= slug used by WordPress.
  */
-export const NAV_ITEMS = [
-	{ key: SLUG, label: __( 'Dashboard', 'gemsecurity' ), icon: 'grid' },
-	{ key: `${ SLUG }-firewall`, label: __( 'Firewall', 'gemsecurity' ), icon: 'shield' },
-	{ key: `${ SLUG }-threats`, label: __( 'Threat Defense', 'gemsecurity' ), icon: 'zap' },
-	{ key: `${ SLUG }-login-security`, label: __( 'Login Security', 'gemsecurity' ), icon: 'lock' },
-	{ key: `${ SLUG }-two-factor`, label: __( 'Two-Factor', 'gemsecurity' ), icon: 'key' },
-	{ key: `${ SLUG }-social-login`, label: __( 'Social Login', 'gemsecurity' ), icon: 'users' },
-	{ key: `${ SLUG }-geolocation`, label: __( 'Geolocation', 'gemsecurity' ), icon: 'globe' },
-	{ key: `${ SLUG }-admin-guard`, label: __( 'Admin Guard', 'gemsecurity' ), icon: 'crown' },
-	{ key: `${ SLUG }-scanner`, label: __( 'Scanner', 'gemsecurity' ), icon: 'radar' },
-	{ key: `${ SLUG }-malware`, label: __( 'Malware Scan', 'gemsecurity' ), icon: 'bug' },
-	{ key: `${ SLUG }-logs`, label: __( 'Logs', 'gemsecurity' ), icon: 'list' },
-	{ key: `${ SLUG }-backup`, label: __( 'Backup', 'gemsecurity' ), icon: 'refresh' },
-	{ key: `${ SLUG }-pro-tools`, label: __( 'Pro Tools', 'gemsecurity' ), icon: 'crown' },
-	{ key: `${ SLUG }-settings`, label: __( 'Settings', 'gemsecurity' ), icon: 'cog' },
-];
+export const MODULES = Array.isArray( GS.modules ) ? GS.modules : [];
+
+export const NAV_ITEMS = MODULES
+	.filter( ( m ) => m.visible )
+	.map( ( m ) => ( {
+		key: m.page_slug,
+		label: m.title,
+		icon: m.icon,
+		isPro: !! m.is_pro,
+		active: !! m.active,
+	} ) );
 
 /** Base admin path used for client-side router links, e.g. "/wp-admin/". */
 export const ROUTE_PATH = GS.route_path || '/wp-admin/';

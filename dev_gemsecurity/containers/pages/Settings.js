@@ -1,12 +1,20 @@
-import React from 'react';
-import { __ } from '@wordpress/i18n';
+import React, { useState } from 'react';
+import { __, sprintf } from '@wordpress/i18n';
+import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Field, Toggle, NumberInput, TextInput, Select, ListInput, Button } from '@Components/ui/Controls';
+import { Card, Field, Toggle, NumberInput, TextInput, Select, ListInput, Button, Badge } from '@Components/ui/Controls';
+import { useToast } from '@Components/ui/Toast';
 import BackupSchedule from '@Containers/pages/BackupSchedule';
 import BackupStorage from '@Containers/pages/BackupStorage';
 
 const KEYS = [
 	'logs_retention_days',
+	// Compliance / SIEM.
+	'log_hash_chain_enabled',
+	'siem_enabled',
+	'siem_endpoint',
+	'siem_syslog',
+	'siem_min_severity',
 	// Alerts + digest.
 	'alerts_enabled',
 	'alert_min_severity',
@@ -24,6 +32,31 @@ const KEYS = [
 
 export default function Settings() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
+	const toast = useToast();
+	const [ verifyResult, setVerifyResult ] = useState( null );
+	const [ verifying, setVerifying ] = useState( false );
+
+	const runVerify = async () => {
+		setVerifying( true );
+		try {
+			const r = await api.get( 'logs/verify' );
+			setVerifyResult( r.data );
+		} catch ( e ) { toast( __( 'Verification failed.', 'gemsecurity' ), 'error' ); }
+		setVerifying( false );
+	};
+
+	const downloadReport = async () => {
+		try {
+			const r = await api.get( 'logs/report', { params: { days: 30 } } );
+			const blob = new Blob( [ JSON.stringify( r.data.report, null, 2 ) ], { type: 'application/json' } );
+			const url = URL.createObjectURL( blob );
+			const a = document.createElement( 'a' );
+			a.href = url;
+			a.download = 'gemsecurity-compliance-report.json';
+			a.click();
+			URL.revokeObjectURL( url );
+		} catch ( e ) { toast( __( 'Could not generate report.', 'gemsecurity' ), 'error' ); }
+	};
 
 	return (
 		<div className="gs-page">
@@ -38,6 +71,59 @@ export default function Settings() {
 				>
 					<NumberInput min="0" value={ form.logs_retention_days ?? 30 } onChange={ ( e ) => setField( 'logs_retention_days', Number( e.target.value ) ) } />
 				</Field>
+			</Card>
+
+			<Card
+				title={ __( 'Compliance & SIEM', 'gemsecurity' ) }
+				description={ __( 'Tamper-evident logging and forwarding for GDPR / PCI / SOC2 evidence.', 'gemsecurity' ) }
+				actions={
+					<div style={ { display: 'flex', gap: 8 } }>
+						<Button variant="secondary" onClick={ runVerify } loading={ verifying }>{ __( 'Verify integrity', 'gemsecurity' ) }</Button>
+						<Button variant="secondary" onClick={ downloadReport }>{ __( 'Download report', 'gemsecurity' ) }</Button>
+					</div>
+				}
+			>
+				<Toggle
+					label={ __( 'Tamper-evident audit log', 'gemsecurity' ) }
+					description={ __( 'Hash-chain each log entry so any edit or deletion is detectable.', 'gemsecurity' ) }
+					checked={ form.log_hash_chain_enabled }
+					onChange={ ( v ) => setField( 'log_hash_chain_enabled', v ) }
+				/>
+				{ verifyResult && (
+					<div className={ `gs-notice gs-notice--${ verifyResult.ok ? 'info' : 'error' }` } style={ { margin: '4px 0 12px' } }>
+						{ verifyResult.ok
+							? sprintf( /* translators: %d rows */ __( 'Chain intact — %d entries verified.', 'gemsecurity' ), verifyResult.checked )
+							: sprintf( /* translators: %d id */ __( 'Tampering detected at log entry #%d.', 'gemsecurity' ), verifyResult.tampered_at ) }
+					</div>
+				) }
+				<Toggle
+					label={ __( 'Forward events to SIEM', 'gemsecurity' ) }
+					description={ __( 'Stream security events to an external collector and/or system syslog.', 'gemsecurity' ) }
+					checked={ form.siem_enabled }
+					onChange={ ( v ) => setField( 'siem_enabled', v ) }
+				/>
+				{ form.siem_enabled && (
+					<>
+						<Field label={ __( 'HTTP collector endpoint', 'gemsecurity' ) }>
+							<TextInput value={ form.siem_endpoint ?? '' } onChange={ ( e ) => setField( 'siem_endpoint', e.target.value ) } placeholder="https://siem.example.com/ingest" />
+						</Field>
+						<div className="gs-row">
+							<Field label={ __( 'Minimum severity', 'gemsecurity' ) }>
+								<Select
+									value={ form.siem_min_severity || 'warning' }
+									onChange={ ( e ) => setField( 'siem_min_severity', e.target.value ) }
+									options={ [
+										{ value: 'info', label: __( 'Info & above', 'gemsecurity' ) },
+										{ value: 'notice', label: __( 'Notice & above', 'gemsecurity' ) },
+										{ value: 'warning', label: __( 'Warning & above', 'gemsecurity' ) },
+										{ value: 'critical', label: __( 'Critical only', 'gemsecurity' ) },
+									] }
+								/>
+							</Field>
+						</div>
+						<Toggle label={ __( 'Also write to system syslog', 'gemsecurity' ) } checked={ form.siem_syslog } onChange={ ( v ) => setField( 'siem_syslog', v ) } />
+					</>
+				) }
 			</Card>
 
 			<Card

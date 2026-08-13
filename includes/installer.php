@@ -10,10 +10,14 @@ class Installer {
 	const CRON_PRUNE_LOGS = 'gemsecurity_prune_logs';
 	const CRON_DAILY_SCAN = 'gemsecurity_daily_scan';
 	const CRON_WEEKLY_DIGEST = 'gemsecurity_weekly_digest';
+	const CRON_POST_UPDATE_SCAN = 'gemsecurity_post_update_scan';
 
 	public static function activate() {
 		self::create_tables();
 		self::set_default_options();
+		// Seed the module-activation map from current settings so a fresh install
+		// boots core + recommended modules and an existing site keeps its behavior.
+		\GemSecurity\Modules\Registry::seed_if_missing();
 		self::schedule_events();
 		self::snapshot_admin_whitelist();
 		flush_rewrite_rules();
@@ -35,6 +39,9 @@ class Installer {
 		if ( get_option( 'gemsecurity_db_version' ) !== GEMSECURITY_DB_VERSION ) {
 			self::create_tables();
 			self::set_default_options();
+			// Derive module activation from the existing settings on first
+			// upgrade to the module system — no behavior change for the site.
+			\GemSecurity\Modules\Registry::seed_if_missing();
 			self::schedule_events();
 		}
 	}
@@ -52,6 +59,7 @@ class Installer {
 			ip_address VARCHAR(45) DEFAULT NULL,
 			user_id BIGINT(20) UNSIGNED DEFAULT NULL,
 			context LONGTEXT DEFAULT NULL,
+			hash VARCHAR(64) DEFAULT NULL,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			KEY event_type (event_type),
@@ -95,12 +103,18 @@ class Installer {
 			// General / firewall.
 			'firewall_enabled'             => true,
 			'ip_blocklist'                 => [],
+			// Off by default: a site not actually behind a proxy/CDN must
+			// keep resolving REMOTE_ADDR directly, or every visitor would
+			// appear to share the trusted proxy's IP.
+			'trust_cloudflare_ip'          => false,
+			'trusted_proxies'              => [],
 			'xmlrpc_disabled'              => false,
 			'disable_file_editing'         => true,
 			'block_author_enumeration'     => true,
 			'disable_user_rest'            => true,
 			'hide_wp_version'              => true,
 			'disable_application_passwords' => false,
+			'comments_disabled'            => false,
 
 			// Login security.
 			'login_attempts_enabled'       => true,
@@ -124,6 +138,10 @@ class Installer {
 
 			// Scanner.
 			'scanner_auto_scan'            => false,
+			'file_watcher_enabled'         => true,
+			'link_scanner_enabled'         => true,
+			'link_blocklist'               => [],
+			'link_allowlist'               => [],
 
 			// Logs / audit.
 			'logs_retention_days'          => 30,
@@ -132,6 +150,13 @@ class Installer {
 			'audit_plugins_themes'         => true,
 			'audit_users'                  => true,
 			'audit_settings'               => true,
+
+			// Compliance / SIEM.
+			'log_hash_chain_enabled'       => false,
+			'siem_enabled'                 => false,
+			'siem_endpoint'                => '',
+			'siem_syslog'                  => false,
+			'siem_min_severity'            => 'warning',
 
 			// Security headers (master off; safe individual defaults).
 			'security_headers_enabled'     => false,
@@ -146,6 +171,13 @@ class Installer {
 			'header_csp_enabled'           => false,
 			'header_csp_value'             => "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
 			'header_csp_report_only'       => true,
+			'header_csp_report'            => false,
+
+			// security.txt (RFC 9116).
+			'securitytxt_enabled'          => false,
+			'securitytxt_contact'          => '',
+			'securitytxt_expires'          => '',
+			'securitytxt_policy'           => '',
 
 			// CAPTCHA.
 			'captcha_enabled'              => false,
@@ -155,7 +187,16 @@ class Installer {
 			'captcha_on_login'             => true,
 			'captcha_on_register'          => true,
 			'captcha_on_lostpassword'      => false,
+			'captcha_on_comments'          => false,
 			'captcha_v3_threshold'         => 0.5,
+			'comment_honeypot_enabled'     => true,
+
+			// Anti-spam.
+			'antispam_enabled'             => true,
+			'antispam_min_seconds'         => 3,
+			'antispam_heuristics'          => false,
+			'antispam_max_links'           => 3,
+			'antispam_keywords'            => [],
 
 			// Two-factor.
 			'two_factor_enabled'           => false,
@@ -179,6 +220,26 @@ class Installer {
 			'social_twitter_client_id'     => '',
 			'social_twitter_client_secret' => '',
 
+			// API & access hardening.
+			'rest_rate_limit_enabled'      => false,
+			'rest_rate_limit_max'          => 120,
+			'rest_rate_limit_window'       => 1, // minutes.
+			'app_pw_disabled'              => false,
+			'app_pw_alert_on_create'       => true,
+			'app_pw_max_age_days'          => 0, // 0 = never auto-expire.
+			'login_errors_generic'         => false,
+
+			// Virtual patching.
+			'virtual_patch_enabled'        => true,
+
+			// Payment-page integrity.
+			'payment_integrity_enabled'    => false,
+			'payment_page_ids'             => [],
+
+			// Monitoring.
+			'monitoring_enabled'           => false,
+			'monitor_alert_email'          => '',
+
 			// Vulnerability scanner.
 			'vuln_scan_enabled'            => true,
 
@@ -197,12 +258,21 @@ class Installer {
 			'throttle_404_window'          => 5,
 			'block_bad_bots'               => false,
 			'block_empty_ua'               => true,
+			'block_ai_crawlers'            => false,
+			'verify_search_bots'           => false,
 			'bot_blocklist'                => [],
 			'mu_loader_enabled'            => false,
 			'autoban_enabled'              => true,
 			'autoban_threshold'            => 10,
 			'autoban_window'               => 60,
 			'autoban_duration'             => 1440,
+
+			// Advanced threat detection.
+			'anomaly_detection_enabled'    => false,
+			'anomaly_threshold'            => 4,
+			'credential_stuffing_enabled'  => false,
+			'credential_stuffing_threshold' => 5,
+			'live_traffic_enabled'         => false,
 
 			// Password policy.
 			'password_policy_enabled'      => false,
@@ -218,6 +288,12 @@ class Installer {
 			// Custom login URL.
 			'custom_login_enabled'         => false,
 			'custom_login_slug'            => '',
+
+			// Login extras.
+			'login_honeypot_enabled'       => true,
+			'trusted_devices_enabled'      => false,
+			'trusted_devices_alert'        => true,
+			'magic_link_enabled'           => false,
 
 			// Alerts + digest.
 			'alerts_enabled'               => false,
@@ -302,5 +378,6 @@ class Installer {
 		wp_clear_scheduled_hook( self::CRON_PRUNE_LOGS );
 		wp_clear_scheduled_hook( self::CRON_DAILY_SCAN );
 		wp_clear_scheduled_hook( self::CRON_WEEKLY_DIGEST );
+		wp_clear_scheduled_hook( self::CRON_POST_UPDATE_SCAN );
 	}
 }
