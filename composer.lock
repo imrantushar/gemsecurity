@@ -1,0 +1,35 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "267661c44b6e94a3424965ddc80fd8e4",
+    "packages": [
+        {
+            "name": "storeengine/wordpress-sdk",
+            "version": "1.5.2",
+            "dist": {
+                "type": "zip",
+                "url": "https://codeload.github.com/imrantushar/storeengine-sdk-for-wordpress/zip/907b1f0213a3a4ccb8769695d75897278c19f4fa"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "init.php"
+                ]
+            }
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": "^7.4 || >=8.0"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}

@@ -13,6 +13,11 @@ class Installer {
 	const CRON_POST_UPDATE_SCAN = 'gemsecurity_post_update_scan';
 
 	public static function activate() {
+		// Fed to the StoreEngine SDK bootstrap (see StoreLicense::load_sdk())
+		// for its "days since install" insights/opt-in timing. add_option()
+		// is a no-op if it already exists, so re-activation never resets it.
+		add_option( 'gemsecurity_first_install_time', time(), '', false );
+
 		self::create_tables();
 		self::set_default_options();
 		// Seed the module-activation map from current settings so a fresh install

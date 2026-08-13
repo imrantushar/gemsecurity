@@ -1,0 +1,43 @@
+{
+    "name": "gemsecurity/gemsecurity",
+    "description": "GemSecurity is an all-in-one WordPress security dashboard — firewall, login protection, malware scanner, and activity logs.",
+    "type": "project",
+    "license": "GPL-3.0-or-later",
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "storeengine/wordpress-sdk",
+                "version": "1.5.2",
+                "type": "library",
+                "dist": {
+                    "type": "zip",
+                    "url": "https://codeload.github.com/imrantushar/storeengine-sdk-for-wordpress/zip/907b1f0213a3a4ccb8769695d75897278c19f4fa"
+                },
+                "autoload": {
+                    "files": [
+                        "init.php"
+                    ]
+                }
+            }
+        }
+    ],
+    "require": {
+        "php": "^7.4 || >=8.0",
+        "storeengine/wordpress-sdk": "^1.5"
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        },
+        "github-protocols": ["https"]
+    },
+    "scripts": {
+        "build": "@composer install --no-dev --optimize-autoloader --classmap-authoritative",
+        "dev": "@composer install"
+    },
+    "scripts-descriptions": {
+        "build": "Installs dependencies without dev-dependencies.",
+        "dev": "Installs all dependencies including dev-dependencies."
+    }
+}

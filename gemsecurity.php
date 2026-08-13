@@ -80,6 +80,7 @@ final class GemSecurity {
 		add_filter( 'gemsecurity/module_active', [ GemSecurity\Helper::class, 'is_module_active' ], 10, 2 );
 
 		GemSecurity\Database::init();
+		GemSecurity\StoreLicense::init();
 		GemSecurity\Assets::init();
 		GemSecurity\Api::init();
 
@@ -105,6 +106,13 @@ final class GemSecurity {
 	}
 
 	public function load_dependency() {
+		// Composer-managed runtime deps (currently just the StoreEngine SDK).
+		// Vendored into git since WordPress.org installs never run `composer
+		// install`; the check just guards a dev checkout that hasn't run it yet.
+		if ( file_exists( GEMSECURITY_ROOT_DIR_PATH . 'vendor/autoload.php' ) ) {
+			require_once GEMSECURITY_ROOT_DIR_PATH . 'vendor/autoload.php';
+		}
+
 		require_once GEMSECURITY_INCLUDES_DIR_PATH . 'autoload.php';
 	}
 

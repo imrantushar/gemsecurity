@@ -96,6 +96,20 @@ class Api {
 			],
 		] );
 
+		// StoreEngine SDK insights opt-in (backs the settings License tab).
+		register_rest_route( $ns, '/license/insights', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ Rest\License::class, 'get' ],
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => [ Rest\License::class, 'set' ],
+				'permission_callback' => $perm,
+			],
+		] );
+
 		// Dashboard overview.
 		register_rest_route( $ns, '/dashboard', [
 			'methods'             => 'GET',

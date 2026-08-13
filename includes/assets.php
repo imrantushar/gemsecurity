@@ -54,7 +54,7 @@ class Assets {
 	}
 
 	public function get_scripts_data() {
-		return [
+		$data = [
 			'nonce'            => wp_create_nonce( 'wp_rest' ),
 			'gemsecurity_nonce'      => wp_create_nonce( 'gemsecurity_nonce' ),
 			'rest_url'         => esc_url_raw( rest_url() ),
@@ -76,6 +76,15 @@ class Assets {
 			'pro_features'     => Helper::get_pro_features(),
 			'upgrade_url'      => Helper::upgrade_url(),
 		];
+
+		/**
+		 * Let extensions (the StoreEngine SDK bootstrap, GemSecurity Pro, …)
+		 * append their own keys to the localized `GemSecurityGlobal` payload
+		 * without patching this method.
+		 *
+		 * @param array $data
+		 */
+		return apply_filters( 'gemsecurity/assets/script_data', $data );
 	}
 
 	/**
