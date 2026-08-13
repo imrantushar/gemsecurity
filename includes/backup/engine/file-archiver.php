@@ -67,10 +67,18 @@ class File_Archiver {
 	private static function get_excludes() {
 		$settings = get_option( GEMBACKUP_SETTINGS_NAME, [] );
 		$lines = array_filter( array_map( 'trim', explode( "\n", $settings['exclude_paths'] ?? '' ) ) );
-		$lines[] = 'wp-content/gembackup'; // never include our own backup directory
+		// Never include our own backup directory. Fixed stale name: this was
+		// "wp-content/gembackup" from before the engine was re-homed into
+		// GemSecurity as "gemsecurity-backups" (GemSecurity\Backup::BACKUP_DIR),
+		// so a full backup was silently bundling every previous backup archive
+		// into itself.
+		$lines[] = 'wp-content/gemsecurity-backups';
 		$lines[] = 'wp-content/cache';
 		$lines[] = '.git';
 		$lines[] = 'node_modules';
+		// Never bundle wp-config.php: a "full" backup has no business shipping
+		// DB credentials and secret keys inside itself.
+		$lines[] = 'wp-config.php';
 		return $lines;
 	}
 

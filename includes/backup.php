@@ -63,6 +63,8 @@ class Backup {
 		\GemBackup\Storage\Oauth_Handler::init();
 
 		add_action( 'init', [ __CLASS__, 'handle_secure_download' ] );
+		add_action( 'admin_init', [ __CLASS__, 'maybe_dismiss_nginx_notice' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'maybe_nginx_notice' ] );
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\GemBackup\Cli\Backup_Command::register();
@@ -144,6 +146,72 @@ class Backup {
 		echo '<div class="notice notice-warning"><p>';
 		echo esc_html__( 'GemSecurity now includes backups. Please deactivate the standalone GemBackup plugin to avoid conflicts.', 'gemsecurity' );
 		echo '</p></div>';
+	}
+
+	/**
+	 * Whether the request is being served by nginx. The .htaccess / web.config
+	 * files GemBackup lays down (Installer::create_backup_directory()) protect
+	 * the local backup directory on Apache/LiteSpeed and IIS — nginx doesn't
+	 * read per-directory config files at all, so those files do nothing there
+	 * and a request for a backup archive is served as a static file before
+	 * WordPress ever runs. There's no file this plugin can drop that fixes
+	 * that; the admin has to add a rule to their own server block.
+	 *
+	 * Only warns on a positive "nginx" signature, not merely an unrecognised
+	 * one, so hosts we can't identify aren't nagged over a guess.
+	 *
+	 * @return bool
+	 */
+	private static function server_is_nginx() {
+		$software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( (string) $_SERVER['SERVER_SOFTWARE'] ) : '';
+		return false !== strpos( $software, 'nginx' );
+	}
+
+	/**
+	 * One-time warning on nginx that the local backup directory isn't
+	 * protected the way it is on Apache/IIS, with a snippet to close it.
+	 */
+	public static function maybe_nginx_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		if ( get_option( 'gembackup_nginx_notice_dismissed', false ) ) {
+			return;
+		}
+		if ( ! self::server_is_nginx() ) {
+			return;
+		}
+
+		$dir_name    = trim( str_replace( trailingslashit( WP_CONTENT_DIR ), '', GEMBACKUP_BACKUP_DIR_PATH ), '/' );
+		$dismiss_url = wp_nonce_url(
+			add_query_arg( 'gembackup_dismiss_nginx_notice', '1' ),
+			'gembackup_dismiss_nginx_notice'
+		);
+
+		echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'GemSecurity: local backups are not protected from direct download on nginx.', 'gemsecurity' ) . '</strong></p>';
+		echo '<p>' . sprintf(
+			/* translators: %s: backup directory path, relative to wp-content */
+			esc_html__( 'The .htaccess file GemSecurity uses to block direct access to wp-content/%s only works on Apache/LiteSpeed — nginx does not read it. Add this to your nginx server block to close the gap:', 'gemsecurity' ),
+			esc_html( $dir_name )
+		) . '</p>';
+		echo '<pre style="background:#f0f0f1;padding:10px;overflow:auto;">location ^~ /wp-content/' . esc_html( $dir_name ) . "/ {\n\tdeny all;\n\treturn 404;\n}</pre>";
+		echo '<p><a href="' . esc_url( $dismiss_url ) . '">' . esc_html__( "I've handled this / stop showing this notice", 'gemsecurity' ) . '</a></p>';
+		echo '</div>';
+	}
+
+	/**
+	 * Persist the nginx-notice dismissal.
+	 */
+	public static function maybe_dismiss_nginx_notice() {
+		if ( ! isset( $_GET['gembackup_dismiss_nginx_notice'] ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'gembackup_dismiss_nginx_notice' ) ) {
+			return;
+		}
+		update_option( 'gembackup_nginx_notice_dismissed', true, false );
+		wp_safe_redirect( remove_query_arg( [ 'gembackup_dismiss_nginx_notice', '_wpnonce' ] ) );
+		exit;
 	}
 
 	/**
