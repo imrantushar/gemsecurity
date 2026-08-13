@@ -4,7 +4,7 @@ Tags: security, firewall, two factor authentication, malware scanner, backup
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0-beta1
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
@@ -63,6 +63,20 @@ Yes. Everything described above works in the free plugin. Pro adds active threat
 
 == Changelog ==
 
-= 1.0.0 =
-* Initial release: firewall, hardening, security headers, WAF, login security, custom login URL, CAPTCHA, 2FA, social login, Admin Guard, core/uploads/vulnerability scanning, activity log and dashboard.
-* Backups: manual database/files/full backups, restore, download, daily local schedule and pre-update automatic backups (cloud storage, encryption and migration in Pro).
+= 1.0-beta1 - 13/08/2026 =
+First public beta. GemSecurity is an all-in-one, registry-driven security suite with a single-page React dashboard, live security score and a toggleable module manager.
+
+* Added - Firewall & WAF: SQLi/XSS/LFI/RCE request inspection, IP blocklist (CIDR), request rate limiting, 404-flood throttling, bad-bot and AI-crawler blocking, search-bot verification.
+* Added - Hardening: disable XML-RPC / file editor / author & REST user enumeration, hide WP version, application-password governance, and security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, HSTS, CSP).
+* Added - Login Security: brute-force lockouts, session limits & idle timeout, password policy, custom login URL, admin-login email alerts, magic-link and lockdown.
+* Added - Two-Factor Authentication: app-based TOTP, email OTP and one-time backup codes with per-role enforcement; login CAPTCHA (reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile).
+* Added - Social Login: OAuth sign-in with Google, Facebook, GitHub and Twitter/X.
+* Added - Admin Guard: rogue-admin auto-remediation, administrator whitelist and hidden-admin detection.
+* Added - API & Access hardening: REST API rate limiting, application-password max-age, username-enumeration and generic-login-error protection.
+* Added - Anti-Spam: frictionless bot checks on comments and registration with heuristic filtering.
+* Added - Scanner: WordPress core file-integrity checks against official checksums, uploads malware/PHP-pattern scan, file-change detection, link scanning, and known-vulnerability scanning for core/plugins/themes.
+* Added - Activity Logs & real-time Alerts with retention and CSV export.
+* Added - Backups: manual database / files / full-site backups, restore, download, daily local schedule, retention, exclude paths/tables and pre-update automatic backups.
+* Added - Module manager with a live security score and one-page dashboard.
+
+Active threat defense, virtual patching, geolocation access control, payment-integrity monitoring, incident response, uptime/TLS monitoring, signature malware remediation & quarantine, database-injection scan, file integrity vs WordPress.org, recovery toolkit, and cloud backup storage with encryption & migration are available in GemSecurity Pro.
