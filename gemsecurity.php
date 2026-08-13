@@ -73,6 +73,12 @@ final class GemSecurity {
 		add_action( 'update_option_' . GemSecurity\Modules\Registry::OPTION, [ GemSecurity\Modules\Registry::class, 'flush_state_cache' ] );
 		add_action( 'add_option_' . GemSecurity\Modules\Registry::OPTION, [ GemSecurity\Modules\Registry::class, 'flush_state_cache' ] );
 
+		// Public integration surface for companion plugins (e.g. Academy LMS)
+		// to query module state — always registered, independent of any
+		// specific module's activation, so it's queryable the moment
+		// GemSecurity itself is active.
+		add_filter( 'gemsecurity/module_active', [ GemSecurity\Helper::class, 'is_module_active' ], 10, 2 );
+
 		GemSecurity\Database::init();
 		GemSecurity\Assets::init();
 		GemSecurity\Api::init();

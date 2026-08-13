@@ -433,6 +433,28 @@ class Waf {
 		return false;
 	}
 
+	/**
+	 * Scan an arbitrary string for SQLi/XSS/LFI/RCE signatures, independent
+	 * of the current request. Used by integrations (e.g. the Academy
+	 * content-abuse check) that need to inspect user-supplied text outside
+	 * the normal request-inspection path in protect().
+	 *
+	 * @param string $value
+	 * @return array|false { type, value }
+	 */
+	public function scan_string( $value ) {
+		$value = (string) $value;
+		if ( '' === $value ) {
+			return false;
+		}
+		foreach ( $this->rules() as $type => $pattern ) {
+			if ( preg_match( $pattern, $value ) ) {
+				return [ 'type' => $type, 'value' => $value ];
+			}
+		}
+		return false;
+	}
+
 	private function collect( $arr, &$out ) {
 		foreach ( (array) $arr as $v ) {
 			if ( is_array( $v ) ) {

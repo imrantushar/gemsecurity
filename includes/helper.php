@@ -71,6 +71,37 @@ class Helper {
 	}
 
 	/**
+	 * Backs the public `gemsecurity/module_active` filter — the integration
+	 * surface other plugins (e.g. Academy LMS) use to ask "is GemSecurity
+	 * module X active?" without depending on GemSecurity's internal classes
+	 * or data storage. Registered unconditionally in gemsecurity.php so it's
+	 * queryable any time GemSecurity itself is active, regardless of which
+	 * individual modules are on.
+	 *
+	 * `captcha` is special-cased: it isn't its own Registry module (the
+	 * Captcha class boots as part of the `two-factor` module), but "is
+	 * CAPTCHA protection active" is the semantic an external caller actually
+	 * wants, so this resolves it from the settings that actually govern it.
+	 *
+	 * @param bool   $default
+	 * @param string $id
+	 * @return bool
+	 */
+	public static function is_module_active( $default, $id ) {
+		if ( 'captcha' === $id ) {
+			return self::get_setting( 'captcha_enabled', false ) && \GemSecurity\Modules\Captcha::is_configured();
+		}
+		$all = \GemSecurity\Modules\Registry::all();
+		if ( ! isset( $all[ $id ] ) ) {
+			// Unrecognized id — hand back the caller's own default rather than
+			// asserting "inactive", so a caller passing `true` (to fail open)
+			// isn't silently overridden.
+			return $default;
+		}
+		return \GemSecurity\Modules\Registry::is_active( (string) $id );
+	}
+
+	/**
 	 * Canonical registry of Pro-only features, keyed by the page/section key
 	 * the UI uses. Single source of truth shared by PHP (menu badges + server
 	 * gating) and the React app (nav badges + locked overlays).

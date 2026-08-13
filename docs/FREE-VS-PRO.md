@@ -54,6 +54,9 @@ Legend: ✅ already built in the codebase · 🔨 needs building (from the gap a
 - Manual / basic ban list ✅
 - Email alerts (basic) ✅
 
+### Integrations
+- Public integration API (`gemsecurity/module_active` filter, `LoginSecurity::is_locked_out()`, `Captcha::verify_token()`, `Waf::scan_string()`) — consumed by Academy LMS's own `Academy\Integration\GemSecurity` for brute-force lockout on Academy's login ✅
+
 ---
 
 ## PRO plan
@@ -79,6 +82,9 @@ Legend: ✅ already built in the codebase · 🔨 needs building (from the gap a
 ### Access Control Pro
 - **Geolocation / country access control** — login gate, site 403, per-user location lock ✅
 - Restrict wp-admin by IP allow-list 🔨
+
+### Integrations Pro
+- Academy LMS's `Academy\Integration\GemSecurity` calls into the same public API to add, when GemSecurity Pro is active: WAF content scanning on Q&A/lesson comments, geo-blocking on Academy's public REST routes, enrollment-fraud alerting, AJAX rate limiting ✅
 
 ### Two-Factor Pro
 - **Enforce 2FA by role** ✅

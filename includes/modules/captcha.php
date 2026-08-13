@@ -265,9 +265,26 @@ class Captcha {
 	private function passes() {
 		$p     = $this->provider();
 		$token = isset( $_POST[ $p['field'] ] ) ? sanitize_text_field( wp_unslash( $_POST[ $p['field'] ] ) ) : '';
+		return $this->verify_token( $token );
+	}
+
+	/**
+	 * Verify an explicit token against the configured provider's siteverify
+	 * endpoint. Exposed (not just consumed via $_POST internally) so other
+	 * integrations — e.g. GemSecurity's Academy integration, which receives
+	 * a token via a REST JSON body rather than a classic form POST — can
+	 * reuse the same provider-verification logic instead of duplicating it.
+	 *
+	 * @param string $token
+	 * @return bool
+	 */
+	public function verify_token( $token ) {
+		$token = is_string( $token ) ? $token : '';
 		if ( '' === $token ) {
 			return false;
 		}
+
+		$p = $this->provider();
 
 		$response = wp_remote_post( $p['verify'], [
 			'timeout' => 10,
