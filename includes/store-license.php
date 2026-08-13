@@ -51,13 +51,7 @@ final class StoreLicense {
 		self::$sdk_client = se_license_init( [
 			'package_file'        => GEMSECURITY_PLUGIN_FILE,
 			'package_name'        => 'GemSecurity', // translation removed due to load too early
-			// TODO: replace with the real StoreEngine product id once the
-			// GemSecurity product is created on the store. The SDK hard-fails
-			// (RuntimeException) on a falsy product_id even for free
-			// packages, so this is a non-zero placeholder, not a real id —
-			// it only affects usage-tracking attribution, since `is_free`
-			// keeps license()/update checks from ever calling the server.
-			'product_id'          => 999999,
+			'product_id'          => 427,
 			'is_free'             => true,
 			'slug'                => 'gemsecurity',
 			'basename'            => GEMSECURITY_PLUGIN_BASENAME,
