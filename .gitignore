@@ -4,6 +4,16 @@ node_modules/
 **/*.map
 assets/build/*.txt
 
+# === Vendor: ignore everything except the StoreEngine SDK we ship ===
+# Glob the contents (/vendor/*), not the directory (/vendor/), so the `!`
+# negations below can re-include children. GemSecurity (free) is the sole
+# home of the StoreEngine SDK; Pro consumes the global se_license_init() this
+# copy provides.
+/vendor/*
+!/vendor/storeengine/
+!/vendor/composer/
+composer.phar
+
 # Editors
 .idea
 .vscode

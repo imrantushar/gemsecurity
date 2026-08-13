@@ -1,0 +1,92 @@
+{
+    "name": "storeengine/wordpress-sdk",
+    "description": "Official StoreEngine SDK for WordPress licensing and telemetry insights.",
+    "homepage": "https://storeengine.pro",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
+    "readme": "README.md",
+    "authors": [
+        {
+            "name": "Kodezen Limited",
+            "email": "support@kodezen.com",
+            "role": "Maintainer"
+        },
+        {
+            "name": "Kudratullah",
+            "email": "hi@kudratullah.dev",
+            "role": "Lead Developer"
+        }
+    ],
+    "funding": [
+        {
+            "type": "custom",
+            "url": "https://storeengine.pro"
+        }
+    ],
+    "support": {
+        "source": "https://github.com/imrantushar/storeengine-sdk-for-wordpress",
+        "issues": "https://github.com/imrantushar/storeengine-sdk-for-wordpress/issues"
+    },
+    "keywords": [
+        "storeengine",
+        "wordpress",
+        "plugin",
+        "wordpress-plugin",
+        "theme",
+        "wordpress-theme",
+        "license",
+        "insights",
+        "sdk"
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=7.1"
+    },
+    "autoload": {
+        "files": [
+            "init.php"
+        ]
+    },
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^3.0",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "squizlabs/php_codesniffer": "^3.9",
+        "phpcompatibility/php-compatibility": "^9.3",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "phpstan/extension-installer": "^1.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "scripts": {
+        "phpcs": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpcs -p -s --colors"
+        ],
+        "phpcs-pre-commit": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpcs -s -p -n"
+        ],
+        "phpcbf": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpcbf -p"
+        ],
+        "phpcs:ci": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpcs --standard=phpcompat.xml -p -s --colors"
+        ],
+        "phpstan": "./vendor/bin/phpstan analyse phpstan.neon --memory-limit 2G"
+    },
+    "extra": {
+        "scripts-description": {
+            "phpcs": "Analyze code against the WordPress coding standards with PHP_CodeSniffer",
+            "phpcbf": "Fix coding standards warnings/errors automatically with PHP Code Beautifier",
+            "phpstan": "Analyze code with static analyser"
+        }
+    }
+}

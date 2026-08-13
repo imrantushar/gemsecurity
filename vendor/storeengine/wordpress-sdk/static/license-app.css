@@ -1,0 +1,681 @@
+/* StoreEngine SDK License + Updates panel.
+   Matches the legacy license-form.php visual language:
+   centered cards, soft shadow, system fonts, muted slate palette, 4px radius. */
+
+.se-sdk-app {
+	margin: 20px 0;
+	max-width: 1200px;
+	color: #0C3140;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.se-sdk-app *,
+.se-sdk-app *::before,
+.se-sdk-app *::after {
+	box-sizing: border-box;
+}
+
+.se-sdk-app h2,
+.se-sdk-app h3,
+.se-sdk-app h4,
+.se-sdk-app p {
+	font-family: inherit;
+	color: inherit;
+}
+
+/* Generic link styles — but stay out of the way of links that are styled
+   as buttons (.se-sdk-btn / .se-sdk-btn-secondary), otherwise the link
+   colour overrides the button's white text and the label vanishes. */
+.se-sdk-app a:not(.se-sdk-btn):not(.se-sdk-btn-secondary):not(.se-sdk-btn-danger):not(.se-sdk-btn-ghost) {
+	color: var(--se-sdk-primary-color, #2271b1);
+	text-decoration: none;
+}
+.se-sdk-app a:not(.se-sdk-btn):not(.se-sdk-btn-secondary):not(.se-sdk-btn-danger):not(.se-sdk-btn-ghost):hover {
+	text-decoration: underline;
+}
+
+.se-sdk-loading {
+	padding: 40px;
+	text-align: center;
+	color: #738496;
+	background: #fff;
+	border-radius: 4px;
+	box-shadow: 0 3px 10px rgba(16, 16, 16, 0.05);
+}
+
+/* Toast (top-right) */
+.se-sdk-toast {
+	position: fixed;
+	top: 60px;
+	right: 24px;
+	z-index: 99999;
+	padding: 12px 20px;
+	border-radius: 4px;
+	background: #0C3140;
+	color: #fff;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+	max-width: 360px;
+	font-size: 13px;
+}
+.se-sdk-toast-success { background: #28a745; }
+.se-sdk-toast-error { background: #f02e5e; }
+
+/* ---------- Card ---------- */
+
+.se-sdk-card {
+	background: #fff;
+	border-radius: 4px;
+	box-shadow: 0 3px 10px rgba(16, 16, 16, 0.05);
+	margin-bottom: 20px;
+	overflow: hidden;
+}
+
+.se-sdk-card-body {
+	padding: 32px 48px;
+}
+
+.se-sdk-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 20px 32px;
+	background: #f8fafb;
+	border-bottom: 1px solid #eaeaea;
+	flex-wrap: wrap;
+}
+
+.se-sdk-card-header h2 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: #141A24;
+}
+
+.se-sdk-card-header .se-sdk-card-subtitle {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: #738496;
+	font-weight: 400;
+}
+
+/* ---------- Hero (Update status) ---------- */
+
+.se-sdk-hero {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	padding: 28px 48px;
+	flex-wrap: wrap;
+}
+
+.se-sdk-hero-versions {
+	display: flex;
+	align-items: center;
+	gap: 28px;
+}
+
+.se-sdk-version-block {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 96px;
+}
+
+.se-sdk-version-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #738496;
+	font-weight: 500;
+}
+
+.se-sdk-version-value {
+	font-size: 22px;
+	font-weight: 600;
+	color: #0C3140;
+	font-variant-numeric: tabular-nums;
+}
+
+.se-sdk-version-value.is-latest {
+	color: var(--se-sdk-primary-color, #2271b1);
+}
+
+.se-sdk-hero-arrow {
+	color: #CBD1D7;
+	font-size: 28px;
+	line-height: 1;
+}
+
+.se-sdk-hero-actions {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.se-sdk-checked-at {
+	font-size: 12px;
+	color: #738496;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* ---------- Buttons ---------- */
+
+.se-sdk-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 10px 16px;
+	border-radius: 4px;
+	border: 1px solid transparent;
+	background: var(--se-sdk-primary-color, #2271b1);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+	cursor: pointer;
+	text-decoration: none;
+	transition: opacity 120ms ease, box-shadow 120ms ease;
+	font-family: inherit;
+	white-space: nowrap;
+}
+
+.se-sdk-btn:hover { opacity: 0.92; text-decoration: none; }
+.se-sdk-btn:focus-visible { box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--se-sdk-primary-color, #2271b1); outline: none; }
+.se-sdk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.se-sdk-btn-secondary {
+	background: #fff;
+	color: #0C3140;
+	border-color: #CBD1D7;
+}
+.se-sdk-btn-secondary:hover { background: #f8fafb; opacity: 1; }
+.se-sdk-btn-secondary:focus-visible { box-shadow: 0 0 0 2px var(--se-sdk-primary-color, #2271b1); }
+
+.se-sdk-btn-danger { background: #f02e5e; color: #fff; }
+.se-sdk-btn-danger:focus-visible { box-shadow: 0 0 0 1px #fff, 0 0 0 3px #f02e5e; }
+
+.se-sdk-btn-ghost {
+	background: transparent;
+	color: var(--se-sdk-primary-color, #2271b1);
+	padding: 6px 8px;
+}
+.se-sdk-btn-ghost:hover { background: #f0f4f7; opacity: 1; }
+
+.se-sdk-btn-icon {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+/* ---------- Banner (above hero) ---------- */
+
+.se-sdk-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 18px 32px;
+	border-radius: 4px;
+	margin-bottom: 20px;
+	background: #fff;
+	box-shadow: 0 3px 10px rgba(16, 16, 16, 0.05);
+	flex-wrap: wrap;
+}
+.se-sdk-banner-update {
+	background: linear-gradient(0deg, rgba(34, 113, 177, 0.04), rgba(34, 113, 177, 0.04)), #fff;
+	border-left: 4px solid var(--se-sdk-primary-color, #2271b1);
+}
+.se-sdk-banner-rollback {
+	background: linear-gradient(0deg, rgba(178, 98, 0, 0.04), rgba(178, 98, 0, 0.04)), #fff;
+	border-left: 4px solid #b26200;
+}
+.se-sdk-banner-ok {
+	background: linear-gradient(0deg, rgba(40, 167, 69, 0.04), rgba(40, 167, 69, 0.04)), #fff;
+	border-left: 4px solid #28a745;
+}
+
+.se-sdk-banner-message {
+	flex: 1;
+	min-width: 220px;
+}
+
+.se-sdk-banner-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: #0C3140;
+	margin: 0 0 4px;
+}
+
+.se-sdk-banner-sub {
+	margin: 0;
+	font-size: 13px;
+	color: #738496;
+	max-width: 70ch;
+}
+
+.se-sdk-banner-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+/* ---------- License section (matches old layout) ---------- */
+
+.se-sdk-license-hero {
+	padding: 40px 60px 32px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+	text-align: center;
+}
+
+.se-sdk-license-hero-title {
+	font-size: 20px;
+	font-weight: 500;
+	color: #141A24;
+	margin: 0;
+}
+
+.se-sdk-license-hero-sub {
+	font-size: 14px;
+	color: #738496;
+	margin: 0;
+	max-width: 540px;
+}
+
+.se-sdk-license-form {
+	width: 100%;
+	max-width: 840px;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 16px;
+}
+
+.se-sdk-license-row {
+	display: flex;
+	gap: 16px;
+	width: 100%;
+	align-items: stretch;
+}
+
+.se-sdk-license-input {
+	flex: 1 1 auto;
+	height: 40px;
+	padding: 10px 12px;
+	border-radius: 4px;
+	border: 1px solid #CBD1D7;
+	background: #f9f9f9;
+	color: #0C3140;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 13px;
+	letter-spacing: 0.04em;
+}
+
+.se-sdk-license-input:focus {
+	outline: none;
+	border-color: var(--se-sdk-primary-color, #2271b1);
+	box-shadow: 0 0 0 3px rgba(34, 113, 177, 0.12);
+}
+
+.se-sdk-license-input[readonly] {
+	cursor: default;
+	background: #f0f4f7;
+}
+
+.se-sdk-purchase-prompt {
+	text-align: center;
+	font-size: 13px;
+	color: #738496;
+	margin-top: 8px;
+}
+
+.se-sdk-error {
+	padding: 10px 14px;
+	background: #fcf0f1;
+	border-left: 3px solid #f02e5e;
+	color: #720000;
+	font-size: 13px;
+	border-radius: 0 4px 4px 0;
+}
+
+/* ---------- Stats row (under license form) ---------- */
+
+.se-sdk-stats {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-around;
+	padding: 24px 48px;
+	border-top: 1px solid #eaeaea;
+	background: #fafbfc;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.se-sdk-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 110px;
+}
+
+.se-sdk-stat-label {
+	font-size: 11px;
+	font-weight: 500;
+	color: #738496;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.se-sdk-stat-value {
+	font-size: 14px;
+	font-weight: 600;
+	color: #0C3140;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.se-sdk-stat-value.is-warn { color: #b26200; }
+.se-sdk-stat-value.is-bad { color: #f02e5e; }
+
+.se-sdk-refresh-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 999px;
+	color: var(--se-sdk-primary-color, #2271b1);
+	cursor: pointer;
+	background: transparent;
+	border: none;
+	padding: 0;
+}
+.se-sdk-refresh-link:hover { background: rgba(34, 113, 177, 0.1); }
+.se-sdk-refresh-link:disabled { opacity: 0.5; cursor: not-allowed; }
+.se-sdk-refresh-link svg { width: 12px; height: 12px; }
+
+/* ---------- Pill ---------- */
+
+.se-sdk-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	background: #e9eef3;
+	color: #50575e;
+}
+.se-sdk-pill-ok { background: #d8efdd; color: #14532d; }
+.se-sdk-pill-warn { background: #fce5cc; color: #6b4f00; }
+.se-sdk-pill-danger { background: #fcd8d8; color: #720000; }
+.se-sdk-pill-current { background: var(--se-sdk-primary-color, #2271b1); color: #fff; }
+.se-sdk-pill-released { background: #d8efdd; color: #14532d; }
+.se-sdk-pill-beta-released { background: #fff3cd; color: #6b4f00; }
+.se-sdk-pill-unreleased { background: #e9eef3; color: #50575e; }
+
+/* ---------- Versions table ---------- */
+
+.se-sdk-versions-table-wrap {
+	overflow-x: auto;
+}
+
+.se-sdk-versions-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.se-sdk-versions-table th {
+	text-align: left;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #738496;
+	padding: 10px 16px;
+	border-bottom: 1px solid #eaeaea;
+	background: #fafbfc;
+}
+
+.se-sdk-versions-table td {
+	padding: 14px 16px;
+	border-bottom: 1px solid #f0f0f1;
+	color: #0C3140;
+	vertical-align: middle;
+}
+
+.se-sdk-versions-table tr:last-child td { border-bottom: 0; }
+
+.se-sdk-versions-table tr:hover td { background: #fafbfc; }
+
+.se-sdk-versions-table code {
+	background: #f0f4f7;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	color: #0C3140;
+}
+
+.se-sdk-col-actions {
+	text-align: right;
+	width: 200px;
+	white-space: nowrap;
+}
+
+.se-sdk-col-actions .se-sdk-btn,
+.se-sdk-col-actions .se-sdk-btn-secondary {
+	padding: 6px 12px;
+	font-size: 13px;
+}
+
+.se-sdk-confirm-row td {
+	background: #fffaf2 !important;
+	border-top: 2px solid #b26200;
+}
+
+.se-sdk-confirm-box strong {
+	color: #b26200;
+	font-size: 13px;
+}
+.se-sdk-confirm-box p {
+	margin: 8px 0 12px;
+	color: #5b4400;
+	font-size: 13px;
+}
+.se-sdk-confirm-actions {
+	display: flex;
+	gap: 8px;
+}
+
+/* ---------- Empty / soft-empty state ---------- */
+
+.se-sdk-empty-state {
+	margin: 0;
+	padding: 32px 24px;
+	background: #fafbfc;
+	border: 1px dashed #d6dade;
+	border-radius: 4px;
+	text-align: center;
+}
+.se-sdk-empty-state p { margin: 0 0 8px; }
+.se-sdk-empty-state p:last-child { margin-bottom: 0; }
+.se-sdk-empty-state-soft {
+	background: #fff8ec;
+	border-color: #f0d9a2;
+	color: #6b4f00;
+}
+.se-sdk-empty-state-soft strong { color: #6b4f00; }
+
+/* ---------- Settings card ---------- */
+
+.se-sdk-setting-row {
+	padding: 18px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+.se-sdk-setting-row:first-child { padding-top: 0; }
+.se-sdk-setting-row:last-child { padding-bottom: 0; border-bottom: 0; }
+
+.se-sdk-setting-label {
+	font-size: 14px;
+	font-weight: 500;
+	color: #0C3140;
+	margin: 0 0 4px;
+}
+.se-sdk-setting-help {
+	font-size: 12px;
+	color: #738496;
+	margin: 4px 0 0;
+}
+
+.se-sdk-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.se-sdk-toggle input {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	cursor: pointer;
+}
+
+.se-sdk-window-row {
+	display: flex;
+	gap: 8px;
+	margin-top: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.se-sdk-window-row input {
+	flex: 1 1 240px;
+	height: 36px;
+	padding: 8px 12px;
+	border: 1px solid #CBD1D7;
+	border-radius: 4px;
+	font-size: 13px;
+	font-family: inherit;
+}
+.se-sdk-window-row input:focus {
+	outline: none;
+	border-color: var(--se-sdk-primary-color, #2271b1);
+	box-shadow: 0 0 0 3px rgba(34, 113, 177, 0.12);
+}
+
+/* ---------- Install progress + log ---------- */
+
+.se-sdk-install-progress {
+	margin: 12px 0 0;
+	flex-basis: 100%;
+	width: 100%;
+}
+
+.se-sdk-progress-track {
+	height: 4px;
+	background: #e9eef3;
+	border-radius: 999px;
+	overflow: hidden;
+	position: relative;
+	margin-bottom: 12px;
+}
+
+.se-sdk-progress-fill {
+	position: absolute;
+	top: 0;
+	left: -40%;
+	width: 40%;
+	height: 100%;
+	background: var(--se-sdk-primary-color, #2271b1);
+	border-radius: 999px;
+	animation: se-sdk-progress 1.4s infinite ease-in-out;
+}
+@keyframes se-sdk-progress {
+	0%   { left: -40%; }
+	100% { left: 100%; }
+}
+
+.se-sdk-log-drawer {
+	background: #fafbfc;
+	border: 1px solid #eaeaea;
+	border-radius: 4px;
+	padding: 10px 14px;
+	margin-top: 10px;
+}
+.se-sdk-log-drawer summary {
+	cursor: pointer;
+	font-size: 12px;
+	color: #738496;
+	font-weight: 500;
+	list-style: none;
+}
+.se-sdk-log-drawer summary::-webkit-details-marker { display: none; }
+.se-sdk-log-drawer summary::before {
+	content: "›";
+	display: inline-block;
+	transform: rotate(0deg);
+	transition: transform 120ms ease;
+	margin-right: 6px;
+	font-size: 14px;
+	line-height: 1;
+}
+.se-sdk-log-drawer[open] summary::before { transform: rotate(90deg); }
+
+.se-sdk-log-list {
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 12px;
+	max-height: 240px;
+	overflow-y: auto;
+	color: #0C3140;
+}
+.se-sdk-log-list li {
+	padding: 3px 0;
+	display: flex;
+	gap: 10px;
+}
+.se-sdk-log-level {
+	text-transform: uppercase;
+	font-size: 10px;
+	width: 56px;
+	flex-shrink: 0;
+	color: #738496;
+	font-weight: 600;
+}
+.se-sdk-log-error .se-sdk-log-level { color: #f02e5e; }
+.se-sdk-log-warning .se-sdk-log-level { color: #b26200; }
+.se-sdk-log-msg { word-break: break-word; }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 782px) {
+	.se-sdk-card-body { padding: 24px 20px; }
+	.se-sdk-card-header { padding: 16px 20px; }
+	.se-sdk-hero { padding: 20px; flex-direction: column; align-items: flex-start; }
+	.se-sdk-hero-versions { gap: 16px; flex-wrap: wrap; }
+	.se-sdk-license-hero { padding: 24px 20px; }
+	.se-sdk-license-row { flex-direction: column; }
+	.se-sdk-stats { padding: 20px; gap: 18px; flex-direction: column; align-items: stretch; }
+	.se-sdk-stat { min-width: 0; }
+	.se-sdk-banner { padding: 16px 20px; flex-direction: column; align-items: flex-start; }
+	.se-sdk-banner-actions { width: 100%; flex-wrap: wrap; }
+	.se-sdk-versions-table th,
+	.se-sdk-versions-table td { padding: 10px 12px; }
+	.se-sdk-col-actions { width: auto; }
+}

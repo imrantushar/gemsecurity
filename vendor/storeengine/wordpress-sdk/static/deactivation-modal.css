@@ -1,0 +1,580 @@
+body.se-sdk-deactivation-modal-open {
+	overflow: hidden !important;
+}
+
+.se-sdk-deactivation-modal,
+.se-sdk-deactivation-modal * {
+	box-sizing: border-box;
+}
+
+.se-sdk-deactivation-modal {
+	position: fixed;
+	z-index: 9999999;
+	inset: 0;
+	display: none;
+	background: rgba(0, 0, 0, 0.5);
+	color: var(--se-sdk-muted-color, #787878);
+	font-size: 13px;
+	line-height: 25px;
+}
+
+.se-sdk-deactivation-modal.modal-active {
+	display: block;
+}
+
+.se-sdk-deactivation-modal strong,
+.se-sdk-deactivation-modal b {
+	font-weight: bold;
+}
+
+.se-sdk-deactivation-modal--wrap {
+	position: absolute;
+	inset: 0;
+	z-index: 99;
+	display: block;
+	width: 550px;
+	height: max-content;
+	margin: auto;
+	background: #fff;
+	border-radius: 3px;
+	box-shadow: 0 15px 15px rgba(0, 0, 0, 0.2);
+}
+
+.se-sdk-deactivation-modal--wrap.support {
+	z-index: 999;
+}
+
+.se-sdk-deactivation-modal--wrap .response {
+	position: absolute;
+	inset: 0;
+	display: none;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.8);
+}
+
+.se-sdk-deactivation-modal .response.show {
+	display: block;
+}
+
+.se-sdk-deactivation-modal--wrap .response .wrapper {
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+	justify-content: center;
+	width: calc(100% - 40px);
+	height: calc(100% - 40px);
+	margin: 20px;
+	padding: 40px;
+	text-align: center;
+	background: #fff;
+}
+
+.se-sdk-deactivation-modal .reason .response .wrapper {
+	width: calc(100% - 80px);
+	height: calc(100% - 80px);
+	margin: 40px;
+}
+
+.se-sdk-deactivation-modal .button .dashicons {
+	margin: 4px 0;
+}
+
+.se-sdk-deactivation-modal--header {
+	position: relative;
+	display: block;
+	float: left;
+	width: 100%;
+	padding: 12px 24px;
+	border-bottom: 1px solid var(--se-sdk-border-color, #eee);
+}
+
+.se-sdk-deactivation-modal--header h3 {
+	display: flex;
+	flex: 1 0 0;
+	gap: 8px;
+	align-items: center;
+	margin: 0;
+	color: var(--se-sdk-text-color, #141A24);
+	font-size: 18px;
+	font-style: normal;
+	font-weight: 600;
+	line-height: 28px;
+}
+
+.se-sdk-deactivation-modal--close {
+	position: absolute;
+	top: -15px;
+	right: -15px;
+	width: 30px;
+	height: 30px;
+	padding: 6px;
+	line-height: 0;
+	background: #fff;
+	border-radius: 15px;
+	box-shadow: 0 5px 7px rgba(0, 0, 0, 0.3);
+}
+
+.se-sdk-deactivation-modal--close svg {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	font-size: 18px;
+	user-select: none;
+}
+
+.se-sdk-deactivation-modal--body {
+	position: relative;
+	display: block;
+	float: left;
+	width: 100%;
+	max-height: 58dvh;
+	padding: 32px 32px 12px;
+	overflow: auto;
+}
+
+.se-sdk-deactivation-modal .feedback-message {
+	margin-bottom: 24px;
+	color: var(--se-sdk-text-color, #141A24);
+	font-size: 16px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 24px;
+}
+
+.se-sdk-deactivation-modal .reasons {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0;
+}
+
+.se-sdk-deactivation-modal dd,
+.se-sdk-deactivation-modal li {
+	margin: 0;
+}
+
+.se-sdk-deactivation-modal .reason-input {
+	margin-top: 5px;
+	margin-left: 20px;
+}
+
+.se-sdk-deactivation-modal--footer {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	padding: 12px 32px 32px;
+	border-top: 1px solid var(--se-sdk-border-color, #eee);
+}
+
+.se-sdk-deactivation-modal--open-ticket {
+	margin-bottom: 24px;
+}
+
+.se-sdk-deactivation-modal--open-ticket span {
+	color: var(--se-sdk-muted-color, #738496);
+	font-size: 16px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 24px;
+}
+
+.se-sdk-deactivation-modal--footer a,
+.se-sdk-deactivation-modal--footer button {
+	vertical-align: middle;
+}
+
+.support .se-sdk-deactivation-modal--footer {
+	text-align: left;
+}
+
+.support .se-sdk-deactivation-modal--footer button {
+	float: right;
+	margin-left: 10px;
+}
+
+.se-sdk-deactivation-modal .se-sdk-row {
+	position: relative;
+	display: block;
+	float: left;
+	width: 100%;
+	margin: 4px auto;
+}
+
+.se-sdk-deactivation-modal .mui {
+	display: inline-flex;
+	flex-direction: column;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	vertical-align: top;
+}
+
+.se-sdk-deactivation-modal .se-sdk-row.col-2 {
+	width: calc(50% - 16px);
+}
+
+.se-sdk-deactivation-modal .se-sdk-row.col-3 {
+	width: calc(calc(100% / 3) - 16px);
+}
+
+.se-sdk-deactivation-modal .se-sdk-row.col-left {
+	margin-right: 8px;
+}
+
+.se-sdk-deactivation-modal .se-sdk-row.col-center {
+	margin-right: 8px;
+	margin-left: 8px;
+}
+
+.se-sdk-deactivation-modal .se-sdk-row.col-right {
+	margin-left: 8px;
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	width: 100%;
+	font-size: 1rem;
+	line-height: 1.1875em;
+	cursor: text;
+}
+
+.se-sdk-deactivation-modal .mui label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	padding: 0;
+	color: rgba(0, 0, 0, 0.54);
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1;
+	letter-spacing: 0.00938em;
+	transform: translate(0, 24px) scale(1);
+	transform-origin: top left;
+	transition: color 200ms cubic-bezier(0, 0, 0.2, 1), transform 200ms cubic-bezier(0, 0, 0.2, 1), padding 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.se-sdk-deactivation-modal .mui label.focused {
+	color: var(--se-sdk-primary-color, #008DFF);
+}
+
+.se-sdk-deactivation-modal p:not(.helper-text).mui-error,
+.se-sdk-deactivation-modal div:not(.helper-text).mui-error,
+.se-sdk-deactivation-modal .mui label.mui-error {
+	padding: 5px 10px;
+	color: var(--se-sdk-danger-color, #f02e5e);
+}
+
+.se-sdk-deactivation-modal .mui label.shrink.mui-error {
+	padding: 0;
+}
+
+.se-sdk-deactivation-modal p:not(.helper-text).mui-error,
+.se-sdk-deactivation-modal div:not(.helper-text).mui-error {
+	font-weight: bold;
+	border: 1px solid var(--se-sdk-danger-color, #f02e5e);
+}
+
+.se-sdk-deactivation-modal .mui label.shrink {
+	transform: translate(0, 2px) scale(0.75);
+	transform-origin: top left;
+}
+
+.se-sdk-deactivation-modal .mui label + .se-sdk-form-control {
+	margin-top: 16px;
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control::before {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	content: "\00a0";
+	border-bottom: 1px solid rgba(0, 0, 0, 0.42);
+	pointer-events: none;
+	transition: border-bottom-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control:hover:not(.disabled)::before {
+	border-bottom: 2px solid rgba(0, 0, 0, 0.87);
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control::after {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	content: "";
+	border-bottom: 2px solid var(--se-sdk-primary-color, #008DFF);
+	transform: scaleX(0);
+	pointer-events: none;
+	transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control.focused::after {
+	transform: scaleX(1);
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control.mui-error::after {
+	border-bottom-color: var(--se-sdk-danger-color, #f02e5e);
+	transform: scaleX(1);
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input,
+.se-sdk-deactivation-modal .mui .se-sdk-form-control textarea {
+	display: block;
+	width: 100%;
+	min-width: 0;
+	min-height: auto;
+	height: 1.1875em;
+	margin: 0;
+	padding: 6px 0 7px;
+	color: currentColor;
+	font: inherit;
+	background: none;
+	border: 0;
+	box-sizing: content-box;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input {
+	animation-name: mui-keyframes-auto-fill-cancel;
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input:-moz-autofill,
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input:-webkit-autofill {
+	animation-name: mui-keyframes-auto-fill;
+	animation-duration: 5000s;
+}
+
+@-webkit-keyframes mui-keyframes-auto-fill {
+}
+
+@-webkit-keyframes mui-keyframes-auto-fill-cancel {
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control textarea {
+	height: auto;
+	padding: 0;
+	resize: none;
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input::-webkit-search-decoration,
+.se-sdk-deactivation-modal .mui .se-sdk-form-control textarea::-webkit-search-decoration {
+	-webkit-appearance: none;
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input::placeholder,
+.se-sdk-deactivation-modal .mui .se-sdk-form-control textarea::placeholder {
+	color: currentColor;
+	opacity: 0.42;
+	transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input:focus,
+.se-sdk-deactivation-modal .mui .se-sdk-form-control input:invalid,
+.se-sdk-deactivation-modal .mui .se-sdk-form-control textarea:focus,
+.se-sdk-deactivation-modal .mui .se-sdk-form-control textarea:invalid {
+	outline: 0;
+	box-shadow: none;
+}
+
+.se-sdk-deactivation-modal .reason-input input[type="text"]:focus,
+.se-sdk-deactivation-modal .reason-input textarea:focus {
+	border-color: var(--se-sdk-primary-color, #008DFF);
+	box-shadow: 0 0 0 1px var(--se-sdk-primary-color, #008DFF);
+}
+
+.se-sdk-deactivation-modal .mui .helper-text {
+	min-height: 1em;
+	margin: 8px 0 0;
+	color: rgba(0, 0, 0, 0.54);
+	font-size: 0.75rem;
+	font-weight: 400;
+	line-height: 1em;
+	text-align: left;
+	letter-spacing: 0.03333em;
+}
+
+.se-sdk-deactivation-modal .mui .helper-text.contained {
+	margin: 8px 14px 0;
+}
+
+.se-sdk-deactivation-modal .mui .helper-text.mui-error {
+	position: absolute;
+	right: 0;
+	margin-top: 3px;
+	color: var(--se-sdk-danger-color, #f02e5e);
+	font-size: 11px;
+}
+
+.se-sdk-deactivation-modal--open-ticket a,
+.se-sdk-deactivation-modal--open-ticket button,
+.se-sdk-deactivation-modal .button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 14px;
+	color: #fff;
+	font-size: 14px;
+	font-weight: 500;
+	text-decoration: none;
+	cursor: pointer;
+	background: var(--se-sdk-primary-color, #008DFF);
+	border: 1px solid var(--se-sdk-primary-color, #008DFF);
+	border-radius: 4px;
+}
+
+.se-sdk-deactivation-modal--open-ticket a,
+.se-sdk-deactivation-modal--open-ticket button {
+	gap: 8px;
+	margin-top: 12px;
+	padding: 9px 14px;
+	color: var(--se-sdk-primary-color, #008DFF);
+	background: #fff;
+	border: 1px solid var(--se-sdk-primary-color, #008DFF);
+	border-radius: 9999px;
+}
+
+.se-sdk-deactivation-modal .button:hover,
+.se-sdk-deactivation-modal .button:focus {
+	color: #fff;
+	background: var(--se-sdk-primary-color, #008DFF);
+	border-color: var(--se-sdk-primary-color, #008DFF);
+	box-shadow: inset 1px 1px 12px -1px #00000040;
+}
+
+.se-sdk-deactivation-modal--open-ticket a:hover,
+.se-sdk-deactivation-modal--open-ticket button:hover {
+	color: #fff;
+	background: var(--se-sdk-primary-color, #008DFF);
+}
+
+.se-sdk-deactivation-modal--open-ticket a:hover svg path,
+.se-sdk-deactivation-modal--open-ticket button:hover svg path {
+	fill: #fff;
+}
+
+.se-sdk-deactivation-modal--open-ticket a:focus,
+.se-sdk-deactivation-modal--open-ticket button:focus,
+.se-sdk-deactivation-modal .button:focus {
+	box-shadow: 0 0 0 1px #fff, 0 0 0 3px var(--se-sdk-primary-color, #008DFF);
+}
+
+.se-sdk-deactivation-modal .button.button-link,
+.se-sdk-deactivation-modal button.button-link {
+	color: var(--se-sdk-muted-color, #738496);
+	font-weight: 400;
+	background: transparent;
+	border-color: transparent;
+}
+
+.se-sdk-deactivation-modal .button.button-link:hover,
+.se-sdk-deactivation-modal button.button-link:hover {
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
+}
+
+.se-sdk-deactivation-modal .button.button-link:focus,
+.se-sdk-deactivation-modal button.button-link:focus {
+	box-shadow: 0 0 0 1px #fff, 0 0 0 3px currentColor;
+}
+
+.se-sdk-deactivation-modal .open-ticket-form svg path,
+.se-sdk-deactivation-modal .open-ticket-link svg path {
+	fill: var(--se-sdk-primary-color, #008DFF);
+}
+
+.se-sdk-deactivation-modal .button.disabled,
+.se-sdk-deactivation-modal button.disabled,
+.se-sdk-deactivation-modal .button:disabled,
+.se-sdk-deactivation-modal button:disabled {
+	cursor: not-allowed !important;
+	background: transparent !important;
+	border: 1px solid #c8c8c8;
+	box-shadow: none;
+	color: #7a7a7a;
+}
+
+/* Loading state keeps the original primary colour so the spinner reads
+   as "submitting" rather than "disabled". `.loading` always wins over
+   `.disabled` thanks to ordering below. */
+.se-sdk-deactivation-modal .button.loading,
+.se-sdk-deactivation-modal button.loading,
+.se-sdk-deactivation-modal .button.disabled.loading,
+.se-sdk-deactivation-modal button.disabled.loading,
+.se-sdk-deactivation-modal .button.loading:disabled,
+.se-sdk-deactivation-modal button.loading:disabled {
+	cursor: wait !important;
+	background: var(--se-sdk-primary-color, #008DFF) !important;
+	border: 1px solid var(--se-sdk-primary-color, #008DFF) !important;
+	color: #fff !important;
+	box-shadow: none;
+	opacity: 0.85;
+}
+
+/* Skip & Deactivate is the muted "link" button — keep its look while loading. */
+.se-sdk-deactivation-modal .button.button-link.loading,
+.se-sdk-deactivation-modal button.button-link.loading,
+.se-sdk-deactivation-modal .button.button-link.disabled.loading,
+.se-sdk-deactivation-modal button.button-link.disabled.loading {
+	background: transparent !important;
+	border-color: transparent !important;
+	color: var(--se-sdk-muted-color, #738496) !important;
+}
+
+/* In-button loading spinner shown while feedback is being sent. */
+.se-sdk-deactivation-modal .se-sdk-spinner {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	margin-right: 8px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	vertical-align: -2px;
+	animation: se-sdk-modal-spin 0.7s linear infinite;
+}
+
+.se-sdk-deactivation-modal .se-sdk-spinner-label {
+	vertical-align: middle;
+}
+
+@keyframes se-sdk-modal-spin {
+	to { transform: rotate(360deg); }
+}
+
+.se-sdk-deactivation-modal .button.disabled.button-link,
+.se-sdk-deactivation-modal button.disabled.button-link,
+.se-sdk-deactivation-modal .button.button-link:disabled,
+.se-sdk-deactivation-modal button.button-link:disabled {
+	border-color: transparent !important;
+}
+
+.se-sdk-deactivation-modal input[type="radio"]:checked::before {
+	background-color: var(--se-sdk-primary-color, #008DFF);
+}
+
+.se-sdk-deactivation-modal input[type="checkbox"]:checked::before {
+	content: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M14.83 4.89l1.34.94-5.81 8.38H9.02L5.78 9.67l1.34-1.25 2.57 2.4z' fill='%23008DFF'/%3E%3C/svg%3E");
+}
+
+.se-sdk-deactivation-modal input[type="checkbox"],
+.se-sdk-deactivation-modal input[type="radio"] {
+	border-color: var(--se-sdk-primary-color, #008DFF);
+}
+
+@media (max-width: 768px) {
+	.se-sdk-deactivation-modal--wrap {
+		width: calc(100% - 30px) !important;
+	}
+
+	.se-sdk-deactivation-modal--body {
+		padding: 16px !important;
+	}
+}

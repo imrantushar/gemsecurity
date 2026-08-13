@@ -54,7 +54,14 @@ class Assets {
 	}
 
 	public function get_scripts_data() {
-		return [
+		/**
+		 * Filters the localized React payload. The StoreEngine SDK bridge
+		 * (StoreLicense::add_script_data) hooks this to inject `SeSdk` for the
+		 * settings License tab / insights opt-in.
+		 *
+		 * @param array $data
+		 */
+		return apply_filters( 'gemsecurity/assets/script_data', [
 			'nonce'            => wp_create_nonce( 'wp_rest' ),
 			'gemsecurity_nonce'      => wp_create_nonce( 'gemsecurity_nonce' ),
 			'rest_url'         => esc_url_raw( rest_url() ),
@@ -75,7 +82,7 @@ class Assets {
 			'is_pro'           => Helper::is_pro_active(),
 			'pro_features'     => Helper::get_pro_features(),
 			'upgrade_url'      => Helper::upgrade_url(),
-		];
+		] );
 	}
 
 	/**

@@ -105,10 +105,28 @@ final class GemSecurity {
 	}
 
 	public function load_dependency() {
+		// Composer autoloader — GemSecurity (free) is the sole home of the
+		// StoreEngine SDK (vendor/storeengine/wordpress-sdk); GemSecurity Pro
+		// no longer bundles its own copy and consumes the global
+		// se_license_init() this require makes available. The SDK declares its
+		// bootstrap as a composer `files` autoload entry.
+		$composer_autoload = GEMSECURITY_ROOT_DIR_PATH . 'vendor/autoload.php';
+		if ( file_exists( $composer_autoload ) ) {
+			require_once $composer_autoload;
+		}
+
 		require_once GEMSECURITY_INCLUDES_DIR_PATH . 'autoload.php';
+
+		// License/insights SDK bootstrap (defers se_license_init to plugins_loaded).
+		GemSecurity\StoreLicense::init();
 	}
 
 	public function activate() {
+		// Feeds the SDK's insights/opt-in "days since install" timing.
+		// add_option() is a no-op if it already exists, so re-activation
+		// never resets it.
+		add_option( 'gemsecurity_first_install_time', time(), '', false );
+
 		GemSecurity\Installer::activate();
 		GemSecurity\Backup::activate();
 	}
