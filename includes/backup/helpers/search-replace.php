@@ -36,6 +36,18 @@ class Search_Replace {
 			return $data;
 		}
 		if ( is_object( $data ) ) {
+			// maybe_unserialize_recursive() deliberately calls unserialize()
+			// with allowed_classes => false (avoiding PHP object-injection
+			// gadget chains from arbitrary stored data), so every object
+			// reaching here is a __PHP_Incomplete_Class stand-in — PHP
+			// fatals on any attempt to write a property on one. Leave
+			// objects untouched rather than crash the whole run; only
+			// array/string values get searched into. This is an inherent
+			// tradeoff of not instantiating arbitrary classes, not
+			// something a fix here can avoid.
+			if ( $data instanceof \__PHP_Incomplete_Class ) {
+				return $data;
+			}
 			$vars = get_object_vars( $data );
 			foreach ( $vars as $k => $v ) {
 				$data->$k = self::deep_replace( $v, $from, $to );
@@ -80,7 +92,15 @@ class Search_Replace {
 
 		foreach ( $tables as $entry ) {
 			list( $table, $col, $pk, $label ) = $entry;
-			$rows = $wpdb->get_results( "SELECT {$pk}, {$col} FROM {$table} WHERE {$col} LIKE '%" . esc_sql( $from ) . "%' LIMIT 100000", ARRAY_A );
+			// $table/$col/$pk are fixed identifiers from the hardcoded list
+			// above, not user input, so they can't go through a %s
+			// placeholder — only $from (the LIKE value) needs prepare().
+			// esc_like() additionally escapes LIKE's own %/_ wildcards
+			// within $from itself, so a literal % in the search string
+			// doesn't unintentionally widen the match.
+			$sql  = "SELECT {$pk}, {$col} FROM {$table} WHERE {$col} LIKE %s LIMIT 100000";
+			$like = '%' . $wpdb->esc_like( $from ) . '%';
+			$rows = $wpdb->get_results( $wpdb->prepare( $sql, $like ), ARRAY_A );
 			foreach ( $rows as $row ) {
 				$new_val = self::replace_in_string( $row[ $col ], $from, $to );
 				if ( $new_val !== $row[ $col ] ) {
