@@ -6,6 +6,7 @@ import { Card, Field, Toggle, NumberInput, TextInput, Select, ListInput, Button,
 import { useToast } from '@Components/ui/Toast';
 import BackupSchedule from '@Containers/pages/BackupSchedule';
 import BackupStorage from '@Containers/pages/BackupStorage';
+import LicenseCard from '@Containers/pages/License';
 
 const KEYS = [
 	'logs_retention_days',
@@ -60,6 +61,8 @@ export default function Settings() {
 
 	return (
 		<div className="gs-page">
+			<LicenseCard />
+
 			<Card
 				title={ __( 'General settings', 'gemsecurity' ) }
 				description={ __( 'Plugin-wide preferences. Firewall, login and admin options live on their own pages.', 'gemsecurity' ) }
