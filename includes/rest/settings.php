@@ -308,10 +308,15 @@ class Settings {
 	/**
 	 * Run all incoming values through the schema sanitizers, returning only known keys.
 	 *
+	 * Public: also used by GemSecurity Pro's settings import (Rest::import_settings()
+	 * in gemsecurity-pro), so an imported settings file goes through the same
+	 * type coercion as a normal POST /settings save rather than storing raw
+	 * values straight from the uploaded file.
+	 *
 	 * @param array $incoming
 	 * @return array
 	 */
-	private static function sanitize_all( array $incoming ): array {
+	public static function sanitize_all( array $incoming ): array {
 		$clean = [];
 		foreach ( self::schema() as $key => $type ) {
 			if ( ! array_key_exists( $key, $incoming ) ) {
