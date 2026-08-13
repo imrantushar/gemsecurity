@@ -70,12 +70,10 @@ final class StoreLicense {
 			// which throws for free products; the opt-in is proxied through our
 			// own `gemsecurity/v1` namespace instead.
 			'init_insights'       => true,
-			// TODO: replace with the real StoreEngine store domain + URLs
-			// once the GemSecurity product is live.
-			'license_server'      => 'https://store.gemsecurity.net/',
+			'license_server'      => 'https://store.kodezen.com/',
 			'purchase_url'        => Helper::upgrade_url(),
 			'product_logo'        => defined( 'GEMSECURITY_ASSETS_URI' ) ? GEMSECURITY_ASSETS_URI . 'images/icon_logo.png' : '',
-			'store_dashboard_url' => 'https://store.gemsecurity.net/dashboard/license-keys/',
+			'store_dashboard_url' => 'https://store.kodezen.com/dashboard/license-keys/',
 			'terms_url'           => 'https://gemsecurity.net/terms-and-conditions/',
 			'privacy_policy_url'  => 'https://gemsecurity.net/privacy-policy/',
 			'ticket_recipient'    => 'support@gemsecurity.net',
