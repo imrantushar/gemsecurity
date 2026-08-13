@@ -1,0 +1,23 @@
+{
+    "packages": [
+        {
+            "name": "storeengine/wordpress-sdk",
+            "version": "1.5.2",
+            "version_normalized": "1.5.2.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://codeload.github.com/imrantushar/storeengine-sdk-for-wordpress/zip/907b1f0213a3a4ccb8769695d75897278c19f4fa"
+            },
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "init.php"
+                ]
+            },
+            "install-path": "../storeengine/wordpress-sdk"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}

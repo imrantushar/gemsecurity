@@ -67,10 +67,18 @@ class File_Archiver {
 	private static function get_excludes() {
 		$settings = get_option( GEMBACKUP_SETTINGS_NAME, [] );
 		$lines = array_filter( array_map( 'trim', explode( "\n", $settings['exclude_paths'] ?? '' ) ) );
-		$lines[] = 'wp-content/gembackup'; // never include our own backup directory
+		// Never include our own backup directory. Fixed stale name: this was
+		// "wp-content/gembackup" from before the engine was re-homed into
+		// GemSecurity as "gemsecurity-backups" (GemSecurity\Backup::BACKUP_DIR),
+		// so a full backup was silently bundling every previous backup archive
+		// into itself.
+		$lines[] = 'wp-content/gemsecurity-backups';
 		$lines[] = 'wp-content/cache';
 		$lines[] = '.git';
 		$lines[] = 'node_modules';
+		// Never bundle wp-config.php: a "full" backup has no business shipping
+		// DB credentials and secret keys inside itself.
+		$lines[] = 'wp-config.php';
 		return $lines;
 	}
 
@@ -186,9 +194,76 @@ class File_Archiver {
 		if ( $zip->open( $zip_path ) !== true ) {
 			return new \WP_Error( 'gembackup_zip_open', 'Cannot open backup zip' );
 		}
+
+		// Zip-slip guard: modern PHP/libzip have their own protections
+		// against path-traversal entries, but a restore copies this straight
+		// over live wp-content (Restore_Runner::phase_files()), so this
+		// doesn't rely on exactly what a given host's PHP/libzip build does.
+		// All-or-nothing — a single unsafe entry aborts the whole
+		// extraction rather than silently extracting a "safe" subset, which
+		// could leave a restore in a subtly broken, hard-to-notice state.
+		$unsafe = self::find_unsafe_entry( $zip );
+		if ( null !== $unsafe ) {
+			$zip->close();
+			return new \WP_Error(
+				'gembackup_zip_unsafe',
+				sprintf( 'Backup archive contains an unsafe file path (%s) and was not extracted.', $unsafe )
+			);
+		}
+
 		wp_mkdir_p( $destination );
 		$ok = $zip->extractTo( $destination );
 		$zip->close();
 		return $ok ? true : new \WP_Error( 'gembackup_zip_extract', 'Failed to extract' );
+	}
+
+	/**
+	 * Scan every entry in an open zip for a path that would escape the
+	 * intended extraction directory.
+	 *
+	 * @param \ZipArchive $zip
+	 * @return string|null The first unsafe entry name found, or null if the
+	 *                      whole archive is safe.
+	 */
+	private static function find_unsafe_entry( \ZipArchive $zip ) {
+		for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+			$name = $zip->getNameIndex( $i );
+			if ( false === $name || '' === $name ) {
+				continue;
+			}
+			if ( self::is_unsafe_zip_entry_name( $name ) ) {
+				return $name;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param string $name Raw entry name as stored in the zip.
+	 * @return bool
+	 */
+	private static function is_unsafe_zip_entry_name( $name ) {
+		if ( false !== strpos( $name, "\0" ) ) {
+			return true;
+		}
+		// Absolute paths (POSIX or Windows-drive). Zip entries are always
+		// forward-slash per spec, so any backslash is either an unusual
+		// literal filename character or a smuggled Windows separator —
+		// either way, not worth trying to guess which.
+		if ( '/' === $name[0] || '\\' === $name[0] || preg_match( '#^[a-zA-Z]:#', $name ) ) {
+			return true;
+		}
+		if ( false !== strpos( $name, '\\' ) ) {
+			return true;
+		}
+		// ".." as a whole path segment, not merely a substring — so a real
+		// filename like "file..name.txt" is unaffected, but "../x" or
+		// "a/../../x" is rejected.
+		foreach ( explode( '/', $name ) as $segment ) {
+			if ( '..' === $segment ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

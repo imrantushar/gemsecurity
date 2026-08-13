@@ -47,10 +47,26 @@ class Api {
 		return true;
 	}
 
+	/**
+	 * Whether the module that owns a REST group is currently active. Used to
+	 * skip registering routes for deactivated modules.
+	 *
+	 * @param string $module_id
+	 * @return bool
+	 */
+	private static function module( $module_id ) {
+		return Modules\Registry::is_active( $module_id );
+	}
+
 	public function register_routes() {
 		$ns       = self::NAMESPACE;
 		$perm     = [ __CLASS__, 'permission' ];
 		$pro_perm = [ __CLASS__, 'pro_permission' ];
+
+		/* -------------------------------------------------------------- */
+		/* Core groups — always registered (Dashboard, Modules, Logs,     */
+		/* Settings and the global finder are core modules).              */
+		/* -------------------------------------------------------------- */
 
 		// Settings.
 		register_rest_route( $ns, '/settings', [
@@ -66,6 +82,34 @@ class Api {
 			],
 		] );
 
+		// Module activation manager.
+		register_rest_route( $ns, '/modules', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Modules::class, 'get' ],
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Modules::class, 'save' ],
+				'permission_callback' => $perm,
+			],
+		] );
+
+		// StoreEngine SDK insights opt-in (backs the settings License tab).
+		register_rest_route( $ns, '/license/insights', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ Rest\License::class, 'get' ],
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => [ Rest\License::class, 'set' ],
+				'permission_callback' => $perm,
+			],
+		] );
+
 		// Dashboard overview.
 		register_rest_route( $ns, '/dashboard', [
 			'methods'             => 'GET',
@@ -73,7 +117,7 @@ class Api {
 			'permission_callback' => $perm,
 		] );
 
-		// Logs.
+		// Logs (core "logs" module).
 		register_rest_route( $ns, '/logs', [
 			[
 				'methods'             => 'GET',
@@ -91,139 +135,302 @@ class Api {
 			'callback'            => [ Rest\Logs::class, 'export' ],
 			'permission_callback' => $perm,
 		] );
-
-		// Bot stats + blocklist (Threat Defense — Pro).
-		register_rest_route( $ns, '/bots/stats', [
+		// Compliance: tamper-evident chain verification + summary report.
+		register_rest_route( $ns, '/logs/verify', [
 			'methods'             => 'GET',
-			'callback'            => [ Rest\Bots::class, 'stats' ],
-			'permission_callback' => $pro_perm,
-		] );
-
-		// Add pattern to bot blocklist.
-		register_rest_route( $ns, '/bots/blocklist', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\Bots::class, 'add_to_blocklist' ],
-			'permission_callback' => $pro_perm,
-		] );
-
-		// Administrators (whitelist management + hidden-admin detection).
-		register_rest_route( $ns, '/admins', [
-			'methods'             => 'GET',
-			'callback'            => [ Rest\Admins::class, 'get' ],
+			'callback'            => static function () {
+				return rest_ensure_response( [ 'success' => true ] + Modules\Compliance::verify() );
+			},
 			'permission_callback' => $perm,
 		] );
-		register_rest_route( $ns, '/admins/remove', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\Admins::class, 'remove' ],
+		register_rest_route( $ns, '/logs/report', [
+			'methods'             => 'GET',
+			'callback'            => static function ( $req ) {
+				return rest_ensure_response( [ 'success' => true, 'report' => Modules\Compliance::report( (int) $req->get_param( 'days' ) ?: 30, sanitize_key( (string) $req->get_param( 'framework' ) ) ?: 'general' ) ] );
+			},
 			'permission_callback' => $perm,
 		] );
 
-		// Scanner.
-		register_rest_route( $ns, '/scan', [
-			[
+		// Code & database finder ("grep from the dashboard") — global tool.
+		register_rest_route( $ns, '/search', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Finder::class, 'search' ],
+			'permission_callback' => $perm,
+		] );
+
+		// CSP violation collector — public (browsers post here directly).
+		register_rest_route( $ns, '/csp-report', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Firewall::class, 'csp_report' ],
+			'permission_callback' => '__return_true',
+		] );
+		register_rest_route( $ns, '/csp-violations', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Firewall::class, 'csp_violations' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/file-permissions', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Firewall::class, 'file_permissions' ],
+			'permission_callback' => $perm,
+		] );
+
+		/* -------------------------------------------------------------- */
+		/* Module-owned groups — registered only when their module is on. */
+		/* -------------------------------------------------------------- */
+
+		// Threat Defense (Pro): bans ledger + bot stats/blocklist.
+		if ( self::module( 'threats' ) ) {
+			register_rest_route( $ns, '/bans', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Rest\Bans::class, 'get' ],
+					'permission_callback' => $perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Rest\Bans::class, 'add' ],
+					'permission_callback' => $pro_perm,
+				],
+				[
+					'methods'             => 'DELETE',
+					'callback'            => [ Rest\Bans::class, 'remove' ],
+					'permission_callback' => $pro_perm,
+				],
+			] );
+			register_rest_route( $ns, '/bots/stats', [
 				'methods'             => 'GET',
-				'callback'            => [ Rest\Scanner::class, 'last' ],
+				'callback'            => [ Rest\Bots::class, 'stats' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/bots/blocklist', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Bots::class, 'add_to_blocklist' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/live-traffic', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\ThreatIntel::class, 'rest_traffic' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
+
+		// Virtual patching (Pro) — CVEs currently mitigated on this site.
+		if ( self::module( 'virtual-patch' ) ) {
+			register_rest_route( $ns, '/vpatch', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Vpatch::class, 'get' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
+
+		// Admin Guard: administrator whitelist + hidden-admin detection.
+		if ( self::module( 'admin-guard' ) ) {
+			register_rest_route( $ns, '/admins', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Admins::class, 'get' ],
 				'permission_callback' => $perm,
-			],
+			] );
+			register_rest_route( $ns, '/admins/remove', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Admins::class, 'remove' ],
+				'permission_callback' => $perm,
+			] );
+		}
+
+		// Scanner: integrity/malware scan, baseline, MU-plugin inventory.
+		if ( self::module( 'scanner' ) ) {
+			register_rest_route( $ns, '/scan', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Rest\Scanner::class, 'last' ],
+					'permission_callback' => $perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Rest\Scanner::class, 'run' ],
+					'permission_callback' => $perm,
+				],
+			] );
+			register_rest_route( $ns, '/scan/baseline', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Scanner::class, 'reset_baseline' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/mu-plugins', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\MuPlugins::class, 'get' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/supply-chain', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\SupplyChain::class, 'rest' ],
+				'permission_callback' => $perm,
+			] );
+		}
+
+		// Payment-page script integrity (Pro). The collector is public (browsers
+		// on the checkout page post here); reads/authorise are admin-gated.
+		register_rest_route( $ns, '/payment-scripts', [
 			[
 				'methods'             => 'POST',
-				'callback'            => [ Rest\Scanner::class, 'run' ],
-				'permission_callback' => $perm,
+				'callback'            => [ Rest\PaymentScripts::class, 'ingest' ],
+				'permission_callback' => '__return_true',
+			],
+			[
+				'methods'             => 'GET',
+				'callback'            => [ Rest\PaymentScripts::class, 'get' ],
+				'permission_callback' => $pro_perm,
 			],
 		] );
+		if ( self::module( 'payment-integrity' ) ) {
+			register_rest_route( $ns, '/payment-scripts/authorize', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\PaymentScripts::class, 'authorize' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
 
-		// Two-factor (current user enrollment).
-		register_rest_route( $ns, '/2fa', [
-			'methods'             => 'GET',
-			'callback'            => [ Rest\TwoFactor::class, 'status' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/2fa/setup', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\TwoFactor::class, 'setup' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/2fa/activate', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\TwoFactor::class, 'activate' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/2fa/enable-email', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\TwoFactor::class, 'enable_email' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/2fa/disable', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\TwoFactor::class, 'disable' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/2fa/backup-codes', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\TwoFactor::class, 'backup_codes' ],
-			'permission_callback' => $perm,
-		] );
+		// Incident response (Pro): timeline, quarantine, recovery.
+		if ( self::module( 'incident-response' ) ) {
+			register_rest_route( $ns, '/incident/timeline', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\IncidentResponse::class, 'rest_timeline' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/incident/quarantine', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Modules\IncidentResponse::class, 'rest_quarantine_list' ],
+					'permission_callback' => $pro_perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Modules\IncidentResponse::class, 'rest_quarantine' ],
+					'permission_callback' => $pro_perm,
+				],
+			] );
+			register_rest_route( $ns, '/incident/restore', [
+				'methods'             => 'POST',
+				'callback'            => [ Modules\IncidentResponse::class, 'rest_restore' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/incident/recover', [
+				'methods'             => 'POST',
+				'callback'            => [ Modules\IncidentResponse::class, 'rest_recover' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
+
+		// Two-Factor (current-user enrollment) + login CAPTCHA module.
+		if ( self::module( 'two-factor' ) ) {
+			register_rest_route( $ns, '/2fa', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\TwoFactor::class, 'status' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/2fa/setup', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\TwoFactor::class, 'setup' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/2fa/activate', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\TwoFactor::class, 'activate' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/2fa/enable-email', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\TwoFactor::class, 'enable_email' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/2fa/disable', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\TwoFactor::class, 'disable' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/2fa/backup-codes', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\TwoFactor::class, 'backup_codes' ],
+				'permission_callback' => $perm,
+			] );
+		}
+
+		// Application-password governance (API & Access module).
+		if ( self::module( 'api-hardening' ) ) {
+			register_rest_route( $ns, '/app-passwords', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\AppPasswords::class, 'get' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/app-passwords/revoke', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\AppPasswords::class, 'revoke' ],
+				'permission_callback' => $perm,
+			] );
+		}
 
 		// Social login config (provider list + redirect URI).
-		register_rest_route( $ns, '/social', [
-			'methods'             => 'GET',
-			'callback'            => [ Rest\Social::class, 'config' ],
-			'permission_callback' => $perm,
-		] );
-
-		// Sessions.
-		register_rest_route( $ns, '/sessions', [
-			'methods'             => 'GET',
-			'callback'            => [ Rest\Sessions::class, 'get' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/sessions/revoke-others', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\Sessions::class, 'revoke_others' ],
-			'permission_callback' => $perm,
-		] );
-		register_rest_route( $ns, '/sessions/force-logout', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\Sessions::class, 'force_logout' ],
-			'permission_callback' => $perm,
-		] );
-
-		// Banned IPs (Threat Defense — Pro). Reading the ledger stays open so
-		// the dashboard count works; mutating bans requires Pro.
-		register_rest_route( $ns, '/bans', [
-			[
+		if ( self::module( 'social-login' ) ) {
+			register_rest_route( $ns, '/social', [
 				'methods'             => 'GET',
-				'callback'            => [ Rest\Bans::class, 'get' ],
+				'callback'            => [ Rest\Social::class, 'config' ],
 				'permission_callback' => $perm,
-			],
-			[
+			] );
+		}
+
+		// Sessions (Login Security module).
+		if ( self::module( 'login-security' ) ) {
+			register_rest_route( $ns, '/sessions', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Sessions::class, 'get' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/sessions/revoke-others', [
 				'methods'             => 'POST',
-				'callback'            => [ Rest\Bans::class, 'add' ],
+				'callback'            => [ Rest\Sessions::class, 'revoke_others' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/sessions/force-logout', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Sessions::class, 'force_logout' ],
+				'permission_callback' => $perm,
+			] );
+			// Magic-link recovery (Pro) — issue a one-time login link for a user.
+			register_rest_route( $ns, '/magic-link', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\MagicLink::class, 'issue' ],
 				'permission_callback' => $pro_perm,
-			],
-			[
-				'methods'             => 'DELETE',
-				'callback'            => [ Rest\Bans::class, 'remove' ],
+			] );
+		}
+
+		// Monitoring (Pro).
+		if ( self::module( 'monitoring' ) ) {
+			register_rest_route( $ns, '/monitoring', [
+				'methods'             => 'GET',
+				'callback'            => [ Modules\Monitoring::class, 'rest' ],
 				'permission_callback' => $pro_perm,
-			],
-		] );
+			] );
+		}
 
 		// Geolocation (Pro).
-		register_rest_route( $ns, '/geo/test', [
-			'methods'             => 'GET',
-			'callback'            => [ Rest\Geolocation::class, 'test' ],
-			'permission_callback' => $pro_perm,
-		] );
-		register_rest_route( $ns, '/geo/users', [
-			'methods'             => 'GET',
-			'callback'            => [ Rest\Geolocation::class, 'users' ],
-			'permission_callback' => $pro_perm,
-		] );
-		register_rest_route( $ns, '/geo/user', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\Geolocation::class, 'set_user' ],
-			'permission_callback' => $pro_perm,
-		] );
+		if ( self::module( 'geolocation' ) ) {
+			register_rest_route( $ns, '/geo/test', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Geolocation::class, 'test' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/geo/users', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Geolocation::class, 'users' ],
+				'permission_callback' => $pro_perm,
+			] );
+			register_rest_route( $ns, '/geo/user', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Geolocation::class, 'set_user' ],
+				'permission_callback' => $pro_perm,
+			] );
+		}
 
 		/**
 		 * Let the Pro addon (or any extension) register its own routes under

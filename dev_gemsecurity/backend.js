@@ -5,6 +5,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import store from '@Redux/store';
 import App from '@Containers/App';
 import { ToastProvider } from '@Components/ui/Toast';
+import { applyTheme, getInitialTheme } from '@Utils/theme';
 import './backend.scss';
 
 document.addEventListener( 'DOMContentLoaded', () => {
@@ -14,6 +15,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	}
 
 	container.innerHTML = '';
+	// Set the theme attribute before first paint to avoid a flash of light.
+	applyTheme( getInitialTheme() );
 	const root = createRoot( container );
 	root.render(
 		<Provider store={ store }>

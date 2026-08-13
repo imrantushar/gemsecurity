@@ -7,6 +7,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Installer {
 
+	/**
+	 * Bump whenever the .htaccess/web.config content in create_backup_directory()
+	 * changes, so maybe_upgrade() re-lays the files for sites that already have
+	 * the (older, weaker) versions on disk — not just fresh installs.
+	 */
+	const PROTECTION_VERSION = '2';
+
 	public static function activate() {
 		self::create_backup_directory();
 		self::create_tables();
@@ -37,6 +44,11 @@ class Installer {
 		if ( version_compare( $current, GEMBACKUP_DB_VERSION, '<' ) ) {
 			self::create_tables();
 		}
+		// Idempotent and cheap to call every load (short-circuits once the
+		// stored protection version is current) — re-lays the directory's
+		// .htaccess/web.config for sites that installed before a fix, not just
+		// new installs.
+		self::create_backup_directory();
 		self::schedule_heartbeat();
 	}
 
@@ -59,6 +71,17 @@ class Installer {
 		}
 	}
 
+	/**
+	 * Create the backup directory and lay down its access-control files.
+	 *
+	 * Neither .htaccess nor web.config protects anything on nginx — nginx
+	 * doesn't read per-directory config files at all, so a request for a file
+	 * under this directory is served directly as a static file before
+	 * WordPress/PHP ever runs. See Backup::maybe_nginx_notice() for the
+	 * admin-facing warning that covers that case; this function only handles
+	 * what's actually possible to do with dropped-in files (Apache/LiteSpeed
+	 * via .htaccess, IIS via web.config).
+	 */
 	private static function create_backup_directory() {
 		$dir = GEMBACKUP_BACKUP_DIR_PATH;
 
@@ -66,15 +89,48 @@ class Installer {
 			wp_mkdir_p( $dir );
 		}
 
-		$htaccess = $dir . '.htaccess';
-		if ( ! file_exists( $htaccess ) ) {
-			file_put_contents( $htaccess, "deny from all\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		// Cheap short-circuit: this runs on every request via maybe_upgrade(),
+		// but only touches disk when the on-disk files are from an older,
+		// weaker version.
+		if ( get_option( 'gembackup_dir_protection_version', '0' ) === self::PROTECTION_VERSION ) {
+			return;
 		}
 
-		$index = $dir . 'index.php';
-		if ( ! file_exists( $index ) ) {
-			file_put_contents( $index, "<?php // Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		// Apache 2.4+ / LiteSpeed read `Require all denied`; Apache 2.2 (and
+		// any host without mod_authz_core) falls back to `Deny from all`.
+		// `Options -Indexes` stops a directory listing on hosts that inherited
+		// +Indexes from a parent config.
+		file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions
+			$dir . '.htaccess',
+			"<IfModule mod_authz_core.c>\n" .
+			"\tRequire all denied\n" .
+			"</IfModule>\n" .
+			"<IfModule !mod_authz_core.c>\n" .
+			"\tDeny from all\n" .
+			"</IfModule>\n" .
+			"Options -Indexes\n"
+		);
+
+		// IIS equivalent of the block above. Requires the URL-authorization
+		// module (bundled on most Windows/IIS WordPress hosting); harmless if
+		// the module isn't present — IIS ignores directives it can't process
+		// rather than erroring.
+		file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions
+			$dir . 'web.config',
+			"<configuration>\n" .
+			"\t<system.web>\n" .
+			"\t\t<authorization>\n" .
+			"\t\t\t<deny users=\"*\" />\n" .
+			"\t\t</authorization>\n" .
+			"\t</system.web>\n" .
+			"</configuration>\n"
+		);
+
+		if ( ! file_exists( $dir . 'index.php' ) ) {
+			file_put_contents( $dir . 'index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		}
+
+		update_option( 'gembackup_dir_protection_version', self::PROTECTION_VERSION, false );
 	}
 
 	private static function create_tables() {

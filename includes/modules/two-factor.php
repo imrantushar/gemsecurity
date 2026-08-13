@@ -147,12 +147,18 @@ class TwoFactor {
 	}
 
 	/**
+	 * Verify a submitted second-factor code (TOTP, email OTP, or backup code)
+	 * for a user. Public so other integrations (e.g. GemSecurity's Academy
+	 * integration, which runs its own REST-based challenge instead of the
+	 * wp-login.php interstitial) can reuse the exact same verification logic
+	 * standard login 2FA uses.
+	 *
 	 * @param \WP_User $user
 	 * @param string   $method
 	 * @param string   $code
 	 * @return bool
 	 */
-	private function verify_factor( $user, $method, $code ) {
+	public function verify_factor( $user, $method, $code ) {
 		$code = trim( $code );
 		if ( '' === $code ) {
 			return false;
@@ -180,7 +186,13 @@ class TwoFactor {
 	/* Email OTP                                                           */
 	/* ------------------------------------------------------------------ */
 
-	private function send_email_otp( $user ) {
+	/**
+	 * Send a fresh 6-digit email OTP to a user and store it for verification.
+	 * Public for the same reason as verify_factor() above.
+	 *
+	 * @param \WP_User $user
+	 */
+	public function send_email_otp( $user ) {
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
 		set_transient( self::EMAIL_OTP_PREFIX . $user->ID, $code, 10 * MINUTE_IN_SECONDS );
 

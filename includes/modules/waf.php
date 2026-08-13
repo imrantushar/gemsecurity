@@ -91,6 +91,12 @@ class Waf {
 			}
 		}
 
+		// 2c. Bot governance: block spoofed search crawlers and (optionally)
+		// AI scrapers. A verified good crawler is allowed straight through.
+		if ( $this->check_bots( $ip ) === 'verified' ) {
+			return;
+		}
+
 		// 3. Rate limiting.
 		if ( Helper::get_setting( 'rate_limit_enabled', false ) && $this->rate_limited( $ip ) ) {
 			Logger::log( 'waf_rate_limited', sprintf( 'Rate limit exceeded by %s.', $ip ), Logger::SEVERITY_WARNING, [ 'user_id' => 0, 'ip_address' => $ip ] );
@@ -143,6 +149,149 @@ class Waf {
 			Logger::log( 'waf_404_flood', sprintf( '404 flood from %s (%d in window).', $ip, $count ), Logger::SEVERITY_WARNING, [ 'user_id' => 0, 'ip_address' => $ip ] );
 			BanList::record_strike( $ip, '404 flood' );
 		}
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Bot governance (AI crawlers + verified search bots)                 */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Enforce verified-bot and AI-crawler policy for the current request.
+	 *
+	 * @param string $ip
+	 * @return string|null 'verified' if this is a confirmed good crawler (skip
+	 *                      the rest of the firewall), otherwise null. May not
+	 *                      return at all if it denies the request.
+	 */
+	private function check_bots( $ip ) {
+		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		if ( '' === $ua ) {
+			return null;
+		}
+
+		// Verified-bot enforcement: a request claiming to be a major search
+		// crawler must prove it via reverse DNS, else it's a spoof.
+		if ( Helper::get_setting( 'verify_search_bots', false ) ) {
+			$claim = $this->claimed_search_bot( $ua );
+			if ( $claim ) {
+				if ( $this->is_verified_bot( $ip, $claim ) ) {
+					return 'verified';
+				}
+				Logger::log(
+					'waf_fake_bot',
+					sprintf( 'Spoofed %s user-agent from %s.', $claim['label'], $ip ),
+					Logger::SEVERITY_WARNING,
+					[ 'user_id' => 0, 'ip_address' => $ip, 'context' => [ 'ua' => $ua, 'claimed' => $claim['label'] ] ]
+				);
+				BanList::record_strike( $ip, 'fake ' . $claim['label'] );
+				$this->deny( __( 'Access denied.', 'gemsecurity' ) );
+			}
+		}
+
+		// AI-crawler / scraper control (blocked, not banned — they're unwanted,
+		// not necessarily malicious).
+		if ( Helper::get_setting( 'block_ai_crawlers', false ) && $this->is_ai_crawler( $ua ) ) {
+			Logger::log(
+				'ai_crawler_blocked',
+				sprintf( 'Blocked AI crawler / scraper from %s.', $ip ),
+				Logger::SEVERITY_NOTICE,
+				[ 'user_id' => 0, 'ip_address' => $ip, 'context' => [ 'ua' => $ua ] ]
+			);
+			$this->deny( __( 'Automated access is not permitted.', 'gemsecurity' ), 403 );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Known AI-crawler / scraper user-agent tokens.
+	 *
+	 * @return string[]
+	 */
+	private function ai_crawler_agents() {
+		return apply_filters( 'gemsecurity/ai_crawlers', [
+			'GPTBot', 'ChatGPT-User', 'OAI-SearchBot', 'CCBot', 'ClaudeBot', 'Claude-Web',
+			'anthropic-ai', 'Google-Extended', 'PerplexityBot', 'Perplexity-User', 'Amazonbot',
+			'Bytespider', 'Applebot-Extended', 'cohere-ai', 'Diffbot', 'ImagesiftBot', 'Omgilibot',
+			'Omgili', 'FacebookBot', 'meta-externalagent', 'YouBot', 'DataForSeoBot', 'Timpibot',
+		] );
+	}
+
+	/**
+	 * @param string $ua
+	 * @return bool
+	 */
+	private function is_ai_crawler( $ua ) {
+		foreach ( $this->ai_crawler_agents() as $token ) {
+			if ( false !== stripos( $ua, $token ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * If the UA claims to be a verifiable search crawler, return its rDNS policy.
+	 *
+	 * @param string $ua
+	 * @return array|null { label, token, suffixes[] }
+	 */
+	private function claimed_search_bot( $ua ) {
+		$map = [
+			'googlebot'     => [ 'label' => 'Googlebot', 'suffixes' => [ '.googlebot.com', '.google.com' ] ],
+			'adsbot-google' => [ 'label' => 'Googlebot', 'suffixes' => [ '.googlebot.com', '.google.com' ] ],
+			'bingbot'       => [ 'label' => 'Bingbot', 'suffixes' => [ '.search.msn.com' ] ],
+			'msnbot'        => [ 'label' => 'Bingbot', 'suffixes' => [ '.search.msn.com' ] ],
+			'yandexbot'     => [ 'label' => 'YandexBot', 'suffixes' => [ '.yandex.com', '.yandex.ru', '.yandex.net' ] ],
+			'applebot'      => [ 'label' => 'Applebot', 'suffixes' => [ '.applebot.apple.com' ] ],
+		];
+		// Skip AI variants (e.g. "Applebot-Extended" / "Google-Extended") — those
+		// are governed by the AI-crawler control, not verified-bot enforcement.
+		if ( false !== stripos( $ua, '-extended' ) ) {
+			return null;
+		}
+		foreach ( $map as $token => $info ) {
+			if ( false !== stripos( $ua, $token ) ) {
+				return $info + [ 'token' => $token ];
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Reverse-DNS-verify a claimed search crawler (result cached per IP+bot).
+	 *
+	 * @param string $ip
+	 * @param array  $claim
+	 * @return bool
+	 */
+	private function is_verified_bot( $ip, $claim ) {
+		$key    = 'gemsec_vbot_' . md5( $ip . '|' . $claim['token'] );
+		$cached = get_transient( $key );
+		if ( false !== $cached ) {
+			return '1' === $cached;
+		}
+
+		$verified = false;
+		$host     = @gethostbyaddr( $ip ); // phpcs:ignore -- PTR lookup.
+		if ( $host && $host !== $ip ) {
+			$host_l = strtolower( $host );
+			foreach ( $claim['suffixes'] as $sfx ) {
+				if ( substr( $host_l, -strlen( $sfx ) ) === $sfx ) {
+					// Forward-confirm for IPv4; accept suffix match for IPv6
+					// (gethostbyname is IPv4-only).
+					if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+						$verified = true;
+					} else {
+						$verified = ( @gethostbyname( $host ) === $ip ); // phpcs:ignore
+					}
+					break;
+				}
+			}
+		}
+
+		set_transient( $key, $verified ? '1' : '0', $verified ? DAY_IN_SECONDS : HOUR_IN_SECONDS );
+		return $verified;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -279,6 +428,28 @@ class Waf {
 				if ( preg_match( $pattern, $value ) ) {
 					return [ 'type' => $type, 'value' => $value ];
 				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Scan an arbitrary string for SQLi/XSS/LFI/RCE signatures, independent
+	 * of the current request. Used by integrations (e.g. the Academy
+	 * content-abuse check) that need to inspect user-supplied text outside
+	 * the normal request-inspection path in protect().
+	 *
+	 * @param string $value
+	 * @return array|false { type, value }
+	 */
+	public function scan_string( $value ) {
+		$value = (string) $value;
+		if ( '' === $value ) {
+			return false;
+		}
+		foreach ( $this->rules() as $type => $pattern ) {
+			if ( preg_match( $pattern, $value ) ) {
+				return [ 'type' => $type, 'value' => $value ];
 			}
 		}
 		return false;

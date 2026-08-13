@@ -66,15 +66,43 @@ class Scanner {
 		@set_time_limit( 0 );
 
 		$core_issues = self::scan_core_integrity();
+		$foreign     = self::scan_foreign_files();
 		$suspicious  = array_merge( self::scan_admin_concealment(), self::scan_suspicious_files() );
 
-		$issue_count = count( $core_issues ) + count( $suspicious );
+		// File change watcher — baseline diff + injection heuristics over the
+		// active theme, mu-plugins and drop-ins (and the database). Enabled by
+		// default; catches tampering the core-checksum pass cannot see.
+		$file_watcher = Helper::get_setting( 'file_watcher_enabled', true ) ? FileWatcher::run() : null;
+
+		// Outbound link / malicious-site detector — surfaces external domains the
+		// site links to and flags blocklisted, cloaked or spam-category ones.
+		$link_scan = Helper::get_setting( 'link_scanner_enabled', true ) ? LinkScanner::run() : null;
+
+		// Auto-executed code inventory — mu-plugins, nested payloads and drop-ins.
+		// A compact summary rides the scan result (counted + logged); the full
+		// item list is served by the /mu-plugins endpoint the UI reads.
+		$mu        = \GemSecurity\Security\MuPlugins::inventory();
+		$mu_summary = [
+			'count'            => (int) $mu['count'],
+			'suspicious_count' => (int) $mu['suspicious_count'],
+			'relocated'        => ! empty( $mu['relocated'] ),
+			'has_loader'       => ! empty( $mu['has_loader'] ),
+		];
+
+		$issue_count = count( $core_issues ) + count( $foreign ) + count( $suspicious )
+			+ ( $file_watcher ? (int) $file_watcher['issue_count'] : 0 )
+			+ ( $link_scan ? (int) $link_scan['issue_count'] : 0 )
+			+ $mu_summary['suspicious_count'];
 
 		$result = [
 			'scanned_at'      => current_time( 'mysql' ),
 			'wp_version'      => get_bloginfo( 'version' ),
 			'core_issues'     => $core_issues,
+			'foreign_files'   => $foreign,
 			'suspicious'      => $suspicious,
+			'file_watcher'    => $file_watcher,
+			'link_scan'       => $link_scan,
+			'mu_plugins'      => $mu_summary,
 			'issue_count'     => $issue_count,
 			'status'          => $issue_count > 0 ? 'issues' : 'clean',
 		];
@@ -91,13 +119,19 @@ class Scanner {
 		$result = self::run();
 		update_option( self::RESULT_OPTION, $result, false );
 
+		$fw = $result['file_watcher'] ?? null;
 		Logger::log(
 			'scan_completed',
 			sprintf(
-				'Security scan finished — %d issue(s) found (%d core, %d suspicious file(s)).',
+				'Security scan finished — %d issue(s) found (%d core, %d foreign file(s), %d suspicious file(s), %d changed file(s), %d injection(s), %d mu-plugin/drop-in, %d flagged link domain(s)).',
 				$result['issue_count'],
 				count( $result['core_issues'] ),
-				count( $result['suspicious'] )
+				count( $result['foreign_files'] ),
+				count( $result['suspicious'] ),
+				$fw ? (int) $fw['change_count'] : 0,
+				$fw ? (int) $fw['injection_count'] : 0,
+				(int) ( $result['mu_plugins']['suspicious_count'] ?? 0 ),
+				(int) ( $result['link_scan']['flagged_count'] ?? 0 )
 			),
 			$result['issue_count'] > 0 ? Logger::SEVERITY_WARNING : Logger::SEVERITY_INFO
 		);
@@ -118,22 +152,35 @@ class Scanner {
 	/* --------------------------------------------------------------------- */
 
 	/**
-	 * @return array List of { file, issue }.
+	 * The official core file → md5 manifest for this exact version, memoised for
+	 * the request. Keys are ABSPATH-relative paths with forward slashes.
+	 *
+	 * @return array<string,string>
 	 */
-	private static function scan_core_integrity() {
+	private static function core_checksums() {
+		static $cache = null;
+		if ( null !== $cache ) {
+			return $cache;
+		}
+
 		require_once ABSPATH . 'wp-admin/includes/update.php';
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 
-		$version  = get_bloginfo( 'version' );
-		$locale   = get_locale();
-		$checksums = function_exists( 'get_core_checksums' ) ? get_core_checksums( $version, $locale ) : false;
-
+		$version   = get_bloginfo( 'version' );
+		$checksums = function_exists( 'get_core_checksums' ) ? get_core_checksums( $version, get_locale() ) : false;
 		if ( empty( $checksums ) || ! is_array( $checksums ) ) {
-			// Try the en_US fallback.
 			$checksums = function_exists( 'get_core_checksums' ) ? get_core_checksums( $version, 'en_US' ) : false;
 		}
 
-		if ( empty( $checksums ) || ! is_array( $checksums ) ) {
+		return $cache = ( is_array( $checksums ) ? $checksums : [] );
+	}
+
+	/**
+	 * @return array List of { file, issue }.
+	 */
+	private static function scan_core_integrity() {
+		$checksums = self::core_checksums();
+		if ( empty( $checksums ) ) {
 			return [];
 		}
 
@@ -157,6 +204,146 @@ class Scanner {
 		}
 
 		return $issues;
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Foreign / unexpected files                                             */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Detect files that do not belong to WordPress: executable files present in
+	 * the core directories (wp-admin, wp-includes) or the site root that are NOT
+	 * part of the official release, and auto-loaded plugin files that hide from
+	 * the Plugins screen. The core-integrity pass above only checks that KNOWN
+	 * core files are unmodified; it cannot see EXTRA files dropped alongside them
+	 * — which is exactly where a disguised implant like a fake "wp-core-updater"
+	 * lives.
+	 *
+	 * @return array List of { file, reason, severity }.
+	 */
+	private static function scan_foreign_files() {
+		return array_merge( self::scan_core_extras(), self::scan_hidden_plugins() );
+	}
+
+	/**
+	 * Executable files sitting inside the core directories (or the site root)
+	 * that are not in the official checksum manifest for this version.
+	 *
+	 * @return array
+	 */
+	private static function scan_core_extras() {
+		$checksums = self::core_checksums();
+		if ( empty( $checksums ) ) {
+			return []; // Without the manifest we cannot tell core from foreign.
+		}
+
+		$exec = [ 'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'inc', 'phar' ];
+		$findings = [];
+		$count    = 0;
+
+		// wp-admin and wp-includes must be 100% core — anything executable there
+		// that is not in the manifest is a high-confidence implant.
+		foreach ( [ 'wp-admin', 'wp-includes' ] as $dir ) {
+			$root = ABSPATH . $dir;
+			if ( ! is_dir( $root ) ) {
+				continue;
+			}
+			try {
+				$it = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $root, \FilesystemIterator::SKIP_DOTS ) );
+			} catch ( \Exception $e ) {
+				continue;
+			}
+			foreach ( $it as $file ) {
+				if ( $count >= 200 ) {
+					break 2;
+				}
+				if ( ! $file->isFile() || ! in_array( strtolower( $file->getExtension() ), $exec, true ) ) {
+					continue;
+				}
+				$rel = str_replace( '\\', '/', str_replace( ABSPATH, '', $file->getPathname() ) );
+				if ( ! isset( $checksums[ $rel ] ) ) {
+					$findings[] = [
+						'file'     => $rel,
+						'reason'   => __( 'Executable file inside a WordPress core directory that is not part of the official release — a disguised implant hides here.', 'gemsecurity' ),
+						'severity' => 'critical',
+					];
+					$count++;
+				}
+			}
+		}
+
+		// Top-level PHP in the site root (non-recursive). wp-config.php is the one
+		// legitimate non-manifest root PHP file.
+		$allow_root = [ 'wp-config.php' => true ];
+		foreach ( (array) glob( ABSPATH . '*.php' ) as $path ) {
+			$rel = str_replace( '\\', '/', str_replace( ABSPATH, '', $path ) );
+			if ( isset( $checksums[ $rel ] ) || isset( $allow_root[ $rel ] ) ) {
+				continue;
+			}
+			$findings[] = [
+				'file'     => $rel,
+				'reason'   => __( 'Unexpected PHP file in the WordPress root — not part of the official release.', 'gemsecurity' ),
+				'severity' => 'critical',
+			];
+			if ( ++$count >= 200 ) {
+				break;
+			}
+		}
+
+		return $findings;
+	}
+
+	/**
+	 * Plugin files that run but hide from the Plugins screen: an entry in
+	 * active_plugins with no corresponding header (so it never lists), and loose
+	 * top-level PHP files in the plugins folder that are not registered plugins.
+	 * This is the exact concealment used by disguised droppers.
+	 *
+	 * @return array
+	 */
+	private static function scan_hidden_plugins() {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+		$findings = [];
+		$listed   = array_flip( array_keys( get_plugins() ) );
+
+		$active = (array) get_option( 'active_plugins', [] );
+		if ( is_multisite() ) {
+			$active = array_merge( $active, array_keys( (array) get_site_option( 'active_sitewide_plugins', [] ) ) );
+		}
+
+		$flagged = [];
+		foreach ( array_unique( $active ) as $plugin ) {
+			if ( ! isset( $listed[ $plugin ] ) ) {
+				$rel             = 'wp-content/plugins/' . $plugin;
+				$flagged[ $rel ] = true;
+				$findings[]      = [
+					'file'     => $rel,
+					'reason'   => __( 'Active plugin that does not appear on the Plugins screen — an auto-loaded file concealing itself (classic malware behaviour).', 'gemsecurity' ),
+					'severity' => 'critical',
+				];
+			}
+		}
+
+		// Loose *.php directly in the plugins folder that WordPress does not
+		// recognise as a plugin (no header) — a favourite dropper location.
+		foreach ( (array) glob( WP_PLUGIN_DIR . '/*.php' ) as $path ) {
+			$base = basename( $path );
+			if ( isset( $listed[ $base ] ) ) {
+				continue; // A legitimate single-file plugin (has a header).
+			}
+			$rel = 'wp-content/plugins/' . $base;
+			if ( isset( $flagged[ $rel ] ) ) {
+				continue;
+			}
+			$findings[] = [
+				'file'     => $rel,
+				'reason'   => __( 'Loose PHP file in the plugins folder that is not a registered plugin — review it; disguised droppers live here.', 'gemsecurity' ),
+				'severity' => 'warning',
+			];
+		}
+
+		return $findings;
 	}
 
 	/* --------------------------------------------------------------------- */

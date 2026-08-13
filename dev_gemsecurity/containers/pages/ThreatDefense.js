@@ -11,7 +11,38 @@ const KEYS = [
 	'throttle_404_enabled', 'throttle_404_max', 'throttle_404_window',
 	'block_bad_bots', 'block_empty_ua', 'bot_blocklist', 'mu_loader_enabled',
 	'autoban_enabled', 'autoban_threshold', 'autoban_window', 'autoban_duration',
+	'anomaly_detection_enabled', 'anomaly_threshold',
+	'credential_stuffing_enabled', 'credential_stuffing_threshold',
+	'live_traffic_enabled',
 ];
+
+function LiveTraffic() {
+	const [ rows, setRows ] = useState( null );
+	const load = useCallback( () => {
+		api.get( 'live-traffic' ).then( ( r ) => setRows( r.data.items ) ).catch( () => setRows( [] ) );
+	}, [] );
+	useEffect( () => {
+		load();
+		const t = setInterval( load, 5000 );
+		return () => clearInterval( t );
+	}, [ load ] );
+	return (
+		<Card title={ __( 'Live traffic', 'gemsecurity' ) } description={ __( 'Recent front-end requests (refreshes every 5s). Enable “Live traffic” above to populate.', 'gemsecurity' ) }>
+			{ ! rows || rows.length === 0 ? (
+				<p className="gs-muted">{ __( 'No traffic captured yet.', 'gemsecurity' ) }</p>
+			) : (
+				<table className="gs-table">
+					<thead><tr><th>{ __( 'Time', 'gemsecurity' ) }</th><th>{ __( 'IP', 'gemsecurity' ) }</th><th>{ __( 'Method', 'gemsecurity' ) }</th><th>{ __( 'URI', 'gemsecurity' ) }</th></tr></thead>
+					<tbody>
+						{ rows.slice( 0, 40 ).map( ( r, i ) => (
+							<tr key={ i }><td className="gs-nowrap">{ r.time }</td><td className="gs-nowrap">{ r.ip }</td><td className="gs-nowrap">{ r.method }</td><td><code>{ r.uri }</code></td></tr>
+						) ) }
+					</tbody>
+				</table>
+			) }
+		</Card>
+	);
+}
 
 function BannedIps() {
 	const toast = useToast();
@@ -260,10 +291,45 @@ export default function ThreatDefense() {
 				onPatternsChange={ ( v ) => { setField( 'bot_blocklist', v ); save( { bot_blocklist: v } ); } }
 			/>
 
+			<Card
+				title={ __( 'Advanced detection', 'gemsecurity' ) }
+				description={ __( 'Behavioral scoring and credential-stuffing detection catch attacks that fixed rules and volumetric bans miss.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Behavioral anomaly detection', 'gemsecurity' ) }
+					description={ __( 'Score each request for suspicious shape (bad UA, huge payloads, encoded exploits) and log anomalies.', 'gemsecurity' ) }
+					checked={ form.anomaly_detection_enabled }
+					onChange={ ( v ) => setField( 'anomaly_detection_enabled', v ) }
+				/>
+				{ form.anomaly_detection_enabled && (
+					<Field label={ __( 'Anomaly score threshold', 'gemsecurity' ) }>
+						<NumberInput min="2" value={ form.anomaly_threshold ?? 4 } onChange={ ( e ) => setField( 'anomaly_threshold', Number( e.target.value ) ) } />
+					</Field>
+				) }
+				<Toggle
+					label={ __( 'Credential-stuffing detection', 'gemsecurity' ) }
+					description={ __( 'Ban an IP that tries many different usernames in a short window.', 'gemsecurity' ) }
+					checked={ form.credential_stuffing_enabled }
+					onChange={ ( v ) => setField( 'credential_stuffing_enabled', v ) }
+				/>
+				{ form.credential_stuffing_enabled && (
+					<Field label={ __( 'Distinct usernames before ban', 'gemsecurity' ) }>
+						<NumberInput min="2" value={ form.credential_stuffing_threshold ?? 5 } onChange={ ( e ) => setField( 'credential_stuffing_threshold', Number( e.target.value ) ) } />
+					</Field>
+				) }
+				<Toggle
+					label={ __( 'Live traffic monitor', 'gemsecurity' ) }
+					description={ __( 'Record recent front-end requests for real-time triage (adds a small write per request).', 'gemsecurity' ) }
+					checked={ form.live_traffic_enabled }
+					onChange={ ( v ) => setField( 'live_traffic_enabled', v ) }
+				/>
+			</Card>
+
 			<div className="gs-savebar">
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
 			</div>
 
+			{ form.live_traffic_enabled && <LiveTraffic /> }
 			<BannedIps />
 		</div>
 	);

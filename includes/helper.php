@@ -71,6 +71,37 @@ class Helper {
 	}
 
 	/**
+	 * Backs the public `gemsecurity/module_active` filter — the integration
+	 * surface other plugins (e.g. Academy LMS) use to ask "is GemSecurity
+	 * module X active?" without depending on GemSecurity's internal classes
+	 * or data storage. Registered unconditionally in gemsecurity.php so it's
+	 * queryable any time GemSecurity itself is active, regardless of which
+	 * individual modules are on.
+	 *
+	 * `captcha` is special-cased: it isn't its own Registry module (the
+	 * Captcha class boots as part of the `two-factor` module), but "is
+	 * CAPTCHA protection active" is the semantic an external caller actually
+	 * wants, so this resolves it from the settings that actually govern it.
+	 *
+	 * @param bool   $default
+	 * @param string $id
+	 * @return bool
+	 */
+	public static function is_module_active( $default, $id ) {
+		if ( 'captcha' === $id ) {
+			return self::get_setting( 'captcha_enabled', false ) && \GemSecurity\Modules\Captcha::is_configured();
+		}
+		$all = \GemSecurity\Modules\Registry::all();
+		if ( ! isset( $all[ $id ] ) ) {
+			// Unrecognized id — hand back the caller's own default rather than
+			// asserting "inactive", so a caller passing `true` (to fail open)
+			// isn't silently overridden.
+			return $default;
+		}
+		return \GemSecurity\Modules\Registry::is_active( (string) $id );
+	}
+
+	/**
 	 * Canonical registry of Pro-only features, keyed by the page/section key
 	 * the UI uses. Single source of truth shared by PHP (menu badges + server
 	 * gating) and the React app (nav badges + locked overlays).
@@ -131,98 +162,26 @@ class Helper {
 	}
 
 	/**
-	 * Admin menu definition — filterable.
+	 * Admin menu definition — derived from the module registry so only visible
+	 * modules produce a menu item. Core and Pro modules are always visible (Pro
+	 * as a locked upsell); other modules appear only when active. Shape is kept
+	 * stable (page_slug => [parent_slug,title,capability,is_pro]) for menu.php
+	 * and the localized React payload.
 	 */
 	public static function get_admin_menu_list() {
 		$menu = [];
 
-		$menu[ GEMSECURITY_PLUGIN_SLUG ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Dashboard', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-firewall' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Firewall', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-threats' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Threat Defense', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-login-security' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Login Security', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-two-factor' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Two-Factor', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-social-login' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Social Login', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-geolocation' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Geolocation', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-admin-guard' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Admin Guard', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-scanner' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Scanner', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-malware' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Malware Scan', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-logs' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Logs', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-backup' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Backup', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-pro-tools' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Pro Tools', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-			'is_pro'      => true,
-		];
-
-		$menu[ GEMSECURITY_PLUGIN_SLUG . '-settings' ] = [
-			'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-			'title'       => __( 'Settings', 'gemsecurity' ),
-			'capability'  => 'manage_options',
-		];
+		foreach ( \GemSecurity\Modules\Registry::all() as $id => $module ) {
+			if ( ! \GemSecurity\Modules\Registry::is_visible( $id ) ) {
+				continue;
+			}
+			$menu[ $module['page_slug'] ] = [
+				'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
+				'title'       => $module['title'],
+				'capability'  => 'manage_options',
+				'is_pro'      => $module['is_pro'],
+			];
+		}
 
 		return apply_filters( 'gemsecurity/admin_menu_list', $menu );
 	}
@@ -260,25 +219,148 @@ class Helper {
 	/**
 	 * Get the visitor's IP address.
 	 *
+	 * Forwarding headers (CF-Connecting-IP, X-Forwarded-For, X-Real-IP) are
+	 * trivially spoofable by any client — trusting them unconditionally lets
+	 * an attacker rotate their apparent IP on every request, bypassing login
+	 * lockouts, IP bans and rate limits. They're only honoured when the
+	 * connection is actually arriving from a proxy/CDN the site owner has
+	 * explicitly trusted (Cloudflare, or a custom "trusted_proxies" list);
+	 * every other request resolves to the raw REMOTE_ADDR, which cannot be
+	 * forged without controlling that network hop.
+	 *
 	 * @return string
 	 */
 	public static function get_ip_address() {
-		$keys = [
-			'HTTP_CF_CONNECTING_IP',
-			'HTTP_X_FORWARDED_FOR',
-			'HTTP_X_REAL_IP',
-			'REMOTE_ADDR',
-		];
+		$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? trim( (string) $_SERVER['REMOTE_ADDR'] ) : '';
+		$remote_addr = filter_var( $remote_addr, FILTER_VALIDATE_IP ) ? $remote_addr : '0.0.0.0';
 
-		foreach ( $keys as $key ) {
-			if ( ! empty( $_SERVER[ $key ] ) ) {
-				$ip = trim( explode( ',', sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) ) )[0] );
-				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-					return $ip;
+		if ( ! self::is_trusted_proxy( $remote_addr ) ) {
+			return $remote_addr;
+		}
+
+		foreach ( [ 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP' ] as $key ) {
+			if ( empty( $_SERVER[ $key ] ) ) {
+				continue;
+			}
+			$chain = explode( ',', sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) ) );
+
+			// A forwarding header can carry a multi-hop chain
+			// ("client, proxy1, proxy2, ..."). Walk it right-to-left,
+			// skipping any entry that is itself a trusted proxy, and take
+			// the first one that isn't — never trust the leftmost entry
+			// blindly, since a client can prepend a fake IP before the
+			// chain reaches your real proxy.
+			for ( $i = count( $chain ) - 1; $i >= 0; $i-- ) {
+				$candidate = trim( $chain[ $i ] );
+				if ( ! filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
+					continue;
+				}
+				if ( self::is_trusted_proxy( $candidate ) ) {
+					continue;
+				}
+				return $candidate;
+			}
+		}
+
+		// Trusted proxy, but no usable header value — fall back to the
+		// connection IP (the proxy's own address) rather than guessing.
+		return $remote_addr;
+	}
+
+	/**
+	 * Whether $ip is a proxy/CDN edge this site has explicitly chosen to
+	 * trust for forwarded-IP headers.
+	 *
+	 * @param string $ip
+	 * @return bool
+	 */
+	private static function is_trusted_proxy( $ip ) {
+		if ( '' === $ip || '0.0.0.0' === $ip ) {
+			return false;
+		}
+
+		if ( self::get_setting( 'trust_cloudflare_ip', false ) ) {
+			foreach ( self::cloudflare_ip_ranges() as $cidr ) {
+				if ( self::ip_in_cidr( $ip, $cidr ) ) {
+					return true;
 				}
 			}
 		}
 
-		return '0.0.0.0';
+		foreach ( (array) self::get_setting( 'trusted_proxies', [] ) as $cidr ) {
+			$cidr = trim( (string) $cidr );
+			if ( '' !== $cidr && self::ip_in_cidr( $ip, $cidr ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Cloudflare's published edge IP ranges (https://www.cloudflare.com/ips/).
+	 * Filterable so a site can correct/update the list without waiting on a
+	 * plugin release if Cloudflare ever changes it.
+	 *
+	 * @return string[]
+	 */
+	private static function cloudflare_ip_ranges() {
+		static $ranges = null;
+		if ( null === $ranges ) {
+			$ranges = apply_filters( 'gemsecurity/cloudflare_ip_ranges', [
+				// IPv4.
+				'173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
+				'141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
+				'197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+				'104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+				// IPv6.
+				'2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32',
+				'2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32',
+			] );
+		}
+		return $ranges;
+	}
+
+	/**
+	 * Whether $ip (IPv4 or IPv6) falls inside $cidr. A bare IP (no "/bits")
+	 * is treated as an exact match.
+	 *
+	 * @param string $ip
+	 * @param string $cidr
+	 * @return bool
+	 */
+	private static function ip_in_cidr( $ip, $cidr ) {
+		$parts  = explode( '/', $cidr, 2 );
+		$subnet = $parts[0];
+
+		$ip_bin     = @inet_pton( $ip );
+		$subnet_bin = @inet_pton( $subnet );
+		// False on invalid input; family mismatch (IPv4 vs IPv6) shows up as
+		// different packed lengths — both are simply "no match".
+		if ( false === $ip_bin || false === $subnet_bin || strlen( $ip_bin ) !== strlen( $subnet_bin ) ) {
+			return false;
+		}
+
+		$max_bits = strlen( $ip_bin ) * 8;
+		$bits     = isset( $parts[1] ) ? (int) $parts[1] : $max_bits;
+		if ( $bits < 0 || $bits > $max_bits ) {
+			return false;
+		}
+		if ( 0 === $bits ) {
+			return true; // 0.0.0.0/0 or ::/0 — matches everything.
+		}
+
+		$full_bytes = intdiv( $bits, 8 );
+		if ( $full_bytes > 0 && substr( $ip_bin, 0, $full_bytes ) !== substr( $subnet_bin, 0, $full_bytes ) ) {
+			return false;
+		}
+
+		$remaining_bits = $bits % 8;
+		if ( 0 === $remaining_bits ) {
+			return true;
+		}
+
+		$mask = chr( ( 0xFF << ( 8 - $remaining_bits ) ) & 0xFF );
+		return ( $ip_bin[ $full_bytes ] & $mask ) === ( $subnet_bin[ $full_bytes ] & $mask );
 	}
 }

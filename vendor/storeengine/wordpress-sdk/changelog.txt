@@ -1,0 +1,100 @@
+*** Changelog ***
+
+= 1.5.2 - 26-05-2026 =
+* Fixed manual install / rollback always re-installing the currently-installed version instead of the requested one. `SE_License_SDK_Client::request()` was building the outgoing body with `array_merge( $args['body'], [ ..., 'version' => $this->getProjectVersion(), ... ] )`, and because `array_merge()` lets the later array win on duplicate keys, any caller that put `version` in the body had it silently clobbered by the currently-installed plugin version. The `/software/get-package` proxy in `SE_License_SDK_Rest_API::resolve_package_url()` does exactly that — it sends `version` as the *target* version to fetch the zip for. So every rollback/manual-install request effectively asked the server for the currently-installed version, downloaded that zip, re-installed it on top of itself, and reported success without any actual version change.
+* Swapped the merge order so caller-supplied body fields win over auto-added defaults. Matches the precedence the `license` field already used (via `if ( empty( $body['license'] ) )` guard).
+* Added `upgrader_source_selection` filter in `SE_License_SDK_Install_Job::install_from_url()` that renames the working-dir source folder to match the host plugin's slug before `WP_Upgrader::install_package()` derives the destination. Protects against legitimate misnamed-folder uploads (older deployment uploads predating the upload-time `versions-controller.php` folder-name normalization) which would otherwise install into a sibling directory instead of the active plugin folder.
+* Added deactivate-before-install in `install_from_url()` mirroring `Plugin_Upgrader::deactivate_plugin_before_upgrade()` so an actively-loaded plugin file is not held open during the overwrite. Avoids the silent "install reported success but nothing actually changed" symptom on Windows where the running PHP file cannot be replaced.
+* Restored Manage License button text visibility — generic `.se-sdk-app a` link rule no longer overrides `.se-sdk-btn` button text colour (previously turned the white label into the same primary blue as the background).
+
+= 1.5.1 - 26-05-2026 =
+* Fixed `Fatal error: Class "SE_License_SDK_Update_State" not found` that could occur on hosts where multiple SDK copies coexist (Strauss-prefixed vendor folders, classmap-authoritative composer dumps, custom autoloaders). The SDK's own `spl_autoload_register` resolves classes relative to whichever plugin's `init.php` registered the version first — which is not always the plugin that loaded `SE_License_SDK_Updater.php`. The 1.5.0 release added three new classes (`Update_State`, `Install_Job`, `Upgrader_Skin`) and the autoload mismatch could lookup them in the wrong vendor folder.
+* Added a defensive `require_once` for `SE_License_SDK_Update_State` before its two callsites in `SE_License_SDK_Updater::get_updates()` and `::record_previous_version()`. Loads the sibling file by `__DIR__` so it always matches the Updater that's running.
+* Added the same defensive load in `SE_License_SDK_Client::update_state()` and `::new_install_job()` for the React panel REST handlers.
+* Added the same defensive load in `SE_License_SDK_Install_Job::install_from_url()` for `SE_License_SDK_Upgrader_Skin`.
+
+= 1.5.0 - 26-05-2026 =
+* Added `str_starts_with`, `str_ends_with`, `str_contains` polyfills so the SDK runs correctly on PHP 7.4 (matches the declared `php: >=7.1` composer constraint).
+* Added React-based License & Updates panel (`static/license-app.js` + `static/license-app.css`) that replaces the legacy PHP license form on the SDK's built-in admin page. Mounts via `wp.element` — no build step required.
+* Added Status Hero card with installed → latest version, last-checked timestamp, and a "Check for updates" button.
+* Added Update Available banner with one-click "Update to vX.Y.Z" backed by `Plugin_Upgrader`. Synchronous install with captured log streamed to a collapsible drawer.
+* Added Rollback Banner: one-click revert to the previously installed version (recorded automatically via the `upgrader_process_complete` hook).
+* Added Version History card with per-row Install / Roll back / Rollback-blocked actions. Honours per-version `allow_rollback` + `breaking_changes` flags set by the vendor.
+* Added breaking-changes confirm modal inline in the version table.
+* Added "Receive beta updates" toggle backed by the new `/settings/beta-channel` endpoint.
+* Added new REST routes under `storeengine-sdk/v1/{slug}/`: `GET updates/status`, `POST updates/check-now`, `GET updates/versions`, `POST updates/install`, `POST updates/rollback`, `GET/POST settings/beta-channel`.
+* Added `SE_License_SDK_Install_Job` that wraps `Plugin_Upgrader::run()` with a non-interactive skin, captures progress, persists the log to a 1h transient for post-mortem.
+* Added `SE_License_SDK_Upgrader_Skin` — non-interactive skin that suppresses HTML output, captures feedback/errors as JSON, forces direct filesystem (no FTP prompt).
+* Added `SE_License_SDK_Update_State` — single wp_option store for `previous_version`, `last_install_*`, `last_checked_at`, `beta_enabled` mirror.
+* Added `SE_License_SDK_Updater::force_check()` — clears the transient and re-queries the server with `force=true`.
+* Added `upgrader_process_complete` hook to record `previous_version` whenever WP (cron or otherwise) successfully updates the host plugin, enabling the one-click rollback shortcut.
+* Stamps `last_checked_at` on every successful `/check-update` response so the UI can render "Checked 5 min ago" without a network round-trip.
+* Reworked deactivation feedback modal: reduced to 5 reasons (no longer needed / found better / couldn't work / temporary / other), removed the required-selection gating, exposed an in-button spinner that preserves the primary brand colour while submitting.
+* Switched deactivation feedback delivery to `navigator.sendBeacon` so the user is never blocked waiting for an AJAX round-trip before the plugin deactivates. Old AJAX path retained as fallback for browsers without sendBeacon.
+* Submit & Deactivate with no reason now still fires telemetry (server enriches with admin name/email/site URL/usage_log) but never blocks deactivation; Skip & Deactivate skips telemetry entirely.
+* Scoped 5 unscoped CSS selectors in `static/deactivation-modal.css` (`.feedback-message`, `.reasons`, `li`, `.mui`, `.mui-error`) to prevent style leakage onto unrelated WP admin pages.
+* Removed the deactivate-on-WP-plugin-deactivate behaviour in `project_deactivation()`. The license stays active across WP plugin deactivate/reactivate cycles (matches ACF Pro / Yoast Premium / EDD behaviour). Seat is freed only when the user explicitly clicks Deactivate License in the SDK panel or truly uninstalls the plugin.
+* Surfaced real WordPress auto-update state for the host plugin in the UI's "WP Auto-update" pill (was previously hardcoded to "Enabled").
+* Surfaced license `updated_at` as the source for "Last Checked" instead of mistakenly using the update-check timestamp.
+* Dropped JS double-masking of the license key (server already masks via `get_public_data()`).
+* Removed the unused `currentVersion` field from the localized config payload; removed `auto_update_window` from the `/updates/status` response (server endpoint + storage retained for future scheduled-update feature).
+
+= 1.4.0 - 20-04-2026 =
+* Fixed normalize sdk assets path for windows compatibility.
+* Improved purchase URL handling on the client with UTM parameters.
+* Added `blocking` always `true` in request args ensuring client requests are always blocking (required for server-side data saving).
+* Improved updater cache handling.
+* Added support for localizing SDK frontend data via `script_handler`, `script_object`, `get_js_param_name()`, and `get_js_params()` for custom JavaScript or React-based license management screens.
+* Added package update metadata to localized SDK data, including current version, available update details, and update availability status.
+* Added a REST API package info endpoint for SDK integrations that need update data in custom management UIs.
+* Added `redirect_on_activation` option to allow disabling the automatic redirect to the manage license page after plugin activation.
+* Made `package_file`, `package_name`, `basename`, `package_type`, and `package_version` optional in `se_license_init()` by auto-detecting package metadata from the current plugin or theme when possible.
+* Improved package file detection to resolve a plugin's main bootstrap file when the SDK is initialized from an included file.
+* Normalized the configured license server URL before using it in client requests.
+* Updated SDK helper documentation to cover the new script localization and activation redirect options.
+* Improved updater filter signatures and forced-refresh handling for package information requests.
+* Refined internal SDK component initialization to keep shared client state in sync across license, updater, REST API, promotions, and insights modules.
+* Fixed license signature validation after activation and Freemius migration by aligning signature generation with the scheduled license check timestamp.
+* Refreshed Composer package metadata and modernized development dependency constraints.
+
+= 1.3.0 - 30-03-2026 =
+* Fixed float to int implicit conversion warning in `PHP 8.1`
+* Improved IntelliSense & type hints for sdk-init helper function.
+* Added `SensitiveParameter` attribute to hide license key from error log & crash reports.
+* Added isolated per-client REST API for license and insights management.
+* Added `init_restapi` option to `se_license_init` to conditionally enable/disable the REST API.
+* Unified license activation and deactivation logic across the REST API and the built-in management page.
+* Added support for license key masking and public data formatting in the license class.
+* Introduced `get_js_params()` in the client class for easier frontend integration.
+* Improved SDK initialization and path resolution, including PHP 8.1+ compatibility fixes.
+* Refactored REST API callbacks to provide enriched error and success responses.
+* Comprehensive documentation for `se_license_init` arguments.
+* General code style improvements and standard compliance fixes.
+
+= 1.2.0 - 02-12-2025 =
+* Refactored user agent string generation in client class for more detailed environment info and standardized header casing.
+* Enhanced promotions class to handle non-JSON and error responses from the server, ensuring only valid promotions are processed.
+* Added comments explaining logic for hiding promotions for users and admins.
+* Unified version information, passing version to SDK client form initializer.
+
+= 1.1.0 - 06-10-2025 =
+* Updated documentation and fixed typo in readme file.
+* Added doc-comment
+* Added GitHub Actions workflow for release on tag.
+* Fixed promo transient data type before storing.
+* Refactored insights opt-in logic to support delayed and conditional display.
+* Added new methods for install time and notice delay, and improved admin notice rendering.
+* Introduced new views for deactivation reasons and support ticket submission/email.
+* Updated license form and related styles for better UI consistency.
+* Redirects to license form anchor after license check for better user experience.
+* Added UTM parameters to the purchase link for tracking.
+* Updated license-check redirect URL (with hash fragment) for better navigation UX.
+* Updated insights and promotions modules to use a unified CSS variable for primary color, improving consistency across notices, modals, and forms.
+* Refactored support ticket email and form templates for insights, renamed and replaced related view files, and enhanced promo hiding logic to combine transient and user options.
+* Improved code style and documentation for better developer experience.
+* Fixed opt-in notice (insight) template loading.
+* Updated deactivation modal script loader hook priority.
+* Removed error_log statements & clean up unnecessary debug output.
+
+= 1.0.0 - 21-08-2025 =
+* Initial Commit.

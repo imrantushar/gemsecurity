@@ -50,117 +50,21 @@ class Dashboard {
 
 		$recent = $wpdb->get_results( "SELECT id, event_type, severity, message, ip_address, user_id, created_at FROM {$table} ORDER BY id DESC LIMIT 8", ARRAY_A );
 
+		$assessment = \GemSecurity\Security\SecurityScore::assess();
+
 		return rest_ensure_response( [
 			'success'        => true,
 			'counts'         => $counts,
 			'trend'          => $trend,
 			'recent'         => $recent ? $recent : [],
-			'security_score' => self::security_score(),
-			'protections'    => self::protections_status(),
+			'security_score' => [ 'score' => $assessment['score'], 'grade' => $assessment['grade'] ],
+			'posture'        => [
+				'posture_percent' => $assessment['posture_percent'],
+				'checks'          => $assessment['checks'],
+				'threats'         => $assessment['threats'],
+				'summary'         => $assessment['summary'],
+			],
 			'last_scan'      => Scanner::get_last_result(),
 		] );
-	}
-
-	/**
-	 * A simple weighted security score out of 100 based on which protections
-	 * are enabled.
-	 *
-	 * @return array { score, grade }
-	 */
-	private static function security_score() {
-		$checks = [
-			'firewall_enabled'              => 15,
-			'login_attempts_enabled'        => 15,
-			'admin_whitelist_enabled'       => 15,
-			'disable_file_editing'          => 10,
-			'block_author_enumeration'      => 10,
-			'disable_user_rest'             => 10,
-			'hide_wp_version'               => 5,
-			'xmlrpc_disabled'               => 5,
-			'admin_login_alert_enabled'     => 5,
-			'admin_session_timeout_enabled' => 5,
-			'scanner_auto_scan'             => 5,
-		];
-
-		$score = 0;
-		$total = array_sum( $checks );
-		foreach ( $checks as $key => $weight ) {
-			if ( Helper::get_setting( $key, false ) ) {
-				$score += $weight;
-			}
-		}
-
-		// Backup posture: a recent successful backup is part of good security
-		// hygiene now that GemSecurity includes backups.
-		$total += 10;
-		if ( self::has_recent_backup() ) {
-			$score += 10;
-		}
-
-		$percent = (int) round( ( $score / $total ) * 100 );
-		$grade   = 'F';
-		if ( $percent >= 90 ) {
-			$grade = 'A';
-		} elseif ( $percent >= 75 ) {
-			$grade = 'B';
-		} elseif ( $percent >= 60 ) {
-			$grade = 'C';
-		} elseif ( $percent >= 40 ) {
-			$grade = 'D';
-		}
-
-		return [ 'score' => $percent, 'grade' => $grade ];
-	}
-
-	/**
-	 * Is there a successful backup within the last 7 days?
-	 *
-	 * @return bool
-	 */
-	private static function has_recent_backup() {
-		global $wpdb;
-		if ( empty( $wpdb->gembackup_backups ) ) {
-			return false; // Backup subsystem inactive (e.g. standalone conflict).
-		}
-		$table = $wpdb->gembackup_backups;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE status = 'completed' AND created_at >= %s",
-				gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS )
-			)
-		);
-		return $count > 0;
-	}
-
-	/**
-	 * Status of individual protections for the dashboard checklist.
-	 *
-	 * @return array
-	 */
-	private static function protections_status() {
-		$items = [
-			'firewall_enabled'              => __( 'Firewall', 'gemsecurity' ),
-			'login_attempts_enabled'        => __( 'Brute-force protection', 'gemsecurity' ),
-			'admin_whitelist_enabled'       => __( 'Admin whitelist guard', 'gemsecurity' ),
-			'admin_login_alert_enabled'     => __( 'Admin login alerts', 'gemsecurity' ),
-			'admin_session_timeout_enabled' => __( 'Admin session timeout', 'gemsecurity' ),
-			'disable_file_editing'          => __( 'File editor disabled', 'gemsecurity' ),
-			'block_author_enumeration'      => __( 'Author enumeration blocked', 'gemsecurity' ),
-			'disable_user_rest'             => __( 'REST user enumeration blocked', 'gemsecurity' ),
-			'xmlrpc_disabled'               => __( 'XML-RPC disabled', 'gemsecurity' ),
-			'hide_wp_version'               => __( 'WordPress version hidden', 'gemsecurity' ),
-			'scanner_auto_scan'             => __( 'Daily malware scan', 'gemsecurity' ),
-		];
-
-		$out = [];
-		foreach ( $items as $key => $label ) {
-			$out[] = [
-				'key'     => $key,
-				'label'   => $label,
-				'enabled' => (bool) Helper::get_setting( $key, false ),
-			];
-		}
-		return $out;
 	}
 }

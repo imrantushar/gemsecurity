@@ -12,6 +12,7 @@ global $wpdb;
 // Options.
 $options = [
 	'gemsecurity_settings',
+	'gemsecurity_active_modules',
 	'gemsecurity_db_version',
 	'gemsecurity_last_scan',
 	'gemsecurity_vuln_scan',

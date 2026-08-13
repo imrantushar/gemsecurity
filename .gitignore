@@ -4,6 +4,17 @@ node_modules/
 **/*.map
 assets/build/*.txt
 
+# === Vendor: ignore everything except the runtime dep we ship ===
+# /vendor/* (glob the contents) — not /vendor/ — because Git cannot
+# un-ignore children of a fully-ignored parent directory, which would
+# silently break the `!` negations for newly added vendor files. The
+# StoreEngine SDK is committed because WordPress.org installs don't run
+# `composer install`.
+/vendor/*
+!/vendor/storeengine/
+!/vendor/composer/
+composer.phar
+
 # Editors
 .idea
 .vscode
