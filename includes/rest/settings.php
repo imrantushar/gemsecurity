@@ -21,6 +21,12 @@ class Settings {
 			// Firewall / hardening.
 			'firewall_enabled'              => 'bool',
 			'ip_blocklist'                  => 'ip_list',
+			// Real-IP resolution: which upstream proxies/CDNs, if any, are
+			// trusted to supply the visitor's IP via forwarding headers.
+			// Everyone else always resolves to the raw REMOTE_ADDR — see
+			// Helper::get_ip_address().
+			'trust_cloudflare_ip'           => 'bool',
+			'trusted_proxies'               => 'ip_list',
 			'xmlrpc_disabled'               => 'bool',
 			'disable_file_editing'          => 'bool',
 			'block_author_enumeration'      => 'bool',

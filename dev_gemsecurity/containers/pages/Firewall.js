@@ -7,6 +7,9 @@ import { Card, Toggle, Field, ListInput, Select, TextInput, NumberInput, Button,
 const KEYS = [
 	'firewall_enabled',
 	'ip_blocklist',
+	// Real visitor IP detection.
+	'trust_cloudflare_ip',
+	'trusted_proxies',
 	'xmlrpc_disabled',
 	'disable_file_editing',
 	'block_author_enumeration',
@@ -142,6 +145,28 @@ export default function Firewall() {
 						value={ form.ip_blocklist }
 						onChange={ ( v ) => setField( 'ip_blocklist', v ) }
 						placeholder={ '203.0.113.10\n198.51.100.0/24' }
+					/>
+				</Field>
+			</Card>
+
+			<Card
+				title={ __( 'Real visitor IP detection', 'gemsecurity' ) }
+				description={ __( 'Every ban, rate-limit and geolocation rule relies on knowing the visitor\u2019s real IP. Forwarding headers (X-Forwarded-For, CF-Connecting-IP) can be sent by anyone, so they\u2019re only trusted from a proxy you name here \u2014 everyone else always resolves to the raw connection IP.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'This site is behind Cloudflare', 'gemsecurity' ) }
+					description={ __( 'Trusts CF-Connecting-IP, but only for requests actually arriving from Cloudflare\u2019s published IP ranges.', 'gemsecurity' ) }
+					checked={ form.trust_cloudflare_ip }
+					onChange={ ( v ) => setField( 'trust_cloudflare_ip', v ) }
+				/>
+				<Field
+					label={ __( 'Other trusted proxies', 'gemsecurity' ) }
+					description={ __( 'For a custom load balancer, Varnish, or a CDN other than Cloudflare. One IP or CIDR range per line \u2014 only requests arriving from these addresses get their X-Forwarded-For / X-Real-IP header trusted. Leave empty if the site isn\u2019t behind a proxy; an overly broad range (e.g. 0.0.0.0/0) defeats this protection entirely.', 'gemsecurity' ) }
+				>
+					<ListInput
+						value={ form.trusted_proxies }
+						onChange={ ( v ) => setField( 'trusted_proxies', v ) }
+						placeholder={ '203.0.113.5\n198.51.100.0/24' }
 					/>
 				</Field>
 			</Card>

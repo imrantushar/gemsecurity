@@ -103,6 +103,11 @@ class Installer {
 			// General / firewall.
 			'firewall_enabled'             => true,
 			'ip_blocklist'                 => [],
+			// Off by default: a site not actually behind a proxy/CDN must
+			// keep resolving REMOTE_ADDR directly, or every visitor would
+			// appear to share the trusted proxy's IP.
+			'trust_cloudflare_ip'          => false,
+			'trusted_proxies'              => [],
 			'xmlrpc_disabled'              => false,
 			'disable_file_editing'         => true,
 			'block_author_enumeration'     => true,
