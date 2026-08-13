@@ -22,14 +22,28 @@ webpack.config.js
 .eslintignore
 .prettierrc*
 .prettierignore
+.editorconfig
 jsconfig.json
 *.map
 
 # React / SCSS source
 dev_gemsecurity
 
+# Release build kit (the Node dist builder + its config/cache/output).
+# NOTE: vendor/ is intentionally NOT excluded — it ships wholesale so
+# vendor/autoload.php (StoreEngine SDK bootstrap) is never dropped.
+build-tools
+build.config.json
+.build-cache
+/dist
+
+# Composer manifests (the built vendor/ autoloader needs neither at runtime)
+composer.json
+composer.lock
+
 # Dev docs & build artifacts
 docs
+README.md
 *.zip
 *.tar
 *.tar.gz
@@ -38,6 +52,11 @@ docs
 phpcs.xml*
 phpunit.xml*
 tests
+/test-results
+/playwright-report
+/blob-report
+/playwright
+.playwright
 
 # AI tooling
 .claude

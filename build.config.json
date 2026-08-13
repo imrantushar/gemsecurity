@@ -1,0 +1,21 @@
+{
+  "slug": "gemsecurity",
+  "textdomain": "gemsecurity",
+  "mainFile": "gemsecurity.php",
+  "languages": "languages",
+  "zipName": "{slug}.{version}.zip",
+  "outputDir": "..",
+
+  "versionFrom": "header",
+
+  "steps": { "js": true, "composer": true, "strauss": false, "pot": true, "zip": true },
+
+  "js": { "install": "auto", "buildScript": "build" },
+
+  "pot": {
+    "exclude": ["node_modules", "vendor", "dev_gemsecurity", "docs", "tests", "build-tools", ".build-cache", "dist", "languages"]
+  },
+
+  "autoDownloadTools": true,
+  "toolVersions": { "wpCli": "2.12.0" }
+}
