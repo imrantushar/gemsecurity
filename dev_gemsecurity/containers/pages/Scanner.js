@@ -158,6 +158,7 @@ function CoreRepair() {
 	const needed = ( info?.modified?.length || 0 ) + ( info?.missing?.length || 0 ) + ( evict ? info?.extras?.length || 0 : 0 );
 
 	return (
+		<div className="gs-corerepair">
 		<div className="gs-addrow">
 			<Button variant="secondary" onClick={ check } loading={ busy === 'check' }>
 				{ __( 'Check core files', 'gemsecurity' ) }
@@ -182,6 +183,40 @@ function CoreRepair() {
 					) }
 				</>
 			) }
+		</div>
+
+		{ /* Show exactly what would be removed before offering to remove it. */ }
+		{ info && info.note && (
+			<div className="gs-alert gs-alert--warning">
+				<Icon name="alert" size={ 18 } />
+				<span>{ info.note }</span>
+			</div>
+		) }
+		{ info && ( info.extras || [] ).length > 0 && (
+			<table className="gs-table">
+				<thead>
+					<tr>
+						<th>{ __( 'Path', 'gemsecurity' ) }</th>
+						<th>{ __( 'Why', 'gemsecurity' ) }</th>
+					</tr>
+				</thead>
+				<tbody>
+					{ info.extras.slice( 0, 100 ).map( ( e ) => (
+						<tr key={ e.file }>
+							<td>
+								<code>{ e.file }</code>
+								{ 'dir' === e.type && ' /' }
+							</td>
+							<td>
+								<Badge tone={ 'critical' === e.severity ? 'danger' : 'warning' }>
+									{ e.reason }
+								</Badge>
+							</td>
+						</tr>
+					) ) }
+				</tbody>
+			</table>
+		) }
 		</div>
 	);
 }

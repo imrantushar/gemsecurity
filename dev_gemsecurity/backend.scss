@@ -896,3 +896,12 @@ html {
 		&__hint { margin: 0; align-self: center; color: $gs-muted; font-size: 13px; }
 	}
 }
+
+/* Core repair: the check/repair row plus the list of unexpected paths. */
+#gemsecuritywrap.gemsecuritywrap {
+	.gs-corerepair {
+		display: flex; flex-direction: column; gap: 12px; align-items: flex-start;
+		.gs-table { width: 100%; }
+		code { font-size: 12px; word-break: break-all; }
+	}
+}
