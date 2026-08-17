@@ -157,6 +157,11 @@ export default function Settings() {
 								<TextInput type="email" value={ form.alert_to_email ?? '' } onChange={ ( e ) => setField( 'alert_to_email', e.target.value ) } placeholder={ __( 'Defaults to admin email', 'gemsecurity' ) } />
 							</Field>
 						</div>
+						<TestCredentials
+							target="email"
+							getValues={ () => ( { to: form.alert_to_email || '' } ) }
+							label={ __( 'Send a test email', 'gemsecurity' ) }
+						/>
 						<SetupGuide id="alerts.slack" />
 						<Field label={ __( 'Slack incoming webhook URL', 'gemsecurity' ) }>
 							<TextInput value={ form.alert_slack_webhook ?? '' } onChange={ ( e ) => setField( 'alert_slack_webhook', e.target.value ) } placeholder="https://hooks.slack.com/services/…" />

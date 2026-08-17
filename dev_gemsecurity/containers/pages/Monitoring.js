@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, TextInput, Button, Badge } from '@Components/ui/Controls';
+import TestCredentials from '@Components/ui/TestCredentials';
 import Icon from '@Components/ui/Icon';
 
 const KEYS = [ 'monitoring_enabled', 'monitor_alert_email' ];
@@ -51,6 +52,13 @@ export default function Monitoring() {
 					<Field label={ __( 'Alert email', 'gemsecurity' ) } description={ __( 'Defaults to the admin email.', 'gemsecurity' ) }>
 						<TextInput type="email" value={ form.monitor_alert_email ?? '' } onChange={ ( e ) => setField( 'monitor_alert_email', e.target.value ) } />
 					</Field>
+				) }
+				{ form.monitoring_enabled && (
+					<TestCredentials
+						target="email"
+						getValues={ () => ( { to: form.monitor_alert_email || '' } ) }
+						label={ __( 'Send a test email', 'gemsecurity' ) }
+					/>
 				) }
 				<div className="gs-savebar gs-savebar--inline">
 					<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save', 'gemsecurity' ) }</Button>

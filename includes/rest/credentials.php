@@ -58,6 +58,12 @@ class Credentials {
 
 			case 'social':
 				return self::respond( self::test_social( $values ) );
+
+			case 'email':
+				return self::respond( self::test_email( $values ) );
+
+			case 'service':
+				return self::respond( self::test_service( $values ) );
 		}
 
 		return new \WP_Error(
@@ -336,6 +342,186 @@ class Credentials {
 			'message' => __( 'The receiver rejected the test event.', 'gemsecurity' ),
 			/* translators: %d: HTTP status code. */
 			'detail'  => sprintf( __( 'HTTP %d', 'gemsecurity' ), $code ),
+		];
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Email delivery                                                      */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Send a test email.
+	 *
+	 * Every alert in the plugin falls back to email, and site mail is the
+	 * channel most likely to be quietly broken — no SMTP configured, the host
+	 * blocking port 25, the address a typo. wp_mail() returning true only
+	 * means it was handed off, so the phpmailer failure hook is captured to
+	 * report the actual reason when it is refused outright.
+	 *
+	 * @param array $values to
+	 * @return array
+	 */
+	private static function test_email( array $values ) {
+		$to = $values['to'] ?? '';
+		if ( '' === $to ) {
+			$to = get_option( 'admin_email' );
+		}
+		if ( ! is_email( $to ) ) {
+			return [ 'message' => __( 'That is not a valid email address.', 'gemsecurity' ) ];
+		}
+
+		$error = '';
+		$catch = static function ( $wp_error ) use ( &$error ) {
+			if ( is_wp_error( $wp_error ) ) {
+				$error = $wp_error->get_error_message();
+			}
+		};
+		add_action( 'wp_mail_failed', $catch );
+
+		$sent = wp_mail(
+			$to,
+			sprintf(
+				/* translators: %s: site name. */
+				__( '[%s] GemSecurity test email', 'gemsecurity' ),
+				get_bloginfo( 'name' )
+			),
+			__( 'This is a GemSecurity test email. If you can read this, security alerts will reach you at this address.', 'gemsecurity' )
+		);
+
+		remove_action( 'wp_mail_failed', $catch );
+
+		if ( $sent ) {
+			return [
+				'ok'      => true,
+				/* translators: %s: email address. */
+				'message' => sprintf( __( 'Test email sent to %s.', 'gemsecurity' ), sanitize_email( $to ) ),
+				'detail'  => __( 'If it does not arrive, check spam and your site’s mail setup — WordPress reported no error.', 'gemsecurity' ),
+			];
+		}
+
+		return [
+			'message' => __( 'WordPress could not send the email.', 'gemsecurity' ),
+			'detail'  => $error
+				? sanitize_text_field( $error )
+				: __( 'No reason was reported — an SMTP plugin is usually the fix.', 'gemsecurity' ),
+		];
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Outbound services                                                   */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Reach-test the third-party services features depend on.
+	 *
+	 * None of these need a key, which is exactly why they fail invisibly: a
+	 * host that blocks outbound HTTP turns the vulnerability scanner, the
+	 * breached-password check and country lookups into silent no-ops that
+	 * report nothing wrong. This proves the call works from this server.
+	 *
+	 * @param array $values service
+	 * @return array
+	 */
+	private static function test_service( array $values ) {
+		$service = sanitize_key( $values['service'] ?? '' );
+
+		switch ( $service ) {
+			case 'geolocation':
+				// Resolve a well-known public address end to end, through the
+				// plugin's own resolver, so proxies and caching apply too.
+				$country = \GemSecurity\Security\Geo::country_for_ip( '8.8.8.8' );
+				if ( $country ) {
+					return [
+						'ok'      => true,
+						/* translators: %s: two-letter country code. */
+						'message' => sprintf( __( 'Country lookup works (test address resolved to %s).', 'gemsecurity' ), sanitize_text_field( $country ) ),
+					];
+				}
+				return [
+					'message' => __( 'Country lookup failed from this server.', 'gemsecurity' ),
+					'detail'  => __( 'Geolocation fails open, so nobody is blocked — but country rules will not apply until outbound HTTP works.', 'gemsecurity' ),
+				];
+
+			case 'breached_passwords':
+				// k-anonymity range endpoint: a known prefix must return rows.
+				$r = wp_remote_get( 'https://api.pwnedpasswords.com/range/21BD1', [ 'timeout' => 10 ] );
+				return self::http_verdict(
+					$r,
+					__( 'Breached-password check is reachable.', 'gemsecurity' ),
+					__( 'Could not reach the breached-password service.', 'gemsecurity' ),
+					__( 'Passwords are never sent — only a 5-character hash prefix.', 'gemsecurity' )
+				);
+
+			case 'vulnerability_feed':
+				// Same request shape the scanner makes ({base}/{type}/{slug}/).
+				$base = apply_filters( 'gemsecurity/vuln_api_base', 'https://www.wpvulnerability.net' );
+				$r    = wp_remote_get( trailingslashit( $base ) . 'plugin/akismet/', [
+					'timeout' => 15,
+					'headers' => [ 'Accept' => 'application/json' ],
+				] );
+				if ( is_wp_error( $r ) ) {
+					return [
+						'message' => __( 'Could not reach the vulnerability feed.', 'gemsecurity' ),
+						'detail'  => $r->get_error_message(),
+					];
+				}
+				$code = (int) wp_remote_retrieve_response_code( $r );
+				// 404 means "no record for this slug", which the scanner reads
+				// as "not vulnerable" — the service answered either way.
+				if ( 200 === $code || 404 === $code ) {
+					return [
+						'ok'      => true,
+						'message' => __( 'Vulnerability feed is reachable.', 'gemsecurity' ),
+						'detail'  => __( 'Scans query it per plugin and theme, and cache the answers.', 'gemsecurity' ),
+					];
+				}
+				return [
+					'message' => __( 'The vulnerability feed is not answering normally.', 'gemsecurity' ),
+					/* translators: %d: HTTP status code. */
+					'detail'  => sprintf( __( 'It replied HTTP %d — scans still run, they just cannot report known vulnerabilities.', 'gemsecurity' ), $code ),
+				];
+
+			case 'wordpress_org':
+				$checksums = function_exists( 'get_core_checksums' )
+					? get_core_checksums( get_bloginfo( 'version' ), 'en_US' )
+					: false;
+				if ( is_array( $checksums ) && $checksums ) {
+					return [
+						'ok'      => true,
+						/* translators: %d: number of files. */
+						'message' => sprintf( __( 'WordPress.org reachable — %d core checksums received.', 'gemsecurity' ), count( $checksums ) ),
+					];
+				}
+				return [
+					'message' => __( 'Could not fetch core checksums from WordPress.org.', 'gemsecurity' ),
+					'detail'  => __( 'Core integrity and plugin-integrity scanning need this endpoint.', 'gemsecurity' ),
+				];
+		}
+
+		return [ 'message' => __( 'Unknown service.', 'gemsecurity' ) ];
+	}
+
+	/**
+	 * Shared verdict for a plain "can this server reach it" HTTP check.
+	 *
+	 * @param array|\WP_Error $response
+	 * @param string          $ok_message
+	 * @param string          $fail_message
+	 * @param string          $detail
+	 * @return array
+	 */
+	private static function http_verdict( $response, $ok_message, $fail_message, $detail = '' ) {
+		if ( is_wp_error( $response ) ) {
+			return [ 'message' => $fail_message, 'detail' => $response->get_error_message() ];
+		}
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		if ( $code >= 200 && $code < 300 ) {
+			return [ 'ok' => true, 'message' => $ok_message, 'detail' => $detail ];
+		}
+		return [
+			'message' => $fail_message,
+			/* translators: %d: HTTP status code. */
+			'detail'  => sprintf( __( 'The service replied HTTP %d.', 'gemsecurity' ), $code ),
 		];
 	}
 

@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Button, Badge, EmptyState, Field, ListInput } from '@Components/ui/Controls';
+import TestCredentials from '@Components/ui/TestCredentials';
 import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
 import { ProGate, ProBadge, isLocked, proFeatures } from '@Components/ui/Pro';
@@ -201,6 +202,18 @@ export default function Scanner() {
 							description={ __( 'Compares installed versions against a public vulnerability database during the daily scan.', 'gemsecurity' ) }
 							checked={ form.vuln_scan_enabled }
 							onChange={ ( v ) => setField( 'vuln_scan_enabled', v ) }
+						/>
+						{ /* Both scans depend on an outbound call that a locked-down
+						     host can block, which would look like "nothing found". */ }
+						<TestCredentials
+							target="service"
+							getValues={ () => ( { service: 'vulnerability_feed' } ) }
+							label={ __( 'Test vulnerability feed', 'gemsecurity' ) }
+						/>
+						<TestCredentials
+							target="service"
+							getValues={ () => ( { service: 'wordpress_org' } ) }
+							label={ __( 'Test WordPress.org connection', 'gemsecurity' ) }
 						/>
 						<Toggle
 							label={ __( 'Watch theme, must-use plugins & drop-ins for file changes', 'gemsecurity' ) }

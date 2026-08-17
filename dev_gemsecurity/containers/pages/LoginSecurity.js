@@ -5,6 +5,7 @@ import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
 import SetupGuide from '@Components/ui/SetupGuide';
 import TestCaptcha from '@Components/ui/TestCaptcha';
+import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
 import { ProSection, isPro } from '@Components/ui/Pro';
 
@@ -171,6 +172,13 @@ export default function LoginSecurity() {
 						disabled={ ! form.admin_login_alert_enabled }
 					/>
 				</Field>
+				{ form.admin_login_alert_enabled && (
+					<TestCredentials
+						target="email"
+						getValues={ () => ( { to: form.admin_login_alert_email || '' } ) }
+						label={ __( 'Send a test email', 'gemsecurity' ) }
+					/>
+				) }
 			</Card>
 
 			<Card
@@ -278,6 +286,13 @@ export default function LoginSecurity() {
 						</div>
 						<Toggle label={ __( 'Require mixed case, number & symbol', 'gemsecurity' ) } checked={ form.password_require_complexity } onChange={ ( v ) => setField( 'password_require_complexity', v ) } />
 						<Toggle label={ __( 'Reject passwords found in data breaches', 'gemsecurity' ) } description={ __( 'Checks Have I Been Pwned using k-anonymity (the password is never sent).', 'gemsecurity' ) } checked={ form.password_check_breached } onChange={ ( v ) => setField( 'password_check_breached', v ) } />
+						{ form.password_check_breached && (
+							<TestCredentials
+								target="service"
+								getValues={ () => ( { service: 'breached_passwords' } ) }
+								label={ __( 'Test connection', 'gemsecurity' ) }
+							/>
+						) }
 					</>
 				) }
 			</Card>
