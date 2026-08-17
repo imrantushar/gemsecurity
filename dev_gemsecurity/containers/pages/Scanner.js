@@ -6,7 +6,7 @@ import { Card, Toggle, Button, Badge, EmptyState, Field, ListInput } from '@Comp
 import TestCredentials from '@Components/ui/TestCredentials';
 import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
-import { ProGate, ProBadge, isLocked, proFeatures } from '@Components/ui/Pro';
+import { ProGate, ProBadge, isLocked, isPro, proFeatures } from '@Components/ui/Pro';
 import MalwareScan from '@Containers/pages/MalwareScan';
 import SearchPanel from '@Containers/pages/SearchPanel';
 
@@ -85,6 +85,104 @@ function SupplyChainReport() {
 				) }
 			</Card>
 		</>
+	);
+}
+
+/**
+ * Restore WordPress core from the official package.
+ *
+ * Separate from the scan because it writes to disk: the analysis is shown
+ * first, and the button says exactly how many files it will touch. Eviction of
+ * files core does not ship is opt-in, since a host occasionally drops
+ * something legitimate into wp-admin.
+ */
+function CoreRepair() {
+	const toast = useToast();
+	const [ info, setInfo ] = useState( null );
+	const [ busy, setBusy ] = useState( '' );
+	const [ evict, setEvict ] = useState( true );
+
+	const check = async () => {
+		setBusy( 'check' );
+		try {
+			const { data } = await api.get( 'pro/core-repair' );
+			setInfo( data );
+			if ( ! data.available ) {
+				toast( __( 'WordPress.org did not return checksums for this version.', 'gemsecurity' ), 'warning' );
+			}
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not check core files.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const repair = async () => {
+		const total = ( info?.modified?.length || 0 ) + ( info?.missing?.length || 0 );
+		const extras = evict ? info?.extras?.length || 0 : 0;
+		if (
+			! window.confirm(
+				sprintf(
+					/* translators: 1: core files, 2: foreign files. */
+					__(
+						'Replace %1$d core file(s) with clean copies from WordPress.org and quarantine %2$d file(s) core does not ship? The current version of each is saved to quarantine first, and wp-content is not touched.',
+						'gemsecurity'
+					),
+					total,
+					extras
+				)
+			)
+		) {
+			return;
+		}
+		setBusy( 'repair' );
+		try {
+			const { data } = await api.post( 'pro/core-repair', { restore: true, evict } );
+			setInfo( data.analysis );
+			toast(
+				sprintf(
+					/* translators: 1: restored, 2: quarantined, 3: failed. */
+					__( '%1$d core file(s) restored, %2$d quarantined, %3$d failed.', 'gemsecurity' ),
+					data.restored.length,
+					data.evicted.length,
+					data.failed.length
+				),
+				data.failed.length ? 'warning' : 'success'
+			);
+			( data.failed || [] ).forEach( ( f ) => toast( `${ f.file }: ${ f.reason }`, 'error' ) );
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Core repair failed.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const needed = ( info?.modified?.length || 0 ) + ( info?.missing?.length || 0 ) + ( evict ? info?.extras?.length || 0 : 0 );
+
+	return (
+		<div className="gs-addrow">
+			<Button variant="secondary" onClick={ check } loading={ busy === 'check' }>
+				{ __( 'Check core files', 'gemsecurity' ) }
+			</Button>
+			{ info && info.available && (
+				<>
+					<Toggle
+						label={ __( 'Also quarantine files core does not ship', 'gemsecurity' ) }
+						checked={ evict }
+						onChange={ setEvict }
+					/>
+					{ needed > 0 ? (
+						<Button variant="danger" onClick={ repair } loading={ busy === 'repair' }>
+							{ sprintf(
+								/* translators: %d: number of files. */
+								__( 'Repair %d file(s)', 'gemsecurity' ),
+								needed
+							) }
+						</Button>
+					) : (
+						<Badge tone="success">{ __( 'Core matches WordPress.org', 'gemsecurity' ) }</Badge>
+					) }
+				</>
+			) }
+		</div>
 	);
 }
 
@@ -280,7 +378,10 @@ export default function Scanner() {
 								</div>
 							</Card>
 
-							<Card title={ __( 'Core file integrity', 'gemsecurity' ) }>
+							<Card
+								title={ __( 'Core file integrity', 'gemsecurity' ) }
+								actions={ isPro() ? <CoreRepair /> : null }
+							>
 								{ result.core_issues.length === 0 ? (
 									<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'All core files match the official checksums.', 'gemsecurity' ) }</p>
 								) : (
