@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useDispatch } from 'react-redux';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { fetchSettings } from '@Redux/settingsSlice';
 import { useToast } from '@Components/ui/Toast';
 import api from '@Utils/api';
+import { setModules } from '@Utils/nav';
 import { Card, Toggle, Field, ListInput, Button, Badge } from '@Components/ui/Controls';
 
 const KEYS = [
@@ -63,12 +64,26 @@ export default function ProTools() {
 			const url = URL.createObjectURL( blob );
 			const a = document.createElement( 'a' );
 			a.href = url;
-			a.download = 'gemsecurity-settings.json';
+			// Host + date, so files from several sites stay distinguishable.
+			a.download = `gemsecurity-settings-${ window.location.hostname }-${ new Date()
+				.toISOString()
+				.slice( 0, 10 ) }.json`;
+			// The anchor must be in the document for Firefox to honour the
+			// click, and the object URL has to outlive it — revoking straight
+			// away cancels the download in Safari.
+			a.style.display = 'none';
+			document.body.appendChild( a );
 			a.click();
-			URL.revokeObjectURL( url );
+			setTimeout( () => {
+				document.body.removeChild( a );
+				URL.revokeObjectURL( url );
+			}, 1000 );
 			toast( __( 'Settings exported.', 'gemsecurity' ), 'success' );
 		} catch ( e ) {
-			toast( __( 'Export failed.', 'gemsecurity' ), 'error' );
+			toast(
+				e?.response?.data?.message || __( 'Export failed.', 'gemsecurity' ),
+				'error'
+			);
 		}
 		setBusy( '' );
 	};
@@ -82,13 +97,53 @@ export default function ProTools() {
 		const reader = new FileReader();
 		reader.onload = async () => {
 			setBusy( 'import' );
+			let parsed;
 			try {
-				const parsed = JSON.parse( reader.result );
-				await api.post( 'pro/settings/import', parsed.exported ? parsed : { exported: parsed } );
-				await dispatch( fetchSettings() );
-				toast( __( 'Settings imported.', 'gemsecurity' ), 'success' );
+				parsed = JSON.parse( reader.result );
 			} catch ( err ) {
-				toast( __( 'Import failed — invalid file.', 'gemsecurity' ), 'error' );
+				toast( __( 'Import failed — that file is not valid JSON.', 'gemsecurity' ), 'error' );
+				setBusy( '' );
+				return;
+			}
+			try {
+				const { data } = await api.post(
+					'pro/settings/import',
+					parsed.exported ? parsed : { exported: parsed }
+				);
+				// Module activation may have changed, so refresh the nav/menu
+				// from the server rather than leaving a stale module list.
+				await dispatch( fetchSettings() );
+				const fresh = await api.get( 'modules' );
+				if ( Array.isArray( fresh.data?.modules ) ) {
+					setModules( fresh.data.modules );
+				}
+				toast(
+					sprintf(
+						/* translators: 1: settings count, 2: module count. */
+						__( 'Imported %1$d settings and %2$d module states.', 'gemsecurity' ),
+						data?.imported ?? 0,
+						data?.modules ?? 0
+					),
+					'success'
+				);
+				if ( data?.skipped?.length ) {
+					toast(
+						sprintf(
+							/* translators: %s: comma-separated module ids. */
+							__( 'Skipped modules this site cannot enable: %s', 'gemsecurity' ),
+							data.skipped.join( ', ' )
+						),
+						'warning'
+					);
+				}
+			} catch ( err ) {
+				// Surface the server's reason (version mismatch, empty payload,
+				// Pro inactive) instead of blaming the file for everything.
+				toast(
+					err?.response?.data?.message ||
+						__( 'Import failed.', 'gemsecurity' ),
+					'error'
+				);
 			}
 			setBusy( '' );
 		};

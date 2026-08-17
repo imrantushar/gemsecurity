@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
+import SetupGuide from '@Components/ui/SetupGuide';
 import { useToast } from '@Components/ui/Toast';
 import { ProSection, isPro } from '@Components/ui/Pro';
 
@@ -217,6 +218,12 @@ export default function LoginSecurity() {
 								] }
 							/>
 						</Field>
+						{ /* Steps for whichever provider is selected — the key
+						     pairs are not interchangeable between them. */ }
+						<SetupGuide
+							id={ `captcha.${ form.captcha_provider || 'recaptcha_v2' }` }
+							defaultOpen={ ! form.captcha_site_key }
+						/>
 						<div className="gs-row">
 							<Field label={ __( 'Site key', 'gemsecurity' ) }>
 								<TextInput value={ form.captcha_site_key ?? '' } onChange={ ( e ) => setField( 'captcha_site_key', e.target.value ) } />

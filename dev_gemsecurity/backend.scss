@@ -177,7 +177,8 @@ html {
 			color: #fff;
 		}
 		&__title { margin: 0; font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-		&__theme {
+		// Topbar buttons: help ("?") and the light/dark toggle.
+		&__theme, &__action {
 			flex-shrink: 0;
 			display: inline-grid; place-items: center;
 			width: 38px; height: 38px; border-radius: 9px;
@@ -516,7 +517,15 @@ html {
 	@keyframes gs-spin { to { transform: rotate(360deg); } }
 
 	/* ---------------- Toasts ---------------- */
-	.gs-toasts { position: fixed; bottom: 24px; right: 24px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; }
+	// Top-right, clear of the WordPress admin bar (32px on desktop, 46px on the
+	// small-screen layout where it also stops being fixed).
+	.gs-toasts {
+		position: fixed; top: calc(32px + 20px); right: 24px; z-index: 100000;
+		display: flex; flex-direction: column; gap: 10px;
+	}
+	@media screen and (max-width: 782px) {
+		.gs-toasts { top: calc(46px + 20px); right: 12px; left: 12px; }
+	}
 	.gs-toast {
 		padding: 12px 18px; border-radius: 10px; color: #fff; font-weight: 600; font-size: 13px;
 		box-shadow: 0 8px 24px rgba(16,24,40,.18); cursor: pointer; min-width: 220px;
@@ -525,7 +534,8 @@ html {
 		&--error { background: $gs-danger; }
 		&--warning { background: $gs-warning; }
 	}
-	@keyframes gs-slide { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+	// Drops in from above, matching the new top anchor.
+	@keyframes gs-slide { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 	/* ---------------- Pro badges & gating ---------------- */
 	.gs-pro-badge {
@@ -631,7 +641,8 @@ html {
 	}
 
 	.gs-modules {
-		// The intro card has an empty body when there are no notices — collapse it.
+		// The intro card is head-only (toggles report through a toast), so its
+		// empty body would otherwise add 20px of dead space.
 		.gs-card__body:empty { display: none; }
 
 		&__group {
@@ -726,6 +737,122 @@ html {
 			display: flex;
 			align-items: center;
 			min-height: 28px;
+		}
+	}
+}
+
+/* ===================================================================
+   Help drawer — the per-page guide behind the topbar "?" button
+   =================================================================== */
+#gemsecuritywrap.gemsecuritywrap {
+
+	.gs-topbar__actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+	.gs-help {
+		&__scrim {
+			position: fixed; inset: 0; z-index: 100010;
+			background: rgba(16, 24, 40, .45);
+			animation: gs-help-fade .15s ease;
+		}
+		&__panel {
+			position: fixed; top: 0; right: 0; bottom: 0; z-index: 100011;
+			width: 460px; max-width: 92vw;
+			display: flex; flex-direction: column;
+			background: $gs-surface; border-left: 1px solid $gs-border;
+			box-shadow: -12px 0 32px rgba(16, 24, 40, .18);
+			animation: gs-help-slide .2s ease;
+			outline: none;
+		}
+		&__head {
+			flex: 0 0 auto;
+			display: flex; align-items: center; justify-content: space-between; gap: 12px;
+			padding: 18px 22px; border-bottom: 1px solid $gs-border;
+		}
+		&__title { margin: 0; font-size: 16px; font-weight: 700; color: $gs-text; }
+		&__close {
+			flex-shrink: 0;
+			display: inline-grid; place-items: center;
+			width: 32px; height: 32px; border-radius: 8px;
+			border: 1px solid $gs-border; background: $gs-surface; color: $gs-muted;
+			cursor: pointer; transition: background .15s, color .15s;
+			&:hover { background: $gs-soft; color: $gs-text; }
+		}
+		&__body { flex: 1 1 auto; overflow-y: auto; padding: 20px 22px 40px; }
+		&__summary {
+			margin: 0 0 20px; padding: 12px 14px; border-radius: 10px;
+			background: $gs-accent-soft; color: $gs-text;
+			font-size: 13.5px; line-height: 1.6;
+		}
+		&__section {
+			margin-bottom: 22px;
+			&.is-warning .gs-help__section-title { color: $gs-warning; }
+		}
+		&__section-title {
+			display: flex; align-items: center; gap: 7px;
+			margin: 0 0 8px; font-size: 12px; font-weight: 700;
+			text-transform: uppercase; letter-spacing: .04em; color: $gs-primary;
+			.gs-icon { flex-shrink: 0; }
+		}
+		&__list {
+			margin: 0; padding-left: 20px;
+			color: $gs-text; font-size: 13.5px; line-height: 1.65;
+			li { margin-bottom: 7px; &:last-child { margin-bottom: 0; } }
+		}
+	}
+
+	@keyframes gs-help-fade { from { opacity: 0; } to { opacity: 1; } }
+	@keyframes gs-help-slide { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+}
+
+/* ===================================================================
+   Inline setup guide — "where do I get this value?" next to a field
+   =================================================================== */
+#gemsecuritywrap.gemsecuritywrap {
+
+	.gs-guide {
+		margin: 0 0 16px;
+		border: 1px solid $gs-border; border-radius: 10px;
+		background: $gs-fill;
+		overflow: hidden;
+
+		&__toggle {
+			width: 100%;
+			display: flex; align-items: center; gap: 8px;
+			padding: 10px 14px;
+			border: 0; background: none; cursor: pointer;
+			color: $gs-primary; font-size: 13px; font-weight: 600; text-align: left;
+			.gs-icon { flex-shrink: 0; }
+			span { flex: 1 1 auto; }
+			&:hover { background: $gs-soft; }
+		}
+		&__chevron { transition: transform .15s; opacity: .7; }
+		&.is-open &__chevron { transform: rotate(180deg); }
+
+		&__body {
+			padding: 4px 16px 16px;
+			border-top: 1px solid $gs-border;
+			background: $gs-surface;
+		}
+		&__steps {
+			margin: 14px 0 0; padding-left: 20px;
+			color: $gs-text; font-size: 13px; line-height: 1.65;
+			li { margin-bottom: 6px; &:last-child { margin-bottom: 0; } }
+		}
+		&__notes {
+			margin: 14px 0 0; padding: 0; list-style: none;
+			li {
+				display: flex; align-items: flex-start; gap: 7px;
+				color: $gs-muted; font-size: 12.5px; line-height: 1.55;
+				margin-bottom: 6px;
+				&:last-child { margin-bottom: 0; }
+				.gs-icon { flex-shrink: 0; margin-top: 2px; color: $gs-warning; }
+			}
+		}
+		&__link {
+			display: inline-flex; align-items: center; gap: 6px;
+			margin-top: 14px;
+			color: $gs-primary; font-size: 13px; font-weight: 600; text-decoration: none;
+			&:hover { text-decoration: underline; }
 		}
 	}
 }

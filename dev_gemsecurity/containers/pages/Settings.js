@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Field, Toggle, NumberInput, TextInput, Select, ListInput, Button, Badge } from '@Components/ui/Controls';
+import SetupGuide from '@Components/ui/SetupGuide';
 import { useToast } from '@Components/ui/Toast';
 import BackupSchedule from '@Containers/pages/BackupSchedule';
 import BackupStorage from '@Containers/pages/BackupStorage';
@@ -104,6 +105,7 @@ export default function Settings() {
 				/>
 				{ form.siem_enabled && (
 					<>
+						<SetupGuide id="siem.endpoint" defaultOpen={ ! form.siem_endpoint } />
 						<Field label={ __( 'HTTP collector endpoint', 'gemsecurity' ) }>
 							<TextInput value={ form.siem_endpoint ?? '' } onChange={ ( e ) => setField( 'siem_endpoint', e.target.value ) } placeholder="https://siem.example.com/ingest" />
 						</Field>
@@ -149,9 +151,11 @@ export default function Settings() {
 								<TextInput type="email" value={ form.alert_to_email ?? '' } onChange={ ( e ) => setField( 'alert_to_email', e.target.value ) } placeholder={ __( 'Defaults to admin email', 'gemsecurity' ) } />
 							</Field>
 						</div>
+						<SetupGuide id="alerts.slack" />
 						<Field label={ __( 'Slack incoming webhook URL', 'gemsecurity' ) }>
 							<TextInput value={ form.alert_slack_webhook ?? '' } onChange={ ( e ) => setField( 'alert_slack_webhook', e.target.value ) } placeholder="https://hooks.slack.com/services/…" />
 						</Field>
+						<SetupGuide id="alerts.telegram" />
 						<div className="gs-row">
 							<Field label={ __( 'Telegram bot token', 'gemsecurity' ) }>
 								<TextInput value={ form.alert_telegram_token ?? '' } onChange={ ( e ) => setField( 'alert_telegram_token', e.target.value ) } />
@@ -160,6 +164,7 @@ export default function Settings() {
 								<TextInput value={ form.alert_telegram_chat ?? '' } onChange={ ( e ) => setField( 'alert_telegram_chat', e.target.value ) } />
 							</Field>
 						</div>
+						<SetupGuide id="alerts.webhook" />
 						<Field label={ __( 'Generic webhook URL', 'gemsecurity' ) }>
 							<TextInput value={ form.alert_webhook_url ?? '' } onChange={ ( e ) => setField( 'alert_webhook_url', e.target.value ) } placeholder="https://example.com/webhook" />
 						</Field>

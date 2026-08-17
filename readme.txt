@@ -55,8 +55,20 @@ The optional GemSecurity Pro add-on unlocks active threat protection and remedia
 
 == Frequently Asked Questions ==
 
+= Where do I start? =
+Open GemSecurity → Modules and turn on the areas your site needs, then work through Firewall, Login Security and Scanner — they cover the most common attacks. Every page has a "?" button in the top bar that explains what that page does, how to set it up, and what to watch out for.
+
+= There are a lot of settings. Is there documentation inside the plugin? =
+Yes. The "?" button in the top bar opens a guide for the page you are on: a short summary, what the feature actually does once enabled, numbered setup steps, and the caveats worth knowing before you switch something on.
+
+= What does turning a module off actually do? =
+A module that is off loads none of its code, registers no REST routes and shows no menu entry — so features you do not use cost nothing. Its settings are kept, so switching it back on restores your configuration exactly as it was. Menu entries appear and disappear as you toggle, without reloading the page.
+
 = Will the firewall lock me out? =
 No. Logged-in administrators are never blocked by the IP blocklist or auto-bans, and aggressive options default to off so you can opt in deliberately.
+
+= Which settings could break my site if I enable them carelessly? =
+The ones the in-plugin guides call out: a custom login URL (save the new address first), an admin IP allowlist on a dynamic home connection, an enforced Content-Security-Policy, HSTS preload, and country blocking applied to the whole site rather than just the login. Each of those is explained in the help drawer on its own page.
 
 = Does it work without GemSecurity Pro? =
 Yes. Everything described above works in the free plugin. Pro adds active threat protection, malware remediation and scale features.

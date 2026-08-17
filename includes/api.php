@@ -96,6 +96,19 @@ class Api {
 			],
 		] );
 
+		// In-product documentation for the help drawer, keyed by page slug.
+		register_rest_route( $ns, '/docs', [
+			'methods'             => 'GET',
+			'callback'            => static function () {
+				return rest_ensure_response( [
+					'success' => true,
+					'docs'    => Modules\Docs::for_js(),
+					'guides'  => Modules\Docs::guides(),
+				] );
+			},
+			'permission_callback' => $perm,
+		] );
+
 		// Dashboard overview.
 		register_rest_route( $ns, '/dashboard', [
 			'methods'             => 'GET',

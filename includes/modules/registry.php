@@ -422,8 +422,11 @@ class Registry {
 
 	/**
 	 * Whether a module should be VISIBLE in the menu / nav.
-	 * Core and Pro modules are always shown (Pro as a locked upsell); other
-	 * modules appear only when active.
+	 *
+	 * Core modules always show. A Pro module shows as a locked upsell only
+	 * while Pro is inactive — there is no toggle to honour yet. Once Pro is
+	 * active it obeys its own activation flag exactly like a free module, so
+	 * turning any module off removes its menu entry.
 	 *
 	 * @param string $id
 	 * @return bool
@@ -434,7 +437,16 @@ class Registry {
 			return false;
 		}
 		$m = $all[ $id ];
-		return $m['core'] || $m['is_pro'] || self::is_active( $id );
+
+		if ( $m['core'] ) {
+			return true;
+		}
+
+		if ( $m['is_pro'] && ! Helper::is_pro_active() ) {
+			return true;
+		}
+
+		return self::is_active( $id );
 	}
 
 	/**

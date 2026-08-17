@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, TextInput, Select, Button, Loading, Badge } from '@Components/ui/Controls';
+import SetupGuide from '@Components/ui/SetupGuide';
 import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
 
@@ -36,14 +37,22 @@ function ProviderCard( { provider, form, setField } ) {
 				<Toggle checked={ enabled } onChange={ ( v ) => setField( `social_${ key }_enabled`, v ) } />
 			</div>
 			{ enabled && (
-				<div className="gs-row">
-					<Field label={ __( 'Client ID', 'gemsecurity' ) }>
-						<TextInput value={ form[ `social_${ key }_client_id` ] ?? '' } onChange={ ( e ) => setField( `social_${ key }_client_id`, e.target.value ) } />
-					</Field>
-					<Field label={ __( 'Client secret', 'gemsecurity' ) }>
-						<TextInput type="password" value={ form[ `social_${ key }_client_secret` ] ?? '' } onChange={ ( e ) => setField( `social_${ key }_client_secret`, e.target.value ) } />
-					</Field>
-				</div>
+				<>
+					{ /* Expanded on first setup: with no credentials saved yet,
+					     the steps are the only thing that helps. */ }
+					<SetupGuide
+						id={ `social.${ key }` }
+						defaultOpen={ ! form[ `social_${ key }_client_id` ] }
+					/>
+					<div className="gs-row">
+						<Field label={ __( 'Client ID', 'gemsecurity' ) }>
+							<TextInput value={ form[ `social_${ key }_client_id` ] ?? '' } onChange={ ( e ) => setField( `social_${ key }_client_id`, e.target.value ) } />
+						</Field>
+						<Field label={ __( 'Client secret', 'gemsecurity' ) }>
+							<TextInput type="password" value={ form[ `social_${ key }_client_secret` ] ?? '' } onChange={ ( e ) => setField( `social_${ key }_client_secret`, e.target.value ) } />
+						</Field>
+					</div>
+				</>
 			) }
 			{ enabled && key === 'twitter' && (
 				<p className="gs-muted">{ __( 'Twitter rarely returns an email — accounts are created with a placeholder address you can change later.', 'gemsecurity' ) }</p>

@@ -1,13 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchSettings } from '@Redux/settingsSlice';
-import { useActivePage, NAV_ITEMS, MODULES, pageUrl } from '@Utils/nav';
+import { useActivePage, useNavItems, useModuleBySlug, pageUrl } from '@Utils/nav';
 import { Loading, EmptyState, Button } from '@Components/ui/Controls';
 import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/Pro';
 import ErrorBoundary from '@Components/ui/ErrorBoundary';
 import Icon from '@Components/ui/Icon';
+import HelpDrawer from '@Components/ui/HelpDrawer';
 import { useThemeMode } from '@Utils/theme';
 
 import Dashboard from '@Containers/pages/Dashboard';
@@ -62,6 +63,7 @@ export default function App() {
 	const { theme, toggle } = useThemeMode();
 	const { data, loading } = useSelector( ( s ) => s.settings );
 	const page = useActivePage();
+	const [ helpOpen, setHelpOpen ] = useState( false );
 
 	useEffect( () => {
 		dispatch( fetchSettings() );
@@ -79,13 +81,14 @@ export default function App() {
 	// The malware scanner is now a tab inside Scanner — resolve the old slug.
 	const resolvedPage = page === 'gemsecurity-malware' ? 'gemsecurity-scanner' : page;
 	const PageComponent = PAGES[ resolvedPage ] || Dashboard;
-	const navItem = NAV_ITEMS.find( ( i ) => i.key === resolvedPage );
+	const navItems = useNavItems();
+	const navItem = navItems.find( ( i ) => i.key === resolvedPage );
 	const locked = isLocked( resolvedPage );
 	const feature = proFeatures()[ resolvedPage ] || {};
 
 	// A module the user has turned off: its page is unreachable. Show a prompt
 	// to re-activate it rather than a broken/empty page.
-	const module = MODULES.find( ( m ) => m.page_slug === resolvedPage );
+	const module = useModuleBySlug( resolvedPage );
 	const inactive = module && ! module.visible;
 
 	const renderPage = () => {
@@ -131,20 +134,31 @@ export default function App() {
 								{ locked && <ProBadge /> }
 							</h1>
 						</div>
-						<button
-							type="button"
-							className="gs-topbar__theme"
-							onClick={ toggle }
-							aria-label={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
-							title={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
-						>
-							<Icon name={ theme === 'dark' ? 'sun' : 'moon' } size={ 18 } />
-						</button>
+						<div className="gs-topbar__actions">
+							<button
+								type="button"
+								className="gs-topbar__action"
+								onClick={ () => setHelpOpen( true ) }
+								aria-label={ __( 'How this page works', 'gemsecurity' ) }
+								title={ __( 'How this page works', 'gemsecurity' ) }
+							>
+								<Icon name="help" size={ 18 } />
+							</button>
+							<button
+								type="button"
+								className="gs-topbar__theme"
+								onClick={ toggle }
+								aria-label={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
+								title={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
+							>
+								<Icon name={ theme === 'dark' ? 'sun' : 'moon' } size={ 18 } />
+							</button>
+						</div>
 					</div>
 				</header>
 				<div className="gs-shell">
 					<nav className="gs-subnav">
-						{ NAV_ITEMS.map( ( item ) => {
+						{ navItems.map( ( item ) => {
 							const href = pageUrl( item.key );
 							return (
 								<a
@@ -177,6 +191,12 @@ export default function App() {
 					</div>
 				</div>
 			</main>
+			<HelpDrawer
+				open={ helpOpen }
+				onClose={ () => setHelpOpen( false ) }
+				slug={ resolvedPage }
+				title={ navItem ? navItem.label : 'GemSecurity' }
+			/>
 		</div>
 	);
 }
