@@ -290,6 +290,7 @@ class Docs {
 				'summary' => __( 'Watches the administrator role itself: only approved accounts stay administrators, and hidden administrators are surfaced.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Keeps an approved-administrator list and demotes or deletes any account that appears outside it.', 'gemsecurity' ),
+					__( 'Refuses the sign-in of an administrator who is not on the list, and ends an existing session belonging to one — so an account added straight to the database, or created while this module was off, still cannot get in.', 'gemsecurity' ),
 					__( 'Detects administrators hidden from the users list — a classic backdoor left behind after a breach.', 'gemsecurity' ),
 					__( 'Emails you when either fires.', 'gemsecurity' ),
 				],
@@ -301,6 +302,8 @@ class Docs {
 				'notes'   => [
 					__( 'Add legitimate new administrators to the list before creating them, or they will be demoted straight away.', 'gemsecurity' ),
 					__( 'Some membership and staffing plugins create elevated accounts on purpose — check before switching to delete.', 'gemsecurity' ),
+					__( 'Login enforcement needs a non-empty list: while the list is empty every administrator would count as unapproved, so the check stays off rather than locking you out.', 'gemsecurity' ),
+					__( 'User ID 1, the site-owner address and multisite super admins are never blocked, whatever the list says.', 'gemsecurity' ),
 				],
 			],
 
