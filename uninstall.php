@@ -77,6 +77,7 @@ $wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE '\_gemsec\_oaut
 
 // Scheduled events (security + backup).
 $hooks = [
+	'gemsecurity_password_rotation',
 	'gemsecurity_prune_logs',
 	'gemsecurity_daily_scan',
 	'gemsecurity_weekly_digest',

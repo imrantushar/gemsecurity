@@ -370,6 +370,9 @@ class Installer {
 			'password_min_length'          => 10,
 			'password_require_complexity'  => true,
 			'password_check_breached'      => true,
+			'password_rotation_enabled'    => false,
+			'password_rotation_days'       => 90,
+			'password_rotation_roles'      => [],
 			'password_expiry_days'         => 0,
 
 			// Sessions.
@@ -474,5 +477,6 @@ class Installer {
 		wp_clear_scheduled_hook( self::CRON_POST_UPDATE_SCAN );
 		wp_clear_scheduled_hook( \GemSecurity\Modules\AdminGuard::CRON_HOOK );
 		wp_clear_scheduled_hook( \GemSecurity\Modules\DailyReport::CRON_HOOK );
+		wp_clear_scheduled_hook( \GemSecurity\Modules\PasswordRotation::CRON_HOOK );
 	}
 }

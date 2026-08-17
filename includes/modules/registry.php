@@ -157,6 +157,7 @@ class Registry {
 					LoginSecurity::class,
 					Sessions::class,
 					PasswordPolicy::class,
+					PasswordRotation::class,
 					CustomLogin::class,
 					Lockdown::class,
 					LoginExtras::class,

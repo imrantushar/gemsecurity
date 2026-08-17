@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
@@ -33,6 +33,10 @@ const KEYS = [
 	'password_min_length',
 	'password_require_complexity',
 	'password_check_breached',
+	// Forced rotation.
+	'password_rotation_enabled',
+	'password_rotation_days',
+	'password_rotation_roles',
 	'password_expiry_days',
 	// Custom login URL.
 	'custom_login_enabled',
@@ -111,6 +115,177 @@ function ActiveSessions() {
 					</tbody>
 				</table>
 			) }
+		</Card>
+	);
+}
+
+const ROTATION_KEYS = [ 'password_rotation_enabled', 'password_rotation_days', 'password_rotation_roles' ];
+
+/**
+ * Forced password resets: one click now, or on a schedule, scoped by role.
+ *
+ * The scope is previewed before anything happens — this destroys sessions and
+ * locks every affected account out until its owner sets a new password, so a
+ * mis-scoped click is expensive.
+ */
+function PasswordRotation() {
+	const { form, setField, save, saving, dirty } = useSettingsForm( ROTATION_KEYS );
+	const toast = useToast();
+	const roles = GS.roles || {};
+	const scoped = form.password_rotation_roles || [];
+	const [ preview, setPreview ] = useState( null );
+	const [ busy, setBusy ] = useState( '' );
+	const [ includeSelf, setIncludeSelf ] = useState( false );
+	const [ notify, setNotify ] = useState( true );
+
+	const toggleRole = ( slug, on ) => {
+		const next = on ? [ ...new Set( [ ...scoped, slug ] ) ] : scoped.filter( ( r ) => r !== slug );
+		setField( 'password_rotation_roles', next );
+	};
+
+	const load = async () => {
+		setBusy( 'preview' );
+		try {
+			const { data } = await api.get( 'passwords/rotate', {
+				params: { roles: scoped, include_self: includeSelf ? 1 : 0 },
+			} );
+			setPreview( data );
+		} catch ( e ) {
+			toast( __( 'Could not check who this would affect.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const run = async () => {
+		setBusy( 'run' );
+		try {
+			const { data } = await api.post( 'passwords/rotate', {
+				roles: scoped,
+				include_self: includeSelf,
+				notify,
+			} );
+			toast(
+				sprintf(
+					/* translators: 1: users reset, 2: emails sent. */
+					__( 'Reset forced for %1$d user(s); %2$d reset link(s) emailed.', 'gemsecurity' ),
+					data.count,
+					data.notified
+				),
+				'success'
+			);
+			setPreview( { targets: 0, pending: data.pending } );
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not force the reset.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const clearAll = async () => {
+		setBusy( 'clear' );
+		try {
+			const { data } = await api.post( 'passwords/rotate', { action: 'clear' } );
+			toast(
+				sprintf( /* translators: %d: users. */ __( 'Cleared the reset requirement for %d user(s).', 'gemsecurity' ), data.cleared ),
+				'success'
+			);
+			setPreview( ( p ) => ( { ...( p || {} ), pending: data.pending } ) );
+		} catch ( e ) {
+			toast( __( 'Could not clear it.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	return (
+		<Card
+			title={ __( 'Password rotation', 'gemsecurity' ) }
+			description={ __( 'Force users to choose a new password. Sessions are ended and the old password stops working immediately — the standard response after a breach.', 'gemsecurity' ) }
+		>
+			<Field
+				label={ __( 'Apply to roles', 'gemsecurity' ) }
+				description={ __( 'Leave all unchecked to apply to every user.', 'gemsecurity' ) }
+			>
+				<div className="gs-toggle-list">
+					{ Object.entries( roles ).map( ( [ slug, name ] ) => (
+						<Toggle
+							key={ slug }
+							label={ name }
+							checked={ scoped.includes( slug ) }
+							onChange={ ( v ) => toggleRole( slug, v ) }
+						/>
+					) ) }
+				</div>
+			</Field>
+
+			<Toggle
+				label={ __( 'Email each user a reset link', 'gemsecurity' ) }
+				description={ __( 'Without this they must use “Lost your password?” themselves. Passwords are never generated or emailed.', 'gemsecurity' ) }
+				checked={ notify }
+				onChange={ setNotify }
+			/>
+			<Toggle
+				label={ __( 'Include my own account', 'gemsecurity' ) }
+				description={ __( 'Off by default so a site-wide reset cannot lock you out in the middle of an incident.', 'gemsecurity' ) }
+				checked={ includeSelf }
+				onChange={ setIncludeSelf }
+			/>
+
+			<div className="gs-addrow">
+				<Button variant="secondary" onClick={ load } loading={ busy === 'preview' }>
+					{ __( 'Check who this affects', 'gemsecurity' ) }
+				</Button>
+				{ preview && preview.targets > 0 && (
+					<Button variant="danger" onClick={ run } loading={ busy === 'run' }>
+						{ sprintf(
+							/* translators: %d: number of users. */
+							__( 'Force a reset for %d user(s)', 'gemsecurity' ),
+							preview.targets
+						) }
+					</Button>
+				) }
+				{ preview && preview.pending > 0 && (
+					<Button variant="secondary" onClick={ clearAll } loading={ busy === 'clear' }>
+						{ sprintf( /* translators: %d: users. */ __( 'Cancel for %d waiting user(s)', 'gemsecurity' ), preview.pending ) }
+					</Button>
+				) }
+			</div>
+
+			{ preview && (
+				<div className={ `gs-alert gs-alert--${ preview.targets ? 'warning' : 'info' }` }>
+					<Icon name={ preview.targets ? 'alert' : 'check' } size={ 18 } />
+					<span>
+						{ sprintf(
+							/* translators: 1: affected users, 2: users already waiting. */
+							__( '%1$d user(s) would be signed out and required to set a new password. %2$d are already waiting to do so.', 'gemsecurity' ),
+							preview.targets,
+							preview.pending
+						) }
+					</span>
+				</div>
+			) }
+
+			<Toggle
+				label={ __( 'Rotate passwords automatically', 'gemsecurity' ) }
+				description={ __( 'Runs daily and forces a reset for anyone in the selected roles whose password is older than the age below.', 'gemsecurity' ) }
+				checked={ form.password_rotation_enabled }
+				onChange={ ( v ) => setField( 'password_rotation_enabled', v ) }
+			/>
+			{ form.password_rotation_enabled && (
+				<div className="gs-row">
+					<Field label={ __( 'Maximum password age', 'gemsecurity' ) } suffix={ __( 'days', 'gemsecurity' ) }>
+						<NumberInput
+							min="1"
+							value={ form.password_rotation_days ?? 90 }
+							onChange={ ( e ) => setField( 'password_rotation_days', Number( e.target.value ) ) }
+						/>
+					</Field>
+				</div>
+			) }
+
+			<div className="gs-savebar gs-savebar--inline">
+				<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
+					{ __( 'Save rotation settings', 'gemsecurity' ) }
+				</Button>
+			</div>
 		</Card>
 	);
 }
@@ -358,6 +533,8 @@ export default function LoginSecurity() {
 					{ form.magic_link_enabled && isPro() && <MagicLinkSender /> }
 				</Card>
 			</ProSection>
+
+			<PasswordRotation />
 
 			<div className="gs-savebar">
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>

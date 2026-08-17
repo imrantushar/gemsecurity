@@ -187,6 +187,10 @@ class Settings {
 			'password_min_length'           => 'int',
 			'password_require_complexity'   => 'bool',
 			'password_check_breached'       => 'bool',
+			// Forced password rotation.
+			'password_rotation_enabled'     => 'bool',
+			'password_rotation_days'        => 'int',
+			'password_rotation_roles'       => 'array',
 			'password_expiry_days'          => 'int',
 
 			// Sessions.

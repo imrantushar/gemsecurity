@@ -131,6 +131,51 @@ class Api {
 			],
 		] );
 
+		// Forced password resets: preview the scope, force it, or clear it.
+		register_rest_route( $ns, '/passwords/rotate', [
+			[
+				'methods'             => 'GET',
+				'callback'            => static function ( $req ) {
+					$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
+					return rest_ensure_response( [
+						'success' => true,
+						'targets' => count( Modules\PasswordRotation::targets( [
+							'roles'            => $roles,
+							'exclude_user_ids' => $req->get_param( 'include_self' ) ? [] : [ get_current_user_id() ],
+						] ) ),
+						'pending' => Modules\PasswordRotation::pending_count(),
+					] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => static function ( $req ) {
+					if ( 'clear' === $req->get_param( 'action' ) ) {
+						return rest_ensure_response( [
+							'success' => true,
+							'cleared' => Modules\PasswordRotation::clear_all(),
+							'pending' => Modules\PasswordRotation::pending_count(),
+						] );
+					}
+
+					$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
+					// The administrator running this is excluded unless they opt
+					// in, so a site-wide reset cannot lock its operator out
+					// mid-incident.
+					$result = Modules\PasswordRotation::force_reset( [
+						'roles'            => $roles,
+						'exclude_user_ids' => $req->get_param( 'include_self' ) ? [] : [ get_current_user_id() ],
+						'notify'           => (bool) $req->get_param( 'notify' ),
+						'reason'           => 'manual',
+					] );
+
+					return rest_ensure_response( [ 'success' => true, 'pending' => Modules\PasswordRotation::pending_count() ] + $result );
+				},
+				'permission_callback' => $perm,
+			],
+		] );
+
 		// Credential tester — check third-party keys against the real provider
 		// before a typo reaches the login form. Core: the fields it tests live
 		// across several modules.
