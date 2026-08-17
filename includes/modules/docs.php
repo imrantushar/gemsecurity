@@ -343,6 +343,7 @@ class Docs {
 					__( 'Checks installed plugins and themes against known vulnerabilities and against what WordPress.org actually ships.', 'gemsecurity' ),
 					__( 'Inspects mu-plugins and drop-ins — code that runs on every request without appearing on the Plugins screen.', 'gemsecurity' ),
 					__( 'Pro: full malware scanning with quarantine and a recovery toolkit.', 'gemsecurity' ),
+					__( 'The malware scan covers the whole install — the web root, wp-includes, wp-admin and wp-content — and reads PHP, JavaScript and .htaccess, not PHP alone.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Run a full scan now to establish a clean baseline.', 'gemsecurity' ),
