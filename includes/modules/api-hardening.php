@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -84,21 +85,31 @@ class ApiHardening {
 		}
 
 		$user = get_userdata( $user_id );
-		$to   = get_option( 'admin_email' );
-		wp_mail(
-			$to,
-			sprintf(
-				/* translators: %s: site name. */
-				__( '[%s] New application password created', 'gemsecurity' ),
-				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
-			),
-			sprintf(
-				/* translators: 1: label, 2: user login, 3: site url. */
-				__( "An application password \"%1\$s\" was just created for user \"%2\$s\" on %3\$s.\n\nIf this wasn't expected, review it under GemSecurity → API & Access.", 'gemsecurity' ),
-				$name,
-				$user ? $user->user_login : $user_id,
-				home_url()
-			)
+
+		Mailer::send(
+			get_option( 'admin_email' ),
+			'🔐',
+			__( 'New application password created', 'gemsecurity' ),
+			[
+				[
+					'type' => 'paragraph',
+					'text' => sprintf(
+						/* translators: 1: password label, 2: username. */
+						__( 'An application password <strong>%1$s</strong> was just created for <strong>%2$s</strong>. Application passwords bypass the login form, two-factor and CAPTCHA.', 'gemsecurity' ),
+						esc_html( $name ),
+						esc_html( $user ? $user->user_login : (string) $user_id )
+					),
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'If this was not expected, revoke it now.', 'gemsecurity' ),
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-api-hardening' ),
+					'label' => __( 'Review application passwords', 'gemsecurity' ),
+				],
+			]
 		);
 	}
 

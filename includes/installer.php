@@ -304,6 +304,8 @@ class Installer {
 			'alert_telegram_chat'          => '',
 			'alert_webhook_url'            => '',
 			'digest_enabled'               => false,
+			'daily_report_enabled'         => false,
+			'daily_report_hour'            => 7,
 
 			// Lockdown + backup.
 			'lockdown_enabled'             => false,
@@ -380,5 +382,6 @@ class Installer {
 		wp_clear_scheduled_hook( self::CRON_WEEKLY_DIGEST );
 		wp_clear_scheduled_hook( self::CRON_POST_UPDATE_SCAN );
 		wp_clear_scheduled_hook( \GemSecurity\Modules\AdminGuard::CRON_HOOK );
+		wp_clear_scheduled_hook( \GemSecurity\Modules\DailyReport::CRON_HOOK );
 	}
 }

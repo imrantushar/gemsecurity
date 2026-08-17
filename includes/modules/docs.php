@@ -104,15 +104,18 @@ class Docs {
 					__( 'Alerts: email, Slack, Telegram or a generic webhook, with a minimum-severity filter and an optional digest.', 'gemsecurity' ),
 					__( 'Compliance: log hash-chaining, SIEM/syslog forwarding and a severity floor for what gets shipped.', 'gemsecurity' ),
 					__( 'Maintenance: site lockdown with a custom message, and taking a backup before plugin or theme updates.', 'gemsecurity' ),
+					__( 'Daily report: a morning email listing every administrator and active plugin, and anything that changed since yesterday.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Add the address or webhook that should receive alerts, then set the minimum severity so routine noise stays out of your inbox.', 'gemsecurity' ),
-					__( 'Turn on the daily digest if you would rather get one summary than individual alerts.', 'gemsecurity' ),
+					__( 'Turn on the daily report to get a morning inventory of administrators and active plugins, with new ones called out — then use "Send one now" to see what it looks like.', 'gemsecurity' ),
 					__( 'Use lockdown while you investigate an incident: visitors see your message, administrators keep full access.', 'gemsecurity' ),
 				],
 				'notes'   => [
 					__( 'Alerts are only as reliable as your site mail. If WordPress email is unreliable here, use Slack, Telegram or a webhook instead.', 'gemsecurity' ),
 					__( 'Lockdown blocks the front end for visitors — remember to switch it back off.', 'gemsecurity' ),
+					__( 'Every email names the site and its domain in the subject, after an emoji for the event type — so alerts from several installs stay apart in one inbox.', 'gemsecurity' ),
+					__( 'The first daily report has no baseline, so it lists the inventory without claiming everything is new. Comparisons start the next morning.', 'gemsecurity' ),
 				],
 			],
 

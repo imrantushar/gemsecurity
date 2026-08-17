@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 use GemSecurity\Security\Totp;
 
@@ -196,14 +197,26 @@ class TwoFactor {
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
 		set_transient( self::EMAIL_OTP_PREFIX . $user->ID, $code, 10 * MINUTE_IN_SECONDS );
 
-		$site    = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$subject = sprintf( __( '[%s] Your login verification code', 'gemsecurity' ), $site );
-		$body    = implode( "\n", [
-			sprintf( __( 'Your verification code is: %s', 'gemsecurity' ), $code ),
-			'',
-			__( 'It expires in 10 minutes. If you did not try to log in, change your password immediately.', 'gemsecurity' ),
-		] );
-		wp_mail( $user->user_email, $subject, $body );
+		Mailer::send(
+			$user->user_email,
+			'🔢',
+			__( 'Your login verification code', 'gemsecurity' ),
+			[
+				[
+					'type' => 'notice',
+					'tone' => 'info',
+					'text' => sprintf(
+						/* translators: %s: 6-digit code. */
+						__( 'Your verification code is <strong style="letter-spacing:3px;font-size:20px;">%s</strong>', 'gemsecurity' ),
+						esc_html( $code )
+					),
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'It expires in 10 minutes. If you did not try to sign in, change your password immediately.', 'gemsecurity' ),
+				],
+			]
+		);
 	}
 
 	/* ------------------------------------------------------------------ */

@@ -283,6 +283,7 @@ class Registry {
 				'page_slug'     => $slug . '-logs',
 				'classes'       => [
 					AuditLog::class,
+					DailyReport::class,
 					Alerts::class,
 					Compliance::class,
 				],

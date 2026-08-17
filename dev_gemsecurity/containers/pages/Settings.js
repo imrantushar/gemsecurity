@@ -26,6 +26,9 @@ const KEYS = [
 	'alert_telegram_chat',
 	'alert_webhook_url',
 	'digest_enabled',
+	// Daily morning report.
+	'daily_report_enabled',
+	'daily_report_hour',
 	// Lockdown + backup.
 	'lockdown_enabled',
 	'lockdown_message',
@@ -37,6 +40,7 @@ export default function Settings() {
 	const toast = useToast();
 	const [ verifyResult, setVerifyResult ] = useState( null );
 	const [ verifying, setVerifying ] = useState( false );
+	const [ sendingReport, setSendingReport ] = useState( false );
 
 	const runVerify = async () => {
 		setVerifying( true );
@@ -45,6 +49,17 @@ export default function Settings() {
 			setVerifyResult( r.data );
 		} catch ( e ) { toast( __( 'Verification failed.', 'gemsecurity' ), 'error' ); }
 		setVerifying( false );
+	};
+
+	const sendDailyNow = async () => {
+		setSendingReport( true );
+		try {
+			const { data } = await api.post( 'reports/daily', {} );
+			toast( data.message, data.success ? 'success' : 'error' );
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not send the report.', 'gemsecurity' ), 'error' );
+		}
+		setSendingReport( false );
 	};
 
 	const downloadReport = async () => {
@@ -131,6 +146,40 @@ export default function Settings() {
 						</div>
 						<Toggle label={ __( 'Also write to system syslog', 'gemsecurity' ) } checked={ form.siem_syslog } onChange={ ( v ) => setField( 'siem_syslog', v ) } />
 					</>
+				) }
+			</Card>
+
+			<Card
+				title={ __( 'Daily report', 'gemsecurity' ) }
+				description={ __( 'A morning email listing every administrator and active plugin, and anything that changed since yesterday — so an unexpected change is visible even when no alert fired.', 'gemsecurity' ) }
+				actions={
+					<Button variant="secondary" onClick={ sendDailyNow } loading={ sendingReport }>
+						{ __( 'Send one now', 'gemsecurity' ) }
+					</Button>
+				}
+			>
+				<Toggle
+					label={ __( 'Email a daily report', 'gemsecurity' ) }
+					description={ __( 'Sent to the alert address below, or the site admin email.', 'gemsecurity' ) }
+					checked={ form.daily_report_enabled }
+					onChange={ ( v ) => setField( 'daily_report_enabled', v ) }
+				/>
+				{ form.daily_report_enabled && (
+					<div className="gs-row">
+						<Field
+							label={ __( 'Send at', 'gemsecurity' ) }
+							description={ __( 'In your site’s timezone.', 'gemsecurity' ) }
+						>
+							<Select
+								value={ String( form.daily_report_hour ?? 7 ) }
+								onChange={ ( e ) => setField( 'daily_report_hour', Number( e.target.value ) ) }
+								options={ Array.from( { length: 24 }, ( _, h ) => ( {
+									value: String( h ),
+									label: `${ String( h ).padStart( 2, '0' ) }:00`,
+								} ) ) }
+							/>
+						</Field>
+					</div>
 				) }
 			</Card>
 

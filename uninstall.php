@@ -18,6 +18,7 @@ $options = [
 	'gemsecurity_vuln_scan',
 	'gemsecurity_hidden_admin_scan',
 	'gemsecurity_hidden_admin_state',
+	'gemsecurity_daily_report_snapshot',
 	// Backup subsystem.
 	'gemsecurity_backup_settings',
 	'gembackup_db_version',
@@ -79,6 +80,7 @@ $hooks = [
 	'gemsecurity_daily_scan',
 	'gemsecurity_weekly_digest',
 	'gemsecurity_admin_guard_sweep',
+	'gemsecurity_daily_report',
 	'gembackup_daily_event',
 	'gembackup_weekly_event',
 	'gembackup_monthly_event',

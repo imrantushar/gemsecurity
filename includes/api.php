@@ -96,6 +96,41 @@ class Api {
 			],
 		] );
 
+		// Daily report: preview the morning letter or send it on demand.
+		register_rest_route( $ns, '/reports/daily', [
+			[
+				'methods'             => 'GET',
+				'callback'            => static function () {
+					$data = Modules\DailyReport::collect();
+					return rest_ensure_response( [
+						'success'      => true,
+						'admins'       => count( $data['admins'] ),
+						'plugins'      => count( $data['plugins'] ),
+						'new_plugins'  => count( $data['new_plugins'] ),
+						'new_admins'   => count( $data['new_admins'] ),
+						'first_run'    => $data['first_run'],
+						'next_run'     => wp_next_scheduled( Modules\DailyReport::CRON_HOOK ),
+					] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => static function () {
+					// force: send even while the schedule is off, and leave the
+					// "since yesterday" baseline untouched.
+					$sent = Modules\DailyReport::send( true );
+					return rest_ensure_response( [
+						'success' => (bool) $sent,
+						'message' => $sent
+							? __( 'Report sent.', 'gemsecurity' )
+							: __( 'WordPress could not send the email — check the site’s mail setup.', 'gemsecurity' ),
+					] );
+				},
+				'permission_callback' => $perm,
+			],
+		] );
+
 		// Credential tester — check third-party keys against the real provider
 		// before a typo reaches the login form. Core: the fields it tests live
 		// across several modules.

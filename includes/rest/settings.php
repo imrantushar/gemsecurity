@@ -210,6 +210,9 @@ class Settings {
 			'alert_telegram_chat'           => 'text',
 			'alert_webhook_url'             => 'text',
 			'digest_enabled'                => 'bool',
+			// Daily morning report.
+			'daily_report_enabled'          => 'bool',
+			'daily_report_hour'             => 'int',
 
 			// Lockdown + backup.
 			'lockdown_enabled'              => 'bool',

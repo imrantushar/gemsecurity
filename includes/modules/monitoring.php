@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -158,7 +159,23 @@ class Monitoring {
 		}
 		if ( $alerts ) {
 			$to = Helper::get_setting( 'monitor_alert_email', '' ) ?: get_option( 'admin_email' );
-			wp_mail( $to, __( '[GemSecurity] Monitoring alert', 'gemsecurity' ), implode( "\n", $alerts ) );
+			Mailer::send(
+				$to,
+				'📡',
+				__( 'Monitoring alert', 'gemsecurity' ),
+				[
+					[
+						'type'    => 'list',
+						'heading' => __( 'What changed', 'gemsecurity' ),
+						'items'   => array_map( 'esc_html', $alerts ),
+					],
+					[
+						'type'  => 'button',
+						'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-monitoring' ),
+						'label' => __( 'Open Monitoring', 'gemsecurity' ),
+					],
+				]
+			);
 		}
 	}
 

@@ -3,6 +3,7 @@ namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
 use GemSecurity\Logger;
+use GemSecurity\Mailer;
 use GemSecurity\Security\AdminAudit;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -553,22 +554,44 @@ class AdminGuard {
 		}
 
 		$to   = get_option( 'admin_email' );
-		$site = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$verb = 'delete' === $action ? __( 'deleted', 'gemsecurity' ) : __( 'demoted', 'gemsecurity' );
 
-		$subject = sprintf( __( '[%s] Unapproved administrator blocked', 'gemsecurity' ), $site );
-		$body = implode( "\n", [
-			sprintf( __( 'GemSecurity %s an unapproved administrator account on %s.', 'gemsecurity' ), $verb, $site ),
-			'',
-			sprintf( __( 'Username: %s', 'gemsecurity' ), $login ),
-			sprintf( __( 'Email:    %s', 'gemsecurity' ), $email ),
-			sprintf( __( 'Trigger:  %s', 'gemsecurity' ), $origin ),
-			sprintf( __( 'IP:       %s', 'gemsecurity' ), Helper::get_ip_address() ),
-			'',
-			__( 'If this administrator was legitimate, add their email to the GemSecurity admin whitelist and recreate the account.', 'gemsecurity' ),
-		] );
-
-		wp_mail( $to, $subject, $body );
+		Mailer::send(
+			$to,
+			'🚨',
+			__( 'Unapproved administrator blocked', 'gemsecurity' ),
+			[
+				[
+					'type' => 'notice',
+					'tone' => 'critical',
+					'text' => sprintf(
+						/* translators: 1: username, 2: deleted|demoted */
+						__( 'The administrator account <strong>%1$s</strong> was not on the approved list and has been %2$s.', 'gemsecurity' ),
+						esc_html( $login ),
+						esc_html( $verb )
+					),
+				],
+				[
+					'type'    => 'table',
+					'heading' => __( 'Account', 'gemsecurity' ),
+					'rows'    => [
+						[ __( 'Username', 'gemsecurity' ), esc_html( $login ) ],
+						[ __( 'Email', 'gemsecurity' ), esc_html( $email ) ],
+						[ __( 'Trigger', 'gemsecurity' ), esc_html( $origin ) ],
+						[ __( 'IP address', 'gemsecurity' ), esc_html( Helper::get_ip_address() ) ],
+					],
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'If this administrator was legitimate, add their email to the whitelist and recreate the account.', 'gemsecurity' ),
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-admin-guard' ),
+					'label' => __( 'Review Admin Guard', 'gemsecurity' ),
+				],
+			]
+		);
 	}
 
 	/* --------------------------------------------------------------------- */

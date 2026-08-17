@@ -122,7 +122,33 @@ class Alerts {
 		$body = implode( "\n", $lines );
 
 		$to = trim( (string) Helper::get_setting( 'alert_to_email', '' ) ) ?: get_option( 'admin_email' );
-		wp_mail( $to, sprintf( __( '[%s] Weekly security report', 'gemsecurity' ), $site ), $body );
+		\GemSecurity\Mailer::send(
+			$to,
+			'📊',
+			__( 'Weekly security report', 'gemsecurity' ),
+			[
+				[
+					'type'  => 'stats',
+					'items' => [
+						__( 'Critical', 'gemsecurity' ) => $by_sev['critical'] ?? 0,
+						__( 'Warnings', 'gemsecurity' ) => $by_sev['warning'] ?? 0,
+						__( 'Notices', 'gemsecurity' )  => $by_sev['notice'] ?? 0,
+						__( 'IP bans', 'gemsecurity' )  => \GemSecurity\Security\BanList::count_active(),
+					],
+				],
+				[
+					'type'    => 'list',
+					'heading' => __( 'The last 7 days', 'gemsecurity' ),
+					'items'   => array_map( 'esc_html', array_slice( $lines, 2 ) ),
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-logs' ),
+					'label' => __( 'Open the activity log', 'gemsecurity' ),
+				],
+			],
+			[ 'intro' => __( 'A summary of everything GemSecurity recorded over the last seven days.', 'gemsecurity' ) ]
+		);
 
 		if ( Helper::get_setting( 'alerts_enabled', false ) ) {
 			$this->dispatch( $body );

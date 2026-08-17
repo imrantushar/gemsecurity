@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 use GemSecurity\Security\BanList;
 
@@ -104,16 +105,29 @@ class LoginExtras {
 				[ 'user_id' => $user->ID, 'ip_address' => $ip, 'context' => [ 'ua' => $ua ] ]
 			);
 			if ( Helper::get_setting( 'trusted_devices_alert', true ) && $user->user_email ) {
-				wp_mail(
+				Mailer::send(
 					$user->user_email,
-					sprintf( /* translators: %s site name */ __( '[%s] New device sign-in', 'gemsecurity' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) ),
-					sprintf(
-						/* translators: 1: ip, 2: user agent, 3: time */
-						__( "A new device just signed in to your account.\n\nIP: %1\$s\nDevice: %2\$s\nTime: %3\$s\n\nIf this wasn't you, change your password immediately.", 'gemsecurity' ),
-						$ip,
-						$ua,
-						gmdate( 'Y-m-d H:i:s' )
-					)
+					'💻',
+					__( 'New device sign-in', 'gemsecurity' ),
+					[
+						[
+							'type' => 'paragraph',
+							'text' => __( 'A device that has not been seen before just signed in to your account.', 'gemsecurity' ),
+						],
+						[
+							'type'    => 'table',
+							'heading' => __( 'Device', 'gemsecurity' ),
+							'rows'    => [
+								[ __( 'IP address', 'gemsecurity' ), esc_html( $ip ) ],
+								[ __( 'Device', 'gemsecurity' ), esc_html( $ua ) ],
+								[ __( 'Time', 'gemsecurity' ), esc_html( gmdate( 'Y-m-d H:i:s' ) . ' UTC' ) ],
+							],
+						],
+						[
+							'type' => 'paragraph',
+							'text' => __( 'If this was not you, change your password immediately.', 'gemsecurity' ),
+						],
+					]
 				);
 			}
 		}
@@ -152,14 +166,25 @@ class LoginExtras {
 			[ 'gemsec_magic' => rawurlencode( $token ), 'uid' => $user_id ],
 			wp_login_url()
 		);
-		$sent = wp_mail(
+		$sent = Mailer::send(
 			$user->user_email,
-			sprintf( /* translators: %s site name */ __( '[%s] Your one-time login link', 'gemsecurity' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) ),
-			sprintf(
-				/* translators: 1: link */
-				__( "Use this link within 15 minutes to sign in:\n\n%1\$s\n\nIf you didn't request it, ignore this email.", 'gemsecurity' ),
-				$link
-			)
+			'🔗',
+			__( 'Your one-time sign-in link', 'gemsecurity' ),
+			[
+				[
+					'type' => 'paragraph',
+					'text' => __( 'Use the button below within 15 minutes to sign in. The link works once.', 'gemsecurity' ),
+				],
+				[
+					'type'  => 'button',
+					'url'   => $link,
+					'label' => __( 'Sign in', 'gemsecurity' ),
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'If you did not request this, ignore the email — nothing has changed.', 'gemsecurity' ),
+				],
+			]
 		);
 		Logger::log( 'magic_link_issued', sprintf( 'Magic login link issued for user #%d.', $user_id ), Logger::SEVERITY_NOTICE, [ 'user_id' => $user_id ] );
 		return $sent ? true : new \WP_Error( 'gemsec_mail_failed', __( 'The email could not be sent.', 'gemsecurity' ) );

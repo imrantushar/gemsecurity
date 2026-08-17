@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 use GemSecurity\Security\Geo;
 
@@ -243,16 +244,29 @@ class Geolocation {
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
 		set_transient( self::OTP_PREFIX . $user->ID, $code, 10 * MINUTE_IN_SECONDS );
 
-		$site = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		wp_mail(
+		Mailer::send(
 			$user->user_email,
-			sprintf( __( '[%s] Verify your login location', 'gemsecurity' ), $site ),
-			implode( "\n", [
-				sprintf( __( 'A login to %s was attempted from a new location.', 'gemsecurity' ), $site ),
-				sprintf( __( 'Your verification code is: %s', 'gemsecurity' ), $code ),
-				'',
-				__( 'It expires in 10 minutes. If this was not you, change your password immediately.', 'gemsecurity' ),
-			] )
+			'📍',
+			__( 'Verify your sign-in location', 'gemsecurity' ),
+			[
+				[
+					'type' => 'paragraph',
+					'text' => __( 'A sign-in was attempted from a location this account has not used before.', 'gemsecurity' ),
+				],
+				[
+					'type' => 'notice',
+					'tone' => 'info',
+					'text' => sprintf(
+						/* translators: %s: 6-digit code. */
+						__( 'Your verification code is <strong style="letter-spacing:3px;font-size:20px;">%s</strong>', 'gemsecurity' ),
+						esc_html( $code )
+					),
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'It expires in 10 minutes. If this was not you, change your password immediately.', 'gemsecurity' ),
+				],
+			]
 		);
 	}
 
