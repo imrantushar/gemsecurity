@@ -78,6 +78,7 @@ $hooks = [
 	'gemsecurity_prune_logs',
 	'gemsecurity_daily_scan',
 	'gemsecurity_weekly_digest',
+	'gemsecurity_admin_guard_sweep',
 	'gembackup_daily_event',
 	'gembackup_weekly_event',
 	'gembackup_monthly_event',

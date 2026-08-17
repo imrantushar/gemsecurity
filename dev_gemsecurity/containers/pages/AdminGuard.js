@@ -20,6 +20,10 @@ export default function AdminGuard() {
 	const [ audit, setAudit ] = useState( null );
 	const [ newEmail, setNewEmail ] = useState( '' );
 	const [ busyId, setBusyId ] = useState( 0 );
+	// Sweep of administrators that already exist — previewed before it runs,
+	// because the configured action may be "delete".
+	const [ sweep, setSweep ] = useState( null );
+	const [ sweeping, setSweeping ] = useState( '' );
 
 	useEffect( () => {
 		api.get( 'admins' )
@@ -112,6 +116,34 @@ export default function AdminGuard() {
 	// Suspicious but not already listed as hidden.
 	const suspiciousAdmins = ( admins || [] ).filter( ( a ) => a.suspicious && ! a.hidden );
 	const allClear = audit && hiddenAdmins.length === 0 && suspiciousAdmins.length === 0 && ! audit.mismatch;
+
+	const previewSweep = async () => {
+		setSweeping( 'preview' );
+		try {
+			const { data } = await api.get( 'admins/sweep' );
+			setSweep( data );
+		} catch ( e ) {
+			setSweep( null );
+		}
+		setSweeping( '' );
+	};
+
+	const runSweep = async () => {
+		setSweeping( 'run' );
+		try {
+			const { data } = await api.post( 'admins/sweep', {} );
+			setSweep( { ...data, done: true } );
+			if ( Array.isArray( data.admins ) ) {
+				setAdmins( data.admins );
+			}
+			if ( data.audit ) {
+				setAudit( data.audit );
+			}
+		} catch ( e ) {
+			// Leave the preview on screen; the error surfaces below.
+		}
+		setSweeping( '' );
+	};
 
 	return (
 		<div className="gs-page">
@@ -240,6 +272,66 @@ export default function AdminGuard() {
 					checked={ form.notify_on_rogue_admin }
 					onChange={ ( v ) => setField( 'notify_on_rogue_admin', v ) }
 				/>
+
+				<Field
+					label={ __( 'Existing administrators', 'gemsecurity' ) }
+					description={ __( 'The whitelist is swept hourly, and whenever you change it, so unapproved accounts that never sign in are removed too. Check what that would affect here.', 'gemsecurity' ) }
+				>
+					<div className="gs-addrow">
+						<Button variant="secondary" onClick={ previewSweep } loading={ sweeping === 'preview' }>
+							{ __( 'Check for unapproved admins', 'gemsecurity' ) }
+						</Button>
+						{ sweep && ! sweep.done && sweep.removed && sweep.removed.length > 0 && (
+							<Button variant="danger" onClick={ runSweep } loading={ sweeping === 'run' }>
+								{ 'delete' === sweep.action
+									? __( 'Delete them now', 'gemsecurity' )
+									: __( 'Demote them now', 'gemsecurity' ) }
+							</Button>
+						) }
+					</div>
+				</Field>
+
+				{ sweep && ! sweep.ran && (
+					<div className="gs-alert gs-alert--warning">
+						<Icon name="alert" size={ 18 } />
+						<span>{ __( 'The sweep does not run while the whitelist is empty or the guard is off — otherwise every administrator would count as unapproved.', 'gemsecurity' ) }</span>
+					</div>
+				) }
+
+				{ sweep && sweep.ran && (
+					<div className={ `gs-alert gs-alert--${ sweep.removed.length ? 'warning' : 'info' }` }>
+						<Icon name={ sweep.removed.length ? 'alert' : 'check' } size={ 18 } />
+						<span>
+							{ sweep.done
+								? sprintf(
+									/* translators: 1: count, 2: demoted|deleted */
+									__( '%1$d unapproved administrator(s) %2$s.', 'gemsecurity' ),
+									sweep.removed.length,
+									'delete' === sweep.action ? __( 'deleted', 'gemsecurity' ) : __( 'demoted', 'gemsecurity' )
+								)
+								: sprintf(
+									/* translators: 1: checked, 2: count, 3: delete|demote */
+									__( 'Checked %1$d administrator(s): %2$d not on the whitelist and would be %3$s.', 'gemsecurity' ),
+									sweep.checked,
+									sweep.removed.length,
+									'delete' === sweep.action ? __( 'deleted', 'gemsecurity' ) : __( 'demoted', 'gemsecurity' )
+								) }
+							{ sweep.removed.length > 0 && (
+								<> { sweep.removed.map( ( u ) => u.login ).join( ', ' ) }</>
+							) }
+							{ sweep.protected && sweep.protected.length > 0 && (
+								<>
+									{ ' · ' }
+									{ sprintf(
+										/* translators: %s: comma-separated usernames */
+										__( 'Protected, never removed: %s', 'gemsecurity' ),
+										sweep.protected.map( ( u ) => u.login ).join( ', ' )
+									) }
+								</>
+							) }
+						</span>
+					</div>
+				) }
 			</Card>
 
 			<Card

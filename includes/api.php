@@ -244,6 +244,20 @@ class Api {
 				'callback'            => [ Rest\Admins::class, 'remove' ],
 				'permission_callback' => $perm,
 			] );
+			// Sweep every existing administrator against the whitelist. GET
+			// previews (dry run), POST carries it out.
+			register_rest_route( $ns, '/admins/sweep', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Rest\Admins::class, 'preview_sweep' ],
+					'permission_callback' => $perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Rest\Admins::class, 'sweep' ],
+					'permission_callback' => $perm,
+				],
+			] );
 		}
 
 		// Scanner: integrity/malware scan, baseline, MU-plugin inventory.

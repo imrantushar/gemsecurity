@@ -3,6 +3,7 @@ namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
 use GemSecurity\Logger;
+use GemSecurity\Security\AdminAudit;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -46,6 +47,9 @@ class AdminGuard {
 	 */
 	private static $creating = [];
 
+	/** Recurring sweep for unapproved administrators already on the site. */
+	const CRON_HOOK = 'gemsecurity_admin_guard_sweep';
+
 	public static function init() {
 		$self = new self();
 		add_filter( 'insert_user_meta', [ $self, 'mark_creating' ], 10, 3 );
@@ -65,6 +69,55 @@ class AdminGuard {
 		add_filter( 'authenticate', [ $self, 'block_login' ], 99, 1 );
 		// And end a session that predates the whitelist.
 		add_action( 'init', [ $self, 'guard_session' ], 1 );
+
+		// Dormant accounts never reach either check, so sweep for them: hourly,
+		// and immediately whenever the whitelist itself changes.
+		add_action( self::CRON_HOOK, [ __CLASS__, 'run_scheduled_sweep' ] );
+		add_action( 'init', [ __CLASS__, 'schedule_sweep' ] );
+		add_action( 'update_option_' . GEMSECURITY_SETTINGS_NAME, [ __CLASS__, 'on_settings_saved' ], 10, 2 );
+	}
+
+	/** Keep the recurring sweep scheduled while the guard is enabled. */
+	public static function schedule_sweep() {
+		$self      = new self();
+		$scheduled = wp_next_scheduled( self::CRON_HOOK );
+
+		if ( $self->enforcement_active() ) {
+			if ( ! $scheduled ) {
+				wp_schedule_event( time() + MINUTE_IN_SECONDS, 'hourly', self::CRON_HOOK );
+			}
+		} elseif ( $scheduled ) {
+			wp_unschedule_event( $scheduled, self::CRON_HOOK );
+		}
+	}
+
+	/** Cron callback. */
+	public static function run_scheduled_sweep() {
+		self::sweep( 'cron' );
+	}
+
+	/**
+	 * Re-sweep when the whitelist or the guard's own switches change, so
+	 * approving or un-approving somebody takes effect at once instead of at
+	 * the next scheduled run.
+	 *
+	 * @param mixed $old
+	 * @param mixed $new
+	 */
+	public static function on_settings_saved( $old, $new ) {
+		$keys = [ 'admin_whitelist_enabled', 'admin_whitelist', 'rogue_admin_action' ];
+		foreach ( $keys as $key ) {
+			$before = is_array( $old ) && isset( $old[ $key ] ) ? $old[ $key ] : null;
+			$after  = is_array( $new ) && isset( $new[ $key ] ) ? $new[ $key ] : null;
+			if ( $before !== $after ) {
+				// `init` has already run by the time settings are saved, so
+				// start (or stop) the recurring sweep here rather than leaving
+				// it until the next page load.
+				self::schedule_sweep();
+				self::sweep( 'settings' );
+				return;
+			}
+		}
 	}
 
 	/**
@@ -252,6 +305,82 @@ class AdminGuard {
 
 		wp_safe_redirect( wp_login_url() );
 		exit;
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Sweep of existing accounts                                             */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Remove every administrator that is not on the whitelist.
+	 *
+	 * Blocking logins stops an unapproved administrator being *used*, but the
+	 * account still exists, still holds the role, and still comes back the
+	 * moment this module is switched off. The sweep is what actually removes
+	 * it — including accounts that never log in, which is the usual shape of a
+	 * back door left behind for later.
+	 *
+	 * Administrators are read from the filter-proof audit source, so an account
+	 * hidden from the users list by a `pre_user_query` filter is swept too.
+	 *
+	 * @param string $origin  Why the sweep ran: cron | settings | manual.
+	 * @param bool   $dry_run Report what would happen without touching anything.
+	 * @return array { checked, removed[], protected[], action, ran }
+	 */
+	public static function sweep( $origin = 'manual', $dry_run = false ) {
+		$self   = new self();
+		$action = Helper::get_setting( 'rogue_admin_action', 'demote' );
+		$out    = [
+			'checked'   => 0,
+			'removed'   => [],
+			'protected' => [],
+			'action'    => $action,
+			'ran'       => false,
+		];
+
+		// Same rule as login enforcement: an empty whitelist means "not
+		// configured", and sweeping on it would remove every administrator.
+		if ( ! $self->enforcement_active() ) {
+			return $out;
+		}
+
+		$out['ran'] = true;
+
+		foreach ( AdminAudit::raw_admin_ids() as $user_id ) {
+			$user = get_userdata( (int) $user_id );
+			if ( ! $user instanceof \WP_User ) {
+				continue;
+			}
+			$out['checked']++;
+
+			if ( $self->is_whitelisted( $user ) ) {
+				continue;
+			}
+
+			// Protected accounts are reported, never removed — the sweep must
+			// not be able to orphan a site. `$allow_self` stays on so a manual
+			// run from the admin cannot delete the operator running it.
+			if ( $self->is_protected( $user ) ) {
+				$out['protected'][] = [
+					'id'    => (int) $user->ID,
+					'login' => $user->user_login,
+					'email' => $user->user_email,
+				];
+				continue;
+			}
+
+			$out['removed'][] = [
+				'id'    => (int) $user->ID,
+				'login' => $user->user_login,
+				'email' => $user->user_email,
+			];
+
+			if ( ! $dry_run ) {
+				$self->remove_rogue_admin( $user, $action, 'sweep:' . $origin, $self->pick_fallback_role( $user->roles ) );
+			}
+		}
+
+		return $out;
 	}
 
 	/**

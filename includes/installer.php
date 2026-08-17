@@ -379,5 +379,6 @@ class Installer {
 		wp_clear_scheduled_hook( self::CRON_DAILY_SCAN );
 		wp_clear_scheduled_hook( self::CRON_WEEKLY_DIGEST );
 		wp_clear_scheduled_hook( self::CRON_POST_UPDATE_SCAN );
+		wp_clear_scheduled_hook( \GemSecurity\Modules\AdminGuard::CRON_HOOK );
 	}
 }

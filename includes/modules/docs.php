@@ -291,12 +291,14 @@ class Docs {
 				'does'    => [
 					__( 'Keeps an approved-administrator list and demotes or deletes any account that appears outside it.', 'gemsecurity' ),
 					__( 'Refuses the sign-in of an administrator who is not on the list, and ends an existing session belonging to one — so an account added straight to the database, or created while this module was off, still cannot get in.', 'gemsecurity' ),
+					__( 'Sweeps the administrators that already exist — hourly and whenever you change the whitelist — so an unapproved account is removed even if it never signs in.', 'gemsecurity' ),
 					__( 'Detects administrators hidden from the users list — a classic backdoor left behind after a breach.', 'gemsecurity' ),
 					__( 'Emails you when either fires.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Review the approved list and confirm every account on it is one you recognise.', 'gemsecurity' ),
 					__( 'Choose what happens to a rogue administrator: demote is the safe default, delete is irreversible.', 'gemsecurity' ),
+					__( 'Use "Check for unapproved admins" before relying on it: the preview lists exactly who would be removed, which is worth seeing while the action is set to delete.', 'gemsecurity' ),
 					__( 'Enable both notifications so you hear about it even if you are not logged in.', 'gemsecurity' ),
 				],
 				'notes'   => [
