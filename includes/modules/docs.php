@@ -114,6 +114,7 @@ class Docs {
 				'notes'   => [
 					__( 'Alerts are only as reliable as your site mail. If WordPress email is unreliable here, use Slack, Telegram or a webhook instead.', 'gemsecurity' ),
 					__( 'Lockdown blocks the front end for visitors — remember to switch it back off.', 'gemsecurity' ),
+					__( 'Deactivating GemSecurity emails the alert address with a critical warning naming who did it, and pushes the same message to Slack, Telegram or your webhook — switching security off is the first move in most intrusions.', 'gemsecurity' ),
 					__( 'Every email names the site and its domain in the subject, after an emoji for the event type — so alerts from several installs stay apart in one inbox.', 'gemsecurity' ),
 					__( 'The first daily report has no baseline, so it lists the inventory without claiming everything is new. Comparisons start the next morning.', 'gemsecurity' ),
 				],
@@ -182,6 +183,7 @@ class Docs {
 					__( 'Body inspection reads POST payloads, which costs a little performance on write-heavy sites.', 'gemsecurity' ),
 					__( 'Rate limits apply per IP — verify the proxy settings on the Firewall page first, or all traffic will share one bucket.', 'gemsecurity' ),
 					__( 'The early loader fails open: if it cannot run, requests are allowed rather than the site going down.', 'gemsecurity' ),
+					__( 'The early loader doubles as a watchdog: it is removed on a normal deactivation, so finding it still installed while GemSecurity is inactive means the plugin was disabled outside WordPress — the database edited, or the folder renamed — and it emails a warning about exactly that.', 'gemsecurity' ),
 					__( 'Whitelist your own address before tightening thresholds so a testing burst cannot lock you out.', 'gemsecurity' ),
 				],
 			],

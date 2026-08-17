@@ -20,15 +20,106 @@ class Installer {
 		\GemSecurity\Modules\Registry::seed_if_missing();
 		self::schedule_events();
 		self::snapshot_admin_whitelist();
+		// Fresh start for the mu-plugin watchdog, so a future incident alerts
+		// immediately rather than waiting out an old rate-limit window.
+		delete_option( 'gemsecurity_watchdog_alert' );
 		flush_rewrite_rules();
 	}
 
 	public static function deactivate() {
+		// Say so before tearing anything down. Switching the security plugin off
+		// is the first move in a lot of intrusions — it is quiet, it is
+		// reversible-looking, and every protection stops with it. This runs
+		// while the plugin is still loaded, which is the only moment it can.
+		self::notify_deactivated();
+
 		self::clear_events();
 		// Remove the extended-protection mu-plugin so a deactivated plugin
 		// never leaves an orphaned early firewall behind.
 		\GemSecurity\Security\MuLoader::uninstall();
 		flush_rewrite_rules();
+	}
+
+	/**
+	 * Alert the site owner that protection has just been switched off.
+	 *
+	 * Sent to the alert address and pushed to any fast channel (Slack,
+	 * Telegram, webhook), because an attacker who reaches this point is
+	 * already inside and email alone may be read too late.
+	 */
+	private static function notify_deactivated() {
+		$user = wp_get_current_user();
+		$who  = ( $user && $user->exists() )
+			? sprintf( '%s (%s)', $user->user_login, $user->user_email )
+			: ( ( defined( 'WP_CLI' ) && WP_CLI ) ? 'WP-CLI' : __( 'unknown — not a logged-in user', 'gemsecurity' ) );
+
+		$ip   = \GemSecurity\Helper::get_ip_address();
+		$when = wp_date( 'F j, Y \a\t g:i a' );
+
+		// The log table outlives deactivation, so this is still there to read
+		// afterwards even though nothing is running.
+		\GemSecurity\Logger::log(
+			'plugin_deactivated',
+			sprintf( 'GemSecurity was deactivated by %s from %s.', $who, $ip ),
+			\GemSecurity\Logger::SEVERITY_CRITICAL,
+			[ 'context' => [ 'who' => $who, 'ip' => $ip ] ]
+		);
+
+		$to = trim( (string) \GemSecurity\Helper::get_setting( 'alert_to_email', '' ) );
+		if ( '' === $to ) {
+			$to = get_option( 'admin_email' );
+		}
+
+		\GemSecurity\Mailer::send(
+			$to,
+			'🚨',
+			__( 'DANGER: GemSecurity was deactivated — this site is no longer protected', 'gemsecurity' ),
+			[
+				[
+					'type' => 'notice',
+					'tone' => 'critical',
+					'text' => __( 'The firewall, login protection, scanning and monitoring on this site have all stopped. If you did not do this yourself, treat it as an active intrusion — disabling security is usually the first step, not the last.', 'gemsecurity' ),
+				],
+				[
+					'type'    => 'table',
+					'heading' => __( 'What happened', 'gemsecurity' ),
+					'rows'    => [
+						[ __( 'Action', 'gemsecurity' ), __( 'GemSecurity deactivated', 'gemsecurity' ) ],
+						[ __( 'By', 'gemsecurity' ), esc_html( $who ) ],
+						[ __( 'IP address', 'gemsecurity' ), esc_html( $ip ) ],
+						[ __( 'Time', 'gemsecurity' ), esc_html( $when ) ],
+					],
+				],
+				[
+					'type'    => 'list',
+					'heading' => __( 'If this was not you', 'gemsecurity' ),
+					'items'   => [
+						__( 'Reactivate GemSecurity immediately.', 'gemsecurity' ),
+						__( 'Change every administrator password and log all sessions out.', 'gemsecurity' ),
+						__( 'Run a full malware scan, and check the administrator list for accounts you do not recognise.', 'gemsecurity' ),
+						__( 'Review the activity log — it survives deactivation and records what led up to this.', 'gemsecurity' ),
+					],
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'plugins.php' ),
+					'label' => __( 'Reactivate GemSecurity', 'gemsecurity' ),
+				],
+			]
+		);
+
+		// Fast channels too — an inbox may not be watched for hours.
+		if ( \GemSecurity\Helper::get_setting( 'alerts_enabled', false ) ) {
+			( new \GemSecurity\Modules\Alerts() )->dispatch(
+				sprintf(
+					/* translators: 1: site name, 2: who, 3: ip */
+					__( '[%1$s] CRITICAL: GemSecurity was deactivated by %2$s from %3$s. The site is no longer protected.', 'gemsecurity' ),
+					\GemSecurity\Mailer::site_name(),
+					$who,
+					$ip
+				)
+			);
+		}
 	}
 
 	/**

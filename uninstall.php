@@ -19,6 +19,7 @@ $options = [
 	'gemsecurity_hidden_admin_scan',
 	'gemsecurity_hidden_admin_state',
 	'gemsecurity_daily_report_snapshot',
+	'gemsecurity_watchdog_alert',
 	// Backup subsystem.
 	'gemsecurity_backup_settings',
 	'gembackup_db_version',
