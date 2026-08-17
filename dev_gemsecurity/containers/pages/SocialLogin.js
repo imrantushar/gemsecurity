@@ -4,6 +4,7 @@ import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, TextInput, Select, Button, Loading, Badge } from '@Components/ui/Controls';
 import SetupGuide from '@Components/ui/SetupGuide';
+import TestCredentials from '@Components/ui/TestCredentials';
 import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
 
@@ -52,6 +53,14 @@ function ProviderCard( { provider, form, setField } ) {
 							<TextInput type="password" value={ form[ `social_${ key }_client_secret` ] ?? '' } onChange={ ( e ) => setField( `social_${ key }_client_secret`, e.target.value ) } />
 						</Field>
 					</div>
+					<TestCredentials
+						target="social"
+						getValues={ () => ( {
+							provider: key,
+							client_id: form[ `social_${ key }_client_id` ] || '',
+							client_secret: form[ `social_${ key }_client_secret` ] || '',
+						} ) }
+					/>
 				</>
 			) }
 			{ enabled && key === 'twitter' && (

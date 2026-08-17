@@ -856,3 +856,43 @@ html {
 		}
 	}
 }
+
+/* ===================================================================
+   Credential tester — "test these keys" button + inline verdict
+   =================================================================== */
+#gemsecuritywrap.gemsecuritywrap {
+
+	.gs-credtest {
+		display: flex; align-items: flex-start; flex-wrap: wrap; gap: 12px;
+		margin: 0 0 16px;
+
+		&__result {
+			display: flex; align-items: flex-start; gap: 8px;
+			padding: 9px 13px; border-radius: 9px;
+			font-size: 13px; line-height: 1.5;
+			border: 1px solid transparent;
+			.gs-icon { flex-shrink: 0; margin-top: 2px; }
+			strong { display: block; font-weight: 600; }
+
+			&.is-ok {
+				background: rgba(22, 163, 74, .08);
+				border-color: rgba(22, 163, 74, .28);
+				color: $gs-success;
+			}
+			&.is-fail {
+				background: rgba(220, 38, 38, .08);
+				border-color: rgba(220, 38, 38, .28);
+				color: $gs-danger;
+			}
+		}
+		&__detail { display: block; margin-top: 2px; color: $gs-muted; font-size: 12.5px; }
+	}
+}
+
+/* Widget + hint used by the end-to-end CAPTCHA key test. */
+#gemsecuritywrap.gemsecuritywrap {
+	.gs-credtest {
+		&__widget:not(:empty) { flex-basis: 100%; margin-top: 4px; }
+		&__hint { margin: 0; align-self: center; color: $gs-muted; font-size: 13px; }
+	}
+}

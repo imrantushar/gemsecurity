@@ -4,6 +4,7 @@ import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Field, Toggle, NumberInput, TextInput, Select, ListInput, Button, Badge } from '@Components/ui/Controls';
 import SetupGuide from '@Components/ui/SetupGuide';
+import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
 import BackupSchedule from '@Containers/pages/BackupSchedule';
 import BackupStorage from '@Containers/pages/BackupStorage';
@@ -109,6 +110,11 @@ export default function Settings() {
 						<Field label={ __( 'HTTP collector endpoint', 'gemsecurity' ) }>
 							<TextInput value={ form.siem_endpoint ?? '' } onChange={ ( e ) => setField( 'siem_endpoint', e.target.value ) } placeholder="https://siem.example.com/ingest" />
 						</Field>
+						<TestCredentials
+							target="siem"
+							getValues={ () => ( { url: form.siem_endpoint || '' } ) }
+							label={ __( 'Send a test event', 'gemsecurity' ) }
+						/>
 						<div className="gs-row">
 							<Field label={ __( 'Minimum severity', 'gemsecurity' ) }>
 								<Select
@@ -155,6 +161,11 @@ export default function Settings() {
 						<Field label={ __( 'Slack incoming webhook URL', 'gemsecurity' ) }>
 							<TextInput value={ form.alert_slack_webhook ?? '' } onChange={ ( e ) => setField( 'alert_slack_webhook', e.target.value ) } placeholder="https://hooks.slack.com/services/…" />
 						</Field>
+						<TestCredentials
+							target="slack"
+							getValues={ () => ( { url: form.alert_slack_webhook || '' } ) }
+							label={ __( 'Send a test message', 'gemsecurity' ) }
+						/>
 						<SetupGuide id="alerts.telegram" />
 						<div className="gs-row">
 							<Field label={ __( 'Telegram bot token', 'gemsecurity' ) }>
@@ -164,10 +175,23 @@ export default function Settings() {
 								<TextInput value={ form.alert_telegram_chat ?? '' } onChange={ ( e ) => setField( 'alert_telegram_chat', e.target.value ) } />
 							</Field>
 						</div>
+						<TestCredentials
+							target="telegram"
+							getValues={ () => ( {
+								token: form.alert_telegram_token || '',
+								chat_id: form.alert_telegram_chat || '',
+							} ) }
+							label={ __( 'Test bot & chat', 'gemsecurity' ) }
+						/>
 						<SetupGuide id="alerts.webhook" />
 						<Field label={ __( 'Generic webhook URL', 'gemsecurity' ) }>
 							<TextInput value={ form.alert_webhook_url ?? '' } onChange={ ( e ) => setField( 'alert_webhook_url', e.target.value ) } placeholder="https://example.com/webhook" />
 						</Field>
+						<TestCredentials
+							target="webhook"
+							getValues={ () => ( { url: form.alert_webhook_url || '' } ) }
+							label={ __( 'Send a test event', 'gemsecurity' ) }
+						/>
 					</>
 				) }
 				<Toggle label={ __( 'Send a weekly security digest', 'gemsecurity' ) } description={ __( 'A summary email (and alert) every week.', 'gemsecurity' ) } checked={ form.digest_enabled } onChange={ ( v ) => setField( 'digest_enabled', v ) } />

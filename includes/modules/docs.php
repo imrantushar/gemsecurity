@@ -497,6 +497,7 @@ class Docs {
 					__( 'Go to APIs & Services → Credentials → Create credentials → OAuth client ID, and choose Web application.', 'gemsecurity' ),
 					__( 'Under Authorised redirect URIs, add the redirect URI shown at the top of this page — exactly, including https and any trailing path.', 'gemsecurity' ),
 					__( 'Create the client, then copy the Client ID and Client secret into the fields here and save.', 'gemsecurity' ),
+					__( 'Use Test credentials below to confirm the pair before saving — a wrong secret only shows up when a real person tries to sign in.', 'gemsecurity' ),
 				],
 				'notes' => [
 					__( 'While the consent screen is in Testing, only the test users you list can sign in. Publish it before going live.', 'gemsecurity' ),
@@ -511,6 +512,7 @@ class Docs {
 					__( 'Add the Facebook Login product to the app and choose the Web platform, entering your site URL.', 'gemsecurity' ),
 					__( 'In Facebook Login → Settings, paste the redirect URI from the top of this page into Valid OAuth Redirect URIs.', 'gemsecurity' ),
 					__( 'Open App settings → Basic and copy the App ID into Client ID, and the App secret into Client secret.', 'gemsecurity' ),
+					__( 'Use Test credentials below to confirm the pair before saving — a wrong secret only shows up when a real person tries to sign in.', 'gemsecurity' ),
 				],
 				'notes' => [
 					__( 'Facebook only returns an email address if the user granted the email permission — accounts without one cannot be linked by email.', 'gemsecurity' ),
@@ -526,6 +528,7 @@ class Docs {
 					__( 'Set Homepage URL to your site, and Authorization callback URL to the redirect URI shown at the top of this page.', 'gemsecurity' ),
 					__( 'Register the application, then copy the Client ID.', 'gemsecurity' ),
 					__( 'Choose Generate a new client secret and copy it immediately — GitHub shows it only once.', 'gemsecurity' ),
+					__( 'Use Test credentials below to confirm the pair before saving — a wrong secret only shows up when a real person tries to sign in.', 'gemsecurity' ),
 				],
 				'notes' => [
 					__( 'A GitHub account can hide its email address; those users are created with the account they signed in as rather than linked by email.', 'gemsecurity' ),
@@ -540,6 +543,7 @@ class Docs {
 					__( 'In the app’s User authentication settings, enable OAuth 2.0 and set App type to Web App.', 'gemsecurity' ),
 					__( 'Set the Callback URI to the redirect URI shown at the top of this page, and fill in a website URL.', 'gemsecurity' ),
 					__( 'Save, then copy the OAuth 2.0 Client ID and Client Secret into the fields here.', 'gemsecurity' ),
+					__( 'Use Test credentials below to confirm the pair before saving — a wrong secret only shows up when a real person tries to sign in.', 'gemsecurity' ),
 				],
 				'notes' => [
 					__( 'Use the OAuth 2.0 client credentials, not the older API key and API secret — they are different values on the same screen.', 'gemsecurity' ),
@@ -557,6 +561,7 @@ class Docs {
 					__( 'Choose reCAPTCHA v2 → "I\'m not a robot" Checkbox.', 'gemsecurity' ),
 					__( 'Add your domain — without https:// and without a trailing slash. Add localhost too if you test locally.', 'gemsecurity' ),
 					__( 'Submit, then copy the Site key and Secret key into the fields here.', 'gemsecurity' ),
+					__( 'Then use Test CAPTCHA keys below: it renders the real widget and verifies the token, which is the only way to prove both keys before they reach the login form.', 'gemsecurity' ),
 				],
 				'notes' => [
 					__( 'The two keys are not interchangeable: the site key is public and rendered in the page, the secret key is never sent to the browser.', 'gemsecurity' ),
@@ -571,6 +576,7 @@ class Docs {
 					__( 'Choose reCAPTCHA v3 — v2 keys will not work here, and vice versa.', 'gemsecurity' ),
 					__( 'Add your domain, submit, and copy the Site key and Secret key into the fields here.', 'gemsecurity' ),
 					__( 'Leave the score threshold at the default, then watch the admin console’s score distribution before changing it.', 'gemsecurity' ),
+					__( 'Then use Test CAPTCHA keys below: it renders the real widget and verifies the token, which is the only way to prove both keys before they reach the login form.', 'gemsecurity' ),
 				],
 				'notes' => [
 					__( 'v3 never shows a challenge: it scores each request from 0.0 (bot) to 1.0 (human). A threshold that is too high rejects real people silently.', 'gemsecurity' ),
@@ -585,6 +591,7 @@ class Docs {
 					__( 'Add a new site and enter your domain as the hostname.', 'gemsecurity' ),
 					__( 'Copy the Sitekey into Site key here.', 'gemsecurity' ),
 					__( 'Open Settings and copy your account Secret key into Secret key here — it is account-wide, not per site.', 'gemsecurity' ),
+					__( 'Then use Test CAPTCHA keys below: it renders the real widget and verifies the token, which is the only way to prove both keys before they reach the login form.', 'gemsecurity' ),
 				],
 			],
 
@@ -595,6 +602,7 @@ class Docs {
 					__( 'Open the Cloudflare dashboard → Turnstile → Add site.', 'gemsecurity' ),
 					__( 'Enter your domain and choose the Managed widget unless you have a reason not to.', 'gemsecurity' ),
 					__( 'Copy the Site Key and Secret Key into the fields here.', 'gemsecurity' ),
+					__( 'Then use Test CAPTCHA keys below: it renders the real widget and verifies the token, which is the only way to prove both keys before they reach the login form.', 'gemsecurity' ),
 				],
 				'notes' => [
 					__( 'Your domain does not have to use Cloudflare’s DNS or proxy for Turnstile to work.', 'gemsecurity' ),

@@ -302,6 +302,27 @@ class Captcha {
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( empty( $body['success'] ) ) {
+			// Distinguish "this visitor failed the challenge" from "this site
+			// is misconfigured". A wrong or missing secret makes the provider
+			// reject *every* submission, which would lock every user —
+			// administrators included — out of a form nobody can pass. That is
+			// a site problem, not an attack, so fail open and shout about it in
+			// the log rather than bolting the door with the keys inside.
+			$errors = isset( $body['error-codes'] ) ? (array) $body['error-codes'] : [];
+			foreach ( $errors as $code ) {
+				if ( false !== strpos( (string) $code, 'secret' ) ) {
+					Logger::log(
+						'captcha_misconfigured',
+						sprintf(
+							'CAPTCHA secret key rejected by the provider (%s). Verification is being skipped so logins keep working — fix the keys on the Login Security page.',
+							sanitize_text_field( (string) $code )
+						),
+						Logger::SEVERITY_CRITICAL,
+						[ 'user_id' => 0 ]
+					);
+					return true;
+				}
+			}
 			return false;
 		}
 

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-13T14:31:01+00:00\n"
+"POT-Creation-Date: 2026-08-17T09:06:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -254,6 +254,1196 @@ msgstr ""
 
 #: includes/modules/custom-login.php:105
 msgid "This page does not exist."
+msgstr ""
+
+#: includes/modules/docs.php:45
+msgid "Your security overview: the current protection status, activity from the last 7 days, recent events and the result of the most recent scan."
+msgstr ""
+
+#: includes/modules/docs.php:47
+msgid "Summarises which protections are on and which are still off."
+msgstr ""
+
+#: includes/modules/docs.php:48
+msgid "Charts blocked requests, failed logins and bans over the last 7 days."
+msgstr ""
+
+#: includes/modules/docs.php:49
+msgid "Lists the newest activity-log events so problems surface early."
+msgstr ""
+
+#: includes/modules/docs.php:50
+msgid "Shows when the site was last scanned and what the scan found."
+msgstr ""
+
+#: includes/modules/docs.php:53
+msgid "Open Modules and turn on the feature areas this site needs — everything else stays dormant."
+msgstr ""
+
+#: includes/modules/docs.php:54
+msgid "Work through Firewall, Login Security and Scanner first; they cover the most common attacks."
+msgstr ""
+
+#: includes/modules/docs.php:55
+msgid "Set an alert address in Settings → Alerts & notifications so you hear about incidents without logging in."
+msgstr ""
+
+#: includes/modules/docs.php:56
+msgid "Run a first scan from the Scanner page to get a clean baseline to compare against later."
+msgstr ""
+
+#: includes/modules/docs.php:59
+msgid "Counters only cover events recorded while the relevant module was active."
+msgstr ""
+
+#: includes/modules/docs.php:60
+msgid "A quiet dashboard is not proof of safety — check the Scanner and Logs pages periodically."
+msgstr ""
+
+#: includes/modules/docs.php:65
+msgid "Turn feature areas on or off. A module that is off loads no code, registers no REST routes and shows no menu entry, so unused features cost nothing."
+msgstr ""
+
+#: includes/modules/docs.php:67
+msgid "Activation is the coarse gate; the individual settings inside a module stay as fine-grained switches."
+msgstr ""
+
+#: includes/modules/docs.php:68
+msgid "Turning a module off immediately removes its page from both the plugin nav and the WordPress menu."
+msgstr ""
+
+#: includes/modules/docs.php:69
+msgid "Core modules (Dashboard, Modules, Logs, Settings) are always on and cannot be turned off."
+msgstr ""
+
+#: includes/modules/docs.php:70
+msgid "Pro modules show as locked until the Pro add-on is active; then they toggle like any other module."
+msgstr ""
+
+#: includes/modules/docs.php:73
+msgid "Switch on a module to reveal its page, then open that page and configure it."
+msgstr ""
+
+#: includes/modules/docs.php:74
+msgid "Leave modules you do not use switched off — it keeps the menu short and skips their code entirely."
+msgstr ""
+
+#: includes/modules/docs.php:77
+msgid "Turning a module off does not erase its settings; switching it back on restores them exactly as they were."
+msgstr ""
+
+#: includes/modules/docs.php:78
+msgid "On upgrade, activation was derived from your existing settings, so a module whose features were all off may start hidden."
+msgstr ""
+
+#: includes/modules/docs.php:83
+msgid "A tamper-evident audit trail of everything that matters: logins, user and role changes, plugin and theme activity, settings changes, blocks and bans."
+msgstr ""
+
+#: includes/modules/docs.php:85
+msgid "Records security-relevant events with actor, IP, severity and timestamp."
+msgstr ""
+
+#: includes/modules/docs.php:86
+msgid "Filters by severity, event type, user or IP, and exports the result as CSV."
+msgstr ""
+
+#: includes/modules/docs.php:87
+msgid "Sends real-time alerts for events above the severity you choose."
+msgstr ""
+
+#: includes/modules/docs.php:88
+msgid "Pro: hash-chains each entry so deleted or edited rows can be detected, and can forward events to a SIEM or syslog collector."
+msgstr ""
+
+#: includes/modules/docs.php:91
+msgid "Set how long entries are kept in Settings → General (log retention, in days)."
+msgstr ""
+
+#: includes/modules/docs.php:92
+msgid "Choose an alert channel and minimum severity in Settings → Alerts & notifications."
+msgstr ""
+
+#: includes/modules/docs.php:93
+msgid "Pro: enable the hash chain in Settings → Compliance & SIEM, then use Verify to prove the log is intact."
+msgstr ""
+
+#: includes/modules/docs.php:96
+msgid "Retention trims old rows on a schedule — set it long enough to cover an investigation, short enough to keep the table small."
+msgstr ""
+
+#: includes/modules/docs.php:97
+msgid "Log verification only proves the chain from the point you enabled it, not events recorded before."
+msgstr ""
+
+#: includes/modules/docs.php:102
+msgid "Plugin-wide preferences: log retention, compliance and SIEM forwarding, alert channels, maintenance lockdown and licensing."
+msgstr ""
+
+#: includes/modules/docs.php:104
+msgid "Alerts: email, Slack, Telegram or a generic webhook, with a minimum-severity filter and an optional digest."
+msgstr ""
+
+#: includes/modules/docs.php:105
+msgid "Compliance: log hash-chaining, SIEM/syslog forwarding and a severity floor for what gets shipped."
+msgstr ""
+
+#: includes/modules/docs.php:106
+msgid "Maintenance: site lockdown with a custom message, and taking a backup before plugin or theme updates."
+msgstr ""
+
+#: includes/modules/docs.php:109
+msgid "Add the address or webhook that should receive alerts, then set the minimum severity so routine noise stays out of your inbox."
+msgstr ""
+
+#: includes/modules/docs.php:110
+msgid "Turn on the daily digest if you would rather get one summary than individual alerts."
+msgstr ""
+
+#: includes/modules/docs.php:111
+msgid "Use lockdown while you investigate an incident: visitors see your message, administrators keep full access."
+msgstr ""
+
+#: includes/modules/docs.php:114
+msgid "Alerts are only as reliable as your site mail. If WordPress email is unreliable here, use Slack, Telegram or a webhook instead."
+msgstr ""
+
+#: includes/modules/docs.php:115
+msgid "Lockdown blocks the front end for visitors — remember to switch it back off."
+msgstr ""
+
+#: includes/modules/docs.php:124
+msgid "The front door: an IP blocklist, the classic WordPress hardening switches, browser security headers, bot control and a security.txt file."
+msgstr ""
+
+#: includes/modules/docs.php:126
+msgid "Blocks individual IPs and CIDR ranges before WordPress does any real work."
+msgstr ""
+
+#: includes/modules/docs.php:127
+msgid "Hardening: disable XML-RPC, disable the theme/plugin file editor, block author and REST user enumeration, hide the WordPress version, disable application passwords, disable comments."
+msgstr ""
+
+#: includes/modules/docs.php:128
+msgid "Sends security headers — X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS and CSP — and collects CSP violation reports."
+msgstr ""
+
+#: includes/modules/docs.php:129
+msgid "Bot control: block AI crawlers and verify self-declared search engines by reverse DNS, so fake Googlebots are turned away."
+msgstr ""
+
+#: includes/modules/docs.php:130
+msgid "Publishes /.well-known/security.txt and audits file permissions for world-writable paths."
+msgstr ""
+
+#: includes/modules/docs.php:133
+msgid "Turn the firewall on, then enable the hardening switches one at a time and check the site still works after each."
+msgstr ""
+
+#: includes/modules/docs.php:134
+msgid "If the site sits behind Cloudflare or another proxy, enable the matching option under Real visitor IP detection — otherwise every visitor looks like the proxy and blocks or rate limits hit everyone at once."
+msgstr ""
+
+#: includes/modules/docs.php:135
+msgid "Enable security headers, leave CSP in report-only mode, then read Recent CSP violations for a few days before enforcing it."
+msgstr ""
+
+#: includes/modules/docs.php:136
+msgid "Fill in a contact address under security.txt so researchers know where to report problems."
+msgstr ""
+
+#: includes/modules/docs.php:139
+msgid "Disabling XML-RPC breaks the classic WordPress mobile app, Jetpack-style remote publishing and some pingback workflows."
+msgstr ""
+
+#: includes/modules/docs.php:140
+msgid "HSTS tells browsers to refuse plain HTTP for the max-age you set — only enable it once HTTPS works on every subdomain you include, and treat preload as permanent."
+msgstr ""
+
+#: includes/modules/docs.php:141
+msgid "A CSP that is enforced too early will silently break embeds, analytics and page builders. Report-only first."
+msgstr ""
+
+#: includes/modules/docs.php:142
+msgid "Never trust proxy headers unless the site really is behind that proxy — spoofed headers would let an attacker rotate their apparent IP at will."
+msgstr ""
+
+#: includes/modules/docs.php:147
+msgid "Stops comment and registration spam without CAPTCHAs: invisible bot checks plus a heuristic score for anything that gets through."
+msgstr ""
+
+#: includes/modules/docs.php:149
+msgid "Adds a hidden honeypot field and a minimum time-to-submit, both invisible to real visitors."
+msgstr ""
+
+#: includes/modules/docs.php:150
+msgid "Scores comments on link count and keyword matches, holding or rejecting the worst."
+msgstr ""
+
+#: includes/modules/docs.php:153
+msgid "Turn on silent bot protection — no keys or accounts needed."
+msgstr ""
+
+#: includes/modules/docs.php:154
+msgid "Leave the minimum submit time at a few seconds; raise it only if spam still gets through."
+msgstr ""
+
+#: includes/modules/docs.php:155
+msgid "Enable heuristic filtering, set the maximum number of links you consider normal, and add keywords you keep seeing in spam."
+msgstr ""
+
+#: includes/modules/docs.php:158
+msgid "Aggressive keyword lists cause false positives — check the held queue for a while after adding new terms."
+msgstr ""
+
+#: includes/modules/docs.php:159
+msgid "Heavily cached sites can serve a stale form timestamp; if legitimate comments are refused, lower the minimum submit time."
+msgstr ""
+
+#: includes/modules/docs.php:164
+msgid "Active defence: a request firewall that inspects traffic for attack patterns, rate limits and 404 throttling, escalating auto-bans, and live traffic visibility."
+msgstr ""
+
+#: includes/modules/docs.php:166
+msgid "Inspects requests for SQL injection, XSS, local file inclusion and remote code execution patterns, optionally including the request body."
+msgstr ""
+
+#: includes/modules/docs.php:167
+msgid "Rate limits requests and throttles 404 floods — the usual signature of a vulnerability scanner."
+msgstr ""
+
+#: includes/modules/docs.php:168
+msgid "Blocks known-bad bots, empty user agents and your own custom patterns."
+msgstr ""
+
+#: includes/modules/docs.php:169
+msgid "Escalates repeat offenders from strikes to a temporary ban and then a permanent one, all in a ban ledger you can edit."
+msgstr ""
+
+#: includes/modules/docs.php:170
+msgid "Detects request anomalies and credential-stuffing bursts, and shows requests as they arrive in Live traffic."
+msgstr ""
+
+#: includes/modules/docs.php:173
+msgid "Enable the firewall and leave all four attack classes on unless a legitimate integration trips one."
+msgstr ""
+
+#: includes/modules/docs.php:174
+msgid "Enable the early-load loader so banned requests are rejected before other plugins run."
+msgstr ""
+
+#: includes/modules/docs.php:175
+msgid "Set the auto-ban threshold, window and duration to match your traffic — start lenient and tighten later."
+msgstr ""
+
+#: includes/modules/docs.php:176
+msgid "Turn on Live traffic while tuning, then turn it off again; it records every request and adds write load."
+msgstr ""
+
+#: includes/modules/docs.php:179
+msgid "Body inspection reads POST payloads, which costs a little performance on write-heavy sites."
+msgstr ""
+
+#: includes/modules/docs.php:180
+msgid "Rate limits apply per IP — verify the proxy settings on the Firewall page first, or all traffic will share one bucket."
+msgstr ""
+
+#: includes/modules/docs.php:181
+msgid "The early loader fails open: if it cannot run, requests are allowed rather than the site going down."
+msgstr ""
+
+#: includes/modules/docs.php:182
+msgid "Whitelist your own address before tightening thresholds so a testing burst cannot lock you out."
+msgstr ""
+
+#: includes/modules/docs.php:187
+msgid "Blocks exploitation of known plugin and theme vulnerabilities at the request level, so you are covered in the gap between a disclosure and the vendor’s fix."
+msgstr ""
+
+#: includes/modules/docs.php:189
+msgid "Matches mitigation rules against the plugins and versions actually installed here."
+msgstr ""
+
+#: includes/modules/docs.php:190
+msgid "Applies only the relevant rules, so an unrelated vulnerability costs nothing."
+msgstr ""
+
+#: includes/modules/docs.php:191
+msgid "Lists every active mitigation with its severity, so you can see what is being held shut."
+msgstr ""
+
+#: includes/modules/docs.php:194
+msgid "Turn virtual patching on; matching rules apply immediately, with no configuration per vulnerability."
+msgstr ""
+
+#: includes/modules/docs.php:195
+msgid "Review Active mitigations after each plugin update — a mitigation disappearing usually means you updated past the vulnerable version."
+msgstr ""
+
+#: includes/modules/docs.php:198
+msgid "A virtual patch buys time; it is not a substitute for updating the vulnerable plugin."
+msgstr ""
+
+#: includes/modules/docs.php:199
+msgid "Developers can add site-specific rules through the gemsecurity/vpatch_rules filter."
+msgstr ""
+
+#: includes/modules/docs.php:208
+msgid "Everything around the login form: brute-force lockouts, CAPTCHA, password rules, session limits, a renamed login URL and admin login alerts."
+msgstr ""
+
+#: includes/modules/docs.php:210
+msgid "Locks out an IP after a number of failed attempts, for a duration you set."
+msgstr ""
+
+#: includes/modules/docs.php:211
+msgid "Emails you when an administrator signs in, and ends administrator sessions after a set number of hours."
+msgstr ""
+
+#: includes/modules/docs.php:212
+msgid "Adds a CAPTCHA (reCAPTCHA v2/v3, hCaptcha or Turnstile) to login, registration, lost-password and comment forms."
+msgstr ""
+
+#: includes/modules/docs.php:213
+msgid "Enforces a password policy: minimum length, complexity, a breached-password check and optional expiry."
+msgstr ""
+
+#: includes/modules/docs.php:214
+msgid "Moves wp-login.php to a URL of your choosing and 404s the old one, and logs idle users out."
+msgstr ""
+
+#: includes/modules/docs.php:215
+msgid "Pro: remembers trusted devices and offers magic-link recovery."
+msgstr ""
+
+#: includes/modules/docs.php:218
+msgid "Start with brute-force protection — a limit of 5 attempts and a 15–30 minute lockout suits most sites."
+msgstr ""
+
+#: includes/modules/docs.php:219
+msgid "For CAPTCHA, create a site key and secret key with your chosen provider, paste both in, then pick which forms it guards."
+msgstr ""
+
+#: includes/modules/docs.php:220
+msgid "If you enable a custom login URL, save the new address somewhere safe before logging out."
+msgstr ""
+
+#: includes/modules/docs.php:221
+msgid "Set the password policy before onboarding new users; existing passwords are only checked at the next change."
+msgstr ""
+
+#: includes/modules/docs.php:224
+msgid "A custom login URL is obscurity, not authentication — keep brute-force protection and two-factor on as well."
+msgstr ""
+
+#: includes/modules/docs.php:225
+msgid "reCAPTCHA v3 scores rather than challenges: lower the threshold if real users get rejected."
+msgstr ""
+
+#: includes/modules/docs.php:226
+msgid "Short idle timeouts on a site with long editing sessions will cost people their unsaved work."
+msgstr ""
+
+#: includes/modules/docs.php:227
+msgid "Lockouts are per IP, so several users behind one office connection share a bucket."
+msgstr ""
+
+#: includes/modules/docs.php:232
+msgid "A second factor at login: app-based one-time codes with an email fallback, one-time backup codes, and enforcement per role."
+msgstr ""
+
+#: includes/modules/docs.php:234
+msgid "Supports authenticator apps (TOTP) and email one-time codes."
+msgstr ""
+
+#: includes/modules/docs.php:235
+msgid "Issues single-use backup codes for when the phone is not to hand."
+msgstr ""
+
+#: includes/modules/docs.php:236
+msgid "Requires two-factor for the roles you select, falling back to email codes so nobody is locked out."
+msgstr ""
+
+#: includes/modules/docs.php:239
+msgid "Enable the two-factor system, then set up your own account first under My two-factor."
+msgstr ""
+
+#: includes/modules/docs.php:240
+msgid "Scan the QR code with an authenticator app and confirm one generated code to finish enrolment."
+msgstr ""
+
+#: includes/modules/docs.php:241
+msgid "Download the backup codes and store them outside the site."
+msgstr ""
+
+#: includes/modules/docs.php:242
+msgid "Only once your own login works, require two-factor for administrators and any other roles."
+msgstr ""
+
+#: includes/modules/docs.php:245
+msgid "TOTP depends on a correct server clock; a badly drifted clock rejects every valid code."
+msgstr ""
+
+#: includes/modules/docs.php:246
+msgid "Email fallback is only as secure as the mailbox — use the app method for administrators."
+msgstr ""
+
+#: includes/modules/docs.php:247
+msgid "The login CAPTCHA belongs to this module but is configured on the Login Security page."
+msgstr ""
+
+#: includes/modules/docs.php:252
+msgid "Lets people sign in with Google, Facebook, GitHub or X instead of a password, with optional account creation."
+msgstr ""
+
+#: includes/modules/docs.php:254
+msgid "Adds provider buttons to the login form using OAuth 2.0."
+msgstr ""
+
+#: includes/modules/docs.php:255
+msgid "Links a social account to an existing user by email address, or creates one with a default role."
+msgstr ""
+
+#: includes/modules/docs.php:256
+msgid "Fires the normal WordPress login hooks, so two-factor and login alerts still apply."
+msgstr ""
+
+#: includes/modules/docs.php:259
+msgid "Create an OAuth app with the provider and copy its client ID and secret."
+msgstr ""
+
+#: includes/modules/docs.php:260
+msgid "Paste the redirect URI shown on this page into the provider’s allowed-callback list exactly as displayed."
+msgstr ""
+
+#: includes/modules/docs.php:261
+msgid "Enable the provider, then decide whether new visitors may register and which role they receive."
+msgstr ""
+
+#: includes/modules/docs.php:262
+msgid "Test in a private window before announcing it."
+msgstr ""
+
+#: includes/modules/docs.php:265
+msgid "Linking by email trusts the provider’s email — only enable it for providers that verify addresses."
+msgstr ""
+
+#: includes/modules/docs.php:266
+msgid "Never grant a role above Subscriber by default to self-registered accounts."
+msgstr ""
+
+#: includes/modules/docs.php:271
+msgid "Country-level access control: allow logins only from countries you expect, optionally block the whole site, and pin individual users to their own countries."
+msgstr ""
+
+#: includes/modules/docs.php:273
+msgid "Resolves visitor country from CDN headers, falling back to a lookup API with a 24-hour cache."
+msgstr ""
+
+#: includes/modules/docs.php:274
+msgid "Applies your country list as a login gate, a whole-site block, or both."
+msgstr ""
+
+#: includes/modules/docs.php:275
+msgid "Locks chosen users to specific countries and can email-verify a login from a new one."
+msgstr ""
+
+#: includes/modules/docs.php:278
+msgid "Add the countries your team and customers actually log in from — include your own, and any you travel to."
+msgstr ""
+
+#: includes/modules/docs.php:279
+msgid "Start with the login gate only. Blocking the whole site also blocks customers and search engines."
+msgstr ""
+
+#: includes/modules/docs.php:280
+msgid "Decide what happens to unknown locations; blocking them is safe for a login gate, risky site-wide."
+msgstr ""
+
+#: includes/modules/docs.php:283
+msgid "Lookups fail open: if the country cannot be resolved, the visitor is allowed rather than locked out."
+msgstr ""
+
+#: includes/modules/docs.php:284
+msgid "VPNs and mobile networks routinely resolve to another country — expect occasional surprises."
+msgstr ""
+
+#: includes/modules/docs.php:285
+msgid "The GEMSEC_GEO_DISABLE constant is the emergency exit if you lock yourself out."
+msgstr ""
+
+#: includes/modules/docs.php:290
+msgid "Watches the administrator role itself: only approved accounts stay administrators, and hidden administrators are surfaced."
+msgstr ""
+
+#: includes/modules/docs.php:292
+msgid "Keeps an approved-administrator list and demotes or deletes any account that appears outside it."
+msgstr ""
+
+#: includes/modules/docs.php:293
+msgid "Detects administrators hidden from the users list — a classic backdoor left behind after a breach."
+msgstr ""
+
+#: includes/modules/docs.php:294
+msgid "Emails you when either fires."
+msgstr ""
+
+#: includes/modules/docs.php:297
+msgid "Review the approved list and confirm every account on it is one you recognise."
+msgstr ""
+
+#: includes/modules/docs.php:298
+msgid "Choose what happens to a rogue administrator: demote is the safe default, delete is irreversible."
+msgstr ""
+
+#: includes/modules/docs.php:299
+msgid "Enable both notifications so you hear about it even if you are not logged in."
+msgstr ""
+
+#: includes/modules/docs.php:302
+msgid "Add legitimate new administrators to the list before creating them, or they will be demoted straight away."
+msgstr ""
+
+#: includes/modules/docs.php:303
+msgid "Some membership and staffing plugins create elevated accounts on purpose — check before switching to delete."
+msgstr ""
+
+#: includes/modules/docs.php:308
+msgid "Closes the paths that bypass the login form: REST API rate limiting, application-password governance and generic login errors."
+msgstr ""
+
+#: includes/modules/docs.php:310
+msgid "Rate limits REST requests per IP within a window you choose."
+msgstr ""
+
+#: includes/modules/docs.php:311
+msgid "Lists every existing application password, can disable them entirely, alerts when a new one is created, and flags ones older than your maximum age."
+msgstr ""
+
+#: includes/modules/docs.php:312
+msgid "Replaces WordPress login errors with a generic message so invalid usernames cannot be distinguished from wrong passwords."
+msgstr ""
+
+#: includes/modules/docs.php:315
+msgid "Review the existing application passwords and revoke any you do not recognise."
+msgstr ""
+
+#: includes/modules/docs.php:316
+msgid "If nothing here uses application passwords, disable them outright."
+msgstr ""
+
+#: includes/modules/docs.php:317
+msgid "Turn on REST rate limiting, then confirm your site builder, mobile app or headless front end still works."
+msgstr ""
+
+#: includes/modules/docs.php:320
+msgid "Application passwords are how most external integrations authenticate — check before disabling them."
+msgstr ""
+
+#: includes/modules/docs.php:321
+msgid "REST limits apply to logged-in editors too, so keep the ceiling above what your own admin work generates."
+msgstr ""
+
+#: includes/modules/docs.php:330
+msgid "Finds what should not be there: modified core files, foreign or suspicious files, changed files, risky outbound links, known vulnerabilities and auto-executed code."
+msgstr ""
+
+#: includes/modules/docs.php:332
+msgid "Verifies core files against the official WordPress.org checksums and lists unexpected or modified ones."
+msgstr ""
+
+#: includes/modules/docs.php:333
+msgid "Watches for file changes between scans and flags newly added or edited files."
+msgstr ""
+
+#: includes/modules/docs.php:334
+msgid "Scans content for outbound links to known-bad destinations."
+msgstr ""
+
+#: includes/modules/docs.php:335
+msgid "Checks installed plugins and themes against known vulnerabilities and against what WordPress.org actually ships."
+msgstr ""
+
+#: includes/modules/docs.php:336
+msgid "Inspects mu-plugins and drop-ins — code that runs on every request without appearing on the Plugins screen."
+msgstr ""
+
+#: includes/modules/docs.php:337
+msgid "Pro: full malware scanning with quarantine and a recovery toolkit."
+msgstr ""
+
+#: includes/modules/docs.php:340
+msgid "Run a full scan now to establish a clean baseline."
+msgstr ""
+
+#: includes/modules/docs.php:341
+msgid "Enable automatic scanning so it repeats on a schedule instead of when you remember."
+msgstr ""
+
+#: includes/modules/docs.php:342
+msgid "Turn on the file-change watcher and the vulnerability check."
+msgstr ""
+
+#: includes/modules/docs.php:343
+msgid "Work through the findings, then rescan so the list reflects the fixed state."
+msgstr ""
+
+#: includes/modules/docs.php:346
+msgid "Scans read every file and are I/O heavy — schedule them for a quiet hour on large sites."
+msgstr ""
+
+#: includes/modules/docs.php:347
+msgid "Premium plugins are not on WordPress.org, so integrity checks cannot confirm them; that is expected, not a finding."
+msgstr ""
+
+#: includes/modules/docs.php:348
+msgid "Caching and backup plugins legitimately write files constantly; expect noise from them in the change watcher."
+msgstr ""
+
+#: includes/modules/docs.php:349
+msgid "Take a backup before deleting or quarantining anything a scan flags."
+msgstr ""
+
+#: includes/modules/docs.php:354
+msgid "Watches the scripts on your checkout pages so a skimmer injected into payment forms is caught, as PCI DSS 4.0 requires."
+msgstr ""
+
+#: includes/modules/docs.php:356
+msgid "Builds an inventory of every script loaded on the pages you nominate."
+msgstr ""
+
+#: includes/modules/docs.php:357
+msgid "Compares each page load against that authorised baseline and reports anything new."
+msgstr ""
+
+#: includes/modules/docs.php:358
+msgid "Flags unauthorised scripts so you can review them before customers are affected."
+msgstr ""
+
+#: includes/modules/docs.php:361
+msgid "Enable the monitor and select your checkout and payment pages."
+msgstr ""
+
+#: includes/modules/docs.php:362
+msgid "Visit those pages so the inventory populates, including any scripts that only load at checkout."
+msgstr ""
+
+#: includes/modules/docs.php:363
+msgid "Review the inventory and authorise each script you recognise; anything left over is worth investigating."
+msgstr ""
+
+#: includes/modules/docs.php:364
+msgid "Re-check after adding an analytics, chat or A/B testing tool — they add scripts by design."
+msgstr ""
+
+#: includes/modules/docs.php:367
+msgid "Tag managers load scripts dynamically, so expect entries you did not add by hand."
+msgstr ""
+
+#: includes/modules/docs.php:368
+msgid "This detects and reports; it does not block. Treat an unexpected script as an incident."
+msgstr ""
+
+#: includes/modules/docs.php:373
+msgid "The page for the worst day: a forensic timeline of what happened, file quarantine, and the recovery actions that stop an attack in progress."
+msgstr ""
+
+#: includes/modules/docs.php:375
+msgid "Builds a timeline from the audit log so you can see the sequence of an intrusion."
+msgstr ""
+
+#: includes/modules/docs.php:376
+msgid "Quarantines suspicious files out of the web root instead of deleting them, so they can be restored or examined."
+msgstr ""
+
+#: includes/modules/docs.php:377
+msgid "Logs every user out at once, which invalidates stolen session cookies."
+msgstr ""
+
+#: includes/modules/docs.php:380
+msgid "Nothing to configure in advance — but do make sure logging and alerts are on, because the timeline is built from them."
+msgstr ""
+
+#: includes/modules/docs.php:381
+msgid "During an incident: log everyone out, quarantine what the scanner flagged, then read the timeline from the earliest suspicious event."
+msgstr ""
+
+#: includes/modules/docs.php:382
+msgid "Reset passwords and revoke application passwords once you know how they got in."
+msgstr ""
+
+#: includes/modules/docs.php:385
+msgid "Logging everyone out includes you; keep your credentials to hand."
+msgstr ""
+
+#: includes/modules/docs.php:386
+msgid "Quarantined files stay on disk in a protected folder — keep them until the investigation is finished."
+msgstr ""
+
+#: includes/modules/docs.php:387
+msgid "The timeline can only show what was recorded, which is why retention matters before an incident, not after."
+msgstr ""
+
+#: includes/modules/docs.php:396
+msgid "Scheduled backups of files and database, kept locally or — with Pro — pushed to remote storage."
+msgstr ""
+
+#: includes/modules/docs.php:398
+msgid "Creates on-demand or scheduled backups of the database, the files, or both."
+msgstr ""
+
+#: includes/modules/docs.php:399
+msgid "Keeps a list of completed backups with their size and status for download."
+msgstr ""
+
+#: includes/modules/docs.php:400
+msgid "Can run automatically before plugin and theme updates."
+msgstr ""
+
+#: includes/modules/docs.php:403
+msgid "Take one backup by hand first to confirm the site has enough disk space and execution time."
+msgstr ""
+
+#: includes/modules/docs.php:404
+msgid "Add a schedule — daily for the database, weekly for files suits most sites."
+msgstr ""
+
+#: includes/modules/docs.php:405
+msgid "Configure a storage destination so copies live somewhere other than the server being backed up."
+msgstr ""
+
+#: includes/modules/docs.php:406
+msgid "Download one archive and confirm it opens. An untested backup is not a backup."
+msgstr ""
+
+#: includes/modules/docs.php:409
+msgid "Local-only backups die with the server. Keep at least one copy off-site."
+msgstr ""
+
+#: includes/modules/docs.php:410
+msgid "Large sites can exceed PHP time or memory limits mid-backup; check the result rather than assuming success."
+msgstr ""
+
+#: includes/modules/docs.php:411
+msgid "Schedules run on WP-Cron, which needs traffic — on a quiet site, wire up a real system cron."
+msgstr ""
+
+#: includes/modules/docs.php:416
+msgid "Watches the things that break quietly: uptime, TLS certificate expiry, DNS changes and SPF/DMARC email authentication."
+msgstr ""
+
+#: includes/modules/docs.php:418
+msgid "Checks the site is reachable and reports when it is not."
+msgstr ""
+
+#: includes/modules/docs.php:419
+msgid "Warns before the TLS certificate expires rather than after."
+msgstr ""
+
+#: includes/modules/docs.php:420
+msgid "Notices DNS record changes, which often precede or follow a domain hijack."
+msgstr ""
+
+#: includes/modules/docs.php:421
+msgid "Verifies SPF and DMARC records so your mail keeps arriving and is harder to spoof."
+msgstr ""
+
+#: includes/modules/docs.php:424
+msgid "Enable monitoring and set the address that should receive warnings."
+msgstr ""
+
+#: includes/modules/docs.php:425
+msgid "Review the Status panel after the first daily run and fix anything already flagged."
+msgstr ""
+
+#: includes/modules/docs.php:428
+msgid "Checks run on a daily schedule, so this is early warning rather than second-by-second uptime monitoring."
+msgstr ""
+
+#: includes/modules/docs.php:429
+msgid "Use an address on a different domain, so a mail problem here does not swallow its own alert."
+msgstr ""
+
+#: includes/modules/docs.php:434
+msgid "The hardening pack: an admin IP allowlist, blocking sensitive files and PHP execution in uploads, forced HTTPS, a file-change baseline, auto-update enforcement and settings import/export."
+msgstr ""
+
+#: includes/modules/docs.php:436
+msgid "Restricts wp-admin to an IP allowlist."
+msgstr ""
+
+#: includes/modules/docs.php:437
+msgid "Blocks direct access to sensitive files and stops PHP running from the uploads directory — the usual landing spot for an uploaded shell."
+msgstr ""
+
+#: includes/modules/docs.php:438
+msgid "Forces HTTPS site-wide."
+msgstr ""
+
+#: includes/modules/docs.php:439
+msgid "Records a file-change baseline over the scopes you pick, so later changes stand out."
+msgstr ""
+
+#: includes/modules/docs.php:440
+msgid "Auto-updates plugins and themes — either only the vulnerable ones, or everything."
+msgstr ""
+
+#: includes/modules/docs.php:441
+msgid "Exports settings as a file you can import into another site."
+msgstr ""
+
+#: includes/modules/docs.php:444
+msgid "Only enable the admin IP allowlist if your address is static, and add it before saving."
+msgstr ""
+
+#: includes/modules/docs.php:445
+msgid "Turn on the uploads PHP block and sensitive-file block — they rarely affect anything legitimate."
+msgstr ""
+
+#: includes/modules/docs.php:446
+msgid "Take a file baseline once the site is in a known-good state, and re-take it after intentional updates."
+msgstr ""
+
+#: includes/modules/docs.php:447
+msgid "Start auto-updates with vulnerable plugins only; updating everything can break a site unattended."
+msgstr ""
+
+#: includes/modules/docs.php:450
+msgid "A dynamic home IP plus an admin allowlist means locking yourself out the next time your router reconnects."
+msgstr ""
+
+#: includes/modules/docs.php:451
+msgid "Exported settings describe your defences — store the file somewhere private."
+msgstr ""
+
+#: includes/modules/docs.php:452
+msgid "Re-baseline after every legitimate update, or the change list fills with noise you learn to ignore."
+msgstr ""
+
+#: includes/modules/docs.php:492
+msgid "How to get a Google client ID and secret"
+msgstr ""
+
+#: includes/modules/docs.php:493
+msgid "Google Cloud console → Credentials"
+msgstr ""
+
+#: includes/modules/docs.php:495
+msgid "Open the Google Cloud console and select an existing project, or create one for this site."
+msgstr ""
+
+#: includes/modules/docs.php:496
+msgid "Go to APIs & Services → OAuth consent screen, choose External, and fill in the app name, support email and developer contact."
+msgstr ""
+
+#: includes/modules/docs.php:497
+msgid "Go to APIs & Services → Credentials → Create credentials → OAuth client ID, and choose Web application."
+msgstr ""
+
+#: includes/modules/docs.php:498
+msgid "Under Authorised redirect URIs, add the redirect URI shown at the top of this page — exactly, including https and any trailing path."
+msgstr ""
+
+#: includes/modules/docs.php:499
+msgid "Create the client, then copy the Client ID and Client secret into the fields here and save."
+msgstr ""
+
+#: includes/modules/docs.php:502
+msgid "While the consent screen is in Testing, only the test users you list can sign in. Publish it before going live."
+msgstr ""
+
+#: includes/modules/docs.php:507
+msgid "How to get a Facebook app ID and secret"
+msgstr ""
+
+#: includes/modules/docs.php:508
+msgid "Meta for Developers → My Apps"
+msgstr ""
+
+#: includes/modules/docs.php:510
+msgid "Open Meta for Developers → My Apps → Create App, and pick the Consumer (or Other → Consumer) type."
+msgstr ""
+
+#: includes/modules/docs.php:511
+msgid "Add the Facebook Login product to the app and choose the Web platform, entering your site URL."
+msgstr ""
+
+#: includes/modules/docs.php:512
+msgid "In Facebook Login → Settings, paste the redirect URI from the top of this page into Valid OAuth Redirect URIs."
+msgstr ""
+
+#: includes/modules/docs.php:513
+msgid "Open App settings → Basic and copy the App ID into Client ID, and the App secret into Client secret."
+msgstr ""
+
+#: includes/modules/docs.php:516
+msgid "Facebook only returns an email address if the user granted the email permission — accounts without one cannot be linked by email."
+msgstr ""
+
+#: includes/modules/docs.php:517
+msgid "The app must be switched from Development to Live before anyone outside your app roles can sign in."
+msgstr ""
+
+#: includes/modules/docs.php:522
+msgid "How to get a GitHub client ID and secret"
+msgstr ""
+
+#: includes/modules/docs.php:523
+msgid "GitHub → Developer settings → OAuth Apps"
+msgstr ""
+
+#: includes/modules/docs.php:525
+msgid "Open GitHub → Settings → Developer settings → OAuth Apps → New OAuth App."
+msgstr ""
+
+#: includes/modules/docs.php:526
+msgid "Set Homepage URL to your site, and Authorization callback URL to the redirect URI shown at the top of this page."
+msgstr ""
+
+#: includes/modules/docs.php:527
+msgid "Register the application, then copy the Client ID."
+msgstr ""
+
+#: includes/modules/docs.php:528
+msgid "Choose Generate a new client secret and copy it immediately — GitHub shows it only once."
+msgstr ""
+
+#: includes/modules/docs.php:531
+msgid "A GitHub account can hide its email address; those users are created with the account they signed in as rather than linked by email."
+msgstr ""
+
+#: includes/modules/docs.php:536
+msgid "How to get X (Twitter) OAuth 2.0 credentials"
+msgstr ""
+
+#: includes/modules/docs.php:537
+msgid "X Developer Portal"
+msgstr ""
+
+#: includes/modules/docs.php:539
+msgid "Open the X Developer Portal and create a project and an app inside it."
+msgstr ""
+
+#: includes/modules/docs.php:540
+msgid "In the app’s User authentication settings, enable OAuth 2.0 and set App type to Web App."
+msgstr ""
+
+#: includes/modules/docs.php:541
+msgid "Set the Callback URI to the redirect URI shown at the top of this page, and fill in a website URL."
+msgstr ""
+
+#: includes/modules/docs.php:542
+msgid "Save, then copy the OAuth 2.0 Client ID and Client Secret into the fields here."
+msgstr ""
+
+#: includes/modules/docs.php:545
+msgid "Use the OAuth 2.0 client credentials, not the older API key and API secret — they are different values on the same screen."
+msgstr ""
+
+#: includes/modules/docs.php:546
+msgid "X rarely returns an email address, so new accounts get a placeholder you can change later."
+msgstr ""
+
+#: includes/modules/docs.php:553
+msgid "How to get reCAPTCHA v2 keys"
+msgstr ""
+
+#: includes/modules/docs.php:554
+#: includes/modules/docs.php:568
+msgid "Google reCAPTCHA admin console"
+msgstr ""
+
+#: includes/modules/docs.php:556
+#: includes/modules/docs.php:570
+msgid "Open the reCAPTCHA admin console and register a new site."
+msgstr ""
+
+#: includes/modules/docs.php:557
+msgid "Choose reCAPTCHA v2 → \"I'm not a robot\" Checkbox."
+msgstr ""
+
+#: includes/modules/docs.php:558
+msgid "Add your domain — without https:// and without a trailing slash. Add localhost too if you test locally."
+msgstr ""
+
+#: includes/modules/docs.php:559
+msgid "Submit, then copy the Site key and Secret key into the fields here."
+msgstr ""
+
+#: includes/modules/docs.php:562
+msgid "The two keys are not interchangeable: the site key is public and rendered in the page, the secret key is never sent to the browser."
+msgstr ""
+
+#: includes/modules/docs.php:567
+msgid "How to get reCAPTCHA v3 keys"
+msgstr ""
+
+#: includes/modules/docs.php:571
+msgid "Choose reCAPTCHA v3 — v2 keys will not work here, and vice versa."
+msgstr ""
+
+#: includes/modules/docs.php:572
+msgid "Add your domain, submit, and copy the Site key and Secret key into the fields here."
+msgstr ""
+
+#: includes/modules/docs.php:573
+msgid "Leave the score threshold at the default, then watch the admin console’s score distribution before changing it."
+msgstr ""
+
+#: includes/modules/docs.php:576
+msgid "v3 never shows a challenge: it scores each request from 0.0 (bot) to 1.0 (human). A threshold that is too high rejects real people silently."
+msgstr ""
+
+#: includes/modules/docs.php:581
+msgid "How to get hCaptcha keys"
+msgstr ""
+
+#: includes/modules/docs.php:582
+msgid "hCaptcha dashboard → Sites"
+msgstr ""
+
+#: includes/modules/docs.php:584
+msgid "Create an hCaptcha account and open the dashboard."
+msgstr ""
+
+#: includes/modules/docs.php:585
+msgid "Add a new site and enter your domain as the hostname."
+msgstr ""
+
+#: includes/modules/docs.php:586
+msgid "Copy the Sitekey into Site key here."
+msgstr ""
+
+#: includes/modules/docs.php:587
+msgid "Open Settings and copy your account Secret key into Secret key here — it is account-wide, not per site."
+msgstr ""
+
+#: includes/modules/docs.php:592
+msgid "How to get Cloudflare Turnstile keys"
+msgstr ""
+
+#: includes/modules/docs.php:593
+msgid "Cloudflare dashboard → Turnstile"
+msgstr ""
+
+#: includes/modules/docs.php:595
+msgid "Open the Cloudflare dashboard → Turnstile → Add site."
+msgstr ""
+
+#: includes/modules/docs.php:596
+msgid "Enter your domain and choose the Managed widget unless you have a reason not to."
+msgstr ""
+
+#: includes/modules/docs.php:597
+msgid "Copy the Site Key and Secret Key into the fields here."
+msgstr ""
+
+#: includes/modules/docs.php:600
+msgid "Your domain does not have to use Cloudflare’s DNS or proxy for Turnstile to work."
+msgstr ""
+
+#: includes/modules/docs.php:607
+msgid "How to get a Slack incoming webhook URL"
+msgstr ""
+
+#: includes/modules/docs.php:608
+msgid "Slack API → Your Apps"
+msgstr ""
+
+#: includes/modules/docs.php:610
+msgid "Open Slack API → Your Apps → Create New App → From scratch, and pick the workspace to post into."
+msgstr ""
+
+#: includes/modules/docs.php:611
+msgid "Open Incoming Webhooks and turn the feature on."
+msgstr ""
+
+#: includes/modules/docs.php:612
+msgid "Choose Add New Webhook to Workspace and select the channel that should receive alerts."
+msgstr ""
+
+#: includes/modules/docs.php:613
+msgid "Copy the generated URL (it starts with https://hooks.slack.com/services/) into the field here."
+msgstr ""
+
+#: includes/modules/docs.php:616
+msgid "The webhook URL is a credential — anyone holding it can post to that channel. Do not commit it anywhere public."
+msgstr ""
+
+#: includes/modules/docs.php:621
+msgid "How to get a Telegram bot token and chat ID"
+msgstr ""
+
+#: includes/modules/docs.php:622
+msgid "Telegram → BotFather"
+msgstr ""
+
+#: includes/modules/docs.php:624
+msgid "Message @BotFather on Telegram and send /newbot, then follow the prompts to name the bot."
+msgstr ""
+
+#: includes/modules/docs.php:625
+msgid "Copy the token BotFather returns into Bot token here."
+msgstr ""
+
+#: includes/modules/docs.php:626
+msgid "Send your new bot a message (or add it to the group that should receive alerts, and post there)."
+msgstr ""
+
+#: includes/modules/docs.php:627
+msgid "Open https://api.telegram.org/bot<TOKEN>/getUpdates in a browser and copy the chat id from the response into Chat ID."
+msgstr ""
+
+#: includes/modules/docs.php:630
+msgid "A bot cannot start a conversation. If nobody has messaged it, getUpdates comes back empty and alerts will not deliver."
+msgstr ""
+
+#: includes/modules/docs.php:631
+msgid "Group chat IDs are negative numbers — include the minus sign."
+msgstr ""
+
+#: includes/modules/docs.php:636
+msgid "How the generic webhook works"
+msgstr ""
+
+#: includes/modules/docs.php:638
+msgid "Point this at any URL that accepts an HTTP POST — an automation platform, a chat bridge, or your own endpoint."
+msgstr ""
+
+#: includes/modules/docs.php:639
+msgid "GemSecurity posts a JSON body describing the event: type, severity, message, IP, user and timestamp."
+msgstr ""
+
+#: includes/modules/docs.php:640
+msgid "Set the minimum severity above so routine events do not flood the receiver."
+msgstr ""
+
+#: includes/modules/docs.php:643
+msgid "Delivery is fire-and-forget: a receiver that is down loses those alerts rather than queueing them."
+msgstr ""
+
+#: includes/modules/docs.php:648
+msgid "How to forward logs to a SIEM"
+msgstr ""
+
+#: includes/modules/docs.php:650
+msgid "Create an HTTP collector (HEC or equivalent) in your SIEM and copy its ingest URL here."
+msgstr ""
+
+#: includes/modules/docs.php:651
+msgid "Alternatively enable syslog output to ship to a local collector instead of over HTTP."
+msgstr ""
+
+#: includes/modules/docs.php:652
+msgid "Set the minimum severity to control the volume — everything at or above it is forwarded."
+msgstr ""
+
+#: includes/modules/docs.php:653
+msgid "Trigger a test event (a failed login will do) and confirm it arrives before relying on it."
+msgstr ""
+
+#: includes/modules/docs.php:656
+msgid "Forwarding is in addition to the local log, not instead of it; retention here still applies."
 msgstr ""
 
 #: includes/modules/file-watcher.php:339
@@ -760,15 +1950,15 @@ msgstr ""
 msgid "Plugin-wide preferences."
 msgstr ""
 
-#: includes/modules/registry.php:546
+#: includes/modules/registry.php:558
 msgid "Unknown module."
 msgstr ""
 
-#: includes/modules/registry.php:551
+#: includes/modules/registry.php:563
 msgid "Core modules cannot be turned off."
 msgstr ""
 
-#: includes/modules/registry.php:554
+#: includes/modules/registry.php:566
 msgid "This module requires GemSecurity Pro."
 msgstr ""
 
@@ -1290,6 +2480,34 @@ msgid "Reload"
 msgstr ""
 
 #: assets/build/backend.1.0-beta1.js:1
+msgid "Help"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:1
+msgid "Close help"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:1
+msgid "Loading guide…"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:1
+msgid "No guide for this page yet. Each card on the page describes what its settings do."
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:1
+msgid "What it does"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:1
+msgid "How to set it up"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:1
+msgid "Good to know"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:1
 msgid "Security score"
 msgstr ""
 
@@ -1700,6 +2918,10 @@ msgid "Remove"
 msgstr ""
 
 #: assets/build/backend.1.0-beta1.js:2
+msgid "Open provider console"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:2
 msgid "username or email"
 msgstr ""
 
@@ -1885,6 +3107,7 @@ msgstr ""
 #: assets/build/backend.1.0-beta1.js:2
 #: assets/build/backend.1.0-beta1.js:7
 #: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Save changes"
 msgstr ""
 
@@ -2174,7 +3397,7 @@ msgid "extra"
 msgstr ""
 
 #: assets/build/backend.1.0-beta1.js:2
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Verification failed."
 msgstr ""
 
@@ -2943,6 +4166,16 @@ msgid "Amazon S3, Backblaze B2, Cloudflare R2, Dropbox, Google Drive, OneDrive a
 msgstr ""
 
 #: assets/build/backend.1.0-beta1.js:7
+#, js-format
+msgid "%s activated — its menu is now available."
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:7
+#, js-format
+msgid "%s deactivated — removed from the menu."
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:7
 msgid "Could not update the module. Please try again."
 msgstr ""
 
@@ -2960,14 +4193,6 @@ msgstr ""
 
 #: assets/build/backend.1.0-beta1.js:7
 msgid "active"
-msgstr ""
-
-#: assets/build/backend.1.0-beta1.js:7
-msgid "Module changes are saved. Reload the page to apply the updated menu and features."
-msgstr ""
-
-#: assets/build/backend.1.0-beta1.js:7
-msgid "Reload now"
 msgstr ""
 
 #: assets/build/backend.1.0-beta1.js:7
@@ -4578,205 +5803,221 @@ msgid "Import settings"
 msgstr ""
 
 #: assets/build/backend.1.0-beta1.js:10
-msgid "Settings imported."
+msgid "Import failed — that file is not valid JSON."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
-msgid "Import failed — invalid file."
+#. translators: 1: settings count, 2: module count.
+#: assets/build/backend.1.0-beta1.js:11
+#, js-format
+msgid "Imported %1$d settings and %2$d module states."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#. translators: %s: comma-separated module ids.
+#: assets/build/backend.1.0-beta1.js:12
+#, js-format
+msgid "Skipped modules this site cannot enable: %s"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:12
+msgid "Import failed."
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:12
 msgid "General settings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Plugin-wide preferences. Firewall, login and admin options live on their own pages."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Log retention"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "days"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Activity log entries older than this are pruned daily. Set to 0 to keep them forever."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Compliance & SIEM"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Tamper-evident logging and forwarding for GDPR / PCI / SOC2 evidence."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Verify integrity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Could not generate report."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Download report"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Tamper-evident audit log"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Hash-chain each log entry so any edit or deletion is detectable."
 msgstr ""
 
 #. translators: %d rows
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 #, js-format
 msgid "Chain intact — %d entries verified."
 msgstr ""
 
 #. translators: %d id
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 #, js-format
 msgid "Tampering detected at log entry #%d."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Forward events to SIEM"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Stream security events to an external collector and/or system syslog."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "HTTP collector endpoint"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Minimum severity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Info & above"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Notice & above"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Warning & above"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Critical only"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Also write to system syslog"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Alerts & notifications"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Get notified about important security events beyond email."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Enable real-time alerts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Alert on severity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Alert email (optional)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Defaults to admin email"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Slack incoming webhook URL"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Telegram bot token"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Telegram chat ID"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Generic webhook URL"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Send a weekly security digest"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "A summary email (and alert) every week."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Maintenance & recovery"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Emergency lockdown and pre-update backups."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Lockdown mode"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Close the public site to everyone except administrators (shows a 503 maintenance page). Login still works."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Maintenance message"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "We’ll be back shortly."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Back up before plugin/theme/core updates"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Triggers GemBackup (if active) before any update runs."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
+msgid "How this page works"
+msgstr ""
+
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Switch to light mode"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Switch to dark mode"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "This module is turned off"
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Activate it from the Modules page to use this feature."
 msgstr ""
 
-#: assets/build/backend.1.0-beta1.js:10
+#: assets/build/backend.1.0-beta1.js:12
 msgid "Go to Modules"
 msgstr ""

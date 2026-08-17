@@ -4,6 +4,7 @@ import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
 import SetupGuide from '@Components/ui/SetupGuide';
+import TestCaptcha from '@Components/ui/TestCaptcha';
 import { useToast } from '@Components/ui/Toast';
 import { ProSection, isPro } from '@Components/ui/Pro';
 
@@ -232,6 +233,13 @@ export default function LoginSecurity() {
 								<TextInput type="password" value={ form.captcha_secret_key ?? '' } onChange={ ( e ) => setField( 'captcha_secret_key', e.target.value ) } />
 							</Field>
 						</div>
+						{ /* Prove the keys here rather than on the login form:
+						     renders the real widget and verifies its token. */ }
+						<TestCaptcha
+							provider={ form.captcha_provider || 'recaptcha_v2' }
+							siteKey={ form.captcha_site_key || '' }
+							secretKey={ form.captcha_secret_key || '' }
+						/>
 						{ form.captcha_provider === 'recaptcha_v3' && (
 							<Field label={ __( 'v3 score threshold', 'gemsecurity' ) } description={ __( '0.0–1.0; requests scoring below this are blocked (0.5 recommended).', 'gemsecurity' ) }>
 								<NumberInput step="0.1" min="0" max="1" value={ form.captcha_v3_threshold ?? 0.5 } onChange={ ( e ) => setField( 'captcha_v3_threshold', Number( e.target.value ) ) } />

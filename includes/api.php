@@ -96,6 +96,15 @@ class Api {
 			],
 		] );
 
+		// Credential tester — check third-party keys against the real provider
+		// before a typo reaches the login form. Core: the fields it tests live
+		// across several modules.
+		register_rest_route( $ns, '/credentials/test', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Credentials::class, 'test' ],
+			'permission_callback' => $perm,
+		] );
+
 		// In-product documentation for the help drawer, keyed by page slug.
 		register_rest_route( $ns, '/docs', [
 			'methods'             => 'GET',
