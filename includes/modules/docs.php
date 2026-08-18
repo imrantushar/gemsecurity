@@ -193,7 +193,7 @@ class Docs {
 				'does'    => [
 					__( 'Matches mitigation rules against the plugins and versions actually installed here.', 'gemsecurity' ),
 					__( 'Applies only the relevant rules, so an unrelated vulnerability costs nothing.', 'gemsecurity' ),
-					__( 'Lists every active mitigation with its severity, so you can see what is being held shut.', 'gemsecurity' ),
+					__( 'Lists every mitigation that is switched on and blocking attacks right now.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Turn virtual patching on; matching rules apply immediately, with no configuration per vulnerability.', 'gemsecurity' ),
@@ -201,6 +201,7 @@ class Docs {
 				],
 				'notes'   => [
 					__( 'A virtual patch buys time; it is not a substitute for updating the vulnerable plugin.', 'gemsecurity' ),
+					__( 'The list is what is protecting you, not what is wrong. Two generic rules — SQL injection and path traversal — apply to every request on every site and are always present; a severity of "critical" describes the attack they block, not a problem found here.', 'gemsecurity' ),
 					__( 'Developers can add site-specific rules through the gemsecurity/vpatch_rules filter.', 'gemsecurity' ),
 				],
 			],
