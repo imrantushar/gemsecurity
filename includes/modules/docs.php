@@ -269,6 +269,7 @@ class Docs {
 				],
 				'notes'   => [
 					__( 'Linking by email trusts the provider’s email — only enable it for providers that verify addresses.', 'gemsecurity' ),
+					__( 'If sign-in fails, the message now names the cause: "the provider refused" with its own error (redirect_uri_mismatch means the URI above is not registered exactly, invalid_client means the secret is wrong), while "expired or already used" means the attempt took too long or the browser dropped the cookie. Every failure is also written to the activity log.', 'gemsecurity' ),
 					__( 'Never grant a role above Subscriber by default to self-registered accounts.', 'gemsecurity' ),
 				],
 			],

@@ -18,6 +18,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class SocialLogin {
 
+	/** What the provider said the last time a token exchange failed. */
+	private static $last_token_error = '';
+
 	const STATE_PREFIX = 'gemsec_oauth_state_';
 
 	/** Guards the one-time inline stylesheet on front-end forms. */
@@ -149,20 +152,151 @@ class SocialLogin {
 		}
 
 		set_transient( self::STATE_PREFIX . $state, $data, 10 * MINUTE_IN_SECONDS );
+		// Belt and braces. A transient can be gone by the time the provider
+		// sends the visitor back — an object cache that is per-process rather
+		// than shared, a second app server, a cache flush mid-flow — and the
+		// only symptom is a sign-in that cannot be verified. The same payload
+		// travels in a signed, http-only cookie so the callback can still
+		// verify itself when the server-side copy has vanished.
+		self::set_state_cookie( $state, $data );
 
 		wp_redirect( $meta['authorize'] . '?' . http_build_query( $params ) );
 		exit;
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* State handling                                                      */
+	/* ------------------------------------------------------------------ */
+
+	/** Name of the fallback cookie. */
+	private static function cookie_name() {
+		return 'gemsec_oauth_state';
+	}
+
+	/**
+	 * @param string $state
+	 * @param array  $data
+	 */
+	private static function set_state_cookie( $state, array $data ) {
+		$payload = wp_json_encode( [ 'state' => $state ] + $data );
+		$value   = base64_encode( $payload ) . '.' . hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+
+		setcookie(
+			self::cookie_name(),
+			$value,
+			[
+				'expires'  => time() + 10 * MINUTE_IN_SECONDS,
+				'path'     => '/',
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				// Lax still travels on the top-level GET the provider sends the
+				// visitor back with; Strict would not.
+				'samesite' => 'Lax',
+			]
+		);
+	}
+
+	/**
+	 * Read and verify the fallback cookie for a given state.
+	 *
+	 * @param string $state
+	 * @return array|false
+	 */
+	private static function state_from_cookie( $state ) {
+		if ( empty( $_COOKIE[ self::cookie_name() ] ) ) {
+			return false;
+		}
+
+		$raw   = wp_unslash( $_COOKIE[ self::cookie_name() ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$parts = explode( '.', (string) $raw );
+		if ( 2 !== count( $parts ) ) {
+			return false;
+		}
+
+		$payload = base64_decode( $parts[0], true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		if ( false === $payload || ! hash_equals( hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) ), $parts[1] ) ) {
+			return false;
+		}
+
+		$data = json_decode( $payload, true );
+		if ( ! is_array( $data ) || empty( $data['state'] ) || ! hash_equals( (string) $data['state'], (string) $state ) ) {
+			return false;
+		}
+		// The cookie carries its own age; honour the same ten-minute window.
+		if ( empty( $data['time'] ) || ( time() - (int) $data['time'] ) > 10 * MINUTE_IN_SECONDS ) {
+			return false;
+		}
+
+		unset( $data['state'] );
+		return $data;
+	}
+
+	/** Drop the fallback cookie once the flow is finished. */
+	private static function clear_state_cookie() {
+		setcookie( self::cookie_name(), '', [ 'expires' => time() - 3600, 'path' => '/' ] );
+	}
+
 	private function handle_callback() {
 		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
 		$code  = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
-		$data  = $state ? get_transient( self::STATE_PREFIX . $state ) : false;
 
-		if ( ! $data || ! $code ) {
-			$this->bail( __( 'Sign-in could not be verified. Please try again.', 'gemsecurity' ) );
+		// The provider refused before we ever get a code. Its own reason is far
+		// more useful than anything we could infer — redirect_uri_mismatch and
+		// access_denied are the two that actually happen, and one is a
+		// configuration error while the other is the user changing their mind.
+		if ( isset( $_GET['error'] ) ) {
+			$err  = sanitize_text_field( wp_unslash( $_GET['error'] ) );
+			$desc = isset( $_GET['error_description'] )
+				? sanitize_text_field( wp_unslash( $_GET['error_description'] ) )
+				: '';
+
+			Logger::log(
+				'social_login_failed',
+				sprintf( 'Social sign-in refused by the provider: %s %s', $err, $desc ),
+				'access_denied' === $err ? Logger::SEVERITY_NOTICE : Logger::SEVERITY_WARNING,
+				[ 'user_id' => 0 ]
+			);
+
+			if ( 'access_denied' === $err ) {
+				$this->bail( __( 'Sign-in was cancelled.', 'gemsecurity' ) );
+			}
+
+			$this->bail( sprintf(
+				/* translators: 1: provider error code, 2: provider description. */
+				__( 'The provider refused the sign-in: %1$s. %2$s', 'gemsecurity' ),
+				$err,
+				$desc
+			) );
 		}
+
+		if ( '' === $state ) {
+			Logger::log( 'social_login_failed', 'Social sign-in callback arrived without a state parameter.', Logger::SEVERITY_WARNING, [ 'user_id' => 0 ] );
+			$this->bail( __( 'Sign-in could not be verified: the provider did not return a security token.', 'gemsecurity' ) );
+		}
+
+		$data = get_transient( self::STATE_PREFIX . $state );
+		if ( ! $data ) {
+			// Server-side copy is gone; fall back to the signed cookie.
+			$data = self::state_from_cookie( $state );
+		}
+
+		if ( ! $data ) {
+			Logger::log(
+				'social_login_failed',
+				'Social sign-in state could not be found. It expired, was already used, or the browser did not return the cookie.',
+				Logger::SEVERITY_WARNING,
+				[ 'user_id' => 0 ]
+			);
+			$this->bail( __( 'Sign-in could not be verified — the attempt expired or was already used. Please try again, and make sure your browser accepts cookies for this site.', 'gemsecurity' ) );
+		}
+
+		if ( '' === $code ) {
+			Logger::log( 'social_login_failed', 'Social sign-in callback arrived without an authorization code.', Logger::SEVERITY_WARNING, [ 'user_id' => 0 ] );
+			$this->bail( __( 'Sign-in could not be completed: the provider did not return an authorization code.', 'gemsecurity' ) );
+		}
+
 		delete_transient( self::STATE_PREFIX . $state );
+		self::clear_state_cookie();
 
 		$provider  = $data['provider'];
 		$providers = self::enabled_providers();
@@ -172,7 +306,26 @@ class SocialLogin {
 
 		$token = $this->exchange_code( $provider, $code, isset( $data['verifier'] ) ? $data['verifier'] : '' );
 		if ( ! $token ) {
-			$this->bail( __( 'Could not complete sign-in with the provider.', 'gemsecurity' ) );
+			// self::$last_token_error holds what the provider said — usually
+			// invalid_client (wrong secret) or redirect_uri_mismatch (the URI
+			// registered with the provider differs from this site's). Showing
+			// it turns an unactionable failure into a one-line fix.
+			$detail = self::$last_token_error;
+			Logger::log(
+				'social_login_failed',
+				sprintf( 'Token exchange with %s failed. %s', $provider, $detail ? $detail : 'No reason returned.' ),
+				Logger::SEVERITY_WARNING,
+				[ 'user_id' => 0 ]
+			);
+			$this->bail(
+				$detail
+					? sprintf(
+						/* translators: %s: the provider's error message. */
+						__( 'Could not complete sign-in with the provider: %s', 'gemsecurity' ),
+						$detail
+					)
+					: __( 'Could not complete sign-in with the provider.', 'gemsecurity' )
+			);
 		}
 
 		$profile = $this->fetch_profile( $provider, $token );
@@ -208,8 +361,11 @@ class SocialLogin {
 			$body['client_secret'] = Helper::get_setting( "social_{$provider}_client_secret", '' );
 		}
 
+		self::$last_token_error = '';
+
 		$response = wp_remote_post( $meta['token'], [ 'timeout' => 15, 'headers' => $headers, 'body' => $body ] );
 		if ( is_wp_error( $response ) ) {
+			self::$last_token_error = $response->get_error_message();
 			return '';
 		}
 
@@ -218,7 +374,19 @@ class SocialLogin {
 			// Some providers may return urlencoded; parse as fallback.
 			parse_str( wp_remote_retrieve_body( $response ), $parsed );
 		}
-		return ! empty( $parsed['access_token'] ) ? $parsed['access_token'] : '';
+
+		if ( empty( $parsed['access_token'] ) ) {
+			$error = isset( $parsed['error'] ) ? $parsed['error'] : '';
+			if ( is_array( $error ) ) {
+				$error = isset( $error['message'] ) ? $error['message'] : wp_json_encode( $error );
+			}
+			$desc = isset( $parsed['error_description'] ) ? $parsed['error_description'] : '';
+
+			self::$last_token_error = trim( sanitize_text_field( (string) $error . ( $desc ? ' — ' . $desc : '' ) ) );
+			return '';
+		}
+
+		return $parsed['access_token'];
 	}
 
 	/**

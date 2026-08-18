@@ -88,6 +88,15 @@ class CustomLogin {
 		if ( 'postpass' === $action || 'logout' === $action ) {
 			return; // Don't break password-protected posts or logout links.
 		}
+
+		// Social sign-in returns to wp-login.php with the provider's code. That
+		// URL is registered with Google and friends and cannot be moved to the
+		// secret slug, so 404ing it here would break every social login the
+		// moment a custom login URL is switched on. Both parameters are
+		// dispatched immediately afterwards on login_init.
+		if ( isset( $_GET['gemsec_oauth'] ) || isset( $_GET['gemsec_oauth_cb'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
 		if ( ! is_user_logged_in() ) {
 			$this->deny();
 		} else {

@@ -3,7 +3,7 @@
         'name' => 'gemsecurity/gemsecurity',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '74f4bc5c90e5b57c54f5a28235cd6059c50de666',
+        'reference' => 'bc570035c7dda9c4d19991c3da62fecb20450940',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'gemsecurity/gemsecurity' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '74f4bc5c90e5b57c54f5a28235cd6059c50de666',
+            'reference' => 'bc570035c7dda9c4d19991c3da62fecb20450940',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
