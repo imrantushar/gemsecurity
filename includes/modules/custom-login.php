@@ -97,6 +97,14 @@ class CustomLogin {
 		if ( isset( $_GET['gemsec_oauth'] ) || isset( $_GET['gemsec_oauth_cb'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return;
 		}
+
+		// The second-factor form posts back here while the visitor is still
+		// logged out, so denying it would break every 2FA sign-in the moment a
+		// custom login URL is switched on. The token in the request is what
+		// authorises it, and it is verified immediately afterwards.
+		if ( 'gemsec_2fa' === $action ) {
+			return;
+		}
 		if ( ! is_user_logged_in() ) {
 			$this->deny();
 		} else {

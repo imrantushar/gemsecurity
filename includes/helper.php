@@ -39,6 +39,58 @@ class Helper {
 	}
 
 	/**
+	 * Sign a short-lived payload for a round trip through the browser.
+	 *
+	 * Login flows park their state in a transient and read it back on the next
+	 * request. That breaks quietly wherever the two requests are not served by
+	 * the same cache — a per-process object cache, a second app server, a flush
+	 * mid-flow — and the visitor just lands back on the login form with nothing
+	 * logged. A signed cookie carries the same payload through the browser so
+	 * the flow can complete without shared server-side storage.
+	 *
+	 * The value is signed, not encrypted: never put anything in it that the
+	 * user may not see.
+	 *
+	 * @param array $data
+	 * @return string
+	 */
+	public static function sign_payload( array $data ) {
+		$data['_t'] = time();
+		$json       = wp_json_encode( $data );
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		return base64_encode( $json ) . '.' . hash_hmac( 'sha256', $json, wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * Verify and decode a payload produced by sign_payload().
+	 *
+	 * @param string $value
+	 * @param int    $max_age Seconds the payload stays valid.
+	 * @return array|false
+	 */
+	public static function verify_signed_payload( $value, $max_age = 600 ) {
+		$parts = explode( '.', (string) $value );
+		if ( 2 !== count( $parts ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$json = base64_decode( $parts[0], true );
+		if ( false === $json || ! hash_equals( hash_hmac( 'sha256', $json, wp_salt( 'auth' ) ), $parts[1] ) ) {
+			return false;
+		}
+
+		$data = json_decode( $json, true );
+		if ( ! is_array( $data ) || empty( $data['_t'] ) || ( time() - (int) $data['_t'] ) > $max_age ) {
+			return false;
+		}
+
+		unset( $data['_t'] );
+		return $data;
+	}
+
+	/**
 	 * The full settings array, resolved once per request.
 	 *
 	 * @return array

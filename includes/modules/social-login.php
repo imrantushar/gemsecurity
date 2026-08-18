@@ -178,12 +178,9 @@ class SocialLogin {
 	 * @param array  $data
 	 */
 	private static function set_state_cookie( $state, array $data ) {
-		$payload = wp_json_encode( [ 'state' => $state ] + $data );
-		$value   = base64_encode( $payload ) . '.' . hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-
 		setcookie(
 			self::cookie_name(),
-			$value,
+			Helper::sign_payload( [ 'state' => $state ] + $data ),
 			[
 				'expires'  => time() + 10 * MINUTE_IN_SECONDS,
 				'path'     => '/',
@@ -207,23 +204,9 @@ class SocialLogin {
 			return false;
 		}
 
-		$raw   = wp_unslash( $_COOKIE[ self::cookie_name() ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$parts = explode( '.', (string) $raw );
-		if ( 2 !== count( $parts ) ) {
-			return false;
-		}
-
-		$payload = base64_decode( $parts[0], true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-		if ( false === $payload || ! hash_equals( hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) ), $parts[1] ) ) {
-			return false;
-		}
-
-		$data = json_decode( $payload, true );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$data = Helper::verify_signed_payload( wp_unslash( $_COOKIE[ self::cookie_name() ] ), 10 * MINUTE_IN_SECONDS );
 		if ( ! is_array( $data ) || empty( $data['state'] ) || ! hash_equals( (string) $data['state'], (string) $state ) ) {
-			return false;
-		}
-		// The cookie carries its own age; honour the same ten-minute window.
-		if ( empty( $data['time'] ) || ( time() - (int) $data['time'] ) > 10 * MINUTE_IN_SECONDS ) {
 			return false;
 		}
 

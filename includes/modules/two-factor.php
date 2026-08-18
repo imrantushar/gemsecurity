@@ -75,12 +75,15 @@ class TwoFactor {
 		$remember = ! empty( $_POST['rememberme'] );
 		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : admin_url();
 
-		$token = wp_generate_password( 32, false );
-		set_transient(
-			self::PENDING_PREFIX . $token,
-			[ 'user_id' => $user->ID, 'remember' => $remember, 'redirect' => $redirect, 'method' => $method ],
-			5 * MINUTE_IN_SECONDS
-		);
+		$token   = wp_generate_password( 32, false );
+		$pending = [ 'user_id' => $user->ID, 'remember' => $remember, 'redirect' => $redirect, 'method' => $method ];
+
+		set_transient( self::PENDING_PREFIX . $token, $pending, 5 * MINUTE_IN_SECONDS );
+		// The transient can be gone by the time the code is submitted — an
+		// object cache that is not shared, a second app server — and the only
+		// symptom is being bounced back to the login form after entering a
+		// correct code. The same payload rides along in a signed cookie.
+		self::set_pending_cookie( $token, $pending );
 
 		if ( 'email' === $method ) {
 			$this->send_email_otp( $user );
@@ -99,8 +102,26 @@ class TwoFactor {
 		$token   = isset( $_POST['gemsec_2fa_token'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_token'] ) ) : '';
 		$pending = $token ? get_transient( self::PENDING_PREFIX . $token ) : false;
 
+		if ( ! $pending && $token ) {
+			$pending = self::pending_from_cookie( $token );
+		}
+
 		if ( ! $pending || empty( $pending['user_id'] ) ) {
-			wp_safe_redirect( wp_login_url() );
+			// Bouncing to the login form with no explanation is what made this
+			// look like "the code did not work" when the code was never
+			// checked: the challenge itself had expired or been lost.
+			Logger::log(
+				'2fa_challenge_lost',
+				'A second-factor code was submitted but the pending challenge could not be found. It expired, was already used, or the browser did not return the cookie.',
+				Logger::SEVERITY_WARNING,
+				[ 'user_id' => 0 ]
+			);
+			login_header( __( 'Two-Factor Authentication', 'gemsecurity' ), '', new \WP_Error(
+				'gemsec_2fa_expired',
+				__( 'That sign-in attempt expired before the code was entered. Please sign in again.', 'gemsecurity' )
+			) );
+			echo '<p id="backtoblog"><a href="' . esc_url( wp_login_url() ) . '">' . esc_html__( 'Back to sign in', 'gemsecurity' ) . '</a></p>';
+			login_footer();
 			exit;
 		}
 
@@ -131,6 +152,7 @@ class TwoFactor {
 
 		// Success — complete the login.
 		delete_transient( self::PENDING_PREFIX . $token );
+		self::clear_pending_cookie();
 		delete_transient( self::EMAIL_OTP_PREFIX . $user->ID );
 
 		self::$passed = true;
@@ -309,6 +331,56 @@ class TwoFactor {
 			return false;
 		}
 		return isset( $GLOBALS['pagenow'] ) && 'wp-login.php' === $GLOBALS['pagenow'];
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Pending-challenge fallback                                          */
+	/* ------------------------------------------------------------------ */
+
+	/** Cookie holding the pending challenge, for when the transient is gone. */
+	private static function cookie_name() {
+		return 'gemsec_2fa_pending';
+	}
+
+	/**
+	 * @param string $token
+	 * @param array  $pending
+	 */
+	private static function set_pending_cookie( $token, array $pending ) {
+		setcookie(
+			self::cookie_name(),
+			Helper::sign_payload( [ 'token' => $token ] + $pending ),
+			[
+				'expires'  => time() + 5 * MINUTE_IN_SECONDS,
+				'path'     => '/',
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			]
+		);
+	}
+
+	/**
+	 * @param string $token
+	 * @return array|false
+	 */
+	private static function pending_from_cookie( $token ) {
+		if ( empty( $_COOKIE[ self::cookie_name() ] ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$data = Helper::verify_signed_payload( wp_unslash( $_COOKIE[ self::cookie_name() ] ), 5 * MINUTE_IN_SECONDS );
+		if ( ! is_array( $data ) || empty( $data['token'] ) || ! hash_equals( (string) $data['token'], (string) $token ) ) {
+			return false;
+		}
+
+		unset( $data['token'] );
+		return $data;
+	}
+
+	private static function clear_pending_cookie() {
+		setcookie( self::cookie_name(), '', [ 'expires' => time() - 3600, 'path' => '/' ] );
 	}
 
 	/* ------------------------------------------------------------------ */
