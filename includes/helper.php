@@ -171,13 +171,18 @@ class Helper {
 	public static function get_admin_menu_list() {
 		$menu = [];
 
+		// Labels are fetched here rather than from the registry itself: the
+		// registry is read during plugins_loaded, and translating there loads a
+		// text domain before init. This runs on admin_menu, which is safe.
+		$labels = \GemSecurity\Modules\Registry::labels();
+
 		foreach ( \GemSecurity\Modules\Registry::all() as $id => $module ) {
 			if ( ! \GemSecurity\Modules\Registry::is_visible( $id ) ) {
 				continue;
 			}
 			$menu[ $module['page_slug'] ] = [
 				'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-				'title'       => $module['title'],
+				'title'       => isset( $labels[ $id ]['title'] ) ? $labels[ $id ]['title'] : $id,
 				'capability'  => 'manage_options',
 				'is_pro'      => $module['is_pro'],
 			];

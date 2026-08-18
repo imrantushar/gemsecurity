@@ -70,8 +70,6 @@ class Registry {
 
 			// ---- Core (always active) ------------------------------------
 			'dashboard' => [
-				'title'         => __( 'Dashboard', 'gemsecurity' ),
-				'desc'          => __( 'Security overview and at-a-glance status.', 'gemsecurity' ),
 				'icon'          => 'grid',
 				'category'      => 'core',
 				'core'          => true,
@@ -80,8 +78,6 @@ class Registry {
 				'rest'          => [ 'dashboard', 'search' ],
 			],
 			'modules' => [
-				'title'         => __( 'Modules', 'gemsecurity' ),
-				'desc'          => __( 'Turn security modules on or off. Activate only what this site needs.', 'gemsecurity' ),
 				'icon'          => 'layers',
 				'category'      => 'core',
 				'core'          => true,
@@ -92,8 +88,6 @@ class Registry {
 
 			// ---- Firewall & hardening ------------------------------------
 			'firewall' => [
-				'title'         => __( 'Firewall', 'gemsecurity' ),
-				'desc'          => __( 'Request firewall, hardening switches, security headers and comment control.', 'gemsecurity' ),
 				'icon'          => 'shield',
 				'category'      => 'firewall',
 				'recommended'   => true,
@@ -114,8 +108,6 @@ class Registry {
 				],
 			],
 			'anti-spam' => [
-				'title'         => __( 'Anti-Spam', 'gemsecurity' ),
-				'desc'          => __( 'Frictionless bot checks on comments and registration, plus heuristic comment filtering.', 'gemsecurity' ),
 				'icon'          => 'check',
 				'category'      => 'firewall',
 				'recommended'   => true,
@@ -125,8 +117,6 @@ class Registry {
 				'settings_keys' => [ 'antispam_enabled', 'antispam_heuristics' ],
 			],
 			'threats' => [
-				'title'         => __( 'Threat Defense', 'gemsecurity' ),
-				'desc'          => __( 'Escalating auto-bans, the ban ledger and the early-load request firewall.', 'gemsecurity' ),
 				'icon'          => 'zap',
 				'category'      => 'firewall',
 				'is_pro'        => true,
@@ -135,8 +125,6 @@ class Registry {
 				'rest'          => [ 'bans', 'bots', 'live-traffic' ],
 			],
 			'virtual-patch' => [
-				'title'         => __( 'Virtual Patch', 'gemsecurity' ),
-				'desc'          => __( 'Mitigate known plugin/theme vulnerabilities in place — even before a fix ships.', 'gemsecurity' ),
 				'icon'          => 'shield',
 				'category'      => 'firewall',
 				'is_pro'        => true,
@@ -147,8 +135,6 @@ class Registry {
 
 			// ---- Login & access ------------------------------------------
 			'login-security' => [
-				'title'         => __( 'Login Security', 'gemsecurity' ),
-				'desc'          => __( 'Brute-force lockouts, session limits, password policy and custom login URL.', 'gemsecurity' ),
 				'icon'          => 'lock',
 				'category'      => 'access',
 				'recommended'   => true,
@@ -170,8 +156,6 @@ class Registry {
 				],
 			],
 			'two-factor' => [
-				'title'         => __( 'Two-Factor', 'gemsecurity' ),
-				'desc'          => __( 'Time-based OTP / email two-factor and login CAPTCHA.', 'gemsecurity' ),
 				'icon'          => 'key',
 				'category'      => 'access',
 				'page_slug'     => $slug . '-two-factor',
@@ -183,8 +167,6 @@ class Registry {
 				'settings_keys' => [ 'two_factor_enabled', 'captcha_enabled' ],
 			],
 			'social-login' => [
-				'title'         => __( 'Social Login', 'gemsecurity' ),
-				'desc'          => __( 'Let users sign in with Google, Facebook, GitHub or X.', 'gemsecurity' ),
 				'icon'          => 'users',
 				'category'      => 'access',
 				'page_slug'     => $slug . '-social-login',
@@ -193,8 +175,6 @@ class Registry {
 				'settings_keys' => [ 'social_login_enabled' ],
 			],
 			'geolocation' => [
-				'title'         => __( 'Geolocation', 'gemsecurity' ),
-				'desc'          => __( 'Country access control and per-user location lock.', 'gemsecurity' ),
 				'icon'          => 'globe',
 				'category'      => 'access',
 				'is_pro'        => true,
@@ -204,8 +184,6 @@ class Registry {
 				'settings_keys' => [ 'geo_enabled' ],
 			],
 			'admin-guard' => [
-				'title'         => __( 'Admin Guard', 'gemsecurity' ),
-				'desc'          => __( 'Rogue-admin protection and hidden-administrator detection.', 'gemsecurity' ),
 				'icon'          => 'crown',
 				'category'      => 'access',
 				'recommended'   => true,
@@ -218,8 +196,6 @@ class Registry {
 				'settings_keys' => [ 'admin_whitelist_enabled', 'hidden_admin_detection' ],
 			],
 			'api-hardening' => [
-				'title'         => __( 'API & Access', 'gemsecurity' ),
-				'desc'          => __( 'REST API rate limiting, application-password governance and username-enumeration hardening.', 'gemsecurity' ),
 				'icon'          => 'key',
 				'category'      => 'access',
 				'recommended'   => true,
@@ -234,8 +210,6 @@ class Registry {
 
 			// ---- Scanning ------------------------------------------------
 			'scanner' => [
-				'title'         => __( 'Scanner', 'gemsecurity' ),
-				'desc'          => __( 'Integrity, file-change, link and vulnerability scanning (plus the Pro malware suite).', 'gemsecurity' ),
 				'icon'          => 'radar',
 				'category'      => 'scanning',
 				'recommended'   => true,
@@ -252,8 +226,6 @@ class Registry {
 			],
 
 			'payment-integrity' => [
-				'title'         => __( 'Payment Integrity', 'gemsecurity' ),
-				'desc'          => __( 'Monitor checkout-page scripts for Magecart-style tampering (PCI-DSS 4.0 §6.4.3 / §11.6.1).', 'gemsecurity' ),
 				'icon'          => 'lock',
 				'category'      => 'scanning',
 				'is_pro'        => true,
@@ -264,8 +236,6 @@ class Registry {
 			],
 
 			'incident-response' => [
-				'title'         => __( 'Incident Response', 'gemsecurity' ),
-				'desc'          => __( 'Forensic timeline, file quarantine and one-click recovery for after a breach.', 'gemsecurity' ),
 				'icon'          => 'alert',
 				'category'      => 'scanning',
 				'is_pro'        => true,
@@ -276,8 +246,6 @@ class Registry {
 
 			// ---- Logging -------------------------------------------------
 			'logs' => [
-				'title'         => __( 'Logs', 'gemsecurity' ),
-				'desc'          => __( 'Activity audit log and real-time alerts.', 'gemsecurity' ),
 				'icon'          => 'list',
 				'category'      => 'core',
 				'core'          => true,
@@ -293,8 +261,6 @@ class Registry {
 
 			// ---- Maintenance ---------------------------------------------
 			'backup' => [
-				'title'         => __( 'Backup', 'gemsecurity' ),
-				'desc'          => __( 'Scheduled site backups with local (and Pro remote) storage.', 'gemsecurity' ),
 				'icon'          => 'refresh',
 				'category'      => 'maintenance',
 				'recommended'   => true,
@@ -305,8 +271,6 @@ class Registry {
 				'rest'          => [],
 			],
 			'monitoring' => [
-				'title'         => __( 'Monitoring', 'gemsecurity' ),
-				'desc'          => __( 'Uptime, TLS-certificate expiry, DNS-change and email-authentication (SPF/DMARC) monitoring.', 'gemsecurity' ),
 				'icon'          => 'globe',
 				'category'      => 'maintenance',
 				'is_pro'        => true,
@@ -316,8 +280,6 @@ class Registry {
 				'settings_keys' => [ 'monitoring_enabled' ],
 			],
 			'pro-tools' => [
-				'title'         => __( 'Pro Tools', 'gemsecurity' ),
-				'desc'          => __( 'Hardening pack, file-change baseline, auto-update enforcement and settings import/export.', 'gemsecurity' ),
 				'icon'          => 'crown',
 				'category'      => 'maintenance',
 				'is_pro'        => true,
@@ -330,8 +292,6 @@ class Registry {
 
 			// ---- Settings (core) -----------------------------------------
 			'settings' => [
-				'title'         => __( 'Settings', 'gemsecurity' ),
-				'desc'          => __( 'Plugin-wide preferences.', 'gemsecurity' ),
 				'icon'          => 'cog',
 				'category'      => 'core',
 				'core'          => true,
@@ -363,6 +323,128 @@ class Registry {
 		self::$descriptors_cache = apply_filters( 'gemsecurity/modules', $modules );
 
 		return self::$descriptors_cache;
+	}
+
+	/**
+	 * Human-readable strings for each module, resolved on demand.
+	 *
+	 * Kept out of all() deliberately. The registry is read during
+	 * `plugins_loaded` to decide which modules to boot, and calling __() that
+	 * early forces WordPress to load a text domain before `init` — which is
+	 * exactly what the "translation loading was triggered too early" notice in
+	 * 6.7 is about. Nothing that boots a module needs a label, so the labels
+	 * live here and are merged in only by the code that actually displays them,
+	 * all of which runs after `init`.
+	 *
+	 * @return array<string,array{title:string,desc:string}>
+	 */
+	public static function labels() {
+		return [
+			'dashboard' => [
+				'title' => __( 'Dashboard', 'gemsecurity' ),
+				'desc'  => __( 'Security overview and at-a-glance status.', 'gemsecurity' ),
+			],
+			'modules' => [
+				'title' => __( 'Modules', 'gemsecurity' ),
+				'desc'  => __( 'Turn security modules on or off. Activate only what this site needs.', 'gemsecurity' ),
+			],
+			'firewall' => [
+				'title' => __( 'Firewall', 'gemsecurity' ),
+				'desc'  => __( 'Request firewall, hardening switches, security headers and comment control.', 'gemsecurity' ),
+			],
+			'anti-spam' => [
+				'title' => __( 'Anti-Spam', 'gemsecurity' ),
+				'desc'  => __( 'Frictionless bot checks on comments and registration, plus heuristic comment filtering.', 'gemsecurity' ),
+			],
+			'threats' => [
+				'title' => __( 'Threat Defense', 'gemsecurity' ),
+				'desc'  => __( 'Escalating auto-bans, the ban ledger and the early-load request firewall.', 'gemsecurity' ),
+			],
+			'virtual-patch' => [
+				'title' => __( 'Virtual Patch', 'gemsecurity' ),
+				'desc'  => __( 'Mitigate known plugin/theme vulnerabilities in place — even before a fix ships.', 'gemsecurity' ),
+			],
+			'login-security' => [
+				'title' => __( 'Login Security', 'gemsecurity' ),
+				'desc'  => __( 'Brute-force lockouts, session limits, password policy and custom login URL.', 'gemsecurity' ),
+			],
+			'two-factor' => [
+				'title' => __( 'Two-Factor', 'gemsecurity' ),
+				'desc'  => __( 'Time-based OTP / email two-factor and login CAPTCHA.', 'gemsecurity' ),
+			],
+			'social-login' => [
+				'title' => __( 'Social Login', 'gemsecurity' ),
+				'desc'  => __( 'Let users sign in with Google, Facebook, GitHub or X.', 'gemsecurity' ),
+			],
+			'geolocation' => [
+				'title' => __( 'Geolocation', 'gemsecurity' ),
+				'desc'  => __( 'Country access control and per-user location lock.', 'gemsecurity' ),
+			],
+			'admin-guard' => [
+				'title' => __( 'Admin Guard', 'gemsecurity' ),
+				'desc'  => __( 'Rogue-admin protection and hidden-administrator detection.', 'gemsecurity' ),
+			],
+			'api-hardening' => [
+				'title' => __( 'API & Access', 'gemsecurity' ),
+				'desc'  => __( 'REST API rate limiting, application-password governance and username-enumeration hardening.', 'gemsecurity' ),
+			],
+			'scanner' => [
+				'title' => __( 'Scanner', 'gemsecurity' ),
+				'desc'  => __( 'Integrity, file-change, link and vulnerability scanning (plus the Pro malware suite).', 'gemsecurity' ),
+			],
+			'payment-integrity' => [
+				'title' => __( 'Payment Integrity', 'gemsecurity' ),
+				'desc'  => __( 'Monitor checkout-page scripts for Magecart-style tampering (PCI-DSS 4.0 §6.4.3 / §11.6.1).', 'gemsecurity' ),
+			],
+			'incident-response' => [
+				'title' => __( 'Incident Response', 'gemsecurity' ),
+				'desc'  => __( 'Forensic timeline, file quarantine and one-click recovery for after a breach.', 'gemsecurity' ),
+			],
+			'logs' => [
+				'title' => __( 'Logs', 'gemsecurity' ),
+				'desc'  => __( 'Activity audit log and real-time alerts.', 'gemsecurity' ),
+			],
+			'backup' => [
+				'title' => __( 'Backup', 'gemsecurity' ),
+				'desc'  => __( 'Scheduled site backups with local (and Pro remote) storage.', 'gemsecurity' ),
+			],
+			'monitoring' => [
+				'title' => __( 'Monitoring', 'gemsecurity' ),
+				'desc'  => __( 'Uptime, TLS-certificate expiry, DNS-change and email-authentication (SPF/DMARC) monitoring.', 'gemsecurity' ),
+			],
+			'pro-tools' => [
+				'title' => __( 'Pro Tools', 'gemsecurity' ),
+				'desc'  => __( 'Hardening pack, file-change baseline, auto-update enforcement and settings import/export.', 'gemsecurity' ),
+			],
+			'settings' => [
+				'title' => __( 'Settings', 'gemsecurity' ),
+				'desc'  => __( 'Plugin-wide preferences.', 'gemsecurity' ),
+			],
+		];
+	}
+
+	/**
+	 * A descriptor with its display strings merged in.
+	 *
+	 * Use this anywhere a title or description is shown; use all() when only
+	 * the structure matters.
+	 *
+	 * @param string $id
+	 * @return array|null
+	 */
+	public static function describe( $id ) {
+		$all = self::all();
+		if ( ! isset( $all[ $id ] ) ) {
+			return null;
+		}
+		$labels = self::labels();
+		return array_merge(
+			$all[ $id ],
+			[
+				'title' => isset( $labels[ $id ]['title'] ) ? $labels[ $id ]['title'] : $id,
+				'desc'  => isset( $labels[ $id ]['desc'] ) ? $labels[ $id ]['desc'] : '',
+			]
+		);
 	}
 
 	/**
@@ -469,12 +551,13 @@ class Registry {
 	 * @return array<int,array>
 	 */
 	public static function for_js() {
-		$out = [];
+		$out    = [];
+		$labels = self::labels();
 		foreach ( self::all() as $id => $m ) {
 			$out[] = [
 				'id'        => $id,
-				'title'     => $m['title'],
-				'desc'      => $m['desc'],
+				'title'     => isset( $labels[ $id ]['title'] ) ? $labels[ $id ]['title'] : $id,
+				'desc'      => isset( $labels[ $id ]['desc'] ) ? $labels[ $id ]['desc'] : '',
 				'icon'      => $m['icon'],
 				'category'  => $m['category'],
 				'core'      => $m['core'],

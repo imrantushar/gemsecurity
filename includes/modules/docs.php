@@ -712,7 +712,8 @@ class Docs {
 	 * @return array<string,array>
 	 */
 	public static function for_js() {
-		$out = [];
+		$out    = [];
+		$labels = Registry::labels();
 		foreach ( Registry::all() as $id => $module ) {
 			if ( ! Registry::is_visible( $id ) ) {
 				continue;
@@ -723,7 +724,7 @@ class Docs {
 			}
 			$out[ $module['page_slug'] ] = [
 				'id'     => $id,
-				'title'  => $module['title'],
+				'title'  => isset( $labels[ $id ]['title'] ) ? $labels[ $id ]['title'] : $id,
 				'is_pro' => $module['is_pro'],
 			] + $doc;
 		}
