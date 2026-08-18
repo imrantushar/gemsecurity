@@ -10,6 +10,16 @@ import { ProGate, ProBadge, isLocked, isPro, proFeatures } from '@Components/ui/
 import MalwareScan from '@Containers/pages/MalwareScan';
 import SearchPanel from '@Containers/pages/SearchPanel';
 
+/* Stable reference: an inline array here would be a new value on every render. */
+const SCANNER_KEYS = [
+	'scanner_auto_scan',
+	'vuln_scan_enabled',
+	'file_watcher_enabled',
+	'link_scanner_enabled',
+	'link_blocklist',
+	'link_allowlist',
+];
+
 /** Open the Malware tab directly when arriving via the legacy ?page= alias. */
 function initialTab() {
 	try {
@@ -222,7 +232,7 @@ function CoreRepair() {
 }
 
 export default function Scanner() {
-	const { form, setField, save, saving, dirty } = useSettingsForm( [ 'scanner_auto_scan', 'vuln_scan_enabled', 'file_watcher_enabled', 'link_scanner_enabled', 'link_blocklist', 'link_allowlist' ] );
+	const { form, setField, save, saving, dirty } = useSettingsForm( SCANNER_KEYS );
 	const toast = useToast();
 	const [ tab, setTab ] = useState( initialTab );
 	const [ result, setResult ] = useState( null );
