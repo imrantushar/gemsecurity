@@ -361,6 +361,8 @@ class Docs {
 					__( 'Premium plugins are not on WordPress.org, so integrity checks cannot confirm them; that is expected, not a finding.', 'gemsecurity' ),
 					__( 'Caching and backup plugins legitimately write files constantly; expect noise from them in the change watcher.', 'gemsecurity' ),
 					__( 'Take a backup before deleting or quarantining anything a scan flags.', 'gemsecurity' ),
+					__( 'An index.php holding only "// Silence is golden." is skipped automatically — it has no executable code, and reporting it would only teach you to ignore the list. Anything else you have checked yourself can be marked safe from the findings table.', 'gemsecurity' ),
+					__( 'A safe mark covers the exact contents you reviewed. If that file is later modified it is reported again, so marking something can never become a permanent blind spot.', 'gemsecurity' ),
 				],
 			],
 

@@ -231,6 +231,104 @@ function CoreRepair() {
 	);
 }
 
+/**
+ * "I have looked at this file and it is fine."
+ *
+ * A scanner works on patterns, so some findings are unusual-but-legitimate
+ * code. Marking one keeps the list meaningful — but the mark is tied to the
+ * file's current contents, so if it changes later it is reported again rather
+ * than becoming a permanent blind spot.
+ */
+function MarkSafe( { path, onMarked } ) {
+	const toast = useToast();
+	const [ busy, setBusy ] = useState( false );
+
+	const mark = async () => {
+		setBusy( true );
+		try {
+			await api.post( 'safe-files', { path } );
+			toast(
+				sprintf( /* translators: %s: file path. */ __( '%s marked as safe.', 'gemsecurity' ), path ),
+				'success'
+			);
+			if ( onMarked ) {
+				onMarked( path );
+			}
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not mark that file.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( false );
+	};
+
+	return (
+		<Button variant="secondary" onClick={ mark } loading={ busy }>
+			{ __( 'Mark as safe', 'gemsecurity' ) }
+		</Button>
+	);
+}
+
+/** The files somebody has reviewed, so the decision can be undone. */
+function SafeFiles() {
+	const toast = useToast();
+	const [ files, setFiles ] = useState( null );
+
+	const load = () =>
+		api.get( 'safe-files' ).then( ( r ) => setFiles( r.data.files ) ).catch( () => setFiles( [] ) );
+	useEffect( () => { load(); }, [] );
+
+	const remove = async ( path ) => {
+		try {
+			const { data } = await api.delete( 'safe-files', { data: { path } } );
+			setFiles( data.files );
+			toast( __( 'That file will be reported again.', 'gemsecurity' ), 'success' );
+		} catch ( e ) {
+			toast( __( 'Could not remove the mark.', 'gemsecurity' ), 'error' );
+		}
+	};
+
+	if ( ! files || files.length === 0 ) {
+		return null;
+	}
+
+	return (
+		<Card
+			title={ __( 'Files marked as safe', 'gemsecurity' ) }
+			description={ __( 'Reviewed by you and skipped by every scan. A mark covers the exact contents that were reviewed — if the file changes, it is reported again.', 'gemsecurity' ) }
+		>
+			<table className="gs-table">
+				<thead>
+					<tr>
+						<th>{ __( 'File', 'gemsecurity' ) }</th>
+						<th>{ __( 'Marked', 'gemsecurity' ) }</th>
+						<th />
+					</tr>
+				</thead>
+				<tbody>
+					{ files.map( ( f ) => (
+						<tr key={ f.path }>
+							<td>
+								<code>{ f.path }</code>
+								{ f.changed && (
+									<> <Badge tone="warning">{ __( 'changed since review', 'gemsecurity' ) }</Badge></>
+								) }
+								{ f.missing && (
+									<> <Badge tone="info">{ __( 'no longer exists', 'gemsecurity' ) }</Badge></>
+								) }
+							</td>
+							<td className="gs-nowrap">{ f.marked_at }</td>
+							<td>
+								<Button variant="secondary" onClick={ () => remove( f.path ) }>
+									{ __( 'Remove', 'gemsecurity' ) }
+								</Button>
+							</td>
+						</tr>
+					) ) }
+				</tbody>
+			</table>
+		</Card>
+	);
+}
+
 export default function Scanner() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( SCANNER_KEYS );
 	const toast = useToast();
@@ -452,13 +550,14 @@ export default function Scanner() {
 								<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No unexpected files in core directories or the plugins folder.', 'gemsecurity' ) }</p>
 							) : (
 								<table className="gs-table">
-									<thead><tr><th>{ __( 'File', 'gemsecurity' ) }</th><th>{ __( 'Reason', 'gemsecurity' ) }</th><th>{ __( 'Severity', 'gemsecurity' ) }</th></tr></thead>
+									<thead><tr><th>{ __( 'File', 'gemsecurity' ) }</th><th>{ __( 'Reason', 'gemsecurity' ) }</th><th>{ __( 'Severity', 'gemsecurity' ) }</th><th /></tr></thead>
 									<tbody>
 										{ result.foreign_files.map( ( f, i ) => (
 											<tr key={ i }>
 												<td><code>{ f.file }</code></td>
 												<td>{ f.reason }</td>
 												<td><Badge tone={ f.severity === 'critical' ? 'danger' : 'warning' }>{ f.severity }</Badge></td>
+												<td><MarkSafe path={ f.file } onMarked={ runScan } /></td>
 											</tr>
 										) ) }
 									</tbody>
@@ -471,19 +570,22 @@ export default function Scanner() {
 									<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No suspicious files detected.', 'gemsecurity' ) }</p>
 								) : (
 									<table className="gs-table">
-										<thead><tr><th>{ __( 'File', 'gemsecurity' ) }</th><th>{ __( 'Reason', 'gemsecurity' ) }</th><th>{ __( 'Severity', 'gemsecurity' ) }</th></tr></thead>
+										<thead><tr><th>{ __( 'File', 'gemsecurity' ) }</th><th>{ __( 'Reason', 'gemsecurity' ) }</th><th>{ __( 'Severity', 'gemsecurity' ) }</th><th /></tr></thead>
 										<tbody>
 											{ result.suspicious.map( ( s, i ) => (
 												<tr key={ i }>
 													<td><code>{ s.file }</code></td>
 													<td>{ s.reason }</td>
 													<td><Badge tone={ s.severity === 'critical' ? 'danger' : 'warning' }>{ s.severity }</Badge></td>
+													<td><MarkSafe path={ s.file } onMarked={ runScan } /></td>
 												</tr>
 											) ) }
 										</tbody>
 									</table>
 								) }
 							</Card>
+
+							<SafeFiles />
 
 							{ result.file_watcher && (
 								<Card

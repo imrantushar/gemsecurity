@@ -176,6 +176,44 @@ class Api {
 			],
 		] );
 
+		// Files a person has reviewed and marked safe, so the scanners stop
+		// reporting them.
+		register_rest_route( $ns, '/safe-files', [
+			[
+				'methods'             => 'GET',
+				'callback'            => static function () {
+					return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => static function ( $req ) {
+					$path = (string) $req->get_param( 'path' );
+					// Accept either an absolute path or one relative to the
+					// install, since findings carry both.
+					$abs = ( 0 === strpos( wp_normalize_path( $path ), wp_normalize_path( ABSPATH ) ) )
+						? $path
+						: ABSPATH . ltrim( $path, '/' );
+
+					$res = Security\SafeFiles::mark( $abs );
+					if ( is_wp_error( $res ) ) {
+						return $res;
+					}
+					return rest_ensure_response( [ 'success' => true, 'entry' => $res, 'files' => Security\SafeFiles::for_js() ] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'DELETE',
+				'callback'            => static function ( $req ) {
+					Security\SafeFiles::unmark( (string) $req->get_param( 'path' ) );
+					return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
+				},
+				'permission_callback' => $perm,
+			],
+		] );
+
 		// Credential tester — check third-party keys against the real provider
 		// before a typo reaches the login form. Core: the fields it tests live
 		// across several modules.

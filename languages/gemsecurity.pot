@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-18T06:17:57+00:00\n"
+"POT-Creation-Date: 2026-08-18T06:26:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -930,806 +930,810 @@ msgid "TOTP depends on a correct server clock; a badly drifted clock rejects eve
 msgstr ""
 
 #: includes/modules/docs.php:252
-msgid "Email fallback is only as secure as the mailbox — use the app method for administrators."
+msgid "Emailed codes last 10 minutes and allow five guesses; after that the code is discarded and a new one must be requested. The message says which of those happened rather than always reporting an invalid code."
 msgstr ""
 
 #: includes/modules/docs.php:253
+msgid "Email fallback is only as secure as the mailbox — use the app method for administrators."
+msgstr ""
+
+#: includes/modules/docs.php:254
 msgid "The login CAPTCHA belongs to this module but is configured on the Login Security page."
 msgstr ""
 
-#: includes/modules/docs.php:258
+#: includes/modules/docs.php:259
 msgid "Lets people sign in with Google, Facebook, GitHub or X instead of a password, with optional account creation."
 msgstr ""
 
-#: includes/modules/docs.php:260
+#: includes/modules/docs.php:261
 msgid "Adds provider buttons to the login form using OAuth 2.0."
 msgstr ""
 
-#: includes/modules/docs.php:261
+#: includes/modules/docs.php:262
 msgid "Links a social account to an existing user by email address, or creates one with a default role."
 msgstr ""
 
-#: includes/modules/docs.php:262
+#: includes/modules/docs.php:263
 msgid "Fires the normal WordPress login hooks, so two-factor and login alerts still apply."
 msgstr ""
 
-#: includes/modules/docs.php:265
+#: includes/modules/docs.php:266
 msgid "Create an OAuth app with the provider and copy its client ID and secret."
 msgstr ""
 
-#: includes/modules/docs.php:266
+#: includes/modules/docs.php:267
 msgid "Paste the redirect URI shown on this page into the provider’s allowed-callback list exactly as displayed."
 msgstr ""
 
-#: includes/modules/docs.php:267
+#: includes/modules/docs.php:268
 msgid "Enable the provider, then decide whether new visitors may register and which role they receive."
 msgstr ""
 
-#: includes/modules/docs.php:268
+#: includes/modules/docs.php:269
 msgid "Test in a private window before announcing it."
 msgstr ""
 
-#: includes/modules/docs.php:271
+#: includes/modules/docs.php:272
 msgid "Linking by email trusts the provider’s email — only enable it for providers that verify addresses."
 msgstr ""
 
-#: includes/modules/docs.php:272
+#: includes/modules/docs.php:273
 msgid "If sign-in fails, the message now names the cause: \"the provider refused\" with its own error (redirect_uri_mismatch means the URI above is not registered exactly, invalid_client means the secret is wrong), while \"expired or already used\" means the attempt took too long or the browser dropped the cookie. Every failure is also written to the activity log."
 msgstr ""
 
-#: includes/modules/docs.php:273
+#: includes/modules/docs.php:274
 msgid "Never grant a role above Subscriber by default to self-registered accounts."
 msgstr ""
 
-#: includes/modules/docs.php:278
+#: includes/modules/docs.php:279
 msgid "Country-level access control: allow logins only from countries you expect, optionally block the whole site, and pin individual users to their own countries."
 msgstr ""
 
-#: includes/modules/docs.php:280
+#: includes/modules/docs.php:281
 msgid "Resolves visitor country from CDN headers, falling back to a lookup API with a 24-hour cache."
 msgstr ""
 
-#: includes/modules/docs.php:281
+#: includes/modules/docs.php:282
 msgid "Applies your country list as a login gate, a whole-site block, or both."
 msgstr ""
 
-#: includes/modules/docs.php:282
+#: includes/modules/docs.php:283
 msgid "Locks chosen users to specific countries and can email-verify a login from a new one."
 msgstr ""
 
-#: includes/modules/docs.php:285
+#: includes/modules/docs.php:286
 msgid "Add the countries your team and customers actually log in from — include your own, and any you travel to."
 msgstr ""
 
-#: includes/modules/docs.php:286
+#: includes/modules/docs.php:287
 msgid "Start with the login gate only. Blocking the whole site also blocks customers and search engines."
 msgstr ""
 
-#: includes/modules/docs.php:287
+#: includes/modules/docs.php:288
 msgid "Decide what happens to unknown locations; blocking them is safe for a login gate, risky site-wide."
 msgstr ""
 
-#: includes/modules/docs.php:290
+#: includes/modules/docs.php:291
 msgid "Lookups fail open: if the country cannot be resolved, the visitor is allowed rather than locked out."
 msgstr ""
 
-#: includes/modules/docs.php:291
+#: includes/modules/docs.php:292
 msgid "VPNs and mobile networks routinely resolve to another country — expect occasional surprises."
 msgstr ""
 
-#: includes/modules/docs.php:292
+#: includes/modules/docs.php:293
 msgid "The GEMSEC_GEO_DISABLE constant is the emergency exit if you lock yourself out."
 msgstr ""
 
-#: includes/modules/docs.php:297
+#: includes/modules/docs.php:298
 msgid "Watches the administrator role itself: only approved accounts stay administrators, and hidden administrators are surfaced."
 msgstr ""
 
-#: includes/modules/docs.php:299
+#: includes/modules/docs.php:300
 msgid "Keeps an approved-administrator list and demotes or deletes any account that appears outside it."
 msgstr ""
 
-#: includes/modules/docs.php:300
+#: includes/modules/docs.php:301
 msgid "Refuses the sign-in of an administrator who is not on the list, and ends an existing session belonging to one — so an account added straight to the database, or created while this module was off, still cannot get in."
 msgstr ""
 
-#: includes/modules/docs.php:301
+#: includes/modules/docs.php:302
 msgid "Sweeps the administrators that already exist — hourly and whenever you change the whitelist — so an unapproved account is removed even if it never signs in."
 msgstr ""
 
-#: includes/modules/docs.php:302
+#: includes/modules/docs.php:303
 msgid "Detects administrators hidden from the users list — a classic backdoor left behind after a breach."
 msgstr ""
 
-#: includes/modules/docs.php:303
+#: includes/modules/docs.php:304
 msgid "Emails you when either fires."
 msgstr ""
 
-#: includes/modules/docs.php:306
+#: includes/modules/docs.php:307
 msgid "Review the approved list and confirm every account on it is one you recognise."
 msgstr ""
 
-#: includes/modules/docs.php:307
+#: includes/modules/docs.php:308
 msgid "Choose what happens to a rogue administrator: demote is the safe default, delete is irreversible."
 msgstr ""
 
-#: includes/modules/docs.php:308
+#: includes/modules/docs.php:309
 msgid "Use \"Check for unapproved admins\" before relying on it: the preview lists exactly who would be removed, which is worth seeing while the action is set to delete."
 msgstr ""
 
-#: includes/modules/docs.php:309
+#: includes/modules/docs.php:310
 msgid "Enable both notifications so you hear about it even if you are not logged in."
 msgstr ""
 
-#: includes/modules/docs.php:312
+#: includes/modules/docs.php:313
 msgid "Add legitimate new administrators to the list before creating them, or they will be demoted straight away."
 msgstr ""
 
-#: includes/modules/docs.php:313
+#: includes/modules/docs.php:314
 msgid "Some membership and staffing plugins create elevated accounts on purpose — check before switching to delete."
 msgstr ""
 
-#: includes/modules/docs.php:314
+#: includes/modules/docs.php:315
 msgid "Login enforcement needs a non-empty list: while the list is empty every administrator would count as unapproved, so the check stays off rather than locking you out."
 msgstr ""
 
-#: includes/modules/docs.php:315
+#: includes/modules/docs.php:316
 msgid "User ID 1, the site-owner address and multisite super admins are never blocked, whatever the list says."
 msgstr ""
 
-#: includes/modules/docs.php:320
+#: includes/modules/docs.php:321
 msgid "Closes the paths that bypass the login form: REST API rate limiting, application-password governance and generic login errors."
 msgstr ""
 
-#: includes/modules/docs.php:322
+#: includes/modules/docs.php:323
 msgid "Rate limits REST requests per IP within a window you choose."
 msgstr ""
 
-#: includes/modules/docs.php:323
+#: includes/modules/docs.php:324
 msgid "Lists every existing application password, can disable them entirely, alerts when a new one is created, and flags ones older than your maximum age."
 msgstr ""
 
-#: includes/modules/docs.php:324
+#: includes/modules/docs.php:325
 msgid "Replaces WordPress login errors with a generic message so invalid usernames cannot be distinguished from wrong passwords."
 msgstr ""
 
-#: includes/modules/docs.php:327
+#: includes/modules/docs.php:328
 msgid "Review the existing application passwords and revoke any you do not recognise."
 msgstr ""
 
-#: includes/modules/docs.php:328
+#: includes/modules/docs.php:329
 msgid "If nothing here uses application passwords, disable them outright."
 msgstr ""
 
-#: includes/modules/docs.php:329
+#: includes/modules/docs.php:330
 msgid "Turn on REST rate limiting, then confirm your site builder, mobile app or headless front end still works."
 msgstr ""
 
-#: includes/modules/docs.php:332
+#: includes/modules/docs.php:333
 msgid "Application passwords are how most external integrations authenticate — check before disabling them."
 msgstr ""
 
-#: includes/modules/docs.php:333
+#: includes/modules/docs.php:334
 msgid "REST limits apply to logged-in editors too, so keep the ceiling above what your own admin work generates."
 msgstr ""
 
-#: includes/modules/docs.php:342
+#: includes/modules/docs.php:343
 msgid "Finds what should not be there: modified core files, foreign or suspicious files, changed files, risky outbound links, known vulnerabilities and auto-executed code."
 msgstr ""
 
-#: includes/modules/docs.php:344
+#: includes/modules/docs.php:345
 msgid "Verifies core files against the official WordPress.org checksums and lists unexpected or modified ones."
 msgstr ""
 
-#: includes/modules/docs.php:345
+#: includes/modules/docs.php:346
 msgid "Watches for file changes between scans and flags newly added or edited files."
 msgstr ""
 
-#: includes/modules/docs.php:346
+#: includes/modules/docs.php:347
 msgid "Scans content for outbound links to known-bad destinations."
 msgstr ""
 
-#: includes/modules/docs.php:347
+#: includes/modules/docs.php:348
 msgid "Checks installed plugins and themes against known vulnerabilities and against what WordPress.org actually ships."
 msgstr ""
 
-#: includes/modules/docs.php:348
+#: includes/modules/docs.php:349
 msgid "Inspects mu-plugins and drop-ins — code that runs on every request without appearing on the Plugins screen."
 msgstr ""
 
-#: includes/modules/docs.php:349
+#: includes/modules/docs.php:350
 msgid "Pro: full malware scanning with quarantine and a recovery toolkit."
 msgstr ""
 
-#: includes/modules/docs.php:350
+#: includes/modules/docs.php:351
 msgid "The malware scan covers the whole install — the web root, wp-includes, wp-admin and wp-content — and reads PHP, JavaScript and .htaccess, not PHP alone."
 msgstr ""
 
-#: includes/modules/docs.php:353
+#: includes/modules/docs.php:354
 msgid "Run a full scan now to establish a clean baseline."
 msgstr ""
 
-#: includes/modules/docs.php:354
+#: includes/modules/docs.php:355
 msgid "Enable automatic scanning so it repeats on a schedule instead of when you remember."
 msgstr ""
 
-#: includes/modules/docs.php:355
+#: includes/modules/docs.php:356
 msgid "Turn on the file-change watcher and the vulnerability check."
 msgstr ""
 
-#: includes/modules/docs.php:356
+#: includes/modules/docs.php:357
 msgid "Work through the findings, then rescan so the list reflects the fixed state."
 msgstr ""
 
-#: includes/modules/docs.php:359
+#: includes/modules/docs.php:360
 msgid "Scans read every file and are I/O heavy — schedule them for a quiet hour on large sites."
 msgstr ""
 
-#: includes/modules/docs.php:360
+#: includes/modules/docs.php:361
 msgid "Premium plugins are not on WordPress.org, so integrity checks cannot confirm them; that is expected, not a finding."
 msgstr ""
 
-#: includes/modules/docs.php:361
+#: includes/modules/docs.php:362
 msgid "Caching and backup plugins legitimately write files constantly; expect noise from them in the change watcher."
 msgstr ""
 
-#: includes/modules/docs.php:362
+#: includes/modules/docs.php:363
 msgid "Take a backup before deleting or quarantining anything a scan flags."
 msgstr ""
 
-#: includes/modules/docs.php:367
+#: includes/modules/docs.php:368
 msgid "Watches the scripts on your checkout pages so a skimmer injected into payment forms is caught, as PCI DSS 4.0 requires."
 msgstr ""
 
-#: includes/modules/docs.php:369
+#: includes/modules/docs.php:370
 msgid "Builds an inventory of every script loaded on the pages you nominate."
 msgstr ""
 
-#: includes/modules/docs.php:370
+#: includes/modules/docs.php:371
 msgid "Compares each page load against that authorised baseline and reports anything new."
 msgstr ""
 
-#: includes/modules/docs.php:371
+#: includes/modules/docs.php:372
 msgid "Flags unauthorised scripts so you can review them before customers are affected."
 msgstr ""
 
-#: includes/modules/docs.php:374
+#: includes/modules/docs.php:375
 msgid "Enable the monitor and select your checkout and payment pages."
 msgstr ""
 
-#: includes/modules/docs.php:375
+#: includes/modules/docs.php:376
 msgid "Visit those pages so the inventory populates, including any scripts that only load at checkout."
 msgstr ""
 
-#: includes/modules/docs.php:376
+#: includes/modules/docs.php:377
 msgid "Review the inventory and authorise each script you recognise; anything left over is worth investigating."
 msgstr ""
 
-#: includes/modules/docs.php:377
+#: includes/modules/docs.php:378
 msgid "Re-check after adding an analytics, chat or A/B testing tool — they add scripts by design."
 msgstr ""
 
-#: includes/modules/docs.php:380
+#: includes/modules/docs.php:381
 msgid "Tag managers load scripts dynamically, so expect entries you did not add by hand."
 msgstr ""
 
-#: includes/modules/docs.php:381
+#: includes/modules/docs.php:382
 msgid "This detects and reports; it does not block. Treat an unexpected script as an incident."
 msgstr ""
 
-#: includes/modules/docs.php:386
+#: includes/modules/docs.php:387
 msgid "The page for the worst day: a forensic timeline of what happened, file quarantine, and the recovery actions that stop an attack in progress."
 msgstr ""
 
-#: includes/modules/docs.php:388
+#: includes/modules/docs.php:389
 msgid "Builds a timeline from the audit log so you can see the sequence of an intrusion."
 msgstr ""
 
-#: includes/modules/docs.php:389
+#: includes/modules/docs.php:390
 msgid "Quarantines suspicious files out of the web root instead of deleting them, so they can be restored or examined."
 msgstr ""
 
-#: includes/modules/docs.php:390
+#: includes/modules/docs.php:391
 msgid "Logs every user out at once, which invalidates stolen session cookies."
 msgstr ""
 
-#: includes/modules/docs.php:393
+#: includes/modules/docs.php:394
 msgid "Nothing to configure in advance — but do make sure logging and alerts are on, because the timeline is built from them."
 msgstr ""
 
-#: includes/modules/docs.php:394
+#: includes/modules/docs.php:395
 msgid "During an incident: log everyone out, quarantine what the scanner flagged, then read the timeline from the earliest suspicious event."
 msgstr ""
 
-#: includes/modules/docs.php:395
+#: includes/modules/docs.php:396
 msgid "Reset passwords and revoke application passwords once you know how they got in."
 msgstr ""
 
-#: includes/modules/docs.php:398
+#: includes/modules/docs.php:399
 msgid "Logging everyone out includes you; keep your credentials to hand."
 msgstr ""
 
-#: includes/modules/docs.php:399
+#: includes/modules/docs.php:400
 msgid "Quarantined files stay on disk in a protected folder — keep them until the investigation is finished."
 msgstr ""
 
-#: includes/modules/docs.php:400
+#: includes/modules/docs.php:401
 msgid "The timeline can only show what was recorded, which is why retention matters before an incident, not after."
 msgstr ""
 
-#: includes/modules/docs.php:409
+#: includes/modules/docs.php:410
 msgid "Scheduled backups of files and database, kept locally or — with Pro — pushed to remote storage."
 msgstr ""
 
-#: includes/modules/docs.php:411
+#: includes/modules/docs.php:412
 msgid "Creates on-demand or scheduled backups of the database, the files, or both."
 msgstr ""
 
-#: includes/modules/docs.php:412
+#: includes/modules/docs.php:413
 msgid "Keeps a list of completed backups with their size and status for download."
 msgstr ""
 
-#: includes/modules/docs.php:413
+#: includes/modules/docs.php:414
 msgid "Can run automatically before plugin and theme updates."
 msgstr ""
 
-#: includes/modules/docs.php:416
+#: includes/modules/docs.php:417
 msgid "Take one backup by hand first to confirm the site has enough disk space and execution time."
 msgstr ""
 
-#: includes/modules/docs.php:417
+#: includes/modules/docs.php:418
 msgid "Add a schedule — daily for the database, weekly for files suits most sites."
 msgstr ""
 
-#: includes/modules/docs.php:418
+#: includes/modules/docs.php:419
 msgid "Configure a storage destination so copies live somewhere other than the server being backed up."
 msgstr ""
 
-#: includes/modules/docs.php:419
+#: includes/modules/docs.php:420
 msgid "Download one archive and confirm it opens. An untested backup is not a backup."
 msgstr ""
 
-#: includes/modules/docs.php:422
+#: includes/modules/docs.php:423
 msgid "Local-only backups die with the server. Keep at least one copy off-site."
 msgstr ""
 
-#: includes/modules/docs.php:423
+#: includes/modules/docs.php:424
 msgid "Large sites can exceed PHP time or memory limits mid-backup; check the result rather than assuming success."
 msgstr ""
 
-#: includes/modules/docs.php:424
+#: includes/modules/docs.php:425
 msgid "Schedules run on WP-Cron, which needs traffic — on a quiet site, wire up a real system cron."
 msgstr ""
 
-#: includes/modules/docs.php:429
+#: includes/modules/docs.php:430
 msgid "Watches the things that break quietly: uptime, TLS certificate expiry, DNS changes and SPF/DMARC email authentication."
 msgstr ""
 
-#: includes/modules/docs.php:431
+#: includes/modules/docs.php:432
 msgid "Checks the site is reachable and reports when it is not."
 msgstr ""
 
-#: includes/modules/docs.php:432
+#: includes/modules/docs.php:433
 msgid "Warns before the TLS certificate expires rather than after."
 msgstr ""
 
-#: includes/modules/docs.php:433
+#: includes/modules/docs.php:434
 msgid "Notices DNS record changes, which often precede or follow a domain hijack."
 msgstr ""
 
-#: includes/modules/docs.php:434
+#: includes/modules/docs.php:435
 msgid "Verifies SPF and DMARC records so your mail keeps arriving and is harder to spoof."
 msgstr ""
 
-#: includes/modules/docs.php:437
+#: includes/modules/docs.php:438
 msgid "Enable monitoring and set the address that should receive warnings."
 msgstr ""
 
-#: includes/modules/docs.php:438
+#: includes/modules/docs.php:439
 msgid "Review the Status panel after the first daily run and fix anything already flagged."
 msgstr ""
 
-#: includes/modules/docs.php:441
+#: includes/modules/docs.php:442
 msgid "Checks run on a daily schedule, so this is early warning rather than second-by-second uptime monitoring."
 msgstr ""
 
-#: includes/modules/docs.php:442
+#: includes/modules/docs.php:443
 msgid "Use an address on a different domain, so a mail problem here does not swallow its own alert."
 msgstr ""
 
-#: includes/modules/docs.php:447
+#: includes/modules/docs.php:448
 msgid "The hardening pack: an admin IP allowlist, blocking sensitive files and PHP execution in uploads, forced HTTPS, a file-change baseline, auto-update enforcement and settings import/export."
 msgstr ""
 
-#: includes/modules/docs.php:449
+#: includes/modules/docs.php:450
 msgid "Restricts wp-admin to an IP allowlist."
 msgstr ""
 
-#: includes/modules/docs.php:450
+#: includes/modules/docs.php:451
 msgid "Blocks direct access to sensitive files and stops PHP running from the uploads directory — the usual landing spot for an uploaded shell."
 msgstr ""
 
-#: includes/modules/docs.php:451
+#: includes/modules/docs.php:452
 msgid "Forces HTTPS site-wide."
 msgstr ""
 
-#: includes/modules/docs.php:452
+#: includes/modules/docs.php:453
 msgid "Records a file-change baseline over the scopes you pick, so later changes stand out."
 msgstr ""
 
-#: includes/modules/docs.php:453
+#: includes/modules/docs.php:454
 msgid "Auto-updates plugins and themes — either only the vulnerable ones, or everything."
 msgstr ""
 
-#: includes/modules/docs.php:454
+#: includes/modules/docs.php:455
 msgid "Exports settings as a file you can import into another site."
 msgstr ""
 
-#: includes/modules/docs.php:457
+#: includes/modules/docs.php:458
 msgid "Only enable the admin IP allowlist if your address is static, and add it before saving."
 msgstr ""
 
-#: includes/modules/docs.php:458
+#: includes/modules/docs.php:459
 msgid "Turn on the uploads PHP block and sensitive-file block — they rarely affect anything legitimate."
 msgstr ""
 
-#: includes/modules/docs.php:459
+#: includes/modules/docs.php:460
 msgid "Take a file baseline once the site is in a known-good state, and re-take it after intentional updates."
 msgstr ""
 
-#: includes/modules/docs.php:460
+#: includes/modules/docs.php:461
 msgid "Start auto-updates with vulnerable plugins only; updating everything can break a site unattended."
 msgstr ""
 
-#: includes/modules/docs.php:463
+#: includes/modules/docs.php:464
 msgid "A dynamic home IP plus an admin allowlist means locking yourself out the next time your router reconnects."
 msgstr ""
 
-#: includes/modules/docs.php:464
+#: includes/modules/docs.php:465
 msgid "Exported settings describe your defences — store the file somewhere private."
 msgstr ""
 
-#: includes/modules/docs.php:465
+#: includes/modules/docs.php:466
 msgid "Re-baseline after every legitimate update, or the change list fills with noise you learn to ignore."
 msgstr ""
 
-#: includes/modules/docs.php:505
+#: includes/modules/docs.php:506
 msgid "How to get a Google client ID and secret"
 msgstr ""
 
-#: includes/modules/docs.php:506
+#: includes/modules/docs.php:507
 msgid "Google Cloud console → Credentials"
 msgstr ""
 
-#: includes/modules/docs.php:508
+#: includes/modules/docs.php:509
 msgid "Open the Google Cloud console and select an existing project, or create one for this site."
 msgstr ""
 
-#: includes/modules/docs.php:509
+#: includes/modules/docs.php:510
 msgid "Go to APIs & Services → OAuth consent screen, choose External, and fill in the app name, support email and developer contact."
 msgstr ""
 
-#: includes/modules/docs.php:510
+#: includes/modules/docs.php:511
 msgid "Go to APIs & Services → Credentials → Create credentials → OAuth client ID, and choose Web application."
 msgstr ""
 
-#: includes/modules/docs.php:511
+#: includes/modules/docs.php:512
 msgid "Under Authorised redirect URIs, add the redirect URI shown at the top of this page — exactly, including https and any trailing path."
 msgstr ""
 
-#: includes/modules/docs.php:512
+#: includes/modules/docs.php:513
 msgid "Create the client, then copy the Client ID and Client secret into the fields here and save."
 msgstr ""
 
-#: includes/modules/docs.php:513
-#: includes/modules/docs.php:528
-#: includes/modules/docs.php:544
-#: includes/modules/docs.php:559
+#: includes/modules/docs.php:514
+#: includes/modules/docs.php:529
+#: includes/modules/docs.php:545
+#: includes/modules/docs.php:560
 msgid "Use Test credentials below to confirm the pair before saving — a wrong secret only shows up when a real person tries to sign in."
 msgstr ""
 
-#: includes/modules/docs.php:516
+#: includes/modules/docs.php:517
 msgid "While the consent screen is in Testing, only the test users you list can sign in. Publish it before going live."
 msgstr ""
 
-#: includes/modules/docs.php:521
+#: includes/modules/docs.php:522
 msgid "How to get a Facebook app ID and secret"
 msgstr ""
 
-#: includes/modules/docs.php:522
+#: includes/modules/docs.php:523
 msgid "Meta for Developers → My Apps"
 msgstr ""
 
-#: includes/modules/docs.php:524
+#: includes/modules/docs.php:525
 msgid "Open Meta for Developers → My Apps → Create App, and pick the Consumer (or Other → Consumer) type."
 msgstr ""
 
-#: includes/modules/docs.php:525
+#: includes/modules/docs.php:526
 msgid "Add the Facebook Login product to the app and choose the Web platform, entering your site URL."
 msgstr ""
 
-#: includes/modules/docs.php:526
+#: includes/modules/docs.php:527
 msgid "In Facebook Login → Settings, paste the redirect URI from the top of this page into Valid OAuth Redirect URIs."
 msgstr ""
 
-#: includes/modules/docs.php:527
+#: includes/modules/docs.php:528
 msgid "Open App settings → Basic and copy the App ID into Client ID, and the App secret into Client secret."
 msgstr ""
 
-#: includes/modules/docs.php:531
+#: includes/modules/docs.php:532
 msgid "Facebook only returns an email address if the user granted the email permission — accounts without one cannot be linked by email."
 msgstr ""
 
-#: includes/modules/docs.php:532
+#: includes/modules/docs.php:533
 msgid "The app must be switched from Development to Live before anyone outside your app roles can sign in."
 msgstr ""
 
-#: includes/modules/docs.php:537
+#: includes/modules/docs.php:538
 msgid "How to get a GitHub client ID and secret"
 msgstr ""
 
-#: includes/modules/docs.php:538
+#: includes/modules/docs.php:539
 msgid "GitHub → Developer settings → OAuth Apps"
 msgstr ""
 
-#: includes/modules/docs.php:540
+#: includes/modules/docs.php:541
 msgid "Open GitHub → Settings → Developer settings → OAuth Apps → New OAuth App."
 msgstr ""
 
-#: includes/modules/docs.php:541
+#: includes/modules/docs.php:542
 msgid "Set Homepage URL to your site, and Authorization callback URL to the redirect URI shown at the top of this page."
 msgstr ""
 
-#: includes/modules/docs.php:542
+#: includes/modules/docs.php:543
 msgid "Register the application, then copy the Client ID."
 msgstr ""
 
-#: includes/modules/docs.php:543
+#: includes/modules/docs.php:544
 msgid "Choose Generate a new client secret and copy it immediately — GitHub shows it only once."
 msgstr ""
 
-#: includes/modules/docs.php:547
+#: includes/modules/docs.php:548
 msgid "A GitHub account can hide its email address; those users are created with the account they signed in as rather than linked by email."
 msgstr ""
 
-#: includes/modules/docs.php:552
+#: includes/modules/docs.php:553
 msgid "How to get X (Twitter) OAuth 2.0 credentials"
 msgstr ""
 
-#: includes/modules/docs.php:553
+#: includes/modules/docs.php:554
 msgid "X Developer Portal"
 msgstr ""
 
-#: includes/modules/docs.php:555
+#: includes/modules/docs.php:556
 msgid "Open the X Developer Portal and create a project and an app inside it."
 msgstr ""
 
-#: includes/modules/docs.php:556
+#: includes/modules/docs.php:557
 msgid "In the app’s User authentication settings, enable OAuth 2.0 and set App type to Web App."
 msgstr ""
 
-#: includes/modules/docs.php:557
+#: includes/modules/docs.php:558
 msgid "Set the Callback URI to the redirect URI shown at the top of this page, and fill in a website URL."
 msgstr ""
 
-#: includes/modules/docs.php:558
+#: includes/modules/docs.php:559
 msgid "Save, then copy the OAuth 2.0 Client ID and Client Secret into the fields here."
 msgstr ""
 
-#: includes/modules/docs.php:562
+#: includes/modules/docs.php:563
 msgid "Use the OAuth 2.0 client credentials, not the older API key and API secret — they are different values on the same screen."
 msgstr ""
 
-#: includes/modules/docs.php:563
+#: includes/modules/docs.php:564
 msgid "X rarely returns an email address, so new accounts get a placeholder you can change later."
 msgstr ""
 
-#: includes/modules/docs.php:570
+#: includes/modules/docs.php:571
 msgid "How to get reCAPTCHA v2 keys"
 msgstr ""
 
-#: includes/modules/docs.php:571
-#: includes/modules/docs.php:586
+#: includes/modules/docs.php:572
+#: includes/modules/docs.php:587
 msgid "Google reCAPTCHA admin console"
 msgstr ""
 
-#: includes/modules/docs.php:573
-#: includes/modules/docs.php:588
+#: includes/modules/docs.php:574
+#: includes/modules/docs.php:589
 msgid "Open the reCAPTCHA admin console and register a new site."
 msgstr ""
 
-#: includes/modules/docs.php:574
+#: includes/modules/docs.php:575
 msgid "Choose reCAPTCHA v2 → \"I'm not a robot\" Checkbox."
 msgstr ""
 
-#: includes/modules/docs.php:575
+#: includes/modules/docs.php:576
 msgid "Add your domain — without https:// and without a trailing slash. Add localhost too if you test locally."
 msgstr ""
 
-#: includes/modules/docs.php:576
+#: includes/modules/docs.php:577
 msgid "Submit, then copy the Site key and Secret key into the fields here."
 msgstr ""
 
-#: includes/modules/docs.php:577
-#: includes/modules/docs.php:592
-#: includes/modules/docs.php:607
-#: includes/modules/docs.php:618
+#: includes/modules/docs.php:578
+#: includes/modules/docs.php:593
+#: includes/modules/docs.php:608
+#: includes/modules/docs.php:619
 msgid "Then use Test CAPTCHA keys below: it renders the real widget and verifies the token, which is the only way to prove both keys before they reach the login form."
 msgstr ""
 
-#: includes/modules/docs.php:580
+#: includes/modules/docs.php:581
 msgid "The two keys are not interchangeable: the site key is public and rendered in the page, the secret key is never sent to the browser."
 msgstr ""
 
-#: includes/modules/docs.php:585
+#: includes/modules/docs.php:586
 msgid "How to get reCAPTCHA v3 keys"
 msgstr ""
 
-#: includes/modules/docs.php:589
+#: includes/modules/docs.php:590
 msgid "Choose reCAPTCHA v3 — v2 keys will not work here, and vice versa."
 msgstr ""
 
-#: includes/modules/docs.php:590
+#: includes/modules/docs.php:591
 msgid "Add your domain, submit, and copy the Site key and Secret key into the fields here."
 msgstr ""
 
-#: includes/modules/docs.php:591
+#: includes/modules/docs.php:592
 msgid "Leave the score threshold at the default, then watch the admin console’s score distribution before changing it."
 msgstr ""
 
-#: includes/modules/docs.php:595
+#: includes/modules/docs.php:596
 msgid "v3 never shows a challenge: it scores each request from 0.0 (bot) to 1.0 (human). A threshold that is too high rejects real people silently."
 msgstr ""
 
-#: includes/modules/docs.php:600
+#: includes/modules/docs.php:601
 msgid "How to get hCaptcha keys"
 msgstr ""
 
-#: includes/modules/docs.php:601
+#: includes/modules/docs.php:602
 msgid "hCaptcha dashboard → Sites"
 msgstr ""
 
-#: includes/modules/docs.php:603
+#: includes/modules/docs.php:604
 msgid "Create an hCaptcha account and open the dashboard."
 msgstr ""
 
-#: includes/modules/docs.php:604
+#: includes/modules/docs.php:605
 msgid "Add a new site and enter your domain as the hostname."
 msgstr ""
 
-#: includes/modules/docs.php:605
+#: includes/modules/docs.php:606
 msgid "Copy the Sitekey into Site key here."
 msgstr ""
 
-#: includes/modules/docs.php:606
+#: includes/modules/docs.php:607
 msgid "Open Settings and copy your account Secret key into Secret key here — it is account-wide, not per site."
 msgstr ""
 
-#: includes/modules/docs.php:612
+#: includes/modules/docs.php:613
 msgid "How to get Cloudflare Turnstile keys"
 msgstr ""
 
-#: includes/modules/docs.php:613
+#: includes/modules/docs.php:614
 msgid "Cloudflare dashboard → Turnstile"
 msgstr ""
 
-#: includes/modules/docs.php:615
+#: includes/modules/docs.php:616
 msgid "Open the Cloudflare dashboard → Turnstile → Add site."
 msgstr ""
 
-#: includes/modules/docs.php:616
+#: includes/modules/docs.php:617
 msgid "Enter your domain and choose the Managed widget unless you have a reason not to."
 msgstr ""
 
-#: includes/modules/docs.php:617
+#: includes/modules/docs.php:618
 msgid "Copy the Site Key and Secret Key into the fields here."
 msgstr ""
 
-#: includes/modules/docs.php:621
+#: includes/modules/docs.php:622
 msgid "Your domain does not have to use Cloudflare’s DNS or proxy for Turnstile to work."
 msgstr ""
 
-#: includes/modules/docs.php:628
+#: includes/modules/docs.php:629
 msgid "How to get a Slack incoming webhook URL"
 msgstr ""
 
-#: includes/modules/docs.php:629
+#: includes/modules/docs.php:630
 msgid "Slack API → Your Apps"
 msgstr ""
 
-#: includes/modules/docs.php:631
+#: includes/modules/docs.php:632
 msgid "Open Slack API → Your Apps → Create New App → From scratch, and pick the workspace to post into."
 msgstr ""
 
-#: includes/modules/docs.php:632
+#: includes/modules/docs.php:633
 msgid "Open Incoming Webhooks and turn the feature on."
 msgstr ""
 
-#: includes/modules/docs.php:633
+#: includes/modules/docs.php:634
 msgid "Choose Add New Webhook to Workspace and select the channel that should receive alerts."
 msgstr ""
 
-#: includes/modules/docs.php:634
+#: includes/modules/docs.php:635
 msgid "Copy the generated URL (it starts with https://hooks.slack.com/services/) into the field here."
 msgstr ""
 
-#: includes/modules/docs.php:637
+#: includes/modules/docs.php:638
 msgid "The webhook URL is a credential — anyone holding it can post to that channel. Do not commit it anywhere public."
 msgstr ""
 
-#: includes/modules/docs.php:642
+#: includes/modules/docs.php:643
 msgid "How to get a Telegram bot token and chat ID"
 msgstr ""
 
-#: includes/modules/docs.php:643
+#: includes/modules/docs.php:644
 msgid "Telegram → BotFather"
 msgstr ""
 
-#: includes/modules/docs.php:645
+#: includes/modules/docs.php:646
 msgid "Message @BotFather on Telegram and send /newbot, then follow the prompts to name the bot."
 msgstr ""
 
-#: includes/modules/docs.php:646
+#: includes/modules/docs.php:647
 msgid "Copy the token BotFather returns into Bot token here."
 msgstr ""
 
-#: includes/modules/docs.php:647
+#: includes/modules/docs.php:648
 msgid "Send your new bot a message (or add it to the group that should receive alerts, and post there)."
 msgstr ""
 
-#: includes/modules/docs.php:648
+#: includes/modules/docs.php:649
 msgid "Open https://api.telegram.org/bot<TOKEN>/getUpdates in a browser and copy the chat id from the response into Chat ID."
 msgstr ""
 
-#: includes/modules/docs.php:651
+#: includes/modules/docs.php:652
 msgid "A bot cannot start a conversation. If nobody has messaged it, getUpdates comes back empty and alerts will not deliver."
 msgstr ""
 
-#: includes/modules/docs.php:652
+#: includes/modules/docs.php:653
 msgid "Group chat IDs are negative numbers — include the minus sign."
 msgstr ""
 
-#: includes/modules/docs.php:657
+#: includes/modules/docs.php:658
 msgid "How the generic webhook works"
 msgstr ""
 
-#: includes/modules/docs.php:659
+#: includes/modules/docs.php:660
 msgid "Point this at any URL that accepts an HTTP POST — an automation platform, a chat bridge, or your own endpoint."
 msgstr ""
 
-#: includes/modules/docs.php:660
+#: includes/modules/docs.php:661
 msgid "GemSecurity posts a JSON body describing the event: type, severity, message, IP, user and timestamp."
 msgstr ""
 
-#: includes/modules/docs.php:661
+#: includes/modules/docs.php:662
 msgid "Set the minimum severity above so routine events do not flood the receiver."
 msgstr ""
 
-#: includes/modules/docs.php:664
+#: includes/modules/docs.php:665
 msgid "Delivery is fire-and-forget: a receiver that is down loses those alerts rather than queueing them."
 msgstr ""
 
-#: includes/modules/docs.php:669
+#: includes/modules/docs.php:670
 msgid "How to forward logs to a SIEM"
 msgstr ""
 
-#: includes/modules/docs.php:671
+#: includes/modules/docs.php:672
 msgid "Create an HTTP collector (HEC or equivalent) in your SIEM and copy its ingest URL here."
 msgstr ""
 
-#: includes/modules/docs.php:672
+#: includes/modules/docs.php:673
 msgid "Alternatively enable syslog output to ship to a local collector instead of over HTTP."
 msgstr ""
 
-#: includes/modules/docs.php:673
+#: includes/modules/docs.php:674
 msgid "Set the minimum severity to control the volume — everything at or above it is forwarded."
 msgstr ""
 
-#: includes/modules/docs.php:674
+#: includes/modules/docs.php:675
 msgid "Trigger a test event (a failed login will do) and confirm it arrives before relying on it."
 msgstr ""
 
-#: includes/modules/docs.php:677
+#: includes/modules/docs.php:678
 msgid "Forwarding is in addition to the local log, not instead of it; retention here still applies."
 msgstr ""
 
@@ -1790,7 +1794,7 @@ msgid "A new code has been sent to your email."
 msgstr ""
 
 #: includes/modules/geolocation.php:217
-#: includes/modules/two-factor.php:149
+#: includes/modules/two-factor.php:151
 msgid "Invalid code. Please try again."
 msgstr ""
 
@@ -1804,7 +1808,7 @@ msgstr ""
 
 #. translators: %s: 6-digit code.
 #: includes/modules/geolocation.php:261
-#: includes/modules/two-factor.php:232
+#: includes/modules/two-factor.php:336
 #, php-format
 msgid "Your verification code is <strong style=\"letter-spacing:3px;font-size:20px;\">%s</strong>"
 msgstr ""
@@ -1826,18 +1830,18 @@ msgid "Verification code"
 msgstr ""
 
 #: includes/modules/geolocation.php:350
-#: includes/modules/two-factor.php:414
+#: includes/modules/two-factor.php:518
 #: assets/build/backend.1.0-beta1.js:7
 msgid "Verify"
 msgstr ""
 
 #: includes/modules/geolocation.php:353
-#: includes/modules/two-factor.php:418
+#: includes/modules/two-factor.php:522
 msgid "Resend code"
 msgstr ""
 
 #: includes/modules/geolocation.php:356
-#: includes/modules/two-factor.php:423
+#: includes/modules/two-factor.php:527
 msgid "← Back to login"
 msgstr ""
 
@@ -2408,7 +2412,7 @@ msgid "Behavioral anomaly (score %1$d) from %2$s."
 msgstr ""
 
 #: includes/modules/two-factor.php:119
-#: includes/modules/two-factor.php:392
+#: includes/modules/two-factor.php:496
 msgid "Two-Factor Authentication"
 msgstr ""
 
@@ -2420,23 +2424,31 @@ msgstr ""
 msgid "Back to sign in"
 msgstr ""
 
-#: includes/modules/two-factor.php:225
+#: includes/modules/two-factor.php:153
+msgid "That code has expired. Use “Resend code” to get a new one."
+msgstr ""
+
+#: includes/modules/two-factor.php:155
+msgid "Too many incorrect codes. Request a new one and try again."
+msgstr ""
+
+#: includes/modules/two-factor.php:329
 msgid "Your login verification code"
 msgstr ""
 
-#: includes/modules/two-factor.php:238
+#: includes/modules/two-factor.php:342
 msgid "It expires in 10 minutes. If you did not try to sign in, change your password immediately."
 msgstr ""
 
-#: includes/modules/two-factor.php:402
+#: includes/modules/two-factor.php:506
 msgid "Enter the 6-digit code we just emailed you."
 msgstr ""
 
-#: includes/modules/two-factor.php:403
+#: includes/modules/two-factor.php:507
 msgid "Open your authenticator app and enter the current 6-digit code. You can also use a backup code."
 msgstr ""
 
-#: includes/modules/two-factor.php:408
+#: includes/modules/two-factor.php:512
 msgid "Authentication code"
 msgstr ""
 

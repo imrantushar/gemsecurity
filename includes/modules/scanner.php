@@ -261,7 +261,7 @@ class Scanner {
 					continue;
 				}
 				$rel = str_replace( '\\', '/', str_replace( ABSPATH, '', $file->getPathname() ) );
-				if ( ! isset( $checksums[ $rel ] ) ) {
+				if ( ! isset( $checksums[ $rel ] ) && ! \GemSecurity\Security\SafeFiles::is_safe( $file->getPathname() ) ) {
 					$findings[] = [
 						'file'     => $rel,
 						'reason'   => __( 'Executable file inside a WordPress core directory that is not part of the official release — a disguised implant hides here.', 'gemsecurity' ),
@@ -503,6 +503,12 @@ class Scanner {
 				$ext  = strtolower( $file->getExtension() );
 				$path = $file->getPathname();
 				$rel  = str_replace( ABSPATH, '', $path );
+
+				// "Silence is golden" index.php files, and anything a person
+				// has reviewed and marked safe, are not findings.
+				if ( \GemSecurity\Security\SafeFiles::is_safe( $path ) ) {
+					continue;
+				}
 
 				// PHP in the uploads directory is a strong red flag on its own.
 				if ( 'uploads' === $label && in_array( $ext, [ 'php', 'phtml', 'php5', 'php7', 'phar' ], true ) ) {

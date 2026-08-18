@@ -20,6 +20,7 @@ $options = [
 	'gemsecurity_hidden_admin_state',
 	'gemsecurity_daily_report_snapshot',
 	'gemsecurity_watchdog_alert',
+	'gemsecurity_safe_files',
 	// Backup subsystem.
 	'gemsecurity_backup_settings',
 	'gembackup_db_version',
