@@ -249,6 +249,7 @@ class Docs {
 				],
 				'notes'   => [
 					__( 'TOTP depends on a correct server clock; a badly drifted clock rejects every valid code.', 'gemsecurity' ),
+					__( 'Emailed codes last 10 minutes and allow five guesses; after that the code is discarded and a new one must be requested. The message says which of those happened rather than always reporting an invalid code.', 'gemsecurity' ),
 					__( 'Email fallback is only as secure as the mailbox — use the app method for administrators.', 'gemsecurity' ),
 					__( 'The login CAPTCHA belongs to this module but is configured on the Login Security page.', 'gemsecurity' ),
 				],

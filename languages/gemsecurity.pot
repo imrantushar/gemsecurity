@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-18T06:02:45+00:00\n"
+"POT-Creation-Date: 2026-08-18T06:17:57+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -75,41 +75,41 @@ msgstr ""
 msgid "Backup file not found."
 msgstr ""
 
-#: includes/helper.php:114
+#: includes/helper.php:166
 #: includes/modules/registry.php:360
 msgid "Threat Defense"
 msgstr ""
 
-#: includes/helper.php:115
+#: includes/helper.php:167
 #: includes/modules/registry.php:361
 msgid "Escalating auto-bans, the ban ledger and the early-load request firewall."
 msgstr ""
 
-#: includes/helper.php:118
+#: includes/helper.php:170
 #: includes/modules/registry.php:380
 #: assets/build/backend.1.0-beta1.js:21
 msgid "Geolocation"
 msgstr ""
 
-#: includes/helper.php:119
+#: includes/helper.php:171
 #: includes/modules/registry.php:381
 msgid "Country access control and per-user location lock."
 msgstr ""
 
-#: includes/helper.php:122
+#: includes/helper.php:174
 msgid "Malware Scan"
 msgstr ""
 
-#: includes/helper.php:123
+#: includes/helper.php:175
 msgid "Signature malware scan, database injection scan, quarantine/restore and the post-hack recovery toolkit."
 msgstr ""
 
-#: includes/helper.php:126
+#: includes/helper.php:178
 #: includes/modules/registry.php:416
 msgid "Pro Tools"
 msgstr ""
 
-#: includes/helper.php:127
+#: includes/helper.php:179
 #: includes/modules/registry.php:417
 msgid "Hardening pack, file-change baseline, auto-update enforcement and settings import/export."
 msgstr ""
@@ -386,7 +386,7 @@ msgstr ""
 msgid "Your comment was flagged as spam."
 msgstr ""
 
-#: includes/modules/custom-login.php:114
+#: includes/modules/custom-login.php:122
 msgid "This page does not exist."
 msgstr ""
 
@@ -1785,12 +1785,12 @@ msgid "Login blocked"
 msgstr ""
 
 #: includes/modules/geolocation.php:208
-#: includes/modules/two-factor.php:120
+#: includes/modules/two-factor.php:141
 msgid "A new code has been sent to your email."
 msgstr ""
 
 #: includes/modules/geolocation.php:217
-#: includes/modules/two-factor.php:128
+#: includes/modules/two-factor.php:149
 msgid "Invalid code. Please try again."
 msgstr ""
 
@@ -1804,7 +1804,7 @@ msgstr ""
 
 #. translators: %s: 6-digit code.
 #: includes/modules/geolocation.php:261
-#: includes/modules/two-factor.php:210
+#: includes/modules/two-factor.php:232
 #, php-format
 msgid "Your verification code is <strong style=\"letter-spacing:3px;font-size:20px;\">%s</strong>"
 msgstr ""
@@ -1826,18 +1826,18 @@ msgid "Verification code"
 msgstr ""
 
 #: includes/modules/geolocation.php:350
-#: includes/modules/two-factor.php:342
+#: includes/modules/two-factor.php:414
 #: assets/build/backend.1.0-beta1.js:7
 msgid "Verify"
 msgstr ""
 
 #: includes/modules/geolocation.php:353
-#: includes/modules/two-factor.php:346
+#: includes/modules/two-factor.php:418
 msgid "Resend code"
 msgstr ""
 
 #: includes/modules/geolocation.php:356
-#: includes/modules/two-factor.php:351
+#: includes/modules/two-factor.php:423
 msgid "← Back to login"
 msgstr ""
 
@@ -2304,60 +2304,60 @@ msgid "Suspicious code patterns: %s"
 msgstr ""
 
 #: includes/modules/social-login.php:128
-#: includes/modules/social-login.php:304
+#: includes/modules/social-login.php:287
 msgid "This sign-in method is not available."
 msgstr ""
 
-#: includes/modules/social-login.php:261
+#: includes/modules/social-login.php:244
 msgid "Sign-in was cancelled."
 msgstr ""
 
 #. translators: 1: provider error code, 2: provider description.
-#: includes/modules/social-login.php:266
+#: includes/modules/social-login.php:249
 #, php-format
 msgid "The provider refused the sign-in: %1$s. %2$s"
 msgstr ""
 
-#: includes/modules/social-login.php:274
+#: includes/modules/social-login.php:257
 msgid "Sign-in could not be verified: the provider did not return a security token."
 msgstr ""
 
-#: includes/modules/social-login.php:290
+#: includes/modules/social-login.php:273
 msgid "Sign-in could not be verified — the attempt expired or was already used. Please try again, and make sure your browser accepts cookies for this site."
 msgstr ""
 
-#: includes/modules/social-login.php:295
+#: includes/modules/social-login.php:278
 msgid "Sign-in could not be completed: the provider did not return an authorization code."
 msgstr ""
 
 #. translators: %s: the provider's error message.
-#: includes/modules/social-login.php:324
+#: includes/modules/social-login.php:307
 #, php-format
 msgid "Could not complete sign-in with the provider: %s"
 msgstr ""
 
-#: includes/modules/social-login.php:327
+#: includes/modules/social-login.php:310
 msgid "Could not complete sign-in with the provider."
 msgstr ""
 
-#: includes/modules/social-login.php:333
+#: includes/modules/social-login.php:316
 msgid "Could not read your profile from the provider."
 msgstr ""
 
-#: includes/modules/social-login.php:501
+#: includes/modules/social-login.php:484
 msgid "No account is linked to this profile and registration is disabled."
 msgstr ""
 
-#: includes/modules/social-login.php:603
+#: includes/modules/social-login.php:586
 msgid "or sign in with"
 msgstr ""
 
-#: includes/modules/social-login.php:613
+#: includes/modules/social-login.php:596
 #, php-format
 msgid "Continue with %s"
 msgstr ""
 
-#: includes/modules/social-login.php:665
+#: includes/modules/social-login.php:648
 msgid "Sign-in error"
 msgstr ""
 
@@ -2407,27 +2407,36 @@ msgstr ""
 msgid "Behavioral anomaly (score %1$d) from %2$s."
 msgstr ""
 
-#: includes/modules/two-factor.php:203
-msgid "Your login verification code"
-msgstr ""
-
-#: includes/modules/two-factor.php:216
-msgid "It expires in 10 minutes. If you did not try to sign in, change your password immediately."
-msgstr ""
-
-#: includes/modules/two-factor.php:320
+#: includes/modules/two-factor.php:119
+#: includes/modules/two-factor.php:392
 msgid "Two-Factor Authentication"
 msgstr ""
 
-#: includes/modules/two-factor.php:330
+#: includes/modules/two-factor.php:121
+msgid "That sign-in attempt expired before the code was entered. Please sign in again."
+msgstr ""
+
+#: includes/modules/two-factor.php:123
+msgid "Back to sign in"
+msgstr ""
+
+#: includes/modules/two-factor.php:225
+msgid "Your login verification code"
+msgstr ""
+
+#: includes/modules/two-factor.php:238
+msgid "It expires in 10 minutes. If you did not try to sign in, change your password immediately."
+msgstr ""
+
+#: includes/modules/two-factor.php:402
 msgid "Enter the 6-digit code we just emailed you."
 msgstr ""
 
-#: includes/modules/two-factor.php:331
+#: includes/modules/two-factor.php:403
 msgid "Open your authenticator app and enter the current 6-digit code. You can also use a backup code."
 msgstr ""
 
-#: includes/modules/two-factor.php:336
+#: includes/modules/two-factor.php:408
 msgid "Authentication code"
 msgstr ""
 

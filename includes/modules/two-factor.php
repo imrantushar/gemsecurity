@@ -145,8 +145,23 @@ class TwoFactor {
 		$ok = $this->verify_factor( $user, $method, $code );
 
 		if ( ! $ok ) {
-			Logger::log( '2fa_failed', sprintf( 'Failed second factor for "%s".', $user->user_login ), Logger::SEVERITY_WARNING, [ 'user_id' => $user->ID ] );
-			$this->render_form( $token, $method, __( 'Invalid code. Please try again.', 'gemsecurity' ) );
+			// "Invalid code" is wrong — and unhelpful — when the code was never
+			// compared because it had expired, or when guessing is now locked.
+			$reason  = self::otp_failure();
+			$message = __( 'Invalid code. Please try again.', 'gemsecurity' );
+			if ( 'expired' === $reason ) {
+				$message = __( 'That code has expired. Use “Resend code” to get a new one.', 'gemsecurity' );
+			} elseif ( 'locked' === $reason ) {
+				$message = __( 'Too many incorrect codes. Request a new one and try again.', 'gemsecurity' );
+			}
+
+			Logger::log(
+				'2fa_failed',
+				sprintf( 'Failed second factor for "%s" (%s).', $user->user_login, $reason ? $reason : $method ),
+				Logger::SEVERITY_WARNING,
+				[ 'user_id' => $user->ID ]
+			);
+			$this->render_form( $token, $method, $message );
 			exit;
 		}
 
@@ -154,6 +169,7 @@ class TwoFactor {
 		delete_transient( self::PENDING_PREFIX . $token );
 		self::clear_pending_cookie();
 		delete_transient( self::EMAIL_OTP_PREFIX . $user->ID );
+		delete_user_meta( $user->ID, self::OTP_META );
 
 		self::$passed = true;
 		wp_set_current_user( $user->ID );
@@ -198,10 +214,98 @@ class TwoFactor {
 		}
 
 		if ( 'email' === $method ) {
-			$stored = get_transient( self::EMAIL_OTP_PREFIX . $user->ID );
-			return $stored && hash_equals( (string) $stored, preg_replace( '/\D/', '', $code ) );
+			return self::verify_email_otp( $user, $code );
 		}
 
+		return false;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Email OTP storage                                                   */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Where the emailed code lives while it waits to be used.
+	 *
+	 * User meta, not a transient. The code is written when the challenge is
+	 * issued and read on the next request, and on a host whose object cache is
+	 * not shared between workers the transient is simply gone by then — so a
+	 * correct code comes back as "invalid". User meta is always backed by the
+	 * database, so the two requests agree.
+	 *
+	 * Stored hashed, with an expiry and an attempt count: a six-digit code with
+	 * unlimited guesses is not a second factor.
+	 */
+	const OTP_META = '_gemsec_2fa_otp';
+
+	/** Guesses allowed against one emailed code. */
+	const OTP_MAX_TRIES = 5;
+
+	/** Why the last email OTP check failed: expired | locked | mismatch. */
+	private static $otp_failure = '';
+
+	/** @return string */
+	public static function otp_failure() {
+		return self::$otp_failure;
+	}
+
+	/**
+	 * @param \WP_User $user
+	 * @param string   $code
+	 */
+	private static function store_email_otp( $user, $code ) {
+		update_user_meta(
+			$user->ID,
+			self::OTP_META,
+			[
+				'hash'    => hash_hmac( 'sha256', $code, wp_salt( 'auth' ) ),
+				'expires' => time() + 10 * MINUTE_IN_SECONDS,
+				'tries'   => 0,
+			]
+		);
+	}
+
+	/**
+	 * @param \WP_User $user
+	 * @param string   $code
+	 * @return bool
+	 */
+	private static function verify_email_otp( $user, $code ) {
+		self::$otp_failure = '';
+		$digits = preg_replace( '/\D/', '', $code );
+		$record = get_user_meta( $user->ID, self::OTP_META, true );
+
+		// A code issued before this changed still lives in the old transient.
+		if ( ! is_array( $record ) ) {
+			$legacy = get_transient( self::EMAIL_OTP_PREFIX . $user->ID );
+			if ( $legacy && hash_equals( (string) $legacy, $digits ) ) {
+				delete_transient( self::EMAIL_OTP_PREFIX . $user->ID );
+				return true;
+			}
+			self::$otp_failure = 'expired';
+			return false;
+		}
+
+		if ( empty( $record['expires'] ) || time() > (int) $record['expires'] ) {
+			delete_user_meta( $user->ID, self::OTP_META );
+			self::$otp_failure = 'expired';
+			return false;
+		}
+
+		if ( (int) $record['tries'] >= self::OTP_MAX_TRIES ) {
+			delete_user_meta( $user->ID, self::OTP_META );
+			self::$otp_failure = 'locked';
+			return false;
+		}
+
+		if ( hash_equals( (string) $record['hash'], hash_hmac( 'sha256', $digits, wp_salt( 'auth' ) ) ) ) {
+			delete_user_meta( $user->ID, self::OTP_META );
+			return true;
+		}
+
+		$record['tries'] = (int) $record['tries'] + 1;
+		update_user_meta( $user->ID, self::OTP_META, $record );
+		self::$otp_failure = 'mismatch';
 		return false;
 	}
 
@@ -217,7 +321,7 @@ class TwoFactor {
 	 */
 	public function send_email_otp( $user ) {
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
-		set_transient( self::EMAIL_OTP_PREFIX . $user->ID, $code, 10 * MINUTE_IN_SECONDS );
+		self::store_email_otp( $user, $code );
 
 		Mailer::send(
 			$user->user_email,
