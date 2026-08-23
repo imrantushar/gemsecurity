@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
+import { useNavigate } from 'react-router-dom';
 import api from '@Utils/api';
 import { Card, Loading, Badge } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
+import { pageFromHref, pageUrl } from '@Utils/nav';
 
 const SEVERITY_TONE = { info: 'info', notice: 'info', warning: 'warning', critical: 'danger' };
 
@@ -46,6 +48,44 @@ const STAT_META = [
 	{ key: 'vulnerabilities', label: __( 'Known vulnerabilities', 'gemsecurity' ), icon: 'bug' },
 	{ key: 'critical_7d', label: __( 'Critical events (7d)', 'gemsecurity' ), icon: 'alert' },
 ];
+
+/**
+ * The link that turns a finding into something you can act on.
+ *
+ * Every row used to state a problem and a fix and then leave you to work out
+ * which page to open. The destination comes from the server, which resolves it
+ * through the module registry — so a finding whose module is switched off
+ * points at the Modules manager rather than at a page that does not exist.
+ */
+function ActionLink( { action } ) {
+	const navigate = useNavigate();
+
+	if ( ! action || ! action.url ) {
+		return null;
+	}
+
+	return (
+		<a
+			className="gs-actionlist__go"
+			href={ action.url }
+			onClick={ ( e ) => {
+				// Modifier-clicks keep their normal open-in-new-tab behaviour.
+				if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+					return;
+				}
+				const slug = pageFromHref( action.url );
+				if ( ! slug ) {
+					return;
+				}
+				e.preventDefault();
+				navigate( pageUrl( slug ) );
+			} }
+		>
+			{ action.label }
+			<Icon name="arrow-right" size={ 14 } />
+		</a>
+	);
+}
 
 export default function Dashboard() {
 	const [ data, setData ] = useState( null );
@@ -110,6 +150,7 @@ export default function Dashboard() {
 												<strong>{ t.label }</strong>
 												<span className="gs-actionlist__fix">{ t.fix }</span>
 											</div>
+											<ActionLink action={ t.action } />
 										</li>
 									) ) }
 									{ failingChecks.map( ( c ) => (
@@ -119,6 +160,7 @@ export default function Dashboard() {
 												<strong>{ c.label }</strong>
 												<span className="gs-actionlist__fix">{ c.fix }</span>
 											</div>
+											<ActionLink action={ c.action } />
 										</li>
 									) ) }
 								</ul>

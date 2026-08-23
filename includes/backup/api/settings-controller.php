@@ -25,11 +25,28 @@ class Settings_Controller extends Rest_Controller {
 	}
 
 	public function get_settings() {
-		return $this->ok( get_option( GEMBACKUP_SETTINGS_NAME, [] ) );
+		return $this->ok( self::effective() );
+	}
+
+	/**
+	 * Stored settings over the defaults.
+	 *
+	 * A site that has never saved backup settings has no option row, so the
+	 * raw value is an empty array. Returning that made the UI show every
+	 * default-ON switch as OFF, and a save from that screen would have written
+	 * those falses back — quietly turning off the pre-restore safety snapshot
+	 * and the transient-table skip.
+	 *
+	 * @return array
+	 */
+	private static function effective() {
+		$stored = get_option( GEMBACKUP_SETTINGS_NAME, [] );
+		$stored = is_array( $stored ) ? $stored : [];
+		return array_merge( \GemBackup\Installer::defaults(), $stored );
 	}
 
 	public function update_settings( $request ) {
-		$current = get_option( GEMBACKUP_SETTINGS_NAME, [] );
+		$current = self::effective();
 		$incoming = $request->get_json_params();
 		if ( ! is_array( $incoming ) ) {
 			return $this->fail( 'gembackup_invalid_payload', __( 'Invalid payload.', 'gembackup' ) );

@@ -226,8 +226,19 @@ class Installer {
 		update_option( 'gembackup_db_version', GEMBACKUP_DB_VERSION );
 	}
 
-	private static function set_default_options() {
-		$defaults = [
+	/**
+	 * Default backup settings.
+	 *
+	 * Public because the REST controller merges stored values over these
+	 * before returning them: a site that has never saved backup settings has
+	 * no option row at all, and handing the UI an empty object made every
+	 * toggle that defaults ON render as OFF — including the pre-restore safety
+	 * snapshot, which the next save would then have persisted as disabled.
+	 *
+	 * @return array
+	 */
+	public static function defaults() {
+		return [
 			'backup_retention'          => 10,
 			// Named apart from the security log's own retention setting: both
 			// stores had a `logs_retention_days` key, so the Settings field
@@ -257,8 +268,11 @@ class Installer {
 			// The old schedule_* keys here were written on install and read by
 			// nothing.
 		];
+	}
 
+	private static function set_default_options() {
 		$existing = get_option( GEMBACKUP_SETTINGS_NAME, [] );
-		update_option( GEMBACKUP_SETTINGS_NAME, array_merge( $defaults, $existing ) );
+		$existing = is_array( $existing ) ? $existing : [];
+		update_option( GEMBACKUP_SETTINGS_NAME, array_merge( self::defaults(), $existing ) );
 	}
 }

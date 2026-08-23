@@ -110,26 +110,35 @@ class SecurityScore {
 	/* --------------------------------------------------------------------- */
 
 	/**
-	 * @return array<int,array{key:string,label:string,weight:int,status:string,fix:string}>
+	 * Posture checks.
+	 *
+	 * The fourth column is the page that actually configures the setting, so a
+	 * failing check can link straight to it. Keeping it next to the fix text
+	 * means whoever edits the wording also sees where it points.
+	 *
+	 * @return array<int,array{key:string,label:string,weight:int,status:string,fix:string,action:?array}>
 	 */
 	private static function checks() {
+		$slug = GEMSECURITY_PLUGIN_SLUG;
+
+		// [ setting key, weight, label, fix, page slug ]
 		$defs = [
-			[ 'firewall_enabled', 12, __( 'Firewall', 'gemsecurity' ), __( 'Turn on the firewall to block common attack traffic.', 'gemsecurity' ) ],
-			[ 'login_attempts_enabled', 12, __( 'Brute-force protection', 'gemsecurity' ), __( 'Limit login attempts to stop password-guessing.', 'gemsecurity' ) ],
-			[ 'two_factor_enabled', 10, __( 'Two-factor authentication', 'gemsecurity' ), __( 'Require a second factor so a stolen password is not enough.', 'gemsecurity' ) ],
-			[ 'scanner_auto_scan', 8, __( 'Daily malware scan', 'gemsecurity' ), __( 'Enable the daily scan so new infections are caught automatically.', 'gemsecurity' ) ],
-			[ 'vuln_scan_enabled', 6, __( 'Vulnerability scanning', 'gemsecurity' ), __( 'Check installed plugins and themes against known vulnerabilities.', 'gemsecurity' ) ],
-			[ 'file_watcher_enabled', 6, __( 'File change watcher', 'gemsecurity' ), __( 'Baseline your theme, mu-plugins and drop-ins to detect tampering.', 'gemsecurity' ) ],
-			[ 'security_headers_enabled', 6, __( 'Security headers', 'gemsecurity' ), __( 'Send hardening headers (HSTS, X-Frame-Options, CSP, …).', 'gemsecurity' ) ],
-			[ 'disable_file_editing', 6, __( 'Theme/plugin file editor disabled', 'gemsecurity' ), __( 'Disable the built-in file editor so a stolen login cannot inject code.', 'gemsecurity' ) ],
-			[ 'password_policy_enabled', 5, __( 'Strong-password policy', 'gemsecurity' ), __( 'Enforce length, complexity and breached-password checks.', 'gemsecurity' ) ],
-			[ 'admin_whitelist_enabled', 5, __( 'Admin whitelist guard', 'gemsecurity' ), __( 'Auto-revoke administrator accounts you did not authorise.', 'gemsecurity' ) ],
-			[ 'link_scanner_enabled', 4, __( 'Malicious-link detection', 'gemsecurity' ), __( 'Flag spam/malware domains your content links to.', 'gemsecurity' ) ],
-			[ 'block_author_enumeration', 4, __( 'Author enumeration blocked', 'gemsecurity' ), __( 'Stop attackers from harvesting usernames.', 'gemsecurity' ) ],
-			[ 'disable_user_rest', 4, __( 'REST user enumeration blocked', 'gemsecurity' ), __( 'Hide the user list from the public REST API.', 'gemsecurity' ) ],
-			[ 'admin_login_alert_enabled', 3, __( 'Admin login alerts', 'gemsecurity' ), __( 'Get notified whenever an administrator signs in.', 'gemsecurity' ) ],
-			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ) ],
-			[ 'hide_wp_version', 2, __( 'WordPress version hidden', 'gemsecurity' ), __( 'Stop advertising your exact WordPress version.', 'gemsecurity' ) ],
+			[ 'firewall_enabled', 12, __( 'Firewall', 'gemsecurity' ), __( 'Turn on the firewall to block common attack traffic.', 'gemsecurity' ), $slug . '-firewall' ],
+			[ 'login_attempts_enabled', 12, __( 'Brute-force protection', 'gemsecurity' ), __( 'Limit login attempts to stop password-guessing.', 'gemsecurity' ), $slug . '-login-security' ],
+			[ 'two_factor_enabled', 10, __( 'Two-factor authentication', 'gemsecurity' ), __( 'Require a second factor so a stolen password is not enough.', 'gemsecurity' ), $slug . '-two-factor' ],
+			[ 'scanner_auto_scan', 8, __( 'Daily malware scan', 'gemsecurity' ), __( 'Enable the daily scan so new infections are caught automatically.', 'gemsecurity' ), $slug . '-scanner' ],
+			[ 'vuln_scan_enabled', 6, __( 'Vulnerability scanning', 'gemsecurity' ), __( 'Check installed plugins and themes against known vulnerabilities.', 'gemsecurity' ), $slug . '-scanner' ],
+			[ 'file_watcher_enabled', 6, __( 'File change watcher', 'gemsecurity' ), __( 'Baseline your theme, mu-plugins and drop-ins to detect tampering.', 'gemsecurity' ), $slug . '-scanner' ],
+			[ 'security_headers_enabled', 6, __( 'Security headers', 'gemsecurity' ), __( 'Send hardening headers (HSTS, X-Frame-Options, CSP, …).', 'gemsecurity' ), $slug . '-firewall' ],
+			[ 'disable_file_editing', 6, __( 'Theme/plugin file editor disabled', 'gemsecurity' ), __( 'Disable the built-in file editor so a stolen login cannot inject code.', 'gemsecurity' ), $slug . '-firewall' ],
+			[ 'password_policy_enabled', 5, __( 'Strong-password policy', 'gemsecurity' ), __( 'Enforce length, complexity and breached-password checks.', 'gemsecurity' ), $slug . '-login-security' ],
+			[ 'admin_whitelist_enabled', 5, __( 'Admin whitelist guard', 'gemsecurity' ), __( 'Auto-revoke administrator accounts you did not authorise.', 'gemsecurity' ), $slug . '-admin-guard' ],
+			[ 'link_scanner_enabled', 4, __( 'Malicious-link detection', 'gemsecurity' ), __( 'Flag spam/malware domains your content links to.', 'gemsecurity' ), $slug . '-scanner' ],
+			[ 'block_author_enumeration', 4, __( 'Author enumeration blocked', 'gemsecurity' ), __( 'Stop attackers from harvesting usernames.', 'gemsecurity' ), $slug . '-firewall' ],
+			[ 'disable_user_rest', 4, __( 'REST user enumeration blocked', 'gemsecurity' ), __( 'Hide the user list from the public REST API.', 'gemsecurity' ), $slug . '-firewall' ],
+			[ 'admin_login_alert_enabled', 3, __( 'Admin login alerts', 'gemsecurity' ), __( 'Get notified whenever an administrator signs in.', 'gemsecurity' ), $slug . '-login-security' ],
+			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ), $slug . '-firewall' ],
+			[ 'hide_wp_version', 2, __( 'WordPress version hidden', 'gemsecurity' ), __( 'Stop advertising your exact WordPress version.', 'gemsecurity' ), $slug . '-firewall' ],
 		];
 
 		$checks = [];
@@ -140,6 +149,7 @@ class SecurityScore {
 				'weight' => $d[1],
 				'status' => Helper::get_setting( $d[0], false ) ? 'pass' : 'fail',
 				'fix'    => $d[3],
+				'action' => self::action( $d[4] ),
 			];
 		}
 
@@ -150,6 +160,7 @@ class SecurityScore {
 			'weight' => 6,
 			'status' => self::has_recent_backup() ? 'pass' : 'fail',
 			'fix'    => __( 'Take a backup — you cannot recover from a hack without one.', 'gemsecurity' ),
+			'action' => self::action( GEMSECURITY_PLUGIN_SLUG . '-backup' ),
 		];
 
 		return $checks;
@@ -178,10 +189,11 @@ class SecurityScore {
 	/* --------------------------------------------------------------------- */
 
 	/**
-	 * @return array<int,array{key:string,label:string,severity:string,count:int,fix:string}>
+	 * @return array<int,array{key:string,label:string,severity:string,count:int,fix:string,action:?array}>
 	 */
 	private static function threats() {
 		$threats = [];
+		$scanner = GEMSECURITY_PLUGIN_SLUG . '-scanner';
 
 		$scan = Scanner::get_last_result();
 		if ( ! is_array( $scan ) ) {
@@ -191,6 +203,7 @@ class SecurityScore {
 				'severity' => 'warning',
 				'count'    => 1,
 				'fix'      => __( 'Run a scan from the Scanner page.', 'gemsecurity' ),
+				'action'   => self::action( $scanner ),
 			];
 		} else {
 			$core    = count( (array) ( $scan['core_issues'] ?? [] ) );
@@ -201,47 +214,96 @@ class SecurityScore {
 			$links   = (int) ( $scan['link_scan']['flagged_count'] ?? 0 );
 
 			if ( $core ) {
-				$threats[] = self::threat( 'core_modified', sprintf( _n( '%d modified or missing core file', '%d modified or missing core files', $core, 'gemsecurity' ), $core ), 'critical', $core, __( 'Reinstall WordPress core to restore the official files.', 'gemsecurity' ) );
+				$threats[] = self::threat( 'core_modified', sprintf( _n( '%d modified or missing core file', '%d modified or missing core files', $core, 'gemsecurity' ), $core ), 'critical', $core, __( 'Reinstall WordPress core to restore the official files.', 'gemsecurity' ), $scanner );
 			}
 			if ( $foreign ) {
-				$threats[] = self::threat( 'foreign_files', sprintf( _n( '%d unexpected / foreign file', '%d unexpected / foreign files', $foreign, 'gemsecurity' ), $foreign ), 'critical', $foreign, __( 'Review and remove them in Scanner → Integrity & files.', 'gemsecurity' ) );
+				$threats[] = self::threat( 'foreign_files', sprintf( _n( '%d unexpected / foreign file', '%d unexpected / foreign files', $foreign, 'gemsecurity' ), $foreign ), 'critical', $foreign, __( 'Review and remove them in Scanner → Integrity & files.', 'gemsecurity' ), $scanner );
 			}
 			if ( $inj ) {
-				$threats[] = self::threat( 'injections', sprintf( _n( '%d code / spam-link injection', '%d code / spam-link injections', $inj, 'gemsecurity' ), $inj ), 'critical', $inj, __( 'Clean the injected files/records shown by the file-change watcher.', 'gemsecurity' ) );
+				$threats[] = self::threat( 'injections', sprintf( _n( '%d code / spam-link injection', '%d code / spam-link injections', $inj, 'gemsecurity' ), $inj ), 'critical', $inj, __( 'Clean the injected files/records shown by the file-change watcher.', 'gemsecurity' ), $scanner );
 			}
 			if ( $mu ) {
-				$threats[] = self::threat( 'mu_suspicious', sprintf( _n( '%d suspicious auto-loaded file', '%d suspicious auto-loaded files', $mu, 'gemsecurity' ), $mu ), 'critical', $mu, __( 'Inspect the flagged mu-plugins / drop-ins.', 'gemsecurity' ) );
+				$threats[] = self::threat( 'mu_suspicious', sprintf( _n( '%d suspicious auto-loaded file', '%d suspicious auto-loaded files', $mu, 'gemsecurity' ), $mu ), 'critical', $mu, __( 'Inspect the flagged mu-plugins / drop-ins.', 'gemsecurity' ), $scanner );
 			}
 			if ( $susp ) {
-				$threats[] = self::threat( 'suspicious', sprintf( _n( '%d suspicious file', '%d suspicious files', $susp, 'gemsecurity' ), $susp ), 'warning', $susp, __( 'Review the flagged files in the last scan.', 'gemsecurity' ) );
+				$threats[] = self::threat( 'suspicious', sprintf( _n( '%d suspicious file', '%d suspicious files', $susp, 'gemsecurity' ), $susp ), 'warning', $susp, __( 'Review the flagged files in the last scan.', 'gemsecurity' ), $scanner );
 			}
 			if ( $links ) {
-				$threats[] = self::threat( 'flagged_links', sprintf( _n( '%d flagged outbound-link domain', '%d flagged outbound-link domains', $links, 'gemsecurity' ), $links ), 'warning', $links, __( 'Check the flagged domains in Scanner → Linked sites.', 'gemsecurity' ) );
+				$threats[] = self::threat( 'flagged_links', sprintf( _n( '%d flagged outbound-link domain', '%d flagged outbound-link domains', $links, 'gemsecurity' ), $links ), 'warning', $links, __( 'Check the flagged domains in Scanner → Linked sites.', 'gemsecurity' ), $scanner );
 			}
 		}
 
 		$vuln = Vulnerability::get_last_result();
 		if ( is_array( $vuln ) && (int) ( $vuln['count'] ?? 0 ) > 0 ) {
 			$n = (int) $vuln['count'];
-			$threats[] = self::threat( 'vulnerabilities', sprintf( _n( '%d known vulnerability', '%d known vulnerabilities', $n, 'gemsecurity' ), $n ), 'warning', $n, __( 'Update the affected plugins/themes to a fixed version.', 'gemsecurity' ) );
+			$threats[] = self::threat( 'vulnerabilities', sprintf( _n( '%d known vulnerability', '%d known vulnerabilities', $n, 'gemsecurity' ), $n ), 'warning', $n, __( 'Update the affected plugins/themes to a fixed version.', 'gemsecurity' ), $scanner );
 		}
 
 		$ha = HiddenAdmin::get_last_result();
 		if ( is_array( $ha ) && ! empty( $ha['hidden_ids'] ) ) {
 			$n = count( $ha['hidden_ids'] );
-			$threats[] = self::threat( 'hidden_admins', sprintf( _n( '%d hidden administrator account', '%d hidden administrator accounts', $n, 'gemsecurity' ), $n ), 'critical', $n, __( 'A concealed admin is a back-door — investigate and remove it immediately.', 'gemsecurity' ) );
+			$threats[] = self::threat( 'hidden_admins', sprintf( _n( '%d hidden administrator account', '%d hidden administrator accounts', $n, 'gemsecurity' ), $n ), 'critical', $n, __( 'A concealed admin is a back-door — investigate and remove it immediately.', 'gemsecurity' ), GEMSECURITY_PLUGIN_SLUG . '-admin-guard' );
 		}
 
 		return $threats;
 	}
 
-	private static function threat( $key, $label, $severity, $count, $fix ) {
+	/**
+	 * @param string $key
+	 * @param string $label
+	 * @param string $severity
+	 * @param int    $count
+	 * @param string $fix
+	 * @param string $page Page slug that investigates or resolves this.
+	 * @return array
+	 */
+	private static function threat( $key, $label, $severity, $count, $fix, $page ) {
 		return [
 			'key'      => $key,
 			'label'    => $label,
 			'severity' => $severity,
 			'count'    => (int) $count,
 			'fix'      => $fix,
+			'action'   => self::action( $page ),
+		];
+	}
+
+	/**
+	 * Where to send someone who wants to act on a finding.
+	 *
+	 * Resolved through the registry rather than hardcoded, so a page that is
+	 * renamed or turned into a Pro upsell cannot leave a dead link behind. A
+	 * deactivated module has no page at all, so the link points at the Modules
+	 * manager instead — turning the module back on is the actual first step.
+	 *
+	 * @param string $page_slug
+	 * @return array{url:string,label:string}|null
+	 */
+	private static function action( $page_slug ) {
+		$module = null;
+		foreach ( \GemSecurity\Modules\Registry::all() as $id => $m ) {
+			if ( $m['page_slug'] === $page_slug ) {
+				$module = $id;
+				break;
+			}
+		}
+
+		if ( null === $module ) {
+			return null;
+		}
+
+		if ( ! \GemSecurity\Modules\Registry::is_visible( $module ) ) {
+			return [
+				'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-modules' ),
+				'label' => __( 'Turn the module on', 'gemsecurity' ),
+			];
+		}
+
+		$labels = \GemSecurity\Modules\Registry::labels();
+
+		return [
+			'url'   => admin_url( 'admin.php?page=' . $page_slug ),
+			'label' => isset( $labels[ $module ]['title'] ) ? $labels[ $module ]['title'] : $module,
 		];
 	}
 }
