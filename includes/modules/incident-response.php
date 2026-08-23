@@ -1,8 +1,8 @@
 <?php
 namespace GemSecurity\Modules;
 
-use GemSecurity\Helper;
-use GemSecurity\Logger;
+use GemSecurity\Security\Quarantine;
+use GemSecurity\Security\Recovery;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -13,11 +13,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * investigator's workflow — a correlated forensic timeline, safe quarantine
  * (move, don't delete) and one-click recovery actions.
  *
+ * This page is the single home for containment. The quarantine index and the
+ * force-logout action are the shared ones in {@see Quarantine} and
+ * {@see Recovery}, so a file the malware scanner quarantined shows up here and
+ * can be restored from either place.
+ *
  * On-demand only; all work is driven from the REST controller.
  */
 class IncidentResponse {
-
-	const QUARANTINE_OPTION = 'gemsecurity_quarantine';
 
 	/* ---------------- Forensic timeline ---------------- */
 
@@ -65,17 +68,6 @@ class IncidentResponse {
 
 	/* ---------------- Quarantine ---------------- */
 
-	private static function quarantine_dir() {
-		$up  = wp_upload_dir();
-		$dir = trailingslashit( $up['basedir'] ) . 'gemsecurity-quarantine';
-		if ( ! is_dir( $dir ) ) {
-			wp_mkdir_p( $dir );
-			@file_put_contents( $dir . '/.htaccess', "Deny from all\n" ); // phpcs:ignore
-			@file_put_contents( $dir . '/index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore
-		}
-		return $dir;
-	}
-
 	/**
 	 * Move a suspicious file into quarantine (reversible).
 	 *
@@ -83,26 +75,7 @@ class IncidentResponse {
 	 * @return array|\WP_Error
 	 */
 	public static function quarantine( $path ) {
-		$path = wp_normalize_path( $path );
-		$root = wp_normalize_path( ABSPATH );
-		// Safety: only files under the WordPress root, and never wp-config.
-		if ( 0 !== strpos( $path, $root ) || ! is_file( $path ) || false !== strpos( $path, 'wp-config.php' ) ) {
-			return new \WP_Error( 'gemsec_bad_path', __( 'That file cannot be quarantined.', 'gemsecurity' ), [ 'status' => 400 ] );
-		}
-
-		$id     = substr( md5( $path . microtime() ), 0, 12 );
-		$stored = self::quarantine_dir() . '/' . $id . '.quar';
-		if ( ! @rename( $path, $stored ) ) { // phpcs:ignore
-			return new \WP_Error( 'gemsec_move_failed', __( 'Could not move the file.', 'gemsecurity' ), [ 'status' => 500 ] );
-		}
-
-		$index   = get_option( self::QUARANTINE_OPTION, [] );
-		$index   = is_array( $index ) ? $index : [];
-		$index[] = [ 'id' => $id, 'orig' => $path, 'stored' => $stored, 'time' => gmdate( 'Y-m-d H:i:s' ) ];
-		update_option( self::QUARANTINE_OPTION, $index, false );
-
-		Logger::log( 'quarantine', sprintf( 'Quarantined %s.', str_replace( $root, '', $path ) ), Logger::SEVERITY_WARNING );
-		return [ 'id' => $id ];
+		return Quarantine::add_file( $path );
 	}
 
 	/**
@@ -112,28 +85,16 @@ class IncidentResponse {
 	 * @return true|\WP_Error
 	 */
 	public static function restore( $id ) {
-		$index = get_option( self::QUARANTINE_OPTION, [] );
-		$index = is_array( $index ) ? $index : [];
-		foreach ( $index as $k => $item ) {
-			if ( $item['id'] === $id ) {
-				if ( ! @rename( $item['stored'], $item['orig'] ) ) { // phpcs:ignore
-					return new \WP_Error( 'gemsec_restore_failed', __( 'Could not restore the file.', 'gemsecurity' ), [ 'status' => 500 ] );
-				}
-				unset( $index[ $k ] );
-				update_option( self::QUARANTINE_OPTION, array_values( $index ), false );
-				Logger::log( 'quarantine_restore', sprintf( 'Restored %s.', $item['orig'] ), Logger::SEVERITY_NOTICE );
-				return true;
-			}
-		}
-		return new \WP_Error( 'gemsec_not_found', __( 'Quarantine entry not found.', 'gemsecurity' ), [ 'status' => 404 ] );
+		return Quarantine::restore_file( $id );
 	}
 
+	/**
+	 * Everything currently in quarantine, whichever scanner put it there.
+	 *
+	 * @return array<int,array>
+	 */
 	public static function quarantine_list() {
-		$index = get_option( self::QUARANTINE_OPTION, [] );
-		$root  = wp_normalize_path( ABSPATH );
-		return array_map( static function ( $i ) use ( $root ) {
-			return [ 'id' => $i['id'], 'orig' => str_replace( $root, '', $i['orig'] ), 'time' => $i['time'] ];
-		}, is_array( $index ) ? $index : [] );
+		return Quarantine::items();
 	}
 
 	/* ---------------- Recovery ---------------- */
@@ -146,14 +107,7 @@ class IncidentResponse {
 	 */
 	public static function recover( $action ) {
 		if ( 'logout_everyone' === $action ) {
-			$n = 0;
-			$user_ids = get_users( [ 'fields' => 'ID', 'number' => 1000 ] );
-			foreach ( $user_ids as $uid ) {
-				\WP_Session_Tokens::get_instance( $uid )->destroy_all();
-				$n++;
-			}
-			Logger::log( 'recovery_logout_all', sprintf( 'Forced logout of %d users (incident recovery).', $n ), Logger::SEVERITY_WARNING );
-			return [ 'affected' => $n ];
+			return [ 'affected' => Recovery::logout_all_users() ];
 		}
 
 		return new \WP_Error( 'gemsec_unknown_action', __( 'Unknown recovery action.', 'gemsecurity' ), [ 'status' => 400 ] );

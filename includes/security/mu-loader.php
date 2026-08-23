@@ -109,7 +109,7 @@ add_action( 'init', function () {
 		\$ip   = isset( \$_SERVER['REMOTE_ADDR'] ) ? (string) \$_SERVER['REMOTE_ADDR'] : 'unknown';
 
 		wp_mail(
-			get_option( 'admin_email' ),
+			\GemSecurity\Mailer::recipient(),
 			sprintf( '\xf0\x9f\x9a\xa8 [%s \xc2\xb7 %s] DANGER: GemSecurity is no longer active', \$name, \$host ),
 			implode( "\n", array(
 				'GemSecurity is not active on ' . home_url() . ', but its early-protection file is still installed.',

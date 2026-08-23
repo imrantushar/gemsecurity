@@ -228,33 +228,34 @@ class Installer {
 
 	private static function set_default_options() {
 		$defaults = [
-			'backup_retention'        => 10,
-			'logs_retention_days'     => 30,
+			'backup_retention'          => 10,
+			// Named apart from the security log's own retention setting: both
+			// stores had a `logs_retention_days` key, so the Settings field
+			// looked like it covered this one and never did.
+			'backup_logs_retention_days' => 30,
 
-			'active_storage'          => 'local',
-			'enabled_drivers'         => [ 'local' ],
-			'local_path'              => GEMBACKUP_BACKUP_DIR_PATH,
+			'active_storage'            => 'local',
+			'enabled_drivers'           => [ 'local' ],
+			'local_path'                => GEMBACKUP_BACKUP_DIR_PATH,
 
-			'encryption_enabled'      => false,
-			'encryption_passphrase'   => '',
+			'encryption_enabled'        => false,
+			'encryption_passphrase'     => '',
 
-			'exclude_paths'           => "wp-content/cache\nwp-content/uploads/cache\nwp-content/upgrade",
-			'exclude_tables_smart'    => true,
-			'exclude_tables_extra'    => '',
+			'exclude_paths'             => "wp-content/cache\nwp-content/uploads/cache\nwp-content/upgrade",
+			'exclude_tables_smart'      => true,
+			'exclude_tables_extra'      => '',
 
-			'notify_on_failure'       => false,
-			'notify_email'            => '',
+			// Recipient and webhook are the plugin-wide ones (Settings →
+			// Notifications); this only decides whether backup events are sent.
+			'notify_on_failure'         => false,
 
-			'restore_safety_snapshot' => true,
+			'restore_safety_snapshot'   => true,
 
-			'health_alert_days'       => 7,
-			'webhook_url'             => '',
+			'health_alert_days'         => 7,
 
-			'schedule_enabled'        => false,
-			'schedule_frequency'      => 'daily',
-			'schedule_backup_type'    => 'full',
-			'schedule_storage_driver' => 'local',
-			'schedule_time'           => '02:00',
+			// Schedules live in the gembackup_schedules table, not in settings.
+			// The old schedule_* keys here were written on install and read by
+			// nothing.
 		];
 
 		$existing = get_option( GEMBACKUP_SETTINGS_NAME, [] );

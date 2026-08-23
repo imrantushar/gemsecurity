@@ -364,7 +364,9 @@ class Credentials {
 	private static function test_email( array $values ) {
 		$to = $values['to'] ?? '';
 		if ( '' === $to ) {
-			$to = get_option( 'admin_email' );
+			// Same resolution the real notifications use, so a passing test
+			// proves the address the site will actually send to.
+			$to = \GemSecurity\Mailer::recipient();
 		}
 		if ( ! is_email( $to ) ) {
 			return [ 'message' => __( 'That is not a valid email address.', 'gemsecurity' ) ];

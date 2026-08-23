@@ -32,7 +32,6 @@ class Settings {
 			'block_author_enumeration'      => 'bool',
 			'disable_user_rest'             => 'bool',
 			'hide_wp_version'               => 'bool',
-			'disable_application_passwords' => 'bool',
 			'comments_disabled'             => 'bool',
 
 			// Login security.
@@ -40,7 +39,6 @@ class Settings {
 			'login_attempts_limit'          => 'int',
 			'login_lockout_duration'        => 'int',
 			'admin_login_alert_enabled'     => 'bool',
-			'admin_login_alert_email'       => 'email',
 			'admin_session_timeout_enabled' => 'bool',
 			'admin_session_timeout_hours'   => 'int',
 
@@ -101,7 +99,6 @@ class Settings {
 			'captcha_on_lostpassword'       => 'bool',
 			'captcha_on_comments'           => 'bool',
 			'captcha_v3_threshold'          => 'float',
-			'comment_honeypot_enabled'      => 'bool',
 			'antispam_enabled'              => 'bool',
 			'antispam_min_seconds'          => 'int',
 			'antispam_heuristics'           => 'bool',
@@ -148,7 +145,6 @@ class Settings {
 
 			// Monitoring.
 			'monitoring_enabled'            => 'bool',
-			'monitor_alert_email'           => 'email',
 
 			// Vulnerability scanner.
 			'vuln_scan_enabled'             => 'bool',

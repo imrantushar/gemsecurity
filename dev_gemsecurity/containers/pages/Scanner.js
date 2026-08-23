@@ -18,6 +18,21 @@ const SCANNER_KEYS = [
 	'link_scanner_enabled',
 	'link_blocklist',
 	'link_allowlist',
+	// Pro extends the one file baseline to more of the tree rather than
+	// running a second baseline of its own.
+	'file_baseline_scopes',
+	// Pro auto-update enforcement — it belongs next to the vulnerability scan
+	// that decides what counts as "vulnerable".
+	'auto_update_vulnerable_enabled',
+	'auto_update_all_plugins',
+	'auto_update_all_themes',
+];
+
+/** Extra trees Pro can fold into the file baseline. */
+const BASELINE_SCOPES = [
+	{ key: 'core', label: __( 'WordPress core', 'gemsecurity' ) },
+	{ key: 'plugins', label: __( 'All plugins', 'gemsecurity' ) },
+	{ key: 'themes', label: __( 'All themes', 'gemsecurity' ) },
 ];
 
 /** Open the Malware tab directly when arriving via the legacy ?page= alias. */
@@ -462,6 +477,34 @@ export default function Scanner() {
 							checked={ form.file_watcher_enabled }
 							onChange={ ( v ) => setField( 'file_watcher_enabled', v ) }
 						/>
+						{ form.file_watcher_enabled && (
+							<Field
+								label={ <>{ __( 'Also baseline', 'gemsecurity' ) } { ! isPro() && <ProBadge /> }</> }
+								description={ __( 'Widen the same baseline to more of the install. Bigger trees make each scan slower, so add only what this site needs watched.', 'gemsecurity' ) }
+							>
+								<div style={ { display: 'flex', gap: 18, flexWrap: 'wrap' } }>
+									{ BASELINE_SCOPES.map( ( sc ) => {
+										const scopes = Array.isArray( form.file_baseline_scopes ) ? form.file_baseline_scopes : [];
+										return (
+											<label key={ sc.key } style={ { display: 'flex', alignItems: 'center', gap: 6 } }>
+												<input
+													type="checkbox"
+													checked={ scopes.includes( sc.key ) }
+													disabled={ ! isPro() }
+													onChange={ ( e ) => setField(
+														'file_baseline_scopes',
+														e.target.checked
+															? [ ...new Set( [ ...scopes, sc.key ] ) ]
+															: scopes.filter( ( x ) => x !== sc.key )
+													) }
+												/>
+												{ sc.label }
+											</label>
+										);
+									} ) }
+								</div>
+							</Field>
+						) }
 						<Toggle
 							label={ __( 'Detect links to malicious or spam sites', 'gemsecurity' ) }
 							description={ __( 'Lists every external site your content links to and flags blocklisted, hidden/cloaked, or spam-category (gambling, pharma, adult…) domains — catching injected backlink spam.', 'gemsecurity' ) }
@@ -492,6 +535,29 @@ export default function Scanner() {
 								</Field>
 							</>
 						) }
+						<div className="gs-subcard">
+							<strong>{ __( 'Auto-update enforcement', 'gemsecurity' ) } { ! isPro() && <ProBadge /> }</strong>
+							<p className="gs-card__desc">{ __( 'Close the gap between a vulnerability being disclosed and this site being patched.', 'gemsecurity' ) }</p>
+							<Toggle
+								label={ __( 'Auto-update vulnerable plugins & themes', 'gemsecurity' ) }
+								description={ __( 'Automatically update anything the vulnerability scan above has flagged.', 'gemsecurity' ) }
+								checked={ form.auto_update_vulnerable_enabled }
+								onChange={ ( v ) => setField( 'auto_update_vulnerable_enabled', v ) }
+								disabled={ ! isPro() }
+							/>
+							<Toggle
+								label={ __( 'Auto-update all plugins', 'gemsecurity' ) }
+								checked={ form.auto_update_all_plugins }
+								onChange={ ( v ) => setField( 'auto_update_all_plugins', v ) }
+								disabled={ ! isPro() }
+							/>
+							<Toggle
+								label={ __( 'Auto-update all themes', 'gemsecurity' ) }
+								checked={ form.auto_update_all_themes }
+								onChange={ ( v ) => setField( 'auto_update_all_themes', v ) }
+								disabled={ ! isPro() }
+							/>
+						</div>
 						{ dirty && (
 							<div className="gs-savebar gs-savebar--inline">
 								<Button variant="secondary" onClick={ () => save() } loading={ saving }>
@@ -565,7 +631,11 @@ export default function Scanner() {
 							) }
 						</Card>
 
-						<Card title={ __( 'Suspicious files', 'gemsecurity' ) }>
+						{ ! isPro() && (
+						<Card
+							title={ __( 'Suspicious files', 'gemsecurity' ) }
+							description={ __( 'Heuristic pattern check over uploads and must-use plugins.', 'gemsecurity' ) }
+						>
 								{ result.suspicious.length === 0 ? (
 									<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No suspicious files detected.', 'gemsecurity' ) }</p>
 								) : (
@@ -584,6 +654,7 @@ export default function Scanner() {
 									</table>
 								) }
 							</Card>
+						) }
 
 							<SafeFiles />
 

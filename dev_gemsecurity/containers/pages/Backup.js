@@ -4,6 +4,9 @@ import backupApi from '@Utils/backupApi';
 import { useToast } from '@Components/ui/Toast';
 import { Card, Button, Toggle, Field, Select, Badge, EmptyState } from '@Components/ui/Controls';
 import { isPro, ProBadge } from '@Components/ui/Pro';
+import BackupSchedule from '@Containers/pages/BackupSchedule';
+import BackupStorage from '@Containers/pages/BackupStorage';
+import BackupSettings from '@Containers/pages/BackupSettings';
 
 const TYPES = [
 	{ value: 'full', label: __( 'Full site (database + files)', 'gemsecurity' ) },
@@ -200,6 +203,16 @@ export default function Backup() {
 					</table>
 				) }
 			</Card>
+
+			{ /*
+			   Schedules, destinations and configuration belong with the backups
+			   they govern. These used to render at the bottom of the Settings
+			   page — including when the Backup module was switched off, where
+			   their endpoints are not registered and every card failed to load.
+			*/ }
+			<BackupSchedule />
+			<BackupStorage />
+			<BackupSettings />
 		</div>
 	);
 }

@@ -41,20 +41,38 @@ class Health_Monitor {
 	public static function check() {
 		$settings = get_option( GEMBACKUP_SETTINGS_NAME, [] );
 		$summary  = self::summary();
-		if ( $summary['status'] === 'unhealthy' && ! empty( $settings['notify_email'] ) ) {
-			$subject = sprintf( '[%s] GemBackup health alert', wp_parse_url( home_url(), PHP_URL_HOST ) );
-			$body = sprintf(
-				"No successful backup in %d days (threshold: %d).\nLast: %s\nCheck the GemBackup dashboard for details.",
-				$summary['days_since'] ?? -1,
-				$summary['alert_threshold_days'],
-				$summary['last_successful_backup'] ?: 'never'
+		if ( 'unhealthy' === $summary['status'] && ! empty( $settings['notify_on_failure'] ) ) {
+			\GemSecurity\Mailer::send(
+				\GemSecurity\Mailer::recipient(),
+				'⚠️',
+				__( 'No recent backup', 'gemsecurity' ),
+				[
+					[
+						'type' => 'notice',
+						'tone' => 'warning',
+						'text' => __( 'This site has gone without a successful backup for longer than the configured threshold. If a scheduled backup is failing quietly, there is no restore point to fall back on.', 'gemsecurity' ),
+					],
+					[
+						'type'    => 'table',
+						'heading' => __( 'Details', 'gemsecurity' ),
+						'rows'    => [
+							[ __( 'Days since last success', 'gemsecurity' ), (string) ( $summary['days_since'] ?? -1 ) ],
+							[ __( 'Threshold', 'gemsecurity' ), (string) $summary['alert_threshold_days'] ],
+							[ __( 'Last successful backup', 'gemsecurity' ), $summary['last_successful_backup'] ?: __( 'never', 'gemsecurity' ) ],
+						],
+					],
+					[
+						'type'  => 'button',
+						'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-backup' ),
+						'label' => __( 'Open Backup', 'gemsecurity' ),
+					],
+				]
 			);
-			wp_mail( $settings['notify_email'], $subject, $body );
 		}
 
 		// Prune old logs.
 		global $wpdb;
-		$days = max( 1, (int) ( $settings['logs_retention_days'] ?? 30 ) );
+		$days = max( 1, (int) ( $settings['backup_logs_retention_days'] ?? 30 ) );
 		$wpdb->query( $wpdb->prepare(
 			"DELETE FROM {$wpdb->gembackup_logs} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
 			$days

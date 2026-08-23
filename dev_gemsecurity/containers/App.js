@@ -29,7 +29,6 @@ import IncidentResponse from '@Containers/pages/IncidentResponse';
 import Logs from '@Containers/pages/Logs';
 import Backup from '@Containers/pages/Backup';
 import Monitoring from '@Containers/pages/Monitoring';
-import ProTools from '@Containers/pages/ProTools';
 import Settings from '@Containers/pages/Settings';
 
 const PAGES = {
@@ -53,7 +52,6 @@ const PAGES = {
 	'gemsecurity-logs': Logs,
 	'gemsecurity-backup': Backup,
 	'gemsecurity-monitoring': Monitoring,
-	'gemsecurity-pro-tools': ProTools,
 	'gemsecurity-settings': Settings,
 };
 

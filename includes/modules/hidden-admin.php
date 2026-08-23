@@ -251,7 +251,7 @@ class HiddenAdmin {
 	 */
 	private static function notify( $result, $names, $count ) {
 		Mailer::send(
-			get_option( 'admin_email' ),
+			\GemSecurity\Mailer::recipient(),
 			'🕵️',
 			__( 'Hidden administrator account detected', 'gemsecurity' ),
 			[

@@ -112,10 +112,7 @@ class DailyReport {
 
 		$data = self::collect();
 
-		$to = trim( (string) Helper::get_setting( 'alert_to_email', '' ) );
-		if ( '' === $to ) {
-			$to = get_option( 'admin_email' );
-		}
+		$to = Mailer::recipient();
 
 		// A change worth noticing gets a different emoji and title, so the
 		// notification preview alone says whether to open it.

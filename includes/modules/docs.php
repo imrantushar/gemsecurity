@@ -83,13 +83,15 @@ class Docs {
 				'summary' => __( 'A tamper-evident audit trail of everything that matters: logins, user and role changes, plugin and theme activity, settings changes, blocks and bans.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Records security-relevant events with actor, IP, severity and timestamp.', 'gemsecurity' ),
+					__( 'Lets you choose which activity is recorded — user accounts, plugins and themes, settings changes, content — while security events are always logged.', 'gemsecurity' ),
 					__( 'Filters by severity, event type, user or IP, and exports the result as CSV.', 'gemsecurity' ),
 					__( 'Sends real-time alerts for events above the severity you choose.', 'gemsecurity' ),
 					__( 'Pro: hash-chains each entry so deleted or edited rows can be detected, and can forward events to a SIEM or syslog collector.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Set how long entries are kept in Settings → General (log retention, in days).', 'gemsecurity' ),
-					__( 'Choose an alert channel and minimum severity in Settings → Alerts & notifications.', 'gemsecurity' ),
+					__( 'Use "What gets logged" at the top of this page to switch off any source you do not need — content is the noisiest on an active site.', 'gemsecurity' ),
+					__( 'Choose an alert channel and minimum severity in Settings → Notifications.', 'gemsecurity' ),
 					__( 'Pro: enable the hash chain in Settings → Compliance & SIEM, then use Verify to prove the log is intact.', 'gemsecurity' ),
 				],
 				'notes'   => [
@@ -99,20 +101,22 @@ class Docs {
 			],
 
 			'settings' => [
-				'summary' => __( 'Plugin-wide preferences: log retention, compliance and SIEM forwarding, alert channels, maintenance lockdown and licensing.', 'gemsecurity' ),
+				'summary' => __( 'Plugin-wide preferences: log retention, notifications, compliance and SIEM forwarding, maintenance lockdown, and settings import/export.', 'gemsecurity' ),
 				'does'    => [
-					__( 'Alerts: email, Slack, Telegram or a generic webhook, with a minimum-severity filter and an optional digest.', 'gemsecurity' ),
+					__( 'Notifications: one security email address and one set of channels — Slack, Telegram or a generic webhook — used by every alert, report and failure notice the plugin sends, with a minimum-severity filter and an optional weekly digest.', 'gemsecurity' ),
 					__( 'Compliance: log hash-chaining, SIEM/syslog forwarding and a severity floor for what gets shipped.', 'gemsecurity' ),
 					__( 'Maintenance: site lockdown with a custom message, and taking a backup before plugin or theme updates.', 'gemsecurity' ),
 					__( 'Daily report: a morning email listing every administrator and active plugin, and anything that changed since yesterday.', 'gemsecurity' ),
+					__( 'Settings import/export (Pro): move a whole configuration, including which modules are on, between sites.', 'gemsecurity' ),
 				],
 				'setup'   => [
-					__( 'Add the address or webhook that should receive alerts, then set the minimum severity so routine noise stays out of your inbox.', 'gemsecurity' ),
+					__( 'Set the security email once — backup failures, monitoring warnings, admin alerts and the daily report all use it. Then set the minimum severity so routine noise stays out of your inbox.', 'gemsecurity' ),
 					__( 'Turn on the daily report to get a morning inventory of administrators and active plugins, with new ones called out — then use "Send one now" to see what it looks like.', 'gemsecurity' ),
 					__( 'Use lockdown while you investigate an incident: visitors see your message, administrators keep full access.', 'gemsecurity' ),
 				],
 				'notes'   => [
-					__( 'Alerts are only as reliable as your site mail. If WordPress email is unreliable here, use Slack, Telegram or a webhook instead.', 'gemsecurity' ),
+					__( 'Alerts are only as reliable as your site mail. If WordPress email is unreliable here, use Slack, Telegram or a webhook instead — use "Send a test email" to find out before an incident does.', 'gemsecurity' ),
+					__( 'What gets written to the activity log is configured on the Logs page, not here.', 'gemsecurity' ),
 					__( 'Lockdown blocks the front end for visitors — remember to switch it back off.', 'gemsecurity' ),
 					__( 'Deactivating GemSecurity emails the alert address with a critical warning naming who did it, and pushes the same message to Slack, Telegram or your webhook — switching security off is the first move in most intrusions.', 'gemsecurity' ),
 					__( 'Every email names the site and its domain in the subject, after an emoji for the event type — so alerts from several installs stay apart in one inbox.', 'gemsecurity' ),
@@ -125,16 +129,22 @@ class Docs {
 			/* ---------------------------------------------------------- */
 
 			'firewall' => [
-				'summary' => __( 'The front door: an IP blocklist, the classic WordPress hardening switches, browser security headers, bot control and a security.txt file.', 'gemsecurity' ),
+				'summary' => __( 'The front door: an IP blocklist, the request firewall and its rules, rate limiting, bot control, the classic WordPress hardening switches, browser security headers and a security.txt file.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Blocks individual IPs and CIDR ranges before WordPress does any real work.', 'gemsecurity' ),
-					__( 'Hardening: disable XML-RPC, disable the theme/plugin file editor, block author and REST user enumeration, hide the WordPress version, disable application passwords, disable comments.', 'gemsecurity' ),
+					__( 'Inspects requests for SQL injection, XSS, path traversal and remote code execution, and can also inspect POST bodies.', 'gemsecurity' ),
+					__( 'Rate limits front-end requests per IP and throttles 404 floods from vulnerability scanners.', 'gemsecurity' ),
+					__( 'Hardening: disable XML-RPC, disable the theme/plugin file editor, hide the WordPress version.', 'gemsecurity' ),
+					__( 'Username enumeration: block ?author=N scans, hide the REST users endpoint and return one generic login error.', 'gemsecurity' ),
 					__( 'Sends security headers — X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS and CSP — and collects CSP violation reports.', 'gemsecurity' ),
-					__( 'Bot control: block AI crawlers and verify self-declared search engines by reverse DNS, so fake Googlebots are turned away.', 'gemsecurity' ),
+					__( 'Bot control: block known-bad scanners and empty user agents, block AI crawlers, and verify self-declared search engines by reverse DNS so fake Googlebots are turned away.', 'gemsecurity' ),
 					__( 'Publishes /.well-known/security.txt and audits file permissions for world-writable paths.', 'gemsecurity' ),
+					__( 'With Pro, the hardening pack adds an admin IP allowlist, sensitive-file blocking, no PHP execution in uploads and forced HTTPS.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Turn the firewall on, then enable the hardening switches one at a time and check the site still works after each.', 'gemsecurity' ),
+					__( 'Turn the WAF on and leave the four rule families enabled; add POST body inspection only if you can watch for false positives on your own forms.', 'gemsecurity' ),
+					__( 'Only enable the admin IP allowlist if your address is static, and add it before saving.', 'gemsecurity' ),
 					__( 'If the site sits behind Cloudflare or another proxy, enable the matching option under Real visitor IP detection — otherwise every visitor looks like the proxy and blocks or rate limits hit everyone at once.', 'gemsecurity' ),
 					__( 'Enable security headers, leave CSP in report-only mode, then read Recent CSP violations for a few days before enforcing it.', 'gemsecurity' ),
 					__( 'Fill in a contact address under security.txt so researchers know where to report problems.', 'gemsecurity' ),
@@ -144,23 +154,29 @@ class Docs {
 					__( 'HSTS tells browsers to refuse plain HTTP for the max-age you set — only enable it once HTTPS works on every subdomain you include, and treat preload as permanent.', 'gemsecurity' ),
 					__( 'A CSP that is enforced too early will silently break embeds, analytics and page builders. Report-only first.', 'gemsecurity' ),
 					__( 'Never trust proxy headers unless the site really is behind that proxy — spoofed headers would let an attacker rotate their apparent IP at will.', 'gemsecurity' ),
+					__( 'A dynamic home IP plus an admin IP allowlist means locking yourself out the next time your router reconnects.', 'gemsecurity' ),
+					__( 'Comment controls live on the Anti-Spam page, and application passwords on API & Access.', 'gemsecurity' ),
 				],
 			],
 
 			'anti-spam' => [
-				'summary' => __( 'Stops comment and registration spam without CAPTCHAs: invisible bot checks plus a heuristic score for anything that gets through.', 'gemsecurity' ),
+				'summary' => __( 'Every comment and registration control in one place: close comments entirely, or stop spam with invisible bot checks, an optional CAPTCHA and a heuristic score for anything that gets through.', 'gemsecurity' ),
 				'does'    => [
+					__( 'Closes comments and pingbacks site-wide if the site does not use them.', 'gemsecurity' ),
 					__( 'Adds a hidden honeypot field and a minimum time-to-submit, both invisible to real visitors.', 'gemsecurity' ),
+					__( 'Optionally adds the CAPTCHA configured under Login Security to the comment form as well.', 'gemsecurity' ),
 					__( 'Scores comments on link count and keyword matches, holding or rejecting the worst.', 'gemsecurity' ),
 				],
 				'setup'   => [
-					__( 'Turn on silent bot protection — no keys or accounts needed.', 'gemsecurity' ),
+					__( 'If the site does not take comments, disable them entirely — nothing else on this page then matters.', 'gemsecurity' ),
+					__( 'Otherwise turn on silent bot protection — no keys or accounts needed.', 'gemsecurity' ),
 					__( 'Leave the minimum submit time at a few seconds; raise it only if spam still gets through.', 'gemsecurity' ),
 					__( 'Enable heuristic filtering, set the maximum number of links you consider normal, and add keywords you keep seeing in spam.', 'gemsecurity' ),
 				],
 				'notes'   => [
 					__( 'Aggressive keyword lists cause false positives — check the held queue for a while after adding new terms.', 'gemsecurity' ),
 					__( 'Heavily cached sites can serve a stale form timestamp; if legitimate comments are refused, lower the minimum submit time.', 'gemsecurity' ),
+					__( 'The silent checks stop nearly all automated spam on their own. Add the comment CAPTCHA only if they are not enough — it costs every real visitor a puzzle.', 'gemsecurity' ),
 				],
 			],
 
@@ -235,7 +251,7 @@ class Docs {
 			],
 
 			'two-factor' => [
-				'summary' => __( 'A second factor at login: app-based one-time codes with an email fallback, one-time backup codes, and enforcement per role.', 'gemsecurity' ),
+				'summary' => __( 'A second factor at login: app-based one-time codes with an email fallback, one-time backup codes, and enforcement per role. CAPTCHA is configured under Login Security.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Supports authenticator apps (TOTP) and email one-time codes.', 'gemsecurity' ),
 					__( 'Issues single-use backup codes for when the phone is not to hand.', 'gemsecurity' ),
@@ -318,11 +334,10 @@ class Docs {
 			],
 
 			'api-hardening' => [
-				'summary' => __( 'Closes the paths that bypass the login form: REST API rate limiting, application-password governance and generic login errors.', 'gemsecurity' ),
+				'summary' => __( 'Closes the paths that bypass the login form: REST API rate limiting and application-password governance.', 'gemsecurity' ),
 				'does'    => [
-					__( 'Rate limits REST requests per IP within a window you choose.', 'gemsecurity' ),
+					__( 'Rate limits REST requests per IP within a window you choose. Front-end request rate limiting is on the Firewall page.', 'gemsecurity' ),
 					__( 'Lists every existing application password, can disable them entirely, alerts when a new one is created, and flags ones older than your maximum age.', 'gemsecurity' ),
-					__( 'Replaces WordPress login errors with a generic message so invalid usernames cannot be distinguished from wrong passwords.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Review the existing application passwords and revoke any you do not recognise.', 'gemsecurity' ),
@@ -340,10 +355,11 @@ class Docs {
 			/* ---------------------------------------------------------- */
 
 			'scanner' => [
-				'summary' => __( 'Finds what should not be there: modified core files, foreign or suspicious files, changed files, risky outbound links, known vulnerabilities and auto-executed code.', 'gemsecurity' ),
+				'summary' => __( 'Finds what should not be there: modified core files, foreign or suspicious files, changed files, risky outbound links, known vulnerabilities and auto-executed code — plus, with Pro, the malware suite and auto-update enforcement.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Verifies core files against the official WordPress.org checksums and lists unexpected or modified ones.', 'gemsecurity' ),
-					__( 'Watches for file changes between scans and flags newly added or edited files.', 'gemsecurity' ),
+					__( 'Keeps one file-change baseline over the active theme, must-use plugins and drop-ins, and flags anything added, edited or removed. Pro widens the same baseline to core, all plugins and all themes.', 'gemsecurity' ),
+					__( 'With Pro, auto-updates plugins and themes — either only the ones the vulnerability scan flagged, or everything.', 'gemsecurity' ),
 					__( 'Scans content for outbound links to known-bad destinations.', 'gemsecurity' ),
 					__( 'Checks installed plugins and themes against known vulnerabilities and against what WordPress.org actually ships.', 'gemsecurity' ),
 					__( 'Inspects mu-plugins and drop-ins — code that runs on every request without appearing on the Plugins screen.', 'gemsecurity' ),
@@ -391,10 +407,13 @@ class Docs {
 					__( 'Builds a timeline from the audit log so you can see the sequence of an intrusion.', 'gemsecurity' ),
 					__( 'Quarantines suspicious files out of the web root instead of deleting them, so they can be restored or examined.', 'gemsecurity' ),
 					__( 'Logs every user out at once, which invalidates stolen session cookies.', 'gemsecurity' ),
+					__( 'Regenerates the wp-config.php keys and salts, so every auth cookie on the site stops working at once.', 'gemsecurity' ),
+					__( 'Rolls the site back to the most recent completed backup.', 'gemsecurity' ),
+					__( 'Shows the whole site’s quarantine, including anything the malware scanner moved, so nothing is stranded in a list you cannot see.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Nothing to configure in advance — but do make sure logging and alerts are on, because the timeline is built from them.', 'gemsecurity' ),
-					__( 'During an incident: log everyone out, quarantine what the scanner flagged, then read the timeline from the earliest suspicious event.', 'gemsecurity' ),
+					__( 'During an incident: log everyone out, regenerate the keys and salts, quarantine what the scanner flagged, then read the timeline from the earliest suspicious event.', 'gemsecurity' ),
 					__( 'Reset passwords and revoke application passwords once you know how they got in.', 'gemsecurity' ),
 				],
 				'notes'   => [
@@ -437,37 +456,15 @@ class Docs {
 					__( 'Verifies SPF and DMARC records so your mail keeps arriving and is harder to spoof.', 'gemsecurity' ),
 				],
 				'setup'   => [
-					__( 'Enable monitoring and set the address that should receive warnings.', 'gemsecurity' ),
+					__( 'Enable monitoring. Warnings go to the security email under Settings → Notifications.', 'gemsecurity' ),
 					__( 'Review the Status panel after the first daily run and fix anything already flagged.', 'gemsecurity' ),
 				],
 				'notes'   => [
 					__( 'Checks run on a daily schedule, so this is early warning rather than second-by-second uptime monitoring.', 'gemsecurity' ),
-					__( 'Use an address on a different domain, so a mail problem here does not swallow its own alert.', 'gemsecurity' ),
+					__( 'Set the security email to an address on a different domain, so a mail problem on this site does not swallow its own alert.', 'gemsecurity' ),
 				],
 			],
 
-			'pro-tools' => [
-				'summary' => __( 'The hardening pack: an admin IP allowlist, blocking sensitive files and PHP execution in uploads, forced HTTPS, a file-change baseline, auto-update enforcement and settings import/export.', 'gemsecurity' ),
-				'does'    => [
-					__( 'Restricts wp-admin to an IP allowlist.', 'gemsecurity' ),
-					__( 'Blocks direct access to sensitive files and stops PHP running from the uploads directory — the usual landing spot for an uploaded shell.', 'gemsecurity' ),
-					__( 'Forces HTTPS site-wide.', 'gemsecurity' ),
-					__( 'Records a file-change baseline over the scopes you pick, so later changes stand out.', 'gemsecurity' ),
-					__( 'Auto-updates plugins and themes — either only the vulnerable ones, or everything.', 'gemsecurity' ),
-					__( 'Exports settings as a file you can import into another site.', 'gemsecurity' ),
-				],
-				'setup'   => [
-					__( 'Only enable the admin IP allowlist if your address is static, and add it before saving.', 'gemsecurity' ),
-					__( 'Turn on the uploads PHP block and sensitive-file block — they rarely affect anything legitimate.', 'gemsecurity' ),
-					__( 'Take a file baseline once the site is in a known-good state, and re-take it after intentional updates.', 'gemsecurity' ),
-					__( 'Start auto-updates with vulnerable plugins only; updating everything can break a site unattended.', 'gemsecurity' ),
-				],
-				'notes'   => [
-					__( 'A dynamic home IP plus an admin allowlist means locking yourself out the next time your router reconnects.', 'gemsecurity' ),
-					__( 'Exported settings describe your defences — store the file somewhere private.', 'gemsecurity' ),
-					__( 'Re-baseline after every legitimate update, or the change list fills with noise you learn to ignore.', 'gemsecurity' ),
-				],
-			],
 		];
 
 		/**

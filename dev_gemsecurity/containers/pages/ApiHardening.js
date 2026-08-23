@@ -13,7 +13,6 @@ const KEYS = [
 	'app_pw_disabled',
 	'app_pw_alert_on_create',
 	'app_pw_max_age_days',
-	'login_errors_generic',
 ];
 
 /** Application-password inventory + revoke controls. */
@@ -138,18 +137,6 @@ export default function ApiHardening() {
 						</Field>
 					</div>
 				) }
-			</Card>
-
-			<Card
-				title={ __( 'Username enumeration', 'gemsecurity' ) }
-				description={ __( 'Stop attackers from discovering valid usernames from the login form.', 'gemsecurity' ) }
-			>
-				<Toggle
-					label={ __( 'Generic login error messages', 'gemsecurity' ) }
-					description={ __( 'Show one identical “username or password is incorrect” message instead of revealing which was wrong.', 'gemsecurity' ) }
-					checked={ form.login_errors_generic }
-					onChange={ ( v ) => setField( 'login_errors_generic', v ) }
-				/>
 			</Card>
 
 			<Card

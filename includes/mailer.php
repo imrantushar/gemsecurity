@@ -89,9 +89,34 @@ class Mailer {
 	}
 
 	/**
+	 * The one address GemSecurity notifies.
+	 *
+	 * Every alert, report and failure notice goes here. There used to be four
+	 * separate recipient settings plus a handful of places that hardcoded the
+	 * site admin address, so changing "where security email goes" meant finding
+	 * and changing all of them.
+	 *
+	 * @return string
+	 */
+	public static function recipient() {
+		$to = trim( (string) Helper::get_setting( 'alert_to_email', '' ) );
+		if ( '' === $to || ! is_email( $to ) ) {
+			$to = (string) get_option( 'admin_email' );
+		}
+
+		/**
+		 * Filter the security notification recipient.
+		 *
+		 * @param string $to
+		 */
+		return (string) apply_filters( 'gemsecurity/notification_recipient', $to );
+	}
+
+	/**
 	 * Compose and send a message.
 	 *
-	 * @param string $to       Recipient. Falls back to the site admin address.
+	 * @param string $to       Recipient. Empty or invalid falls back to
+	 *                         {@see recipient()}.
 	 * @param string $emoji    Leading emoji for the subject.
 	 * @param string $title    Subject text and the heading inside the email.
 	 * @param array  $blocks   Ordered content blocks (see render_block()).
@@ -101,7 +126,7 @@ class Mailer {
 	public static function send( $to, $emoji, $title, array $blocks, array $args = [] ) {
 		$to = trim( (string) $to );
 		if ( '' === $to || ! is_email( $to ) ) {
-			$to = get_option( 'admin_email' );
+			$to = self::recipient();
 		}
 
 		$subject = self::subject( $emoji, $title );

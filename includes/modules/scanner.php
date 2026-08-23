@@ -464,10 +464,23 @@ class Scanner {
 	}
 
 	/**
+	 * Heuristic pattern pass over uploads and mu-plugins.
+	 *
+	 * This is the free tier's malware check. When Pro is active its signature
+	 * scanner covers the same files with a far larger rule set, and running
+	 * both produced two overlapping lists of the same findings on one page —
+	 * so the heuristic pass stands down and the "Suspicious files" card gives
+	 * way to the malware scanner's results.
+	 *
+	 * The uploads-directory PHP check is not a heuristic and stays either way:
+	 * an executable file there is a finding regardless of its contents, and
+	 * the signature scanner deliberately skips asset directories.
+	 *
 	 * @return array List of { file, reason, severity }.
 	 */
 	private static function scan_suspicious_files() {
-		$findings = [];
+		$findings       = [];
+		$patterns_only  = ! Helper::is_pro_active();
 
 		$upload_dir = wp_upload_dir();
 		$roots = [
@@ -522,6 +535,9 @@ class Scanner {
 				}
 
 				// Pattern scan PHP files.
+				if ( ! $patterns_only ) {
+					continue;
+				}
 				if ( ! in_array( $ext, [ 'php', 'phtml', 'php5', 'php7', 'inc' ], true ) ) {
 					continue;
 				}

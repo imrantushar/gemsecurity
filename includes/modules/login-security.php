@@ -180,10 +180,7 @@ class LoginSecurity {
 			return;
 		}
 
-		$to = trim( (string) Helper::get_setting( 'admin_login_alert_email', get_option( 'admin_email' ) ) );
-		if ( ! is_email( $to ) ) {
-			$to = get_option( 'admin_email' );
-		}
+		$to = Mailer::recipient();
 
 		// Mailer::subject() supplies the site identity, so the title only needs
 		// to say what happened.

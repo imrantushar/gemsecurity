@@ -430,28 +430,16 @@ class AdminGuard {
 	/**
 	 * Accounts that must never be auto-removed.
 	 *
+	 * Delegates to {@see AdminAudit::is_protected()} — the guard and the audit
+	 * used to carry byte-identical copies of these rules, so a rule added to
+	 * one silently did not apply to the other.
+	 *
 	 * @param \WP_User $user
 	 * @param bool     $allow_self Whether the current user is protected.
 	 * @return bool
 	 */
 	private function is_protected( $user, $allow_self = true ) {
-		// The user performing the current request.
-		if ( $allow_self && get_current_user_id() && (int) $user->ID === get_current_user_id() ) {
-			return true;
-		}
-		// Founding user.
-		if ( 1 === (int) $user->ID ) {
-			return true;
-		}
-		// Site owner address.
-		if ( strtolower( trim( $user->user_email ) ) === strtolower( trim( (string) get_option( 'admin_email' ) ) ) ) {
-			return true;
-		}
-		// Multisite super admins.
-		if ( is_multisite() && is_super_admin( $user->ID ) ) {
-			return true;
-		}
-		return false;
+		return AdminAudit::is_protected( $user, $allow_self );
 	}
 
 	/**
@@ -496,19 +484,11 @@ class AdminGuard {
 	 */
 	private function remove_rogue_admin( $user, $action, $origin, $fallback = 'subscriber' ) {
 		if ( 'delete' === $action ) {
-			require_once ABSPATH . 'wp-admin/includes/user.php';
 			$email = $user->user_email;
 			$login = $user->user_login;
 			$id    = $user->ID;
 
-			if ( is_multisite() ) {
-				require_once ABSPATH . 'wp-admin/includes/ms.php';
-				wpmu_delete_user( $id );
-			} else {
-				// Reassign any content to the site owner to avoid data loss.
-				$owner = get_user_by( 'email', get_option( 'admin_email' ) );
-				wp_delete_user( $id, $owner ? $owner->ID : null );
-			}
+			AdminAudit::delete_user( $id );
 
 			$this->log_removal( 'rogue_admin_deleted', $login, $email, $id, 'delete', $origin );
 			$this->maybe_notify( $login, $email, 'delete', $origin );
@@ -553,7 +533,7 @@ class AdminGuard {
 			return;
 		}
 
-		$to   = get_option( 'admin_email' );
+		$to   = \GemSecurity\Mailer::recipient();
 		$verb = 'delete' === $action ? __( 'deleted', 'gemsecurity' ) : __( 'demoted', 'gemsecurity' );
 
 		Mailer::send(

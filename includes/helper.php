@@ -161,23 +161,29 @@ class Helper {
 	 * @return array<string,array{title:string,desc:string}>
 	 */
 	public static function get_pro_features() {
-		$features = [
-			GEMSECURITY_PLUGIN_SLUG . '-threats'     => [
-				'title' => __( 'Threat Defense', 'gemsecurity' ),
-				'desc'  => __( 'Escalating auto-bans, the ban ledger and the early-load request firewall.', 'gemsecurity' ),
-			],
-			GEMSECURITY_PLUGIN_SLUG . '-geolocation' => [
-				'title' => __( 'Geolocation', 'gemsecurity' ),
-				'desc'  => __( 'Country access control and per-user location lock.', 'gemsecurity' ),
-			],
-			GEMSECURITY_PLUGIN_SLUG . '-malware'     => [
-				'title' => __( 'Malware Scan', 'gemsecurity' ),
-				'desc'  => __( 'Signature malware scan, database injection scan, quarantine/restore and the post-hack recovery toolkit.', 'gemsecurity' ),
-			],
-			GEMSECURITY_PLUGIN_SLUG . '-pro-tools'   => [
-				'title' => __( 'Pro Tools', 'gemsecurity' ),
-				'desc'  => __( 'Hardening pack, file-change baseline, auto-update enforcement and settings import/export.', 'gemsecurity' ),
-			],
+		// Derived from the registry so a module flagged `is_pro` is locked in
+		// the UI automatically. Hand-maintaining this list let Pro modules
+		// (virtual patching, payment integrity, incident response, monitoring)
+		// render unlocked for free installs because nobody remembered to add
+		// them here.
+		$features = [];
+		$labels   = \GemSecurity\Modules\Registry::labels();
+
+		foreach ( \GemSecurity\Modules\Registry::all() as $id => $module ) {
+			if ( empty( $module['is_pro'] ) ) {
+				continue;
+			}
+			$features[ $module['page_slug'] ] = [
+				'title' => isset( $labels[ $id ]['title'] ) ? $labels[ $id ]['title'] : $id,
+				'desc'  => isset( $labels[ $id ]['desc'] ) ? $labels[ $id ]['desc'] : '',
+			];
+		}
+
+		// Sections that are Pro but are not modules of their own: the malware
+		// suite is a tab inside the (free) Scanner module.
+		$features[ GEMSECURITY_PLUGIN_SLUG . '-malware' ] = [
+			'title' => __( 'Malware Scan', 'gemsecurity' ),
+			'desc'  => __( 'Signature malware scan, database injection scan, quarantine/restore and plugin integrity verification.', 'gemsecurity' ),
 		];
 
 		return apply_filters( 'gemsecurity/pro_features', $features );

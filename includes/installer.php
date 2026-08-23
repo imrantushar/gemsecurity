@@ -14,10 +14,12 @@ class Installer {
 
 	public static function activate() {
 		self::create_tables();
+		self::migrate_settings();
 		self::set_default_options();
 		// Seed the module-activation map from current settings so a fresh install
 		// boots core + recommended modules and an existing site keeps its behavior.
 		\GemSecurity\Modules\Registry::seed_if_missing();
+		\GemSecurity\Security\Quarantine::migrate_legacy();
 		self::schedule_events();
 		self::snapshot_admin_whitelist();
 		// Fresh start for the mu-plugin watchdog, so a future incident alerts
@@ -65,10 +67,7 @@ class Installer {
 			[ 'context' => [ 'who' => $who, 'ip' => $ip ] ]
 		);
 
-		$to = trim( (string) \GemSecurity\Helper::get_setting( 'alert_to_email', '' ) );
-		if ( '' === $to ) {
-			$to = get_option( 'admin_email' );
-		}
+		$to = \GemSecurity\Mailer::recipient();
 
 		\GemSecurity\Mailer::send(
 			$to,
@@ -129,11 +128,163 @@ class Installer {
 	public static function maybe_upgrade() {
 		if ( get_option( 'gemsecurity_db_version' ) !== GEMSECURITY_DB_VERSION ) {
 			self::create_tables();
+			// Fold retired and duplicated settings into the keys that replaced
+			// them *before* defaults are merged, so a site keeps the behaviour
+			// it already had.
+			self::migrate_settings();
 			self::set_default_options();
 			// Derive module activation from the existing settings on first
 			// upgrade to the module system — no behavior change for the site.
 			\GemSecurity\Modules\Registry::seed_if_missing();
+			\GemSecurity\Security\Quarantine::migrate_legacy();
 			self::schedule_events();
+		}
+	}
+
+	/**
+	 * Carry settings across the consolidation of duplicated features.
+	 *
+	 * Several things were configurable in two places at once — two comment
+	 * honeypots, two "disable application passwords" switches, four separate
+	 * notification recipients. Each pair collapsed to one key; this moves the
+	 * live value onto the surviving key and drops the retired one, so nothing
+	 * a site had switched on quietly switches itself off.
+	 *
+	 * Idempotent: once the retired keys are gone there is nothing left to do.
+	 *
+	 * @return void
+	 */
+	private static function migrate_settings() {
+		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		if ( ! is_array( $settings ) || ! $settings ) {
+			return;
+		}
+		$before = $settings;
+
+		// The Captcha module's comment honeypot is gone; Anti-Spam's covers
+		// comments and registration and is the stronger of the two.
+		if ( ! empty( $settings['comment_honeypot_enabled'] ) && empty( $settings['antispam_enabled'] ) ) {
+			$settings['antispam_enabled'] = true;
+		}
+
+		// Two switches turned application passwords off; API & Access keeps its
+		// one, because it also governs expiry and creation alerts.
+		if ( ! empty( $settings['disable_application_passwords'] ) ) {
+			$settings['app_pw_disabled'] = true;
+		}
+
+		// One notification recipient. Whichever per-feature address the site had
+		// set wins if the shared one is still empty; admin-login first, since it
+		// was the one most likely to have been deliberately changed.
+		if ( empty( $settings['alert_to_email'] ) ) {
+			$admin_email = (string) get_option( 'admin_email' );
+			foreach ( [ 'admin_login_alert_email', 'monitor_alert_email' ] as $legacy ) {
+				$value = isset( $settings[ $legacy ] ) ? trim( (string) $settings[ $legacy ] ) : '';
+				if ( '' !== $value && $value !== $admin_email && is_email( $value ) ) {
+					$settings['alert_to_email'] = $value;
+					break;
+				}
+			}
+		}
+
+		unset(
+			$settings['comment_honeypot_enabled'],
+			$settings['disable_application_passwords'],
+			$settings['admin_login_alert_email'],
+			$settings['monitor_alert_email']
+		);
+
+		if ( $settings !== $before ) {
+			update_option( GEMSECURITY_SETTINGS_NAME, $settings );
+			\GemSecurity\Helper::flush_settings_cache();
+		}
+
+		self::migrate_backup_settings();
+		self::migrate_retired_modules();
+	}
+
+	/**
+	 * Drop state belonging to modules and features that no longer exist.
+	 *
+	 * `pro-tools` was dissolved — its hardening pack, baseline scopes,
+	 * auto-update rules and settings import/export each moved to the page that
+	 * configures them — and the Pro file baseline was folded into the free
+	 * watcher, leaving its snapshot option orphaned.
+	 *
+	 * @return void
+	 */
+	private static function migrate_retired_modules() {
+		$state = get_option( \GemSecurity\Modules\Registry::OPTION, [] );
+		if ( is_array( $state ) && array_key_exists( 'pro-tools', $state ) ) {
+			unset( $state['pro-tools'] );
+			update_option( \GemSecurity\Modules\Registry::OPTION, $state );
+			\GemSecurity\Modules\Registry::flush_state_cache();
+		}
+
+		// The second baseline's snapshot. Nothing reads it now, and it can be
+		// large — it held a hash per file across core, plugins and themes.
+		delete_option( 'gemsecurity_pro_file_baseline' );
+		wp_clear_scheduled_hook( 'gemsecurity_pro_file_baseline_scan' );
+	}
+
+	/**
+	 * The backup subsystem's own option store: adopt the plugin-wide recipient
+	 * and webhook, rename its log-retention key away from the collision with
+	 * the security log's, and drop the schedule_* keys nothing ever read.
+	 *
+	 * @return void
+	 */
+	private static function migrate_backup_settings() {
+		// Resolved without requiring the constant: it is only defined once the
+		// Backup subsystem boots, and that is gated on the Backup module being
+		// active. Depending on it here would skip the migration entirely on any
+		// site with Backup switched off — and the version bump means it would
+		// never get a second chance.
+		$option = defined( 'GEMBACKUP_SETTINGS_NAME' ) ? GEMBACKUP_SETTINGS_NAME : 'gemsecurity_backup_settings';
+
+		$backup = get_option( $option, [] );
+		if ( ! is_array( $backup ) || ! $backup ) {
+			return;
+		}
+		$before = $backup;
+
+		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		$settings = is_array( $settings ) ? $settings : [];
+
+		if ( empty( $settings['alert_to_email'] ) && ! empty( $backup['notify_email'] ) && is_email( $backup['notify_email'] ) ) {
+			$settings['alert_to_email'] = $backup['notify_email'];
+			update_option( GEMSECURITY_SETTINGS_NAME, $settings );
+			\GemSecurity\Helper::flush_settings_cache();
+		}
+		if ( empty( $settings['alert_webhook_url'] ) && ! empty( $backup['webhook_url'] ) ) {
+			$settings['alert_webhook_url'] = $backup['webhook_url'];
+			update_option( GEMSECURITY_SETTINGS_NAME, $settings );
+			\GemSecurity\Helper::flush_settings_cache();
+		}
+
+		// A site that had a recipient set was receiving completion notices; keep
+		// it receiving them now that one toggle governs both events.
+		if ( ! empty( $backup['notify_email'] ) ) {
+			$backup['notify_on_failure'] = true;
+		}
+
+		if ( isset( $backup['logs_retention_days'] ) && ! isset( $backup['backup_logs_retention_days'] ) ) {
+			$backup['backup_logs_retention_days'] = (int) $backup['logs_retention_days'];
+		}
+
+		unset(
+			$backup['notify_email'],
+			$backup['webhook_url'],
+			$backup['logs_retention_days'],
+			$backup['schedule_enabled'],
+			$backup['schedule_frequency'],
+			$backup['schedule_backup_type'],
+			$backup['schedule_storage_driver'],
+			$backup['schedule_time']
+		);
+
+		if ( $backup !== $before ) {
+			update_option( $option, $backup );
 		}
 	}
 
@@ -204,7 +355,6 @@ class Installer {
 			'block_author_enumeration'     => true,
 			'disable_user_rest'            => true,
 			'hide_wp_version'              => true,
-			'disable_application_passwords' => false,
 			'comments_disabled'            => false,
 
 			// Login security.
@@ -212,7 +362,6 @@ class Installer {
 			'login_attempts_limit'         => 5,
 			'login_lockout_duration'       => 30, // minutes.
 			'admin_login_alert_enabled'    => false,
-			'admin_login_alert_email'      => get_option( 'admin_email' ),
 			'admin_session_timeout_enabled' => false,
 			'admin_session_timeout_hours'  => 24,
 
@@ -280,7 +429,6 @@ class Installer {
 			'captcha_on_lostpassword'      => false,
 			'captcha_on_comments'          => false,
 			'captcha_v3_threshold'         => 0.5,
-			'comment_honeypot_enabled'     => true,
 
 			// Anti-spam.
 			'antispam_enabled'             => true,
@@ -329,7 +477,6 @@ class Installer {
 
 			// Monitoring.
 			'monitoring_enabled'           => false,
-			'monitor_alert_email'          => '',
 
 			// Vulnerability scanner.
 			'vuln_scan_enabled'            => true,
@@ -389,7 +536,8 @@ class Installer {
 			'trusted_devices_alert'        => true,
 			'magic_link_enabled'           => false,
 
-			// Alerts + digest.
+			// Notifications. `alert_to_email` is the one address every alert,
+			// report and failure notice goes to — see Mailer::recipient().
 			'alerts_enabled'               => false,
 			'alert_min_severity'           => 'critical',
 			'alert_to_email'               => '',

@@ -8,9 +8,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Real-time alert channels (Slack, Telegram, generic webhook) and a weekly
- * security digest. Listens on the central `gemsecurity/event_logged` action and
- * forwards qualifying events to the enabled channels (non-blocking, debounced).
+ * Real-time alerts and the weekly security digest.
+ *
+ * Listens on the central `gemsecurity/event_logged` action and forwards
+ * qualifying events to every enabled channel: email first, then the fast
+ * channels (Slack, Telegram, generic webhook) which are fire-and-forget.
+ *
+ * Email used to be missing here even though the settings screen offered an
+ * alert address and a "send a test email" button next to the master switch —
+ * so a site configured for email alerts received none of them.
  */
 class Alerts {
 
@@ -46,7 +52,59 @@ class Alerts {
 
 		$site = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$text = sprintf( '[%s] %s: %s', $site, strtoupper( $severity ), $message );
+
+		$this->email( $event_type, $message, $severity, $args );
 		$this->dispatch( $text );
+	}
+
+	/**
+	 * Email one alert to the site's security address.
+	 *
+	 * @param string $event_type
+	 * @param string $message
+	 * @param string $severity
+	 * @param array  $args
+	 * @return void
+	 */
+	private function email( $event_type, $message, $severity, $args = [] ) {
+		$emoji = ( 'critical' === $severity ) ? '🚨' : '⚠️';
+		$rows  = [
+			[ __( 'Event', 'gemsecurity' ), $event_type ],
+			[ __( 'Severity', 'gemsecurity' ), ucfirst( $severity ) ],
+			[ __( 'Time', 'gemsecurity' ), wp_date( 'F j, Y \a\t g:i a' ) ],
+		];
+
+		$ip = isset( $args['ip'] ) ? $args['ip'] : \GemSecurity\Helper::get_ip_address();
+		if ( $ip ) {
+			$rows[] = [ __( 'IP address', 'gemsecurity' ), $ip ];
+		}
+
+		\GemSecurity\Mailer::send(
+			\GemSecurity\Mailer::recipient(),
+			$emoji,
+			sprintf(
+				/* translators: %s: severity, e.g. Critical. */
+				__( '%s security alert', 'gemsecurity' ),
+				ucfirst( $severity )
+			),
+			[
+				[
+					'type' => 'notice',
+					'tone' => ( 'critical' === $severity ) ? 'critical' : 'warning',
+					'text' => $message,
+				],
+				[
+					'type'    => 'table',
+					'heading' => __( 'Details', 'gemsecurity' ),
+					'rows'    => $rows,
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-logs' ),
+					'label' => __( 'Open the activity log', 'gemsecurity' ),
+				],
+			]
+		);
 	}
 
 	/**
@@ -121,9 +179,8 @@ class Alerts {
 		}
 		$body = implode( "\n", $lines );
 
-		$to = trim( (string) Helper::get_setting( 'alert_to_email', '' ) ) ?: get_option( 'admin_email' );
 		\GemSecurity\Mailer::send(
-			$to,
+			\GemSecurity\Mailer::recipient(),
 			'📊',
 			__( 'Weekly security report', 'gemsecurity' ),
 			[

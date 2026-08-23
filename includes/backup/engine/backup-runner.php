@@ -359,10 +359,8 @@ class Backup_Runner {
 	}
 
 	/**
-	 * Notify on a failed backup. Email is gated on the `notify_on_failure`
-	 * setting; the webhook always fires when configured (integrations want to
-	 * hear about failures). A silent backup failure is the worst outcome for a
-	 * backup plugin, so this path matters as much as the success path.
+	 * Notify on a failed backup. A silent backup failure is the worst outcome
+	 * for a backup plugin, so this path matters as much as the success path.
 	 *
 	 * @param int    $backup_id
 	 * @param string $error
@@ -383,31 +381,73 @@ class Backup_Runner {
 		$is_fail = ( 'failed' === $event );
 		$error   = $error ?: ( $row['error_message'] ?? '' );
 
-		// Email.
-		$send_email = ! empty( $settings['notify_email'] );
-		if ( $is_fail ) {
-			$send_email = $send_email && ! empty( $settings['notify_on_failure'] );
-		}
-		if ( $send_email ) {
+		// Email. Backup notices go to the site's one security address and
+		// through the shared mailer, so they look like — and land with — every
+		// other notification the plugin sends. Success notices are opt-in via
+		// the same toggle as failures.
+		if ( ! empty( $settings['notify_on_failure'] ) ) {
 			if ( $is_fail ) {
-				$subject = sprintf( "[%s] \xE2\x9A\xA0 Backup FAILED: %s", $host, $row['backup_name'] );
-				$body    = sprintf(
-					"Backup #%d (%s) FAILED.\n\nError: %s\nDestination: %s\nWhen: %s\n",
-					$backup_id, $row['backup_type'], $error ?: 'Unknown error', $row['storage_driver'], current_time( 'mysql' )
+				\GemSecurity\Mailer::send(
+					\GemSecurity\Mailer::recipient(),
+					'⚠️',
+					sprintf(
+						/* translators: %s: backup name. */
+						__( 'Backup failed: %s', 'gemsecurity' ),
+						$row['backup_name']
+					),
+					[
+						[
+							'type' => 'notice',
+							'tone' => 'critical',
+							'text' => __( 'A scheduled backup did not complete. Until it does, this site has no fresh restore point.', 'gemsecurity' ),
+						],
+						[
+							'type'    => 'table',
+							'heading' => __( 'Details', 'gemsecurity' ),
+							'rows'    => [
+								[ __( 'Backup', 'gemsecurity' ), sprintf( '#%d (%s)', $backup_id, $row['backup_type'] ) ],
+								[ __( 'Error', 'gemsecurity' ), $error ?: __( 'Unknown error', 'gemsecurity' ) ],
+								[ __( 'Destination', 'gemsecurity' ), $row['storage_driver'] ],
+								[ __( 'When', 'gemsecurity' ), current_time( 'mysql' ) ],
+							],
+						],
+						[
+							'type'  => 'button',
+							'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-backup' ),
+							'label' => __( 'Open Backup', 'gemsecurity' ),
+						],
+					]
 				);
 			} else {
-				$subject = sprintf( '[%s] Backup completed: %s', $host, $row['backup_name'] );
-				$body    = sprintf(
-					"Backup #%d (%s) completed.\n\nSize: %s\nDestination: %s\n",
-					$backup_id, $row['backup_type'], size_format( (int) $row['file_size'] ), $row['storage_driver']
+				\GemSecurity\Mailer::send(
+					\GemSecurity\Mailer::recipient(),
+					'✅',
+					sprintf(
+						/* translators: %s: backup name. */
+						__( 'Backup completed: %s', 'gemsecurity' ),
+						$row['backup_name']
+					),
+					[
+						[
+							'type'    => 'table',
+							'heading' => __( 'Details', 'gemsecurity' ),
+							'rows'    => [
+								[ __( 'Backup', 'gemsecurity' ), sprintf( '#%d (%s)', $backup_id, $row['backup_type'] ) ],
+								[ __( 'Size', 'gemsecurity' ), size_format( (int) $row['file_size'] ) ],
+								[ __( 'Destination', 'gemsecurity' ), $row['storage_driver'] ],
+							],
+						],
+					]
 				);
 			}
-			wp_mail( $settings['notify_email'], $subject, $body );
 		}
 
-		// Webhook — fire for both completed and failed events.
-		if ( ! empty( $settings['webhook_url'] ) ) {
-			wp_remote_post( $settings['webhook_url'], [
+		// Webhook — fire for both completed and failed events. This is the same
+		// generic webhook the rest of the plugin posts alerts to; backup used
+		// to carry a second URL setting of its own that had no UI at all.
+		$webhook = trim( (string) \GemSecurity\Helper::get_setting( 'alert_webhook_url', '' ) );
+		if ( '' !== $webhook ) {
+			wp_remote_post( $webhook, [
 				'timeout' => 5,
 				'headers' => [ 'Content-Type' => 'application/json' ],
 				'body'    => wp_json_encode( [

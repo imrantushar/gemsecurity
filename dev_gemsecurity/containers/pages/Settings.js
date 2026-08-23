@@ -6,8 +6,10 @@ import { Card, Field, Toggle, NumberInput, TextInput, Select, ListInput, Button,
 import SetupGuide from '@Components/ui/SetupGuide';
 import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
-import BackupSchedule from '@Containers/pages/BackupSchedule';
-import BackupStorage from '@Containers/pages/BackupStorage';
+import { useDispatch } from 'react-redux';
+import { fetchSettings } from '@Redux/settingsSlice';
+import { setModules } from '@Utils/nav';
+import { isPro, ProBadge } from '@Components/ui/Pro';
 
 const KEYS = [
 	'logs_retention_days',
@@ -17,7 +19,8 @@ const KEYS = [
 	'siem_endpoint',
 	'siem_syslog',
 	'siem_min_severity',
-	// Alerts + digest.
+	// Notifications. `alert_to_email` is the one address every alert, report
+	// and failure notice on the site goes to.
 	'alerts_enabled',
 	'alert_min_severity',
 	'alert_to_email',
@@ -38,9 +41,101 @@ const KEYS = [
 export default function Settings() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
 	const toast = useToast();
+	const dispatch = useDispatch();
+	const pro = isPro();
 	const [ verifyResult, setVerifyResult ] = useState( null );
 	const [ verifying, setVerifying ] = useState( false );
 	const [ sendingReport, setSendingReport ] = useState( false );
+	const [ busy, setBusy ] = useState( '' );
+
+	/* ------------------------- Settings portability ------------------------- */
+
+	const exportSettings = async () => {
+		setBusy( 'export' );
+		try {
+			const { data } = await api.get( 'pro/settings/export' );
+			const blob = new Blob( [ JSON.stringify( data.exported, null, 2 ) ], { type: 'application/json' } );
+			const url = URL.createObjectURL( blob );
+			const a = document.createElement( 'a' );
+			a.href = url;
+			// Host + date, so files from several sites stay distinguishable.
+			a.download = `gemsecurity-settings-${ window.location.hostname }-${ new Date()
+				.toISOString()
+				.slice( 0, 10 ) }.json`;
+			// The anchor must be in the document for Firefox to honour the
+			// click, and the object URL has to outlive it — revoking straight
+			// away cancels the download in Safari.
+			a.style.display = 'none';
+			document.body.appendChild( a );
+			a.click();
+			setTimeout( () => {
+				document.body.removeChild( a );
+				URL.revokeObjectURL( url );
+			}, 1000 );
+			toast( __( 'Settings exported.', 'gemsecurity' ), 'success' );
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Export failed.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const importSettings = ( e ) => {
+		const file = e.target.files && e.target.files[ 0 ];
+		e.target.value = '';
+		if ( ! file ) {
+			return;
+		}
+		const reader = new FileReader();
+		reader.onload = async () => {
+			setBusy( 'import' );
+			let parsed;
+			try {
+				parsed = JSON.parse( reader.result );
+			} catch ( err ) {
+				toast( __( 'Import failed — that file is not valid JSON.', 'gemsecurity' ), 'error' );
+				setBusy( '' );
+				return;
+			}
+			try {
+				const { data } = await api.post(
+					'pro/settings/import',
+					parsed.exported ? parsed : { exported: parsed }
+				);
+				// Module activation may have changed, so refresh the nav/menu
+				// from the server rather than leaving a stale module list.
+				await dispatch( fetchSettings() );
+				const fresh = await api.get( 'modules' );
+				if ( Array.isArray( fresh.data?.modules ) ) {
+					setModules( fresh.data.modules );
+				}
+				toast(
+					sprintf(
+						/* translators: 1: settings count, 2: module count. */
+						__( 'Imported %1$d settings and %2$d module states.', 'gemsecurity' ),
+						data?.imported ?? 0,
+						data?.modules ?? 0
+					),
+					'success'
+				);
+				if ( data?.skipped?.length ) {
+					toast(
+						sprintf(
+							/* translators: %s: comma-separated module ids. */
+							__( 'Skipped modules this site cannot enable: %s', 'gemsecurity' ),
+							data.skipped.join( ', ' )
+						),
+						'warning'
+					);
+				}
+			} catch ( err ) {
+				// Surface the server's reason (version mismatch, empty payload,
+				// Pro inactive) instead of blaming the file for everything.
+				toast( err?.response?.data?.message || __( 'Import failed.', 'gemsecurity' ), 'error' );
+			}
+			setBusy( '' );
+		};
+		reader.readAsText( file );
+	};
 
 	const runVerify = async () => {
 		setVerifying( true );
@@ -160,7 +255,7 @@ export default function Settings() {
 			>
 				<Toggle
 					label={ __( 'Email a daily report', 'gemsecurity' ) }
-					description={ __( 'Sent to the alert address below, or the site admin email.', 'gemsecurity' ) }
+					description={ __( 'Sent to the security email configured under Notifications.', 'gemsecurity' ) }
 					checked={ form.daily_report_enabled }
 					onChange={ ( v ) => setField( 'daily_report_enabled', v ) }
 				/>
@@ -184,10 +279,27 @@ export default function Settings() {
 			</Card>
 
 			<Card
-				title={ __( 'Alerts & notifications', 'gemsecurity' ) }
-				description={ __( 'Get notified about important security events beyond email.', 'gemsecurity' ) }
+				title={ __( 'Notifications', 'gemsecurity' ) }
+				description={ __( 'Where GemSecurity sends everything: real-time alerts, the daily report, the weekly digest, backup failures and monitoring notices. One address and one set of channels for the whole plugin.', 'gemsecurity' ) }
 			>
-				<Toggle label={ __( 'Enable real-time alerts', 'gemsecurity' ) } checked={ form.alerts_enabled } onChange={ ( v ) => setField( 'alerts_enabled', v ) } />
+				<Field
+					label={ __( 'Security email', 'gemsecurity' ) }
+					description={ __( 'Every notification the plugin sends goes here. Leave empty to use the WordPress admin email.', 'gemsecurity' ) }
+				>
+					<TextInput type="email" value={ form.alert_to_email ?? '' } onChange={ ( e ) => setField( 'alert_to_email', e.target.value ) } placeholder={ __( 'Defaults to the admin email', 'gemsecurity' ) } />
+				</Field>
+				<TestCredentials
+					target="email"
+					getValues={ () => ( { to: form.alert_to_email || '' } ) }
+					label={ __( 'Send a test email', 'gemsecurity' ) }
+				/>
+
+				<Toggle
+					label={ __( 'Enable real-time alerts', 'gemsecurity' ) }
+					description={ __( 'Send an email — and a message to each channel below — as soon as a qualifying event is logged.', 'gemsecurity' ) }
+					checked={ form.alerts_enabled }
+					onChange={ ( v ) => setField( 'alerts_enabled', v ) }
+				/>
 				{ form.alerts_enabled && (
 					<>
 						<div className="gs-row">
@@ -202,15 +314,7 @@ export default function Settings() {
 									] }
 								/>
 							</Field>
-							<Field label={ __( 'Alert email (optional)', 'gemsecurity' ) }>
-								<TextInput type="email" value={ form.alert_to_email ?? '' } onChange={ ( e ) => setField( 'alert_to_email', e.target.value ) } placeholder={ __( 'Defaults to admin email', 'gemsecurity' ) } />
-							</Field>
 						</div>
-						<TestCredentials
-							target="email"
-							getValues={ () => ( { to: form.alert_to_email || '' } ) }
-							label={ __( 'Send a test email', 'gemsecurity' ) }
-						/>
 						<SetupGuide id="alerts.slack" />
 						<Field label={ __( 'Slack incoming webhook URL', 'gemsecurity' ) }>
 							<TextInput value={ form.alert_slack_webhook ?? '' } onChange={ ( e ) => setField( 'alert_slack_webhook', e.target.value ) } placeholder="https://hooks.slack.com/services/…" />
@@ -248,7 +352,7 @@ export default function Settings() {
 						/>
 					</>
 				) }
-				<Toggle label={ __( 'Send a weekly security digest', 'gemsecurity' ) } description={ __( 'A summary email (and alert) every week.', 'gemsecurity' ) } checked={ form.digest_enabled } onChange={ ( v ) => setField( 'digest_enabled', v ) } />
+				<Toggle label={ __( 'Send a weekly security digest', 'gemsecurity' ) } description={ __( 'A summary email (and channel message) every week.', 'gemsecurity' ) } checked={ form.digest_enabled } onChange={ ( v ) => setField( 'digest_enabled', v ) } />
 			</Card>
 
 			<Card
@@ -268,10 +372,29 @@ export default function Settings() {
 				) }
 				<Toggle
 					label={ __( 'Back up before plugin/theme/core updates', 'gemsecurity' ) }
-					description={ __( 'Triggers GemBackup (if active) before any update runs.', 'gemsecurity' ) }
+					description={ __( 'Runs a backup before any update starts. Needs the Backup module switched on.', 'gemsecurity' ) }
 					checked={ form.backup_before_updates }
 					onChange={ ( v ) => setField( 'backup_before_updates', v ) }
 				/>
+			</Card>
+
+			<Card
+				title={ <>{ __( 'Settings import / export', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
+				description={ __( 'Back up or migrate the whole GemSecurity configuration — settings and module activation — as JSON.', 'gemsecurity' ) }
+			>
+				<div style={ { display: 'flex', gap: 10 } }>
+					<Button variant="secondary" loading={ busy === 'export' } onClick={ exportSettings } disabled={ ! pro }>
+						{ __( 'Export settings', 'gemsecurity' ) }
+					</Button>
+					{ pro ? (
+						<label className="gs-btn gs-btn--secondary" style={ { cursor: 'pointer' } }>
+							{ busy === 'import' ? __( 'Importing…', 'gemsecurity' ) : __( 'Import settings', 'gemsecurity' ) }
+							<input type="file" accept="application/json,.json" onChange={ importSettings } style={ { display: 'none' } } />
+						</label>
+					) : (
+						<Button variant="secondary" disabled>{ __( 'Import settings', 'gemsecurity' ) }</Button>
+					) }
+				</div>
 			</Card>
 
 			<div className="gs-savebar">
@@ -279,10 +402,6 @@ export default function Settings() {
 					{ __( 'Save changes', 'gemsecurity' ) }
 				</Button>
 			</div>
-
-			{ /* Backup configuration — schedules and storage destinations. */ }
-			<BackupSchedule />
-			<BackupStorage />
 		</div>
 	);
 }

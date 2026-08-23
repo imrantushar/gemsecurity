@@ -158,7 +158,7 @@ class Monitoring {
 			Logger::log( 'monitoring_alert', $a, Logger::SEVERITY_WARNING, [ 'user_id' => 0 ] );
 		}
 		if ( $alerts ) {
-			$to = Helper::get_setting( 'monitor_alert_email', '' ) ?: get_option( 'admin_email' );
+			$to = \GemSecurity\Mailer::recipient();
 			Mailer::send(
 				$to,
 				'📡',

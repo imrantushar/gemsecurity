@@ -45,7 +45,6 @@ no page, no menu entry and no routes.
 | Logs | `gemsecurity-logs` | Core |
 | Backup | `gemsecurity-backup` | Free (Pro cloud storage) |
 | Monitoring | `gemsecurity-monitoring` | Pro |
-| Pro Tools | `gemsecurity-pro-tools` | Pro |
 | Settings | `gemsecurity-settings` | Core |
 
 ---
@@ -56,22 +55,29 @@ no page, no menu entry and no routes.
 - IP blocklist with CIDR range support.
 - Real visitor IP detection — forwarding headers are honoured only behind a proxy the site
   owner explicitly trusts (Cloudflare, or a custom trusted-proxy list).
-- Hardening toggles: disable XML-RPC, disable file editor, block author/REST user
-  enumeration, hide WP version, disable application passwords, disable comments.
+- Hardening toggles: disable XML-RPC, disable the file editor, hide the WP version.
+- Username enumeration: block ?author=N scans, hide the REST users endpoint, and return one
+  generic login error.
+- Web Application Firewall — request inspection for SQLi / XSS / LFI / RCE patterns,
+  optionally including the request body.
+- Rate limiting per IP + 404-flood throttle.
 - Security headers — X-Frame-Options, X-Content-Type-Options, Referrer-Policy,
   Permissions-Policy, HSTS (max-age / subdomains / preload), CSP (report-only by default)
   with a violation-report collector.
-- Bot control — AI-crawler blocking and reverse-DNS verification of self-declared search bots.
+- Bot control — known-bad scanner blocking, empty user-agent blocking, AI-crawler blocking,
+  and reverse-DNS verification of self-declared search bots.
 - `security.txt` publishing (contact / expires / policy) and a read-only file-permission audit.
+- Pro hardening pack — admin IP allowlist, sensitive-file blocking, no PHP execution in
+  uploads, forced HTTPS.
 
 ### Anti-Spam
-- Silent honeypot + minimum time-to-submit on comments and registration.
+- Every comment control in one place, including the site-wide comment kill switch.
+- Silent honeypot + signed minimum time-to-submit on comments and registration.
+- Optional CAPTCHA on the comment form (provider configured under Login Security).
 - Heuristic comment scoring on link count and keyword matches.
 
-### WAF & Threat Defense (Pro)
-- Request inspection for SQLi / XSS / LFI / RCE patterns, optionally including the request body.
-- Rate limiting + 404-flood throttle.
-- Bad-bot blocking, empty user-agent blocking and custom bot patterns.
+### Threat Defense (Pro)
+- Custom bot patterns on top of the built-in bad-bot list, plus bot analytics.
 - Escalating auto-bans: strikes → temporary → permanent, in a ban-ledger table with a manual
   ban manager UI.
 - Extended-protection mu-plugin — early firewall that blocks banned/malicious requests before
@@ -85,9 +91,11 @@ no page, no menu entry and no routes.
 
 ### Login Security
 - Brute-force lockout with configurable attempt limit and lockout duration.
-- Admin-login email alert; absolute admin session timeout; idle session timeout.
+- Admin-login email alert (to the plugin-wide security email); absolute admin session
+  timeout; idle session timeout.
 - Login CAPTCHA — reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile (login / registration /
-  lost-password / comments) with a v3 score threshold.
+  lost-password) with a v3 score threshold. Putting the same CAPTCHA on the comment form is
+  a switch on the Anti-Spam page.
 - Password policy — minimum length, complexity, expiry, and a breached-password check via
   Have I Been Pwned (k-anonymity).
 - Custom login URL (rename `wp-login.php`, 404 the default) and a login honeypot.
@@ -118,17 +126,19 @@ no page, no menu entry and no routes.
 ### API & Access Hardening
 - REST API rate limiting (max requests per window, per IP).
 - Application-password governance — inventory, disable outright, alert on creation, maximum age.
-- Generic login errors, so an invalid username cannot be distinguished from a wrong password.
 
 ### Scanner
 - WP core file integrity check against official WordPress.org checksums.
-- Unexpected/foreign file and suspicious-pattern detection.
-- File-change watcher between scans; outbound link scanning.
+- Unexpected/foreign file detection, and heuristic suspicious-pattern detection on free
+  (the Pro signature scanner supersedes it).
+- One file-change baseline over the active theme, mu-plugins and drop-ins — Pro widens the
+  same baseline to core, all plugins and all themes. Outbound link scanning.
 - Known-vulnerability scanner for core/plugins/themes (cached, fail-soft) + daily cron.
 - mu-plugins and drop-ins inspection (code that runs without appearing on the Plugins screen).
 - Supply chain — installed plugins checked against what WordPress.org actually ships, plus
   persistence checks.
-- Pro: signature malware scan, database-injection findings, quarantine and a recovery toolkit.
+- Pro: signature malware scan, database-injection findings, quarantine, plugin integrity
+  verification, and auto-update enforcement (vulnerable items only, or everything).
 
 ### Payment Integrity (Pro)
 - Client-side script inventory for nominated checkout/payment pages.
@@ -136,22 +146,23 @@ no page, no menu entry and no routes.
 
 ### Incident Response (Pro)
 - Forensic timeline built from the audit log.
-- File quarantine to a protected uploads folder (move, not delete).
-- Log-everyone-out recovery action, invalidating stolen session cookies.
+- The site's single quarantine — a protected uploads folder (move, not delete), showing
+  anything the malware scanner moved too.
+- Recovery actions: log everyone out, regenerate wp-config keys/salts, roll back to the last
+  completed backup.
 
 ### Activity Log / Audit
-- Audit log covering content edits, plugin/theme changes, user changes and settings changes.
+- Audit log covering content edits, plugin/theme changes, user changes and settings changes,
+  each individually switchable on the Logs page.
 - Severity/category filters, retention and CSV export.
 - Pro: hash-chained entries (tamper-evidence) with a verify endpoint, SIEM/syslog forwarding
   and a compliance report.
 
-### Alerts
-- Channels: email, Slack, Telegram, generic webhook.
-- Minimum-severity filter and an email digest.
-
 ### Backup
 - Manual database / files / full-site backups; restore and download.
-- Scheduled backups with retention, exclude paths/tables and a backup activity log.
+- Scheduled backups, storage destinations and configuration all on the Backup page:
+  retention, encryption, exclude paths/tables, pre-restore safety snapshot, failure
+  notification and the "no recent backup" threshold.
 - Pre-update automatic backup (fires before plugin/theme/core updates).
 - Pro: cloud storage — Amazon S3, Backblaze B2, Cloudflare R2, Dropbox, Google Drive,
   OneDrive, FTP — plus encryption, migration (search-replace), multiple schedules and
@@ -159,16 +170,17 @@ no page, no menu entry and no routes.
 
 ### Monitoring (Pro)
 - Uptime, TLS-certificate expiry, DNS-change and SPF/DMARC checks on a daily cron.
-- Alert address for warnings.
+- Warnings go to the plugin-wide security email (Settings → Notifications).
 
-### Pro Tools (Pro)
-- Admin IP allowlist; block sensitive files; block PHP execution in uploads; force HTTPS.
-- File-change baseline over configurable scopes.
-- Auto-update enforcement — vulnerable plugins only, or all plugins/themes.
-- Settings import / export.
-
-### Lockdown / Maintenance
+### Settings
+- Notifications — one security email address and one set of channels (Slack, Telegram,
+  generic webhook) used by every alert, report and failure notice the plugin sends, with a
+  minimum-severity filter and an optional weekly digest.
+- Daily morning report; compliance & SIEM (log hash chain, forwarding, severity floor).
+- Activity log retention.
 - Lockdown/maintenance mode — 503 for non-admins, with a custom message.
+- Pre-update backup trigger.
+- Pro: settings import / export, carrying module activation with it.
 
 ### Dashboard
 - Security score, stats, 7-day activity trend, recent events and last-scan result.
@@ -223,7 +235,7 @@ implementation.
 - Backup: one-click restore into staging, and white-label PDF reports.
 
 ## Recently closed (previously listed as open)
-- File-change baseline/diff — shipped in Pro Tools.
+- File-change baseline/diff — shipped in Scanner → File change watcher (Pro widens the scopes).
 - Quarantine of modified/malicious files — shipped in the Pro malware scanner and Incident
   Response.
 - Plugin/theme integrity vs the WordPress.org repo — shipped in Scanner → Supply chain.

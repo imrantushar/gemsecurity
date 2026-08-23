@@ -10,6 +10,11 @@ const KEYS = [
 	'antispam_heuristics',
 	'antispam_max_links',
 	'antispam_keywords',
+	// Every comment control lives here now. `captcha_on_comments` was on the
+	// Login Security page and `comments_disabled` in the firewall's hardening
+	// list, so deciding how comments are handled meant visiting three screens.
+	'captcha_on_comments',
+	'comments_disabled',
 ];
 
 export default function AntiSpam() {
@@ -17,6 +22,18 @@ export default function AntiSpam() {
 
 	return (
 		<div className="gs-page">
+			<Card
+				title={ __( 'Comments', 'gemsecurity' ) }
+				description={ __( 'Comments are a common spam and malicious-content vector. If the site does not use them, closing them entirely removes the surface.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Disable comments entirely', 'gemsecurity' ) }
+					description={ __( 'Closes comments and pingbacks everywhere, hides existing ones and removes the comment UI. The rest of this page has no effect while this is on.', 'gemsecurity' ) }
+					checked={ form.comments_disabled }
+					onChange={ ( v ) => setField( 'comments_disabled', v ) }
+				/>
+			</Card>
+
 			<Card
 				title={ __( 'Silent bot protection', 'gemsecurity' ) }
 				description={ __( 'A hidden honeypot plus a minimum time-on-page check stops automated comment and registration spam — with no puzzle for real visitors.', 'gemsecurity' ) }
@@ -32,6 +49,12 @@ export default function AntiSpam() {
 						<NumberInput min="1" value={ form.antispam_min_seconds ?? 3 } onChange={ ( e ) => setField( 'antispam_min_seconds', Number( e.target.value ) ) } />
 					</Field>
 				) }
+				<Toggle
+					label={ __( 'Also show a CAPTCHA on the comment form', 'gemsecurity' ) }
+					description={ __( 'A visible challenge on top of the silent checks. Configure the provider under Login Security → CAPTCHA; without one this does nothing.', 'gemsecurity' ) }
+					checked={ form.captcha_on_comments }
+					onChange={ ( v ) => setField( 'captcha_on_comments', v ) }
+				/>
 			</Card>
 
 			<ProSection

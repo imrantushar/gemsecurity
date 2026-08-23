@@ -251,6 +251,28 @@ html {
 		&__actions { flex-shrink: 0; }
 	}
 
+	/* A grouped block inside a card — for a feature that belongs with its
+	   neighbours but still needs its own heading (e.g. the Pro auto-update
+	   rules sitting under the vulnerability scan that feeds them). */
+	.gs-subcard {
+		margin-top: 18px; padding-top: 16px; border-top: 1px solid $gs-border;
+		> strong { display: block; font-size: 14px; font-weight: 700; }
+		> .gs-card__desc { margin: 4px 0 10px; }
+	}
+
+	/* Two-column list of destructive actions: what it does, and the button
+	   that does it. Used by the Incident Response recovery card. */
+	.gs-recovery {
+		display: grid; grid-template-columns: 1fr auto; gap: 14px 18px; align-items: center;
+		> div + div { margin-top: 0; }
+		strong { font-size: 14px; }
+		.gs-card__desc { margin: 3px 0 0; }
+		@media (max-width: 600px) {
+			grid-template-columns: 1fr;
+			.gs-btn { justify-self: start; }
+		}
+	}
+
 	/* ---------------- Buttons ---------------- */
 	.gs-btn {
 		display: inline-flex; align-items: center; gap: 7px;

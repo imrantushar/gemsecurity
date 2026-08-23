@@ -53,7 +53,6 @@ class Registry {
 	 *  - recommended  bool     Seeded ON for fresh installs.
 	 *  - page_slug    string   WP ?page= slug + React route key.
 	 *  - classes      string[] Fully-qualified class names booted when active.
-	 *  - rest         string[] REST route-group keys registered when active.
 	 *  - settings_keys string[] Settings whose truthiness implies "was in use"
 	 *                           (used to derive activation on upgrade).
 	 *
@@ -75,7 +74,6 @@ class Registry {
 				'core'          => true,
 				'page_slug'     => $slug,
 				'classes'       => [],
-				'rest'          => [ 'dashboard', 'search' ],
 			],
 			'modules' => [
 				'icon'          => 'layers',
@@ -83,7 +81,6 @@ class Registry {
 				'core'          => true,
 				'page_slug'     => $slug . '-modules',
 				'classes'       => [],
-				'rest'          => [ 'modules' ],
 			],
 
 			// ---- Firewall & hardening ------------------------------------
@@ -92,19 +89,20 @@ class Registry {
 				'category'      => 'firewall',
 				'recommended'   => true,
 				'page_slug'     => $slug . '-firewall',
+				// Waf owns every request-level rule the Firewall page configures:
+				// the rule engine, rate limiting, the 404 throttle and bot control.
+				// Pro's Hardening pack gates itself on this module too.
 				'classes'       => [
 					Waf::class,
 					Firewall::class,
-					Comments::class,
 					SecurityHeaders::class,
 				],
-				'rest'          => [],
 				'settings_keys' => [
 					'firewall_enabled', 'xmlrpc_disabled', 'disable_file_editing',
 					'block_author_enumeration', 'disable_user_rest', 'hide_wp_version',
-					'comments_disabled', 'security_headers_enabled', 'waf_enabled',
+					'security_headers_enabled', 'waf_enabled',
 					'rate_limit_enabled', 'throttle_404_enabled', 'block_bad_bots',
-					'block_ai_crawlers', 'verify_search_bots',
+					'block_ai_crawlers', 'verify_search_bots', 'login_errors_generic',
 				],
 			],
 			'anti-spam' => [
@@ -112,9 +110,10 @@ class Registry {
 				'category'      => 'firewall',
 				'recommended'   => true,
 				'page_slug'     => $slug . '-anti-spam',
-				'classes'       => [ AntiSpam::class ],
-				'rest'          => [],
-				'settings_keys' => [ 'antispam_enabled', 'antispam_heuristics' ],
+				// Comments belongs here rather than with the firewall: every
+				// comment control the UI offers now lives on the Anti-Spam page.
+				'classes'       => [ AntiSpam::class, Comments::class ],
+				'settings_keys' => [ 'antispam_enabled', 'antispam_heuristics', 'comments_disabled' ],
 			],
 			'threats' => [
 				'icon'          => 'zap',
@@ -122,7 +121,6 @@ class Registry {
 				'is_pro'        => true,
 				'page_slug'     => $slug . '-threats',
 				'classes'       => [ ThreatIntel::class ], // Auto-ban enforcement lives in Waf; this adds detection.
-				'rest'          => [ 'bans', 'bots', 'live-traffic' ],
 			],
 			'virtual-patch' => [
 				'icon'          => 'shield',
@@ -130,7 +128,6 @@ class Registry {
 				'is_pro'        => true,
 				'page_slug'     => $slug . '-virtual-patch',
 				'classes'       => [ VirtualPatch::class ],
-				'rest'          => [ 'vpatch' ],
 			],
 
 			// ---- Login & access ------------------------------------------
@@ -139,39 +136,36 @@ class Registry {
 				'category'      => 'access',
 				'recommended'   => true,
 				'page_slug'     => $slug . '-login-security',
+				// Captcha lives here, not with Two-Factor: every CAPTCHA control
+				// the UI offers is on the Login Security page, and gating it on a
+				// module the user never sees made the card save but do nothing.
 				'classes'       => [
 					LoginSecurity::class,
 					Sessions::class,
 					PasswordPolicy::class,
 					PasswordRotation::class,
 					CustomLogin::class,
-					Lockdown::class,
 					LoginExtras::class,
+					Captcha::class,
 				],
-				'rest'          => [ 'sessions', 'magic-link' ],
 				'settings_keys' => [
 					'login_attempts_enabled', 'admin_session_timeout_enabled',
 					'password_policy_enabled', 'idle_timeout_enabled',
-					'custom_login_enabled', 'lockdown_enabled',
+					'custom_login_enabled', 'captcha_enabled',
 				],
 			],
 			'two-factor' => [
 				'icon'          => 'key',
 				'category'      => 'access',
 				'page_slug'     => $slug . '-two-factor',
-				'classes'       => [
-					TwoFactor::class,
-					Captcha::class,
-				],
-				'rest'          => [ '2fa' ],
-				'settings_keys' => [ 'two_factor_enabled', 'captcha_enabled' ],
+				'classes'       => [ TwoFactor::class ],
+				'settings_keys' => [ 'two_factor_enabled' ],
 			],
 			'social-login' => [
 				'icon'          => 'users',
 				'category'      => 'access',
 				'page_slug'     => $slug . '-social-login',
 				'classes'       => [ SocialLogin::class ],
-				'rest'          => [ 'social' ],
 				'settings_keys' => [ 'social_login_enabled' ],
 			],
 			'geolocation' => [
@@ -180,7 +174,6 @@ class Registry {
 				'is_pro'        => true,
 				'page_slug'     => $slug . '-geolocation',
 				'classes'       => [ Geolocation::class ],
-				'rest'          => [ 'geo' ],
 				'settings_keys' => [ 'geo_enabled' ],
 			],
 			'admin-guard' => [
@@ -192,7 +185,6 @@ class Registry {
 					AdminGuard::class,
 					HiddenAdmin::class,
 				],
-				'rest'          => [ 'admins' ],
 				'settings_keys' => [ 'admin_whitelist_enabled', 'hidden_admin_detection' ],
 			],
 			'api-hardening' => [
@@ -201,10 +193,8 @@ class Registry {
 				'recommended'   => true,
 				'page_slug'     => $slug . '-api-hardening',
 				'classes'       => [ ApiHardening::class ],
-				'rest'          => [ 'app-passwords' ],
 				'settings_keys' => [
-					'rest_rate_limit_enabled', 'app_pw_disabled',
-					'app_pw_max_age_days', 'login_errors_generic',
+					'rest_rate_limit_enabled', 'app_pw_disabled', 'app_pw_max_age_days',
 				],
 			],
 
@@ -217,8 +207,9 @@ class Registry {
 				// Scanner, Finder, FileWatcher and LinkScanner are on-demand
 				// engines (driven by REST + cron) with no init() hooks, so there
 				// is nothing to boot here — the module is its page + REST routes.
+				// Pro's malware suite, baseline scopes and auto-update enforcement
+				// gate themselves on this module.
 				'classes'       => [],
-				'rest'          => [ 'scan', 'mu-plugins', 'supply-chain' ],
 				'settings_keys' => [
 					'file_watcher_enabled', 'link_scanner_enabled',
 					'scanner_auto_scan', 'vuln_scan_enabled',
@@ -231,7 +222,6 @@ class Registry {
 				'is_pro'        => true,
 				'page_slug'     => $slug . '-payment-integrity',
 				'classes'       => [ PaymentIntegrity::class ],
-				'rest'          => [ 'payment-scripts' ],
 				'settings_keys' => [ 'payment_integrity_enabled' ],
 			],
 
@@ -241,22 +231,15 @@ class Registry {
 				'is_pro'        => true,
 				'page_slug'     => $slug . '-incident-response',
 				'classes'       => [], // On-demand; all work via REST.
-				'rest'          => [ 'incident' ],
 			],
 
 			// ---- Logging -------------------------------------------------
 			'logs' => [
 				'icon'          => 'list',
-				'category'      => 'core',
+				'category'      => 'logging',
 				'core'          => true,
 				'page_slug'     => $slug . '-logs',
-				'classes'       => [
-					AuditLog::class,
-					DailyReport::class,
-					Alerts::class,
-					Compliance::class,
-				],
-				'rest'          => [ 'logs' ],
+				'classes'       => [ AuditLog::class ],
 			],
 
 			// ---- Maintenance ---------------------------------------------
@@ -268,7 +251,6 @@ class Registry {
 				// The Backup subsystem boots via its own bootstrap (see gemsecurity.php),
 				// gated on this module. No plain module class here.
 				'classes'       => [],
-				'rest'          => [],
 			],
 			'monitoring' => [
 				'icon'          => 'globe',
@@ -276,28 +258,25 @@ class Registry {
 				'is_pro'        => true,
 				'page_slug'     => $slug . '-monitoring',
 				'classes'       => [ Monitoring::class ],
-				'rest'          => [ 'monitoring' ],
 				'settings_keys' => [ 'monitoring_enabled' ],
-			],
-			'pro-tools' => [
-				'icon'          => 'crown',
-				'category'      => 'maintenance',
-				'is_pro'        => true,
-				'page_slug'     => $slug . '-pro-tools',
-				// Backing classes live in the Pro plugin and gate themselves on
-				// this module via Registry::is_active( 'pro-tools' ).
-				'classes'       => [],
-				'rest'          => [],
 			],
 
 			// ---- Settings (core) -----------------------------------------
+			// Notifications, the daily report, compliance/SIEM and lockdown are
+			// all configured on the Settings page, so they boot with it. Settings
+			// is core, so these are always available — which is what the page
+			// promises.
 			'settings' => [
 				'icon'          => 'cog',
 				'category'      => 'core',
 				'core'          => true,
 				'page_slug'     => $slug . '-settings',
-				'classes'       => [],
-				'rest'          => [ 'settings' ],
+				'classes'       => [
+					Alerts::class,
+					DailyReport::class,
+					Compliance::class,
+					Lockdown::class,
+				],
 			],
 		];
 
@@ -308,7 +287,6 @@ class Registry {
 			$m['is_pro']        = ! empty( $m['is_pro'] );
 			$m['recommended']   = ! empty( $m['recommended'] );
 			$m['classes']       = isset( $m['classes'] ) ? (array) $m['classes'] : [];
-			$m['rest']          = isset( $m['rest'] ) ? (array) $m['rest'] : [];
 			$m['settings_keys'] = isset( $m['settings_keys'] ) ? (array) $m['settings_keys'] : [];
 		}
 		unset( $m );
@@ -350,15 +328,15 @@ class Registry {
 			],
 			'firewall' => [
 				'title' => __( 'Firewall', 'gemsecurity' ),
-				'desc'  => __( 'Request firewall, hardening switches, security headers and comment control.', 'gemsecurity' ),
+				'desc'  => __( 'Request firewall and WAF rules, rate limiting, bot control, hardening switches and security headers.', 'gemsecurity' ),
 			],
 			'anti-spam' => [
 				'title' => __( 'Anti-Spam', 'gemsecurity' ),
-				'desc'  => __( 'Frictionless bot checks on comments and registration, plus heuristic comment filtering.', 'gemsecurity' ),
+				'desc'  => __( 'Every comment and registration control in one place: silent bot checks, CAPTCHA on comments, heuristic filtering and the comment kill switch.', 'gemsecurity' ),
 			],
 			'threats' => [
 				'title' => __( 'Threat Defense', 'gemsecurity' ),
-				'desc'  => __( 'Escalating auto-bans, the ban ledger and the early-load request firewall.', 'gemsecurity' ),
+				'desc'  => __( 'Live traffic, the ban ledger, escalating auto-bans, the early-load request firewall and behavioural detection.', 'gemsecurity' ),
 			],
 			'virtual-patch' => [
 				'title' => __( 'Virtual Patch', 'gemsecurity' ),
@@ -366,11 +344,11 @@ class Registry {
 			],
 			'login-security' => [
 				'title' => __( 'Login Security', 'gemsecurity' ),
-				'desc'  => __( 'Brute-force lockouts, session limits, password policy and custom login URL.', 'gemsecurity' ),
+				'desc'  => __( 'Brute-force lockouts, login CAPTCHA, session limits, password policy and custom login URL.', 'gemsecurity' ),
 			],
 			'two-factor' => [
 				'title' => __( 'Two-Factor', 'gemsecurity' ),
-				'desc'  => __( 'Time-based OTP / email two-factor and login CAPTCHA.', 'gemsecurity' ),
+				'desc'  => __( 'Time-based OTP / email two-factor, backup codes and per-role enforcement.', 'gemsecurity' ),
 			],
 			'social-login' => [
 				'title' => __( 'Social Login', 'gemsecurity' ),
@@ -386,11 +364,11 @@ class Registry {
 			],
 			'api-hardening' => [
 				'title' => __( 'API & Access', 'gemsecurity' ),
-				'desc'  => __( 'REST API rate limiting, application-password governance and username-enumeration hardening.', 'gemsecurity' ),
+				'desc'  => __( 'REST API rate limiting and application-password governance.', 'gemsecurity' ),
 			],
 			'scanner' => [
 				'title' => __( 'Scanner', 'gemsecurity' ),
-				'desc'  => __( 'Integrity, file-change, link and vulnerability scanning (plus the Pro malware suite).', 'gemsecurity' ),
+				'desc'  => __( 'Integrity, file-change, link and vulnerability scanning, auto-update enforcement and the Pro malware suite.', 'gemsecurity' ),
 			],
 			'payment-integrity' => [
 				'title' => __( 'Payment Integrity', 'gemsecurity' ),
@@ -402,7 +380,7 @@ class Registry {
 			],
 			'logs' => [
 				'title' => __( 'Logs', 'gemsecurity' ),
-				'desc'  => __( 'Activity audit log and real-time alerts.', 'gemsecurity' ),
+				'desc'  => __( 'Activity audit log and what gets recorded in it.', 'gemsecurity' ),
 			],
 			'backup' => [
 				'title' => __( 'Backup', 'gemsecurity' ),
@@ -412,13 +390,9 @@ class Registry {
 				'title' => __( 'Monitoring', 'gemsecurity' ),
 				'desc'  => __( 'Uptime, TLS-certificate expiry, DNS-change and email-authentication (SPF/DMARC) monitoring.', 'gemsecurity' ),
 			],
-			'pro-tools' => [
-				'title' => __( 'Pro Tools', 'gemsecurity' ),
-				'desc'  => __( 'Hardening pack, file-change baseline, auto-update enforcement and settings import/export.', 'gemsecurity' ),
-			],
 			'settings' => [
 				'title' => __( 'Settings', 'gemsecurity' ),
-				'desc'  => __( 'Plugin-wide preferences.', 'gemsecurity' ),
+				'desc'  => __( 'Plugin-wide preferences: notifications, the daily report, compliance/SIEM, lockdown and import/export.', 'gemsecurity' ),
 			],
 		];
 	}
