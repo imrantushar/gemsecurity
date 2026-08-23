@@ -28,6 +28,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class SecurityScore {
 
+	/** Most a site can lose to warnings alone, before any critical finding. */
+	const MAX_WARNING_DEDUCTION = 30;
+
 	/**
 	 * @return array {
 	 *   score:int, grade:string, posture_percent:int,
@@ -55,17 +58,23 @@ class SecurityScore {
 
 		// Active threats dominate. Any critical finding caps the score into
 		// failing territory; warnings each shave a few points off the posture.
-		$critical = 0;
-		$deduct   = 0;
+		$has_critical = false;
+		$deduct       = 0;
 		foreach ( $threats as $t ) {
 			if ( 'critical' === $t['severity'] ) {
-				$critical += (int) $t['count'];
+				$has_critical = true;
 			} else {
 				$deduct += min( 15, 5 * (int) $t['count'] );
 			}
 		}
 
-		if ( $critical > 0 ) {
+		// Each warning was already bounded at 15, but the total was not, so a
+		// site with three kinds of warning lost 45 points and a fully hardened
+		// one could still be graded F on warnings alone. Warnings should be
+		// able to pull a grade down, not erase the posture work behind it.
+		$deduct = min( self::MAX_WARNING_DEDUCTION, $deduct );
+
+		if ( $has_critical ) {
 			$score = min( $posture, 30 );
 		} else {
 			$score = max( 0, $posture - $deduct );
@@ -203,6 +212,25 @@ class SecurityScore {
 				'severity' => 'warning',
 				'count'    => 1,
 				'fix'      => __( 'Run a scan from the Scanner page.', 'gemsecurity' ),
+				'action'   => self::action( $scanner ),
+			];
+		} elseif ( isset( $scan['wp_version'] ) && $scan['wp_version'] !== get_bloginfo( 'version' ) ) {
+			// The last scan ran against a different WordPress version. Its core
+			// findings describe files that have since been legitimately
+			// replaced by the update, so every one of them would be reported as
+			// "modified or missing" — a wall of criticals caused by patching,
+			// which is the opposite of the lesson to teach. Say the result is
+			// out of date instead of repeating what it said.
+			$threats[] = [
+				'key'      => 'scan_outdated',
+				'label'    => sprintf(
+					/* translators: %s: WordPress version the last scan ran against. */
+					__( 'Last scan predates a WordPress update (ran against %s)', 'gemsecurity' ),
+					$scan['wp_version']
+				),
+				'severity' => 'warning',
+				'count'    => 1,
+				'fix'      => __( 'Re-run the scan so core files are checked against the version this site is actually running.', 'gemsecurity' ),
 				'action'   => self::action( $scanner ),
 			];
 		} else {

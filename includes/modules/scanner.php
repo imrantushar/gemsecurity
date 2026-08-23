@@ -332,6 +332,13 @@ class Scanner {
 			if ( isset( $listed[ $base ] ) ) {
 				continue; // A legitimate single-file plugin (has a header).
 			}
+			// The same inert/reviewed test the suspicious-file pass uses.
+			// wp-content/plugins/index.php is WordPress's own silence stub and
+			// is in every install ever made; reporting it as a possible dropper
+			// is exactly the noise that teaches people to skim the list.
+			if ( \GemSecurity\Security\SafeFiles::is_safe( $path ) ) {
+				continue;
+			}
 			$rel = 'wp-content/plugins/' . $base;
 			if ( isset( $flagged[ $rel ] ) ) {
 				continue;

@@ -273,11 +273,57 @@ class FileWatcher {
 		 * second baseline of its own — two baselines meant two snapshots, two
 		 * crons and two "files changed" lists over overlapping trees.
 		 *
+		 * Widening this widens *hashing* only. The injection heuristics run
+		 * over {@see heuristic_roots()}, which is deliberately not filterable.
+		 *
 		 * @param string[] $roots Absolute directory paths.
 		 */
 		$roots = (array) apply_filters( 'gemsecurity/file_watcher/roots', $roots );
 
 		return array_values( array_unique( array_filter( $roots ) ) );
+	}
+
+	/**
+	 * Directories whose *contents* are worth pattern-matching.
+	 *
+	 * Only the locations with no authoritative checksum. WordPress core has
+	 * one — {@see Scanner::scan_core_integrity()} verifies it file by file
+	 * against api.wordpress.org — so running content heuristics over core adds
+	 * nothing and costs a great deal: core legitimately ships gzinflate/eval
+	 * idioms (class-wp-http-encoding.php, class-pclzip.php, Requests, SimplePie)
+	 * and minified assets that match the hidden-off-screen-block signature
+	 * (wp-tinymce.js). Every one of those was reported as malware the moment
+	 * the baseline scopes were widened to include wp-admin and wp-includes.
+	 *
+	 * Not filterable on purpose: an addon may widen what is hashed, but
+	 * widening what is pattern-matched is how a scanner starts crying wolf.
+	 *
+	 * @return string[]
+	 */
+	private static function heuristic_roots() {
+		$roots = [
+			get_stylesheet_directory(),
+			get_template_directory(),
+			WP_CONTENT_DIR . '/mu-plugins',
+		];
+		return array_values( array_unique( array_filter( $roots ) ) );
+	}
+
+	/**
+	 * Is this ABSPATH-relative path inside a directory we pattern-match?
+	 *
+	 * @param string $rel
+	 * @return bool
+	 */
+	private static function is_heuristic_target( $rel ) {
+		$abs = wp_normalize_path( ABSPATH . $rel );
+		foreach ( self::heuristic_roots() as $root ) {
+			if ( 0 === strpos( $abs, trailingslashit( wp_normalize_path( $root ) ) ) ) {
+				return true;
+			}
+		}
+		// Drop-ins sit loose in wp-content and are watched individually.
+		return in_array( $abs, array_map( 'wp_normalize_path', self::dropin_files() ), true );
 	}
 
 	/**
@@ -329,6 +375,12 @@ class FileWatcher {
 
 		// ---- Files -------------------------------------------------------
 		foreach ( array_keys( $watched ) as $rel ) {
+			// Hashed-but-not-heuristic locations (core, when Pro widens the
+			// baseline) are diffed for change and left alone otherwise.
+			if ( ! self::is_heuristic_target( $rel ) ) {
+				continue;
+			}
+
 			$path = ABSPATH . $rel;
 			$code = @file_get_contents( $path );
 			if ( false === $code ) {
