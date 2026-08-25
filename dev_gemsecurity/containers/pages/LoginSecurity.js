@@ -506,7 +506,13 @@ export default function LoginSecurity() {
 						) }
 						<div className="gs-alert gs-alert--warning">
 							<Icon name="alert" size={ 18 } />
-							<span>{ __( 'Bookmark the new URL before you save. If you get locked out, remove custom_login_enabled from the gemsecurity_settings option via wp-cli or the database.', 'gemsecurity' ) }</span>
+							<span>
+								{ __( 'Bookmark the new URL before you save. wp-admin will stop redirecting to the login page — that redirect is what would otherwise give the address away — so visiting it while logged out sends you to the front page instead.', 'gemsecurity' ) }
+								{ ' ' }
+								{ __( 'If you ever get locked out, add this line to wp-config.php:', 'gemsecurity' ) }
+								{ ' ' }
+								<code>define( &apos;GEMSECURITY_DISABLE_CUSTOM_LOGIN&apos;, true );</code>
+							</span>
 						</div>
 					</>
 				) }
