@@ -68,6 +68,7 @@ class Scanner {
 		$core_issues = self::scan_core_integrity();
 		$foreign     = self::scan_foreign_files();
 		$suspicious  = array_merge( self::scan_admin_concealment(), self::scan_suspicious_files() );
+		$htaccess    = \GemSecurity\Security\HtaccessScan::run();
 
 		// File change watcher — baseline diff + injection heuristics over the
 		// active theme, mu-plugins and drop-ins (and the database). Enabled by
@@ -99,6 +100,7 @@ class Scanner {
 			'wp_version'      => get_bloginfo( 'version' ),
 			'core_issues'     => $core_issues,
 			'foreign_files'   => $foreign,
+			'htaccess'        => $htaccess,
 			'suspicious'      => $suspicious,
 			'file_watcher'    => $file_watcher,
 			'link_scan'       => $link_scan,

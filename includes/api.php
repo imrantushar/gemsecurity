@@ -392,6 +392,11 @@ class Api {
 					'permission_callback' => $perm,
 				],
 			] );
+			register_rest_route( $ns, '/scan/quarantine', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Scanner::class, 'quarantine' ],
+				'permission_callback' => $perm,
+			] );
 			register_rest_route( $ns, '/scan/baseline', [
 				'methods'             => 'POST',
 				'callback'            => [ Rest\Scanner::class, 'reset_baseline' ],

@@ -35,6 +35,82 @@ const BASELINE_SCOPES = [
 	{ key: 'themes', label: __( 'All themes', 'gemsecurity' ) },
 ];
 
+/**
+ * .htaccess findings, with a one-click removal.
+ *
+ * Removal is a quarantine, not a delete: the file moves into the protected
+ * store and can be put back from Incident Response if the rule turns out to be
+ * something the host legitimately added. The site's own root .htaccess is
+ * never offered — it carries the WordPress permalink rules, and an attacker
+ * normally appends to it rather than replacing it, so moving the whole file
+ * would take the working half with it.
+ */
+function HtaccessFindings( { rows, onChanged } ) {
+	const toast = useToast();
+	const [ busy, setBusy ] = useState( '' );
+
+	if ( ! rows || rows.length === 0 ) {
+		return (
+			<Card title={ __( '.htaccess rules', 'gemsecurity' ) }>
+				<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No .htaccess file grants execution or redirects traffic.', 'gemsecurity' ) }</p>
+			</Card>
+		);
+	}
+
+	const remove = async ( path ) => {
+		// eslint-disable-next-line no-alert
+		if ( ! window.confirm( sprintf( /* translators: %s: file path. */ __( 'Move %s into quarantine? It can be restored from Incident Response.', 'gemsecurity' ), path ) ) ) {
+			return;
+		}
+		setBusy( path );
+		try {
+			await api.post( 'scan/quarantine', { path } );
+			toast( __( 'Moved into quarantine.', 'gemsecurity' ), 'success' );
+			onChanged();
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not move that file.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	return (
+		<Card
+			title={ __( '.htaccess rules', 'gemsecurity' ) }
+			description={ __( 'Rules that grant execution or send traffic elsewhere. Directory lock-downs written by plugins are not listed — only directives that hand something out.', 'gemsecurity' ) }
+		>
+			<table className="gs-table">
+				<thead><tr>
+					<th>{ __( 'File', 'gemsecurity' ) }</th>
+					<th>{ __( 'What it does', 'gemsecurity' ) }</th>
+					<th>{ __( 'Severity', 'gemsecurity' ) }</th>
+					<th />
+				</tr></thead>
+				<tbody>
+					{ rows.map( ( h ) => (
+						<tr key={ h.file }>
+							<td><code>{ h.file }</code></td>
+							<td>
+								{ h.reason }
+								{ h.note && <div className="gs-muted" style={ { marginTop: 4 } }>{ h.note }</div> }
+							</td>
+							<td><Badge tone={ h.severity === 'critical' ? 'danger' : 'warning' }>{ h.severity }</Badge></td>
+							<td>
+								{ h.removable ? (
+									<Button variant="danger" loading={ busy === h.file } onClick={ () => remove( h.file ) }>
+										{ __( 'Quarantine', 'gemsecurity' ) }
+									</Button>
+								) : (
+									<span className="gs-muted">{ __( 'Edit by hand', 'gemsecurity' ) }</span>
+								) }
+							</td>
+						</tr>
+					) ) }
+				</tbody>
+			</table>
+		</Card>
+	);
+}
+
 /** Open the Malware tab directly when arriving via the legacy ?page= alias. */
 function initialTab() {
 	try {
@@ -655,6 +731,8 @@ export default function Scanner() {
 								) }
 							</Card>
 						) }
+
+							<HtaccessFindings rows={ result.htaccess } onChanged={ runScan } />
 
 							<SafeFiles />
 

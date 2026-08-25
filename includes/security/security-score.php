@@ -253,6 +253,26 @@ class SecurityScore {
 			if ( $mu ) {
 				$threats[] = self::threat( 'mu_suspicious', sprintf( _n( '%d suspicious auto-loaded file', '%d suspicious auto-loaded files', $mu, 'gemsecurity' ), $mu ), 'critical', $mu, __( 'Inspect the flagged mu-plugins / drop-ins.', 'gemsecurity' ), $scanner );
 			}
+			$ht = (array) ( $scan['htaccess'] ?? [] );
+			if ( $ht ) {
+				$ht_critical = false;
+				foreach ( $ht as $h ) {
+					if ( 'critical' === ( $h['severity'] ?? '' ) ) { $ht_critical = true; break; }
+				}
+				$n = count( $ht );
+				$threats[] = self::threat(
+					'htaccess',
+					sprintf(
+						/* translators: %d: number of .htaccess files. */
+						_n( '%d .htaccess file grants execution or redirects traffic', '%d .htaccess files grant execution or redirect traffic', $n, 'gemsecurity' ),
+						$n
+					),
+					$ht_critical ? 'critical' : 'warning',
+					$n,
+					__( 'Review them in Scanner → .htaccess. A rule that loads a PHP file into every request, or re-enables PHP in uploads, is a back-door.', 'gemsecurity' ),
+					$scanner
+				);
+			}
 			if ( $susp ) {
 				$threats[] = self::threat( 'suspicious', sprintf( _n( '%d suspicious file', '%d suspicious files', $susp, 'gemsecurity' ), $susp ), 'warning', $susp, __( 'Review the flagged files in the last scan.', 'gemsecurity' ), $scanner );
 			}
