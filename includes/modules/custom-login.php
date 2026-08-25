@@ -12,6 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * default wp-login.php for logged-out visitors. Stops the bulk of automated
  * login attacks.
  *
+ * The slug is only a secret for as long as nothing hands it out. WordPress
+ * redirects a logged-out visitor from wp-admin to the login page, and because
+ * this class rewrites login URLs, that redirect pointed straight at the secret
+ * address — so anyone could type /wp-admin and be told where the login lives.
+ * Logged-out wp-admin requests are therefore refused with a 404 rather than
+ * redirected; see {@see block_admin_when_logged_out()}.
+ *
  * Recovery if locked out: remove the `custom_login_*` keys from the
  * `gemsecurity_settings` option (e.g. via wp-cli or the database).
  */
@@ -39,6 +46,11 @@ class CustomLogin {
 		// available); 404 the default wp-login.php from inside its own bootstrap.
 		add_action( 'wp_loaded', [ $self, 'serve_slug' ], 1 );
 		add_action( 'login_init', [ $self, 'block_default_login' ], 0 );
+
+		// wp_loaded fires from wp-settings.php, which wp-admin/admin.php has
+		// already run by the time it calls auth_redirect() — so this lands
+		// before the redirect that would leak the slug.
+		add_action( 'wp_loaded', [ $self, 'block_admin_when_logged_out' ], 1 );
 	}
 
 	private function new_login_url( $scheme = null ) {
@@ -113,6 +125,40 @@ class CustomLogin {
 			wp_safe_redirect( admin_url() );
 			exit;
 		}
+	}
+
+	/**
+	 * Refuse logged-out wp-admin requests instead of redirecting them.
+	 *
+	 * auth_redirect() sends anonymous visitors to the login URL, and this class
+	 * rewrites that URL to the secret slug — which turned /wp-admin into a
+	 * public "where is the login page?" oracle and made the whole feature
+	 * pointless. A 404 tells an attacker nothing.
+	 *
+	 * Endpoints inside wp-admin that are legitimately public are left alone:
+	 * admin-ajax.php and admin-post.php both serve logged-out callers by
+	 * design, and blocking them would break front-end forms, payment callbacks
+	 * and anything else that posts to them.
+	 *
+	 * @return void
+	 */
+	public function block_admin_when_logged_out() {
+		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+			return;
+		}
+		if ( ! is_admin() || is_user_logged_in() ) {
+			return;
+		}
+		if ( ( defined( 'DOING_AJAX' ) && DOING_AJAX ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return;
+		}
+
+		$script = basename( (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '', PHP_URL_PATH ) );
+		if ( in_array( $script, [ 'admin-ajax.php', 'admin-post.php' ], true ) ) {
+			return;
+		}
+
+		$this->deny();
 	}
 
 	private function deny() {

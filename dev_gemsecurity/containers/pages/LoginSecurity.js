@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
+import Icon from '@Components/ui/Icon';
 import SetupGuide from '@Components/ui/SetupGuide';
 import TestCaptcha from '@Components/ui/TestCaptcha';
 import TestCredentials from '@Components/ui/TestCredentials';
@@ -291,6 +292,26 @@ export default function LoginSecurity() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
 	const loginBase = ( GS.site_url || '' ).replace( /\/$/, '' ) + '/';
 
+	// Mirror of the server's sanitize_title() + reserved-slug rule, so the
+	// preview shows the address that will actually work. Typing "Secret Login"
+	// used to preview /Secret Login and then serve /secret-login — bookmark the
+	// preview and you get a 404 from a site whose wp-login.php is now hidden.
+	const RESERVED_SLUGS = [
+		'wp-admin', 'wp-login', 'wp-content', 'wp-includes',
+		'wp-json', 'admin', 'login', 'feed', 'trackback',
+	];
+	const cleanSlug = ( raw ) => {
+		const slug = ( raw || '' )
+			.toString()
+			.normalize( 'NFD' )
+			.replace( /[\u0300-\u036f]/g, '' )   // strip accents, as sanitize_title does
+			.toLowerCase()
+			.replace( /[^a-z0-9\-_]+/g, '-' )
+			.replace( /-+/g, '-' )
+			.replace( /^-|-$/g, '' );
+		return RESERVED_SLUGS.includes( slug ) ? '' : slug;
+	};
+
 	return (
 		<div className="gs-page">
 			<Card
@@ -458,11 +479,34 @@ export default function LoginSecurity() {
 				<Toggle label={ __( 'Enable custom login URL', 'gemsecurity' ) } checked={ form.custom_login_enabled } onChange={ ( v ) => setField( 'custom_login_enabled', v ) } />
 				{ form.custom_login_enabled && (
 					<>
-						<Field label={ __( 'Login slug', 'gemsecurity' ) } description={ `${ __( 'Your login page will be:', 'gemsecurity' ) } ${ loginBase }${ form.custom_login_slug || 'your-slug' }` }>
+						<Field
+							label={ __( 'Login slug', 'gemsecurity' ) }
+							description={
+								cleanSlug( form.custom_login_slug )
+									? `${ __( 'Your login page will be:', 'gemsecurity' ) } ${ loginBase }${ cleanSlug( form.custom_login_slug ) }`
+									: __( 'Lowercase letters, numbers and hyphens. Anything else is converted, and addresses WordPress already owns (wp-admin, login, admin…) cannot be used.', 'gemsecurity' )
+							}
+						>
 							<TextInput value={ form.custom_login_slug ?? '' } onChange={ ( e ) => setField( 'custom_login_slug', e.target.value ) } placeholder="secret-login" />
 						</Field>
+						{ form.custom_login_slug && cleanSlug( form.custom_login_slug ) !== form.custom_login_slug && (
+							<div className="gs-alert gs-alert--warning">
+								<Icon name="alert" size={ 18 } />
+								<span>
+									{ cleanSlug( form.custom_login_slug )
+										? sprintf(
+											/* translators: 1: typed slug, 2: slug that will be saved. */
+											__( '“%1$s” will be saved as “%2$s” — that is the address to bookmark.', 'gemsecurity' ),
+											form.custom_login_slug,
+											cleanSlug( form.custom_login_slug )
+										)
+										: __( 'That slug cannot be used, so the custom login URL will stay switched off and wp-login.php will remain reachable. Pick another.', 'gemsecurity' ) }
+								</span>
+							</div>
+						) }
 						<div className="gs-alert gs-alert--warning">
-							<span>{ __( 'Bookmark the new URL. If you get locked out, remove custom_login_enabled from the gemsecurity_settings option via the database.', 'gemsecurity' ) }</span>
+							<Icon name="alert" size={ 18 } />
+							<span>{ __( 'Bookmark the new URL before you save. If you get locked out, remove custom_login_enabled from the gemsecurity_settings option via wp-cli or the database.', 'gemsecurity' ) }</span>
 						</div>
 					</>
 				) }

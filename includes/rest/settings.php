@@ -195,7 +195,7 @@ class Settings {
 
 			// Custom login URL.
 			'custom_login_enabled'          => 'bool',
-			'custom_login_slug'             => 'text',
+			'custom_login_slug'             => 'login_slug',
 			'login_honeypot_enabled'        => 'bool',
 			'trusted_devices_enabled'       => 'bool',
 			'trusted_devices_alert'         => 'bool',
@@ -286,6 +286,14 @@ class Settings {
 			$merged['admin_whitelist'] = AdminGuard::current_admin_emails();
 		}
 
+		// A custom login URL with no usable slug is not a custom login URL. The
+		// module bails out when the slug is empty, so leaving the switch on
+		// would show the login page as hidden while wp-login.php stayed wide
+		// open — the one state this feature must never report.
+		if ( ! empty( $merged['custom_login_enabled'] ) && '' === trim( (string) $merged['custom_login_slug'] ) ) {
+			$merged['custom_login_enabled'] = false;
+		}
+
 		// Install/remove the extended-protection mu-plugin when toggled.
 		$now_mu = ! empty( $merged['mu_loader_enabled'] );
 		if ( $now_mu !== $was_mu_enabled ) {
@@ -360,6 +368,22 @@ class Settings {
 
 			case 'textarea':
 				return sanitize_textarea_field( (string) $value );
+
+			case 'login_slug':
+				// Store exactly what CustomLogin will serve. It runs the value
+				// through sanitize_title() at boot, so anything with a space,
+				// a capital or an accent used to be stored raw, previewed raw,
+				// and then served from a different address — bookmark the one
+				// the screen showed you and you get a 404 from a site whose
+				// wp-login.php is now hidden too.
+				$slug = sanitize_title( (string) $value );
+				// Addresses WordPress already owns. Taking one of these either
+				// shadows the admin or produces a login page nobody can reach.
+				$reserved = [
+					'wp-admin', 'wp-login', 'wp-content', 'wp-includes',
+					'wp-json', 'admin', 'login', 'feed', 'trackback',
+				];
+				return in_array( $slug, $reserved, true ) ? '' : $slug;
 
 			case 'slug_list':
 				$list = self::to_array( $value );
