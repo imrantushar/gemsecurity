@@ -109,6 +109,7 @@
 
 		var config = {
 			slug: modal.data('slug'),
+			plugin: modal.data('plugin'),
 			uninstallAction: modal.data('uninstall-action'),
 			supportAction: modal.data('support-action'),
 			nonce: modal.data('nonce'),
@@ -152,6 +153,9 @@
 				}
 			});
 			modal.find('input[type="radio"]').prop('checked', false).removeClass('selected-reason');
+			// Collapse the "What data do we collect?" disclosure so it starts
+			// hidden again on the next open.
+			modal.find('.se-sdk-consent-details').prop('open', false);
 			modal.find('.reason-input').remove();
 		}
 
@@ -201,7 +205,19 @@
 			control.after('<p class="helper-text mui-error">' + event.target.validationMessage + '</p>');
 		});
 
-		$('tr[data-slug="' + config.slug + '"] .deactivate a').off('click.seSdkModal').on('click.seSdkModal', function(event) {
+		// Bind to the plugin's "Deactivate" link. Prefer data-plugin (the
+		// plugin file basename) because WordPress always sets it on the row and
+		// it's unique — data-slug is derived from the wp.org slug / plugin name
+		// and won't match when the SDK's configured slug differs (e.g. a "-pro"
+		// product slug on a differently-named plugin folder), which would leave
+		// the modal never opening. data-slug is kept as a fallback.
+		var deactivateRow = config.plugin
+			? $('tr[data-plugin="' + config.plugin + '"]')
+			: $();
+		if (!deactivateRow.length) {
+			deactivateRow = $('tr[data-slug="' + config.slug + '"]');
+		}
+		deactivateRow.find('.deactivate a').off('click.seSdkModal').on('click.seSdkModal', function(event) {
 			preventDefault(event);
 			$('body').addClass('se-sdk-deactivation-modal-open');
 			modal.addClass('modal-active');
@@ -261,10 +277,9 @@
 				? radio.closest('.reason-item').find('textarea, input[type="text"]')
 				: $();
 
-			// Even when no reason is picked, fire the beacon — the server
-			// enriches the payload with admin_name, admin_email, site URL
-			// and usage_log, which are valuable as deactivation telemetry
-			// regardless of whether the user provided a textual reason.
+			// The modal discloses exactly what is sent (reason plus the listed
+			// site data), and "Skip & Deactivate" is the cancel path that sends
+			// nothing — so submitting here is informed consent.
 			var payload = {
 				reason_id: radio.length ? radio.val() : 'no-comment',
 				reason_info: input.length ? $.trim(input.val()) : ''

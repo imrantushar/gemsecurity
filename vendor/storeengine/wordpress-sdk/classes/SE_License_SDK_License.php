@@ -47,6 +47,23 @@ final class SE_License_SDK_License {
 	protected $error;
 
 	/**
+	 * Machine-readable error code from the last request (e.g.
+	 * `license-activation-limit-reached`). Lets callers branch on the failure
+	 * kind — the REST layer uses it to turn the limit case into a 409 + picker.
+	 *
+	 * @var string
+	 */
+	protected $error_code = '';
+
+	/**
+	 * Structured error payload from the last request (e.g. the list of active
+	 * sites when the activation limit is reached).
+	 *
+	 * @var array
+	 */
+	protected $error_data = [];
+
+	/**
 	 * Success message on form submit.
 	 *
 	 * @var string
@@ -160,6 +177,16 @@ final class SE_License_SDK_License {
 		return $this;
 	}
 
+	/**
+	 * The store/account dashboard URL where the customer manages/downloads their
+	 * product (set from the `store_dashboard_url` init arg), or null.
+	 *
+	 * @return ?string
+	 */
+	public function get_manage_license_url(): ?string {
+		return $this->manage_license_url ?: null;
+	}
+
 	public function use_custom_style(): SE_License_SDK_License {
 		$this->use_custom_style = true;
 
@@ -207,6 +234,10 @@ final class SE_License_SDK_License {
 		}
 
 		add_action( 'admin_notices', [ $this, '__admin_notices' ] );
+		if ( $this->client->is_network_activated() ) {
+			add_action( 'network_admin_notices', [ $this, '__admin_notices' ] );
+		}
+		add_action( 'admin_init', [ $this, 'maybe_dismiss_renewal_notice' ] );
 
 		// Activation/Deactivation hooks.
 		$this->activation_deactivation();
@@ -261,6 +292,7 @@ final class SE_License_SDK_License {
 		}
 
 		$this->inactive_license_notice();
+		$this->renewal_notice();
 
 		if ( ! empty( $this->error ) ) {
 			?>
@@ -292,7 +324,7 @@ final class SE_License_SDK_License {
 					/* translators: 1: This plugin name, 2: Activation Page URL, 3: This Plugin Name */
 							esc_html__( 'The %1$s license key has not been activated, so some features are inactive! %2$s to activate %3$s.', 'storeengine-sdk' ),
 							'<b class="highlight">' . esc_attr( $this->client->getPackageName() ) . '</b>',
-							'<a href="' . esc_url( $this->get_page_url() ) . '">' . esc_html__( 'Click here', 'woo-feed' ) . '</a>',
+							'<a href="' . esc_url( $this->get_page_url() ) . '">' . esc_html__( 'Click here', 'storeengine-sdk' ) . '</a>',
 							'<strong>' . esc_attr( $this->client->getPackageName() ) . '</strong>'
 					);
 					?>
@@ -328,6 +360,129 @@ final class SE_License_SDK_License {
 			</style>
 			<?php
 		}
+	}
+
+	/**
+	 * How many days before expiry to start nagging about renewal.
+	 *
+	 * @return int
+	 */
+	protected function renewal_notice_window(): int {
+		return (int) max( 1, apply_filters( $this->client->getHookName( 'renewal_notice_days' ), 14 ) );
+	}
+
+	/**
+	 * Transient key snoozing the renewal nag for this product.
+	 */
+	protected function renewal_snooze_key(): string {
+		return 'se_sdk_renew_snooze_' . md5( $this->client->getSlug() );
+	}
+
+	/**
+	 * Nag the admin when an active license is expiring soon or has expired, with
+	 * a renewal link. Skipped on the license page itself (they manage it there),
+	 * for unlimited/no-expiry licenses, and while snoozed. Shown site-wide so a
+	 * lapse is noticed before Pro features quietly stop.
+	 *
+	 * @return void
+	 */
+	public function renewal_notice() {
+		if ( $this->is_license_page || $this->client->isFree() ) {
+			return;
+		}
+
+		$license = $this->get_license();
+		$expires = ! empty( $license['expires'] ) ? (int) $license['expires'] : 0;
+
+		// No expiry to warn about (lifetime/unlimited or unknown).
+		if ( ! $expires || ! empty( $license['unlimited'] ) ) {
+			return;
+		}
+
+		// Only nag for a license the user has actually engaged with (has a key).
+		if ( empty( $license['license'] ) ) {
+			return;
+		}
+
+		$now       = current_time( 'timestamp', true );
+		$days_left = (int) floor( ( $expires - $now ) / DAY_IN_SECONDS );
+		$expired   = $expires <= $now;
+
+		// Not in the warning window yet.
+		if ( ! $expired && $days_left > $this->renewal_notice_window() ) {
+			return;
+		}
+
+		// Snoozed for this exact expiry value?
+		if ( (string) get_transient( $this->renewal_snooze_key() ) === (string) $expires ) {
+			return;
+		}
+
+		$renew_url = $this->manage_license_url ?: $this->client->get_purchase_url();
+		$dismiss   = wp_nonce_url(
+			add_query_arg( 'se_sdk_dismiss_renewal', rawurlencode( $this->client->getSlug() ) ),
+			'se_sdk_dismiss_renewal_' . $this->client->getSlug()
+		);
+
+		if ( $expired ) {
+			$message = sprintf(
+			/* translators: %s: product name. */
+				esc_html__( 'Your %s license has expired. Renew it to keep receiving automatic updates and support.', 'storeengine-sdk' ),
+				'<strong>' . esc_html( $this->client->getPackageName() ) . '</strong>'
+			);
+			$class = 'notice-error';
+		} else {
+			$message = sprintf(
+			/* translators: 1: product name, 2: human time diff e.g. "6 days". */
+				esc_html__( 'Your %1$s license expires in %2$s. Renew now to avoid losing automatic updates and support.', 'storeengine-sdk' ),
+				'<strong>' . esc_html( $this->client->getPackageName() ) . '</strong>',
+				'<strong>' . esc_html( human_time_diff( $now, $expires ) ) . '</strong>'
+			);
+			$class = 'notice-warning';
+		}
+		?>
+		<div class="se-sdk-product-<?php echo esc_attr( $this->client->getSlug() ); ?> notice <?php echo esc_attr( $class ); ?>"
+			 style="--se-sdk-primary-color: <?php echo esc_attr( $this->client->getPrimaryColor() ); ?>;">
+			<p>
+				<?php echo wp_kses_post( $message ); ?>
+				<?php if ( $renew_url ) : ?>
+					&nbsp;<a class="button button-primary" href="<?php echo esc_url( $renew_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Renew license', 'storeengine-sdk' ); ?></a>
+				<?php endif; ?>
+				&nbsp;<a href="<?php echo esc_url( $dismiss ); ?>"><?php esc_html_e( 'Dismiss', 'storeengine-sdk' ); ?></a>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Snooze the renewal nag (for the current expiry value) when the user
+	 * clicks Dismiss. Hooked on admin_init.
+	 *
+	 * @return void
+	 */
+	public function maybe_dismiss_renewal_notice() {
+		if ( empty( $_GET['se_sdk_dismiss_renewal'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		$slug = sanitize_text_field( wp_unslash( $_GET['se_sdk_dismiss_renewal'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( $slug !== $this->client->getSlug() ) {
+			return;
+		}
+
+		if ( ! current_user_can( $this->userCapability ?: 'manage_options' ) ) {
+			return;
+		}
+
+		check_admin_referer( 'se_sdk_dismiss_renewal_' . $this->client->getSlug() );
+
+		$expires = (int) ( $this->get_license()['expires'] ?? 0 );
+		// Snooze for this expiry value for a week; re-nags after that or when the
+		// expiry changes (e.g. a partial renewal).
+		set_transient( $this->renewal_snooze_key(), (string) $expires, WEEK_IN_SECONDS );
+
+		wp_safe_redirect( remove_query_arg( [ 'se_sdk_dismiss_renewal', '_wpnonce' ] ) );
+		exit;
 	}
 
 	/**
@@ -486,11 +641,13 @@ final class SE_License_SDK_License {
 								esc_html__( '%s License Management', 'storeengine-sdk' ),
 								esc_html( $this->client->getPackageName() )
 						),
-						'capability'  => 'manage_options',
+						'capability'  => $this->client->is_network_activated() ? 'manage_network_options' : 'manage_options',
 						'menu_slug'   => 'manage-' . $this->client->getSlug() . '-license',
 						'icon_url'    => 'dashicons-admin-network',
 						'position'    => null,
-						'parent_slug' => 'options-general.php',
+						// Themes have no Settings context by convention — put their
+						// license screen under Appearance; plugins under Settings.
+						'parent_slug' => $this->client->isTheme() ? 'themes.php' : 'options-general.php',
 				]
 		);
 
@@ -531,7 +688,10 @@ final class SE_License_SDK_License {
 			$this->menu_args['type'] = 'submenu';
 		}
 
-		add_action( 'admin_menu', [ $this, 'register_admin_menu' ], 999 );
+		// Network-activated products manage their (network-wide) license from the
+		// Network Admin; everything else from the site admin.
+		$menu_hook = $this->client->is_network_activated() ? 'network_admin_menu' : 'admin_menu';
+		add_action( $menu_hook, [ $this, 'register_admin_menu' ], 999 );
 
 		return $this;
 	}
@@ -625,6 +785,12 @@ final class SE_License_SDK_License {
 			true
 		);
 
+		// Wire JS __()/sprintf strings to translations shipped in the SDK's
+		// languages/ folder (storeengine-sdk-{locale}-{handle-md5}.json).
+		if ( function_exists( 'wp_set_script_translations' ) ) {
+			wp_set_script_translations( $handle, 'storeengine-sdk', SE_License_SDK::sdk_path( 'languages' ) );
+		}
+
 		$is_free = $this->client->isFree();
 
 		// Surface only the bits the React app actually needs — never echo
@@ -639,6 +805,12 @@ final class SE_License_SDK_License {
 			'initialLicense'    => $is_free ? null : $this->get_public_data(),
 			'storeDashboardUrl' => $this->manage_license_url ?: null,
 			'purchaseUrl'       => $this->client->get_purchase_url() ?: null,
+			// Manual-install fallback shown when an automatic update fails: where
+			// to download the package (account dashboard) and where to upload it.
+			'packageType'       => $this->client->getType(),
+			'uploadUrl'         => $this->client->isPlugin()
+				? self_admin_url( 'plugin-install.php?tab=upload' )
+				: self_admin_url( 'theme-install.php?upload' ),
 		];
 
 		// Per-instance global so multiple SDK consumers on the same page
@@ -734,47 +906,163 @@ final class SE_License_SDK_License {
 			return;
 		}
 
-		if ( $license ) {
-			$this->updating_license( true );
-			// Get current license data.
+		$this->updating_license( true );
 
-			// check license.
-			$response = $this->check();
+		$response = $this->check();
 
-			if ( isset( $response['success'] ) && $response['success'] ) {
-				// Update license status.
-				$license = wp_parse_args( $response['data'], $license );
-			} else {
-				// Don't reset the key.
-				// keep it, if the user renew subscription update the status and reactivate the plugin.
-				$license = wp_parse_args(
-						[
-								'license'     => '',
-								'status'      => 'inactive',
-								'device_id'   => $this->client->get_device_id(),
-								'slug'        => $this->client->getSlug(),
-								'product_id'  => $this->client->getProductId(),
-								'remaining'   => 0,
-								'activations' => 0,
-								'limit'       => 0,
-								'unlimited'   => false,
-								'expires'     => '',
-						],
-						$license
-				);
+		// --- Authoritative server verdict ------------------------------------
+		// The server answered (even "inactive" comes back as success=true with
+		// status=inactive). Apply it verbatim and clear any grace bookkeeping.
+		if ( isset( $response['success'] ) && $response['success'] ) {
+			$was_active = 'active' === ( $license['status'] ?? '' );
+			$license    = wp_parse_args( $response['data'], $license );
 
-				if ( $response['error'] ) {
-					$this->error = $response['error'];
-				} else {
-					$this->error = __( 'Unknown error occurred.', 'storeengine-sdk' );
-				}
-			}
-
-			// Update the license state & and save in db.
+			$this->set_grace_state( [ 'last_verified_at' => time() ] );
 			$this->set_license( $license );
 
+			// Lifecycle hook: license transitioned active → inactive/expired.
+			if ( $was_active && 'active' !== ( $license['status'] ?? '' ) ) {
+				$this->emit_license_event( 'license_deactivated', $license );
+			}
+
 			$this->updating_license( false );
+
+			return;
 		}
+
+		// --- Server unreachable → grace period --------------------------------
+		// A transport-level failure (DNS/timeout/TLS/blocked request/5xx) is NOT
+		// a verdict. Keep the last-known-good license active until the grace
+		// window since the last successful verification has elapsed. Prevents a
+		// brief outage from deactivating a paying customer's product.
+		if ( ! empty( $response['transport_error'] ) ) {
+			$grace = $this->client->getLicenseGracePeriod();
+			$state = $this->get_grace_state();
+
+			if ( empty( $state['grace_started_at'] ) ) {
+				$state['grace_started_at'] = time();
+			}
+			$state['last_error'] = $response['error'] ?? '';
+
+			$anchor  = ! empty( $state['last_verified_at'] ) ? (int) $state['last_verified_at'] : (int) $state['grace_started_at'];
+			$expired = ( 0 === $grace ) || ( ( time() - $anchor ) > $grace );
+
+			if ( $expired ) {
+				// Grace exhausted — fall through to the deactivation path.
+				$this->set_grace_state( [] );
+				$this->error = $response['error'] ?: __( 'Could not verify your license and the grace period has ended.', 'storeengine-sdk' );
+				$this->deactivate_local_license( $license );
+				$this->emit_license_event( 'license_grace_expired', $license );
+			} else {
+				// Still within grace — keep the product working, re-sign so the
+				// license stays valid, and record when grace started.
+				$state['in_grace'] = true;
+				$this->set_grace_state( $state );
+				$this->set_license( $license );
+				$this->emit_license_event( 'license_check_deferred', $license );
+			}
+
+			$this->updating_license( false );
+
+			return;
+		}
+
+		// --- Definitive rejection --------------------------------------------
+		// The server responded with a genuine business error (e.g. license
+		// revoked). Deactivate locally but keep the key so a later renewal can
+		// reactivate it.
+		$this->error = $response['error'] ?: __( 'Unknown error occurred.', 'storeengine-sdk' );
+		$this->set_grace_state( [] );
+		$this->deactivate_local_license( $license );
+		$this->emit_license_event( 'license_deactivated', $license );
+
+		$this->updating_license( false );
+	}
+
+	/**
+	 * Mark the stored license inactive locally without touching the key, so a
+	 * later successful check (e.g. after renewal) can reactivate it.
+	 *
+	 * @param array $license Current license array.
+	 */
+	protected function deactivate_local_license( array $license ) {
+		$license = wp_parse_args(
+			[
+				'license'     => '',
+				'status'      => 'inactive',
+				'device_id'   => $this->client->get_device_id(),
+				'slug'        => $this->client->getSlug(),
+				'product_id'  => $this->client->getProductId(),
+				'remaining'   => 0,
+				'activations' => 0,
+				'limit'       => 0,
+				'unlimited'   => false,
+				'expires'     => '',
+			],
+			$license
+		);
+
+		$this->set_license( $license );
+	}
+
+	/**
+	 * Grace-period bookkeeping (stored separately from license_data so it never
+	 * fights parse_license_data's whitelist).
+	 *
+	 * @return array{last_verified_at?:int, grace_started_at?:int, last_error?:string, in_grace?:bool}
+	 */
+	public function get_grace_state(): array {
+		$state = $this->client->get_option( 'license_verify_state', [] );
+
+		return is_array( $state ) ? $state : [];
+	}
+
+	/**
+	 * Persist grace-period bookkeeping. Passing [] clears it.
+	 *
+	 * @param array $state New state (merged onto the existing one; [] resets).
+	 */
+	public function set_grace_state( array $state ) {
+		if ( empty( $state ) ) {
+			$this->client->set_option( 'license_verify_state', [] );
+
+			return;
+		}
+
+		$this->client->set_option( 'license_verify_state', wp_parse_args( $state, $this->get_grace_state() ) );
+	}
+
+	/**
+	 * Whether the license is currently being honoured under the offline grace
+	 * period (server unreachable, last-known-good still active).
+	 */
+	public function is_in_grace(): bool {
+		$state = $this->get_grace_state();
+
+		return ! empty( $state['in_grace'] );
+	}
+
+	/**
+	 * Fire a documented license lifecycle event on this product's hook
+	 * namespace so consuming plugins/themes can react.
+	 *
+	 * @param string $event   Event slug (e.g. 'license_activated').
+	 * @param array  $license License data at the time of the event.
+	 */
+	protected function emit_license_event( string $event, array $license = [] ) {
+		/**
+		 * Fires on a license lifecycle transition for this product.
+		 *
+		 * Hook name: "{product-hook-prefix}_{$event}". Events:
+		 *  - license_activated      License successfully activated.
+		 *  - license_deactivated    License deactivated (by user or server verdict).
+		 *  - license_grace_expired  Offline grace ended; license failed closed.
+		 *  - license_check_deferred Scheduled check skipped (server unreachable, within grace).
+		 *
+		 * @param array                 $license The license data.
+		 * @param SE_License_SDK_License $this   The license handler.
+		 */
+		$this->client->do_action( $event, $license, $this );
 	}
 
 	/**
@@ -1236,6 +1524,14 @@ final class SE_License_SDK_License {
 		return $this->error;
 	}
 
+	public function get_error_code(): string {
+		return $this->error_code;
+	}
+
+	public function get_error_data(): array {
+		return $this->error_data;
+	}
+
 	public function get_success() {
 		return $this->success;
 	}
@@ -1250,6 +1546,10 @@ final class SE_License_SDK_License {
 	public function activate_client_license( array $postData ) {
 
 		$this->updating_license( true );
+
+		// Reset structured error state for this attempt.
+		$this->error_code = '';
+		$this->error_data = [];
 
 		if ( empty( $postData['license_key'] ) ) {
 			$this->error = __( 'The license key field is required.', 'storeengine-sdk' );
@@ -1281,6 +1581,13 @@ final class SE_License_SDK_License {
 		$license['license']   = $postData['license_key'];
 		$license['device_id'] = $this->client->get_device_id();
 
+		// Seats the user chose to release during a limit-reached takeover
+		// (Freemius-style). The server frees these before re-checking the
+		// activation limit so this site can take a seat.
+		if ( ! empty( $postData['deactivate_activations'] ) && is_array( $postData['deactivate_activations'] ) ) {
+			$license['deactivate_activations'] = array_values( array_filter( array_map( 'absint', $postData['deactivate_activations'] ) ) );
+		}
+
 		// Activate The License.
 		$response = $this->activate( $license );
 
@@ -1290,12 +1597,21 @@ final class SE_License_SDK_License {
 			} else {
 				$this->error = __( 'Unknown error occurred.', 'storeengine-sdk' );
 			}
+
+			// Capture the machine-readable code + payload (e.g. the active-site
+			// list when the activation limit is reached) for the REST layer.
+			$this->error_code = $response['code'] ?? '';
+			$this->error_data = ( isset( $response['data'] ) && is_array( $response['data'] ) ) ? $response['data'] : [];
 		} else {
 			if ( ! $updateKey ) {
 				$this->success = __( 'License activated successfully.', 'storeengine-sdk' );
 			} else {
 				$this->success = __( 'License updated successfully.', 'storeengine-sdk' );
 			}
+
+			// Fresh authoritative verdict — anchor the grace period here and
+			// clear any stale offline state from a previous key.
+			$this->set_grace_state( [ 'last_verified_at' => time() ] );
 		}
 
 		// Don't reset the key.
@@ -1303,8 +1619,14 @@ final class SE_License_SDK_License {
 		// Schedule before saving so the signature payload uses the same next-run timestamp as validation.
 		$this->schedule_license_check();
 
+		$new_license = wp_parse_args( $response['data'], $license );
+
 		// Update license status.
-		$this->set_license( wp_parse_args( $response['data'], $license ) );
+		$this->set_license( $new_license );
+
+		if ( $response['success'] && 'active' === ( $new_license['status'] ?? '' ) ) {
+			$this->emit_license_event( 'license_activated', $new_license );
+		}
 
 		$this->updating_license( false );
 	}
@@ -1333,8 +1655,14 @@ final class SE_License_SDK_License {
 		}
 
 		$this->clear_license_check_schedule();
+		$this->set_grace_state( [] );
+
+		$deactivated_license = $this->get_license();
+
 		// Reset license data.
 		$this->set_license();
+
+		$this->emit_license_event( 'license_deactivated', $deactivated_license );
 
 		$this->success = __( 'License deactivated successfully.', 'storeengine-sdk' );
 	}

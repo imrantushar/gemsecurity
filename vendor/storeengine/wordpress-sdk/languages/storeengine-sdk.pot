@@ -1,0 +1,1028 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-07-30T11:25:01+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: storeengine-sdk\n"
+
+#. translators: %s function name.
+#: classes/abstracts/SE_License_SDK.php:259
+#, php-format
+msgid "%s() was called before the StoreEngine License Manager Client SDK was initialized"
+msgstr ""
+
+#. translators: 1. Current Class Name.
+#: classes/SE_License_SDK_Client.php:291
+#, php-format
+msgid "Invalid argument. SDK could not detect a valid plugin or theme file while initializing %s(). Pass `package_file` explicitly if auto-detection fails."
+msgstr ""
+
+#: classes/SE_License_SDK_Client.php:1270
+#: classes/SE_License_SDK_Client.php:1291
+msgid "Operation successful."
+msgstr ""
+
+#: classes/SE_License_SDK_Client.php:1284
+msgid "Unknown error."
+msgstr ""
+
+#: classes/SE_License_SDK_Core_Dependency.php:80
+msgid "the required plugin"
+msgstr ""
+
+#. translators: 1: pro product name, 2: core/free plugin name, 3: required version.
+#: classes/SE_License_SDK_Core_Dependency.php:271
+#, php-format
+msgid "%1$s requires %2$s version %3$s or newer to be installed and active first. Please install and update %2$s, then update %1$s."
+msgstr ""
+
+#. translators: 1: pro product name, 2: core/free plugin name, 3: required version, 4: installed version.
+#: classes/SE_License_SDK_Core_Dependency.php:280
+#, php-format
+msgid "%1$s needs %2$s version %3$s or newer, but %4$s is installed. Update %2$s first — the matching release can take up to 24 hours to appear from WordPress.org, or you can update %2$s manually — then update %1$s."
+msgstr ""
+
+#: classes/SE_License_SDK_Core_Dependency.php:284
+msgid "an older version"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:404
+msgid "Server environment details (MySQL version, MySQL version, Server software & version, etc.)."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:405
+msgid "WordPress installation details (version, debug mode, max upload size)."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:406
+msgid "WordPress settings (site language, active and inactive plugins & themes)."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:407
+msgid "Site Name & URL."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:408
+msgid "Admin Name & Email."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:525
+#: views/insights-deactivation-reasons.php:78
+msgid "Privacy Policy"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:529
+msgid "Terms of Services"
+msgstr ""
+
+#. translators: 1: Privacy Policy Link, 2: Terms Links
+#: classes/SE_License_SDK_Insights.php:536
+#, php-format
+msgid "Please read our %1$s and %2$s"
+msgstr ""
+
+#. translators: 1: Privacy Policy or Terms Link
+#: classes/SE_License_SDK_Insights.php:542
+#, php-format
+msgid "Please read our %1$s"
+msgstr ""
+
+#. translators: 1: plugin name.
+#: classes/SE_License_SDK_Insights.php:548
+msgid "<h3 class=\"se-sdk-insights-notice--title\">Help Us Improve & Get Exclusive Perks!</h3>"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:551
+#, php-format
+msgid "<p class=\"se-sdk-insights-notice--des\">We’d love to stay in touch and share useful updates, tips, and special offers to help you get the most from %1$s. Your privacy is our priority. No spam — ever.</p>"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:822
+msgid "Once Weekly"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:936
+msgid "I no longer need the plugin"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:942
+msgid "I found a better plugin"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:944
+msgid "Which one?"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:948
+msgid "I couldn't get the plugin to work"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:954
+msgid "It's a temporary deactivation"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:960
+msgid "Other"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:962
+msgid "Please share the reason"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:986
+msgid "Invalid Request"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1043
+msgid "Support Ticket Submission"
+msgstr ""
+
+#. translators: %1$s. StoreEngine Site Link. %2$s. SDK version.
+#: classes/SE_License_SDK_Insights.php:1058
+#, php-format
+msgid "Message Processed via %1$s WordPress License SDK (v.%2$s)"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1059
+msgid "StoreEngine"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1081
+msgid "Something Went Wrong.<br>Please try again after sometime."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1085
+msgid "Unable to locate support ticket email template file"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1145
+msgid "Thank you -- Support Ticket Submitted."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1153
+msgid "Something Went Wrong. Please Try Again After Sometime."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1159
+msgid "Missing Required Fields."
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1213
+msgid "Your admin name and email address"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1214
+msgid "Your site name and URL"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1215
+msgid "Your server IP address and operating-system details"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1216
+msgid "PHP, database, and web-server names and versions"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1217
+msgid "WordPress version, locale, and key environment settings"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1218
+msgid "A list of your active and inactive plugins and active theme"
+msgstr ""
+
+#: classes/SE_License_SDK_Insights.php:1231
+msgid "Processing..."
+msgstr ""
+
+#. translators: 1: Plugin Name
+#: classes/SE_License_SDK_Insights.php:1233
+#, php-format
+msgid "&ldquo;%s&rdquo; Uninstall Confirmation"
+msgstr ""
+
+#: classes/SE_License_SDK_Install_Job.php:50
+msgid "Only plugin packages can be installed via the SDK installer."
+msgstr ""
+
+#: classes/SE_License_SDK_Install_Job.php:58
+msgid "You do not have permission to install plugins."
+msgstr ""
+
+#: classes/SE_License_SDK_Install_Job.php:87
+msgid "WordPress could not initialize the filesystem. Set FS_METHOD to \"direct\" or ensure the web server can write to wp-content/plugins."
+msgstr ""
+
+#. translators: 1: actual folder name in zip, 2: expected plugin slug
+#: classes/SE_License_SDK_Install_Job.php:216
+#, php-format
+msgid "Could not normalize package folder from \"%1$s\" to \"%2$s\"."
+msgstr ""
+
+#. translators: 1: actual folder name in zip, 2: expected plugin slug
+#: classes/SE_License_SDK_Install_Job.php:226
+#, php-format
+msgid "Renamed package folder \"%1$s\" → \"%2$s\" to match installed plugin."
+msgstr ""
+
+#: classes/SE_License_SDK_Install_Job.php:253
+msgid "Plugin installer reported an error."
+msgstr ""
+
+#: classes/SE_License_SDK_Install_Job.php:259
+msgid "Installer returned no result."
+msgstr ""
+
+#. translators: %s: WP error message
+#: classes/SE_License_SDK_Install_Job.php:282
+#, php-format
+msgid "Installed but could not reactivate the plugin: %s"
+msgstr ""
+
+#: classes/SE_License_SDK_Install_Job.php:340
+msgid "The update package URL is not a valid HTTPS URL and was rejected for safety."
+msgstr ""
+
+#. translators: %s: the host name returned in the package URL
+#: classes/SE_License_SDK_Install_Job.php:387
+#, php-format
+msgid "The update package host \"%s\" is not a trusted vendor host. Installation was aborted to protect against a tampered or redirected download."
+msgstr ""
+
+#. translators: 1: Warning in bold tag, 2: This plugin name, 3: API Host Name, 4: WP_ACCESSIBLE_HOSTS constant
+#: classes/SE_License_SDK_License.php:269
+#, php-format
+msgid "%1$s You're blocking external requests which means you won't be able to get %2$s updates. Please add %3$s to %4$s constant."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:270
+msgid "Warning!"
+msgstr ""
+
+#. translators: 1: This plugin name, 2: Activation Page URL, 3: This Plugin Name
+#: classes/SE_License_SDK_License.php:312
+#, php-format
+msgid "The %1$s license key has not been activated, so some features are inactive! %2$s to activate %3$s."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:314
+msgid "Click here"
+msgstr ""
+
+#. translators: %s: product name.
+#: classes/SE_License_SDK_License.php:417
+#, php-format
+msgid "Your %s license has expired. Renew it to keep receiving automatic updates and support."
+msgstr ""
+
+#. translators: 1: product name, 2: human time diff e.g. "6 days".
+#: classes/SE_License_SDK_License.php:424
+#, php-format
+msgid "Your %1$s license expires in %2$s. Renew now to avoid losing automatic updates and support."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:436
+msgid "Renew license"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:438
+#: static/license-app.js:209
+msgid "Dismiss"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:487
+#: views/license-form.php:79
+#: static/license-app.js:317
+msgid "Manage License"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:487
+#: classes/SE_License_SDK_License.php:808
+#: static/license-app.js:325
+msgid "Activate License"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:602
+msgid "Invalid Request Action."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:613
+msgid "Invalid/Empty License Data."
+msgstr ""
+
+#. translators: 1. Theme/Plugin Name.
+#: classes/SE_License_SDK_License.php:628
+#: classes/SE_License_SDK_License.php:715
+#, php-format
+msgid "%s License Management"
+msgstr ""
+
+#. translators: 1. Class Method.
+#: classes/SE_License_SDK_License.php:655
+#, php-format
+msgid "%s Should be called before License::init()"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:735
+msgid "JavaScript is required for the full license & updates panel. The simplified form below still works."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:808
+#: static/license-app.js:311
+msgid "Deactivate License"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:809
+#: static/license-app.js:362
+msgid "Active"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:809
+msgid "Inactive"
+msgstr ""
+
+#. translators: %s: Plugin Name
+#: classes/SE_License_SDK_License.php:816
+#, php-format
+msgid "Active %s license to get professional support and automatic update from your WordPress dashboard."
+msgstr ""
+
+#. translators: %s: Plugin Name
+#: classes/SE_License_SDK_License.php:824
+#, php-format
+msgid "Activate %s to unlock automatic updates, priority support, and all tools to optimize your WordPress store."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:929
+msgid "Could not verify your license and the grace period has ended."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:950
+#: classes/SE_License_SDK_License.php:1548
+#: classes/SE_License_SDK_License.php:1574
+#: classes/SE_License_SDK_License.php:1627
+#: classes/SE_License_SDK_License.php:2066
+msgid "Unknown error occurred."
+msgstr ""
+
+#. translators: placeholder is human time diff (e.g. "3 weeks")
+#: classes/SE_License_SDK_License.php:1446
+#: classes/SE_License_SDK_License.php:1469
+#, php-format
+msgid "%s ago"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:1456
+#: classes/SE_License_SDK_License.php:1459
+#: views/license-form.php:153
+#: static/license-app.js:381
+msgid "N/A"
+msgstr ""
+
+#. translators: placeholder is human time diff (e.g. "3 weeks")
+#: classes/SE_License_SDK_License.php:1465
+#, php-format
+msgid "In %s"
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:1531
+msgid "The license key field is required."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:1583
+msgid "License activated successfully."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:1585
+msgid "License updated successfully."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:1617
+msgid "License key not found."
+msgstr ""
+
+#: classes/SE_License_SDK_License.php:1643
+#: classes/SE_License_SDK_Rest_API.php:240
+msgid "License deactivated successfully."
+msgstr ""
+
+#: classes/SE_License_SDK_Promotions.php:144
+msgid "Campaign Logo"
+msgstr ""
+
+#: classes/SE_License_SDK_Promotions.php:159
+msgid "Learn more"
+msgstr ""
+
+#: classes/SE_License_SDK_Promotions.php:482
+msgid "Method must be invoked inside admin_init action."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:178
+msgid "You do not have permission to manage licenses."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:343
+msgid "Could not fetch update information from the server."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:377
+#: classes/SE_License_SDK_Rest_API.php:405
+msgid "Could not fetch version history."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:397
+msgid "The license server does not yet support listing version history. The vendor needs to update the License Management addon on the server."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:443
+msgid "No update is available right now."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:461
+msgid "Server did not return a download URL for the requested version."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:496
+msgid "No previous version is recorded for this installation."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:614
+msgid "Could not resolve a download URL for the requested version."
+msgstr ""
+
+#: classes/SE_License_SDK_Rest_API.php:622
+msgid "Server response is missing a package URL."
+msgstr ""
+
+#. translators: 1: plugin slug, 2: missing main file name.
+#: classes/SE_License_SDK_Updater.php:177
+#, php-format
+msgid "Update aborted: the downloaded %1$s package is missing its main file (%2$s). Your current version was kept."
+msgstr ""
+
+#. translators: 1: plugin slug, 2: missing package-relative path.
+#: classes/SE_License_SDK_Updater.php:198
+#, php-format
+msgid "Update aborted: the downloaded %1$s package is incomplete (missing %2$s). Your current version was kept."
+msgstr ""
+
+#: views/deactivation-reasons.php:12
+#: views/insights-deactivation-reasons.php:20
+msgid "Quick Feedback"
+msgstr ""
+
+#: views/deactivation-reasons.php:14
+#: views/insights-deactivation-reasons.php:22
+#: views/insights-support-ticket-form.php:14
+#: views/support-ticket-form.php:9
+#: static/license-app.js:613
+msgid "Close"
+msgstr ""
+
+#: views/deactivation-reasons.php:23
+#: views/insights-deactivation-reasons.php:31
+#, php-format
+msgid "If you have a moment, please let us know why you are deactivating %s."
+msgstr ""
+
+#: views/deactivation-reasons.php:28
+#: views/insights-deactivation-reasons.php:37
+msgid "If you face any issues, please create a support ticket"
+msgstr ""
+
+#: views/deactivation-reasons.php:30
+#: views/insights-deactivation-reasons.php:39
+msgid "Open a Ticket"
+msgstr ""
+
+#: views/deactivation-reasons.php:48
+#: views/insights-deactivation-reasons.php:88
+msgid "Submit & Deactivate"
+msgstr ""
+
+#: views/deactivation-reasons.php:49
+#: views/insights-deactivation-reasons.php:89
+msgid "Skip & Deactivate"
+msgstr ""
+
+#: views/insights-deactivation-reasons.php:58
+msgid "What data do we collect?"
+msgstr ""
+
+#. translators: %s: server host name, e.g. store.kodezen.com
+#: views/insights-deactivation-reasons.php:64
+#, php-format
+msgid "When you click \"Submit & Deactivate\", your selected reason and the following information about your site are sent to %s to help us improve the plugin:"
+msgstr ""
+
+#: views/insights-deactivation-reasons.php:75
+msgid "Prefer not to share this? Choose \"Skip & Deactivate\" and nothing is sent."
+msgstr ""
+
+#: views/insights-opt-in-notice.php:23
+msgid "What we collect?"
+msgstr ""
+
+#: views/insights-opt-in-notice.php:38
+msgid "Yes, keep me updated"
+msgstr ""
+
+#: views/insights-opt-in-notice.php:39
+msgid "No thanks"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:13
+#: views/support-ticket-form.php:8
+msgid "Submit Support Ticket"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:22
+#: views/support-ticket-form.php:17
+msgid "Name"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:28
+#: views/support-ticket-form.php:23
+msgid "Email"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:35
+#: views/support-ticket-form.php:30
+msgid "Subject"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:41
+#: views/support-ticket-form.php:36
+msgid "Website"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:48
+#: views/support-ticket-form.php:43
+msgid "Message"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:58
+#: views/support-ticket-form.php:53
+msgid "Send Message"
+msgstr ""
+
+#: views/insights-support-ticket-form.php:59
+#: views/support-ticket-form.php:54
+#: static/license-app.js:527
+#: static/license-app.js:650
+msgid "Cancel"
+msgstr ""
+
+#: views/license-form.php:51
+msgid "License Key"
+msgstr ""
+
+#: views/license-form.php:55
+#: static/license-app.js:296
+msgid "Enter your license key to activate"
+msgstr ""
+
+#. translators: %s. Purchase link tag
+#: views/license-form.php:91
+#, php-format
+msgid "Don’t have a license key? %s"
+msgstr ""
+
+#: views/license-form.php:93
+#: static/license-app.js:331
+msgid "Purchase one here"
+msgstr ""
+
+#: views/license-form.php:104
+msgid "Status:"
+msgstr ""
+
+#: views/license-form.php:109
+msgid "Last Checked:"
+msgstr ""
+
+#: views/license-form.php:114
+msgid "Check License Status Now"
+msgstr ""
+
+#: views/license-form.php:120
+msgid "Expires: "
+msgstr ""
+
+#: views/license-form.php:124
+msgid "Activation Remaining: "
+msgstr ""
+
+#: views/license-form.php:135
+#: static/license-app.js:347
+msgid "Unlimited"
+msgstr ""
+
+#. translators: 1: Remaining activation, 2: Total activation (limit)
+#: views/license-form.php:138
+#, php-format
+msgid "%1$d out of %2$s"
+msgstr ""
+
+#. translators: 1: Remaining activation, 2: Total activation (limit)
+#: views/license-form.php:148
+#, php-format
+msgid "%1$d out of %2$d"
+msgstr ""
+
+#: views/license-form.php:157
+msgid "Automatic Update: "
+msgstr ""
+
+#: views/license-form.php:158
+#: static/license-app.js:395
+msgid "Enabled"
+msgstr ""
+
+#: views/license-form.php:158
+#: static/license-app.js:395
+msgid "Disabled"
+msgstr ""
+
+#: static/license-app.js:52
+msgid "never"
+msgstr ""
+
+#: static/license-app.js:55
+msgid "just now"
+msgstr ""
+
+#. translators: %d: minutes
+#: static/license-app.js:56
+#, js-format
+msgid "%d min ago"
+msgstr ""
+
+#: static/license-app.js:57
+#, js-format
+msgid "%d hr ago"
+msgstr ""
+
+#: static/license-app.js:58
+#, js-format
+msgid "%d days ago"
+msgstr ""
+
+#: static/license-app.js:98
+#: static/license-app.js:489
+msgid "Installed"
+msgstr ""
+
+#: static/license-app.js:103
+msgid "Latest"
+msgstr ""
+
+#: static/license-app.js:109
+#, js-format
+msgid "Checked %s"
+msgstr ""
+
+#: static/license-app.js:116
+msgid "Checking…"
+msgstr ""
+
+#: static/license-app.js:116
+msgid "Check for updates"
+msgstr ""
+
+#: static/license-app.js:135
+#, js-format
+msgid "Version %s is available"
+msgstr ""
+
+#: static/license-app.js:140
+msgid "Click update to install the latest release. Your settings and data stay intact."
+msgstr ""
+
+#: static/license-app.js:149
+msgid "Installing…"
+msgstr ""
+
+#: static/license-app.js:150
+#, js-format
+msgid "Update to %s"
+msgstr ""
+
+#: static/license-app.js:166
+#, js-format
+msgid "Install log (%d entries)"
+msgstr ""
+
+#: static/license-app.js:191
+msgid "Appearance → Themes → Add New → Upload Theme"
+msgstr ""
+
+#: static/license-app.js:192
+msgid "Plugins → Add New → Upload Plugin"
+msgstr ""
+
+#: static/license-app.js:196
+#, js-format
+msgid "Download the latest %s package (.zip) from your account dashboard."
+msgstr ""
+
+#: static/license-app.js:197
+#, js-format
+msgid "Download the latest %s package (.zip) from where you purchased it."
+msgstr ""
+
+#: static/license-app.js:198
+#, js-format
+msgid "In another tab, go to %s."
+msgstr ""
+
+#: static/license-app.js:199
+msgid "Upload the .zip you downloaded and choose “Replace current with uploaded” if asked."
+msgstr ""
+
+#: static/license-app.js:200
+msgid "Your settings and data are preserved — this only replaces the files."
+msgstr ""
+
+#: static/license-app.js:205
+msgid "Automatic update didn’t complete — update manually"
+msgstr ""
+
+#: static/license-app.js:223
+msgid "Open account dashboard"
+msgstr ""
+
+#: static/license-app.js:229
+msgid "Go to Upload Theme"
+msgstr ""
+
+#: static/license-app.js:229
+msgid "Go to Upload Plugin"
+msgstr ""
+
+#: static/license-app.js:244
+#, js-format
+msgid "Quick rollback to v%s"
+msgstr ""
+
+#: static/license-app.js:247
+msgid "If the latest update isn't working out, you can return to your previously installed version with one click."
+msgstr ""
+
+#: static/license-app.js:256
+#, js-format
+msgid "Roll back to v%s"
+msgstr ""
+
+#: static/license-app.js:273
+#, js-format
+msgid "%s is active on this site."
+msgstr ""
+
+#: static/license-app.js:274
+#, js-format
+msgid "Activate %s"
+msgstr ""
+
+#: static/license-app.js:277
+msgid "You're receiving updates, security fixes and priority support."
+msgstr ""
+
+#: static/license-app.js:278
+msgid "Activate your license to unlock automatic updates, priority support, and all premium features."
+msgstr ""
+
+#: static/license-app.js:311
+#: static/license-app.js:657
+msgid "Working…"
+msgstr ""
+
+#: static/license-app.js:323
+msgid "Activating…"
+msgstr ""
+
+#: static/license-app.js:329
+msgid "Don't have a license key? "
+msgstr ""
+
+#: static/license-app.js:348
+#, js-format
+msgid "%1$s of %2$s"
+msgstr ""
+
+#: static/license-app.js:360
+#: static/license-app.js:469
+msgid "Status"
+msgstr ""
+
+#: static/license-app.js:366
+msgid "Last Checked"
+msgstr ""
+
+#: static/license-app.js:374
+#: static/license-app.js:375
+msgid "Check license status now"
+msgstr ""
+
+#: static/license-app.js:380
+msgid "Expires"
+msgstr ""
+
+#: static/license-app.js:384
+msgid "Activations Remaining"
+msgstr ""
+
+#: static/license-app.js:388
+msgid "WP Auto-update"
+msgstr ""
+
+#: static/license-app.js:393
+msgid "WordPress will auto-install updates for this plugin (toggled on the Plugins screen)."
+msgstr ""
+
+#: static/license-app.js:394
+msgid "Toggle auto-update from WordPress→Plugins."
+msgstr ""
+
+#: static/license-app.js:410
+msgid "Version history"
+msgstr ""
+
+#: static/license-app.js:412
+msgid "Install or roll back to any released version of this plugin."
+msgstr ""
+
+#: static/license-app.js:420
+msgid "Re-fetch the version list from the license server."
+msgstr ""
+
+#: static/license-app.js:421
+msgid "Refreshing…"
+msgstr ""
+
+#: static/license-app.js:421
+msgid "Refresh"
+msgstr ""
+
+#: static/license-app.js:430
+msgid "Loading version history…"
+msgstr ""
+
+#: static/license-app.js:436
+msgid "The license server doesn't support version history yet."
+msgstr ""
+
+#: static/license-app.js:438
+msgid "Status updates above still work — they use the older /check-update endpoint. The Refresh button retries once the server is upgraded."
+msgstr ""
+
+#: static/license-app.js:444
+msgid "Could not load version history."
+msgstr ""
+
+#: static/license-app.js:450
+msgid "No versions are available to install or roll back to yet."
+msgstr ""
+
+#: static/license-app.js:451
+msgid "Once the vendor publishes additional released versions on the license server, they'll appear here with Install and Roll back buttons."
+msgstr ""
+
+#: static/license-app.js:461
+msgid "You're on the only released version. Roll back will become available once an earlier release is published."
+msgstr ""
+
+#: static/license-app.js:468
+msgid "Version"
+msgstr ""
+
+#: static/license-app.js:470
+msgid "Released"
+msgstr ""
+
+#: static/license-app.js:481
+msgid "current"
+msgstr ""
+
+#: static/license-app.js:491
+msgid "Vendor disabled rollback to this version."
+msgstr ""
+
+#: static/license-app.js:491
+msgid "Rollback blocked"
+msgstr ""
+
+#: static/license-app.js:504
+msgid "Roll back"
+msgstr ""
+
+#: static/license-app.js:505
+msgid "Install"
+msgstr ""
+
+#: static/license-app.js:511
+msgid "⚠ Breaking changes"
+msgstr ""
+
+#: static/license-app.js:522
+msgid "I understand, continue"
+msgstr ""
+
+#: static/license-app.js:552
+msgid "Update preferences"
+msgstr ""
+
+#: static/license-app.js:554
+msgid "Tune how this site receives updates from the license server."
+msgstr ""
+
+#: static/license-app.js:567
+msgid "Receive beta updates"
+msgstr ""
+
+#: static/license-app.js:570
+msgid "Includes pre-release versions tagged as beta on the license server."
+msgstr ""
+
+#. translators: %s: activation limit
+#: static/license-app.js:596
+#, js-format
+msgid "This license is already active on its maximum of %s site(s). Choose the site(s) to deactivate so this site can take a seat."
+msgstr ""
+
+#: static/license-app.js:599
+msgid "This license has reached its activation limit. Choose the site(s) to deactivate so this site can take a seat."
+msgstr ""
+
+#: static/license-app.js:607
+msgid "Activation limit reached"
+msgstr ""
+
+#: static/license-app.js:620
+msgid "No other active sites were reported. Please deactivate a site from your account dashboard, then try again."
+msgstr ""
+
+#: static/license-app.js:635
+msgid "(unknown site)"
+msgstr ""
+
+#. translators: %s: date
+#: static/license-app.js:637
+#, js-format
+msgid "Activated %s"
+msgstr ""
+
+#: static/license-app.js:658
+msgid "Deactivate selected & activate here"
+msgstr ""
+
+#: static/license-app.js:724
+#, js-format
+msgid "Update available: v%s"
+msgstr ""
+
+#: static/license-app.js:725
+msgid "You're up to date."
+msgstr ""
+
+#: static/license-app.js:735
+msgid "Starting…"
+msgstr ""
+
+#: static/license-app.js:741
+#, js-format
+msgid "Rolled back to v%s"
+msgstr ""
+
+#: static/license-app.js:742
+#, js-format
+msgid "Installed v%s"
+msgstr ""
+
+#: static/license-app.js:770
+msgid "License activated."
+msgstr ""
+
+#: static/license-app.js:796
+msgid "Deactivate this license on this site?"
+msgstr ""
+
+#: static/license-app.js:802
+msgid "License deactivated."
+msgstr ""
+
+#: static/license-app.js:813
+msgid "License re-checked."
+msgstr ""
+
+#: static/license-app.js:831
+msgid "Loading…"
+msgstr ""

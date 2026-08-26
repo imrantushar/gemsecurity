@@ -2,7 +2,9 @@
 /**
  * @var SE_License_SDK_Insights $this
  * @var array $reasons
- * @var string $terms_policy_text
+ * @var array $dataCollectionList Plain-language list of data points sent when the user opts in.
+ * @var string $serverHost License/feedback server host (e.g. store.kodezen.com).
+ * @var string $privacyPolicyUrl Vendor privacy policy URL (may be empty).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -50,7 +52,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</li>
 				<?php } ?>
 			</ul>
-		
+
+			<div class="se-sdk-deactivation-modal--consent">
+				<details class="se-sdk-consent-details">
+					<summary class="se-sdk-consent-summary"><?php esc_html_e( 'What data do we collect?', 'storeengine-sdk' ); ?></summary>
+					<div class="se-sdk-consent-content">
+						<p class="se-sdk-consent-intro">
+							<?php
+							printf(
+							/* translators: %s: server host name, e.g. store.kodezen.com */
+								esc_html__( 'When you click "Submit & Deactivate", your selected reason and the following information about your site are sent to %s to help us improve the plugin:', 'storeengine-sdk' ),
+								'<strong>' . esc_html( $serverHost ) . '</strong>'
+							);
+							?>
+						</p>
+						<ul class="se-sdk-consent-list">
+							<?php foreach ( $dataCollectionList as $dataPoint ) { ?>
+								<li><?php echo esc_html( $dataPoint ); ?></li>
+							<?php } ?>
+						</ul>
+						<p class="se-sdk-consent-note">
+							<?php esc_html_e( 'Prefer not to share this? Choose "Skip & Deactivate" and nothing is sent.', 'storeengine-sdk' ); ?>
+							<?php if ( ! empty( $privacyPolicyUrl ) ) { ?>
+								<a href="<?php echo esc_url( $privacyPolicyUrl ); ?>" target="_blank" rel="noopener noreferrer">
+									<?php esc_html_e( 'Privacy Policy', 'storeengine-sdk' ); ?>
+								</a>
+							<?php } ?>
+						</p>
+					</div>
+				</details>
+			</div>
+
 		</div>
 		<div class="se-sdk-deactivation-modal--footer">
 			<button class="button send-reason"><?php esc_html_e( 'Submit & Deactivate', 'storeengine-sdk' ); ?></button>

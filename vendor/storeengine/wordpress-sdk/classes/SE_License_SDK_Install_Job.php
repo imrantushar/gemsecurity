@@ -60,6 +60,18 @@ final class SE_License_SDK_Install_Job {
 			);
 		}
 
+		// Supply-chain hardening: only install packages served from the
+		// vendor's own license-server host (or a subdomain of its registrable
+		// domain). The package URL originates from the /software/get-package
+		// response, so pinning the host here prevents a tampered or MITM'd
+		// response from redirecting the install to an attacker-controlled ZIP
+		// before it ever reaches WP's Plugin_Upgrader. See WP.org review
+		// "remote_controlled_update".
+		$trusted_host = $this->is_trusted_package_url( $package_url );
+		if ( is_wp_error( $trusted_host ) ) {
+			return $trusted_host;
+		}
+
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/misc.php';
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -302,6 +314,81 @@ final class SE_License_SDK_Install_Job {
 			'reactivated'     => $reactivated,
 			'log'             => $messages,
 		];
+	}
+
+	/**
+	 * Validate that a package URL is safe to install from.
+	 *
+	 * Requires HTTPS and pins the host to the vendor's license server (or a
+	 * subdomain of its registrable domain). The allow-list is filterable via
+	 * the client-scoped `trusted_package_hosts` hook so a vendor that serves
+	 * packages from a dedicated download/CDN host can add it without widening
+	 * trust to arbitrary URLs.
+	 *
+	 * @param string $package_url URL returned by /software/get-package.
+	 *
+	 * @return true|WP_Error True when trusted, WP_Error otherwise.
+	 */
+	private function is_trusted_package_url( string $package_url ) {
+		$parsed = wp_parse_url( $package_url );
+		$scheme = isset( $parsed['scheme'] ) ? strtolower( $parsed['scheme'] ) : '';
+		$host   = isset( $parsed['host'] ) ? strtolower( trim( $parsed['host'], '.' ) ) : '';
+
+		if ( 'https' !== $scheme || '' === $host ) {
+			return new WP_Error(
+				'sdk-untrusted-package-url',
+				__( 'The update package URL is not a valid HTTPS URL and was rejected for safety.', 'storeengine-sdk' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$server_host = strtolower( $this->client->get_license_server_host() );
+		$allowed     = [];
+
+		if ( '' !== $server_host ) {
+			$allowed[] = $server_host;
+
+			// Allow subdomains of the license server's registrable domain so a
+			// dedicated download/CDN host (e.g. downloads.example.com) works
+			// without trusting hosts outside the vendor's own domain.
+			$labels = explode( '.', $server_host );
+			if ( count( $labels ) >= 2 ) {
+				$allowed[] = implode( '.', array_slice( $labels, -2 ) );
+			}
+		}
+
+		/**
+		 * Filters the hosts trusted to serve update packages.
+		 *
+		 * Return an array of bare host names (e.g. 'downloads.example.com').
+		 * A package host matches if it equals an entry or is a subdomain of it.
+		 *
+		 * @param string[] $allowed     Trusted hosts.
+		 * @param string   $package_url The package URL being validated.
+		 */
+		$allowed = apply_filters( $this->client->getHookName( 'trusted_package_hosts' ), $allowed, $package_url );
+		$allowed = array_unique( array_filter( array_map( 'strtolower', (array) $allowed ) ) );
+
+		foreach ( $allowed as $candidate ) {
+			if ( $host === $candidate ) {
+				return true;
+			}
+
+			$suffix = '.' . $candidate;
+			if ( strlen( $host ) > strlen( $suffix ) && substr( $host, -strlen( $suffix ) ) === $suffix ) {
+				return true;
+			}
+		}
+
+		return new WP_Error(
+			'sdk-untrusted-package-host',
+			sprintf(
+			/* translators: %s: the host name returned in the package URL */
+				__( 'The update package host "%s" is not a trusted vendor host. Installation was aborted to protect against a tampered or redirected download.', 'storeengine-sdk' ),
+				$host
+			),
+			[ 'status' => 400 ]
+		);
 	}
 
 	/**

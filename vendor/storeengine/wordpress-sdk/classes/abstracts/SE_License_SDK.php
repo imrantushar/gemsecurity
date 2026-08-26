@@ -58,6 +58,39 @@ abstract class SE_License_SDK {
 	}
 
 	/**
+	 * Load the SDK's own translations for the `storeengine-sdk` text domain.
+	 *
+	 * The SDK is a bundled library, not a plugin/theme, so WordPress's
+	 * just-in-time loader has no registered path for its strings. We load the
+	 * .mo explicitly: a site-wide override in wp-content/languages/plugins wins,
+	 * otherwise the .mo shipped in the SDK's own languages/ folder is used.
+	 *
+	 * @return void
+	 */
+	public static function load_textdomain(): void {
+		if ( is_textdomain_loaded( 'storeengine-sdk' ) ) {
+			return;
+		}
+
+		$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+		$locale = apply_filters( 'plugin_locale', $locale, 'storeengine-sdk' );
+
+		// 1. Site-wide override: wp-content/languages/plugins/storeengine-sdk-{locale}.mo
+		$override = WP_LANG_DIR . '/plugins/storeengine-sdk-' . $locale . '.mo';
+		if ( is_readable( $override ) ) {
+			load_textdomain( 'storeengine-sdk', $override, $locale );
+
+			return;
+		}
+
+		// 2. Translations shipped inside the SDK.
+		$mofile = self::sdk_path( 'languages/storeengine-sdk-' . $locale . '.mo' );
+		if ( is_readable( $mofile ) ) {
+			load_textdomain( 'storeengine-sdk', $mofile, $locale );
+		}
+	}
+
+	/**
 	 * Get the absolute URL to the sdk directory, or a file therein
 	 *
 	 * @static
@@ -144,6 +177,18 @@ abstract class SE_License_SDK {
 
 		require_once self::sdk_path( 'functions.php' );
 
+		// Load the SDK's own translations for the `storeengine-sdk` text domain.
+		if ( did_action( 'init' ) ) {
+			self::load_textdomain();
+		} else {
+			add_action( 'init', [ __CLASS__, 'load_textdomain' ], 1 );
+		}
+
+		// Register the `wp se-license` command once for the elected SDK version.
+		if ( defined( 'WP_CLI' ) && WP_CLI && class_exists( '\WP_CLI' ) ) {
+			\WP_CLI::add_command( 'se-license', 'SE_License_SDK_CLI' );
+		}
+
 		// Ensure initialization on plugin activation.
 		if ( ! did_action( 'init' ) ) {
 			add_action(
@@ -206,6 +251,32 @@ abstract class SE_License_SDK {
 	}
 
 	/**
+	 * All registered clients, keyed by their package file.
+	 *
+	 * @return SE_License_SDK_Client[]
+	 */
+	public static function get_all_registered(): array {
+		return self::$registered;
+	}
+
+	/**
+	 * Find a registered client by its product slug.
+	 *
+	 * @param string $slug Product slug.
+	 *
+	 * @return ?SE_License_SDK_Client
+	 */
+	public static function get_registered_by_slug( string $slug ): ?SE_License_SDK_Client {
+		foreach ( self::$registered as $client ) {
+			if ( $client->getSlug() === $slug ) {
+				return $client;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Check whether the AS data store has been initialized.
 	 *
 	 * @param ?string $function_name The name of the function being called. Optional. Default `null`.
@@ -216,7 +287,7 @@ abstract class SE_License_SDK {
 		if ( ! self::$sdk_initialized && ! empty( $function_name ) ) {
 			$message = sprintf(
 			/* translators: %s function name. */
-				__( '%s() was called before the StoreEngine License Manager Client SDK was initialized', 'se-license' ),
+				__( '%s() was called before the StoreEngine License Manager Client SDK was initialized', 'storeengine-sdk' ),
 				esc_attr( $function_name )
 			);
 			_doing_it_wrong( esc_html( $function_name ), esc_html( $message ), '1.0.0' );

@@ -50,6 +50,9 @@ if ( ! function_exists( 'se_license_init' ) ) {
 	 * slug: string, // Plugin slug (without main file)
 	 * package_version?: string, // Optional current package version. Auto-detected from plugin/theme metadata when omitted.
 	 * allow_local?: bool, // Should plugin dev allow license activation from local environment. Recommended.
+	 * critical_paths?: array, // Package-relative paths (e.g. ['includes/autoload.php']) that must exist in an update package; if any is missing the update is aborted before the live folder is swapped. Declare the files your plugin hard-requires on boot. When omitted the SDK falls back to ['vendor/autoload.php'], but only if the installed build actually ships one — so a consumer that ships no vendor/ is never blocked by a path it never had.
+	 * requires_core?: string|array, // Core/free plugin this (pro) product depends on. Pass the slug, or ['slug'=>'', 'basename'=>'', 'name'=>'', 'min_version'=>'']. When set, the SDK updates the core plugin first and refuses to apply the pro update until the core plugin is active and at least the required version (the required version can also be supplied per-release by the license server). Prevents pro from out-running its free plugin during the wp.org 24h review delay.
+	 * license_grace_period?: int, // Seconds a previously-valid license keeps working when the license server is unreachable for its scheduled re-check. Default 14 days. Prevents a transient outage from deactivating a paying customer. 0 = fail closed immediately.
 	 * license_server: string, // Store URL (api backend for SDK).
 	 * activation_prompt?: null|string, // Custom activation nag (admin-notice) message.
 	 * purchase_url?: string, // Plugin store product URL.
@@ -99,6 +102,9 @@ if ( ! function_exists( 'se_license_init' ) ) {
 			'package_type'                  => null,
 			'package_version'               => null,
 			'allow_local'                   => true,
+			'critical_paths'                => null, // Package-relative paths that must exist in an update package; missing ones abort the update before the live folder is swapped.
+			'requires_core'                 => null, // Core/free plugin dependency (slug or [slug, basename, name, min_version]); gates the pro update on the core plugin's version.
+			'license_grace_period'          => null, // Seconds a previously-valid license keeps working while the license server is unreachable. Default 14 days. 0 = fail closed immediately.
 			'license_server'                => null,
 			'activation_prompt'             => null,
 			'purchase_url'                  => null,

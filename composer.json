@@ -5,21 +5,8 @@
     "license": "GPL-3.0-or-later",
     "repositories": [
         {
-            "type": "package",
-            "package": {
-                "name": "storeengine/wordpress-sdk",
-                "version": "1.5.2",
-                "type": "library",
-                "dist": {
-                    "type": "zip",
-                    "url": "https://codeload.github.com/imrantushar/storeengine-sdk-for-wordpress/zip/907b1f0213a3a4ccb8769695d75897278c19f4fa"
-                },
-                "autoload": {
-                    "files": [
-                        "init.php"
-                    ]
-                }
-            }
+            "type": "vcs",
+            "url": "https://github.com/imrantushar/storeengine-sdk-for-wordpress.git"
         }
     ],
     "require": {

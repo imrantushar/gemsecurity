@@ -569,6 +569,55 @@ body.se-sdk-deactivation-modal-open {
 	border-color: var(--se-sdk-primary-color, #008DFF);
 }
 
+.se-sdk-deactivation-modal--consent {
+	margin-top: 16px;
+	padding-top: 14px;
+	border-top: 1px solid var(--se-sdk-border-color, #eeeeee);
+	font-size: 13px;
+	color: var(--se-sdk-text-color, #141A24);
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-summary {
+	cursor: pointer;
+	user-select: none;
+	color: var(--se-sdk-primary-color, #008DFF);
+	font-weight: 500;
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-summary:hover {
+	text-decoration: underline;
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-content {
+	margin-top: 10px;
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-intro {
+	margin: 0 0 6px;
+	color: var(--se-sdk-muted-color, #738496);
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-note {
+	margin: 6px 0 0;
+	color: var(--se-sdk-muted-color, #738496);
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-list {
+	margin: 0 0 6px;
+	padding-left: 18px;
+	list-style: disc;
+	color: var(--se-sdk-muted-color, #738496);
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-list li {
+	margin: 2px 0;
+}
+
+.se-sdk-deactivation-modal--consent .se-sdk-consent-note a {
+	color: var(--se-sdk-primary-color, #008DFF);
+	margin-left: 4px;
+}
+
 @media (max-width: 768px) {
 	.se-sdk-deactivation-modal--wrap {
 		width: calc(100% - 30px) !important;

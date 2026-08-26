@@ -46,10 +46,16 @@ final class SE_License_SDK_Rest_API {
 			'callback'            => [ $this, 'activate_license' ],
 			'permission_callback' => [ $this, 'permissions_check' ],
 			'args'                => [
-				'license' => [
+				'license'                => [
 					'required'          => true,
 					'type'              => 'string',
 					'sanitize_callback' => 'sanitize_text_field',
+				],
+				'deactivate_activations' => [
+					'required' => false,
+					'type'     => 'array',
+					'items'    => [ 'type' => 'integer' ],
+					'default'  => [],
 				],
 			],
 		] );
@@ -183,12 +189,28 @@ final class SE_License_SDK_Rest_API {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function activate_license( WP_REST_Request $request ) {
-		$license = $request->get_param( 'license' );
+		$license    = $request->get_param( 'license' );
+		$deactivate = $request->get_param( 'deactivate_activations' );
 
-		$this->client->license()->activate_client_license( [ 'license_key' => $license ] );
+		$this->client->license()->activate_client_license( [
+			'license_key'            => $license,
+			'deactivate_activations' => is_array( $deactivate ) ? $deactivate : [],
+		] );
 
 		if ( $this->client->license()->get_error() ) {
-			return new WP_Error( 'error-activating-license', $this->client->license()->get_error(), [ 'status' => 400 ] );
+			$code = $this->client->license()->get_error_code();
+			$data = $this->client->license()->get_error_data();
+
+			// Surface the "activation limit reached" case as a 409 carrying the
+			// list of active sites, so the panel can offer a "free a seat"
+			// picker instead of a dead-end error.
+			$status = ( 'license-activation-limit-reached' === $code ) ? 409 : 400;
+
+			return new WP_Error(
+				$code ?: 'error-activating-license',
+				$this->client->license()->get_error(),
+				array_merge( is_array( $data ) ? $data : [], [ 'status' => $status ] )
+			);
 		}
 
 
@@ -398,6 +420,19 @@ final class SE_License_SDK_Rest_API {
 		$current        = $this->client->getProjectVersion();
 		$target_version = $request->get_param( 'version' );
 
+		// Points 1+2: for an upgrade (not a rollback/reinstall), make sure the
+		// core/free plugin is up to date first. This tries to update the core
+		// plugin, then errors with an actionable message if it still can't be
+		// satisfied — e.g. the matching free release is held in wordpress.org's
+		// 24h review window. No-op unless `requires_core` was declared.
+		$is_upgrade = ! $target_version || version_compare( $target_version, $current, '>' );
+		if ( $is_upgrade ) {
+			$core_ok = $this->client->core_dependency()->ensure_satisfied_or_error( true );
+			if ( is_wp_error( $core_ok ) ) {
+				return $core_ok;
+			}
+		}
+
 		// "Latest" path: ask the server what the latest released version is.
 		if ( ! $target_version ) {
 			$info = $this->client->updater()->force_check();
@@ -433,6 +468,16 @@ final class SE_License_SDK_Rest_API {
 
 		if ( is_wp_error( $result ) ) {
 			$this->client->update_state()->record_install( $target_version, $current, 'failed', false );
+
+			/**
+			 * Fires when an SDK-driven update install fails.
+			 * Hook name: "{product-hook-prefix}_update_failed".
+			 *
+			 * @param WP_Error $result         The failure.
+			 * @param string   $target_version The version that was being installed.
+			 * @param string   $current        The version still on disk.
+			 */
+			$this->client->do_action( 'update_failed', $result, $target_version, $current );
 
 			return $result;
 		}
