@@ -152,7 +152,7 @@ export default function BackupSettings() {
 			) }
 			<p className="gs-card__desc">
 				{ __( 'Backup notices go to the security email and webhook configured under', 'gemsecurity' ) }{ ' ' }
-				<a href={ pageUrl( 'gemsecurity-settings' ) }>{ __( 'Settings → Notifications', 'gemsecurity' ) }</a>.
+				<a href={ pageUrl( 'gemsecurity-notifications' ) }>{ __( 'the Notifications page', 'gemsecurity' ) }</a>.
 			</p>
 		</Card>
 	);

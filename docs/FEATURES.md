@@ -73,7 +73,7 @@ no page, no menu entry and no routes.
 ### Anti-Spam
 - Every comment control in one place, including the site-wide comment kill switch.
 - Silent honeypot + signed minimum time-to-submit on comments and registration.
-- Optional CAPTCHA on the comment form (provider configured under Login Security).
+- Optional CAPTCHA on the comment form (provider configured on the CAPTCHA page).
 - Heuristic comment scoring on link count and keyword matches.
 
 ### Threat Defense (Pro)
@@ -93,14 +93,18 @@ no page, no menu entry and no routes.
 - Brute-force lockout with configurable attempt limit and lockout duration.
 - Admin-login email alert (to the plugin-wide security email); absolute admin session
   timeout; idle session timeout.
-- Login CAPTCHA — reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile (login / registration /
-  lost-password) with a v3 score threshold. Putting the same CAPTCHA on the comment form is
-  a switch on the Anti-Spam page.
 - Password policy — minimum length, complexity, expiry, and a breached-password check via
   Have I Been Pwned (k-anonymity).
 - Custom login URL (rename `wp-login.php`, 404 the default) and a login honeypot.
 - Session management — list/end your own sessions, force-logout users.
 - Pro: trusted devices (with alerts) and magic-link recovery.
+
+### CAPTCHA
+- Its own module and page — reCAPTCHA v2/v3, hCaptcha or Cloudflare Turnstile on the login,
+  registration and lost-password forms, with a v3 score threshold.
+- Per-provider setup guide and an end-to-end key test that renders the real widget and
+  verifies a real token before the keys ever reach the login form.
+- Putting the same CAPTCHA on the comment form is a switch on the Anti-Spam page.
 
 ### Two-Factor Authentication
 - App TOTP (RFC 6238, no external libs) + email OTP fallback.

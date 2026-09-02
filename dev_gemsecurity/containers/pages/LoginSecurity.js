@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
+import { Card, Toggle, Field, NumberInput, TextInput, Button, MultiSelect, toOptions } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
-import SetupGuide from '@Components/ui/SetupGuide';
-import TestCaptcha from '@Components/ui/TestCaptcha';
 import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
 import { ProSection, isPro } from '@Components/ui/Pro';
@@ -17,15 +15,6 @@ const KEYS = [
 	'admin_login_alert_enabled',
 	'admin_session_timeout_enabled',
 	'admin_session_timeout_hours',
-	// CAPTCHA.
-	'captcha_enabled',
-	'captcha_provider',
-	'captcha_site_key',
-	'captcha_secret_key',
-	'captcha_on_login',
-	'captcha_on_register',
-	'captcha_on_lostpassword',
-	'captcha_v3_threshold',
 	// Password policy.
 	'password_policy_enabled',
 	'password_min_length',
@@ -136,11 +125,6 @@ function PasswordRotation() {
 	const [ includeSelf, setIncludeSelf ] = useState( false );
 	const [ notify, setNotify ] = useState( true );
 
-	const toggleRole = ( slug, on ) => {
-		const next = on ? [ ...new Set( [ ...scoped, slug ] ) ] : scoped.filter( ( r ) => r !== slug );
-		setField( 'password_rotation_roles', next );
-	};
-
 	const load = async () => {
 		setBusy( 'preview' );
 		try {
@@ -200,18 +184,14 @@ function PasswordRotation() {
 		>
 			<Field
 				label={ __( 'Apply to roles', 'gemsecurity' ) }
-				description={ __( 'Leave all unchecked to apply to every user.', 'gemsecurity' ) }
+				description={ __( 'Leave empty to apply to every user.', 'gemsecurity' ) }
 			>
-				<div className="gs-toggle-list">
-					{ Object.entries( roles ).map( ( [ slug, name ] ) => (
-						<Toggle
-							key={ slug }
-							label={ name }
-							checked={ scoped.includes( slug ) }
-							onChange={ ( v ) => toggleRole( slug, v ) }
-						/>
-					) ) }
-				</div>
+				<MultiSelect
+					options={ toOptions( roles ) }
+					value={ scoped }
+					onChange={ ( next ) => setField( 'password_rotation_roles', next ) }
+					placeholder={ __( 'Every user', 'gemsecurity' ) }
+				/>
 			</Field>
 
 			<Toggle
@@ -355,7 +335,7 @@ export default function LoginSecurity() {
 				/>
 				{ form.admin_login_alert_enabled && (
 					<p className="gs-card__desc">
-						{ __( 'The alert — user, time, IP and browser — goes to the security email under Settings → Notifications, along with every other notification the plugin sends.', 'gemsecurity' ) }
+						{ __( 'The alert — user, time, IP and browser — goes to the security email on the Notifications page, along with every other notification the plugin sends.', 'gemsecurity' ) }
 					</p>
 				) }
 			</Card>
@@ -381,67 +361,6 @@ export default function LoginSecurity() {
 						disabled={ ! form.admin_session_timeout_enabled }
 					/>
 				</Field>
-			</Card>
-
-			<Card
-				title={ __( 'CAPTCHA', 'gemsecurity' ) }
-				description={ __( 'Add a bot challenge to the login, registration and lost-password forms.', 'gemsecurity' ) }
-			>
-				<Toggle
-					label={ __( 'Enable CAPTCHA', 'gemsecurity' ) }
-					checked={ form.captcha_enabled }
-					onChange={ ( v ) => setField( 'captcha_enabled', v ) }
-				/>
-				{ form.captcha_enabled && (
-					<>
-						<Field label={ __( 'Provider', 'gemsecurity' ) }>
-							<Select
-								value={ form.captcha_provider || 'recaptcha_v2' }
-								onChange={ ( e ) => setField( 'captcha_provider', e.target.value ) }
-								options={ [
-									{ value: 'recaptcha_v2', label: 'Google reCAPTCHA v2 (checkbox)' },
-									{ value: 'recaptcha_v3', label: 'Google reCAPTCHA v3 (score)' },
-									{ value: 'hcaptcha', label: 'hCaptcha' },
-									{ value: 'turnstile', label: 'Cloudflare Turnstile' },
-								] }
-							/>
-						</Field>
-						{ /* Steps for whichever provider is selected — the key
-						     pairs are not interchangeable between them. */ }
-						<SetupGuide
-							id={ `captcha.${ form.captcha_provider || 'recaptcha_v2' }` }
-							defaultOpen={ ! form.captcha_site_key }
-						/>
-						<div className="gs-row">
-							<Field label={ __( 'Site key', 'gemsecurity' ) }>
-								<TextInput value={ form.captcha_site_key ?? '' } onChange={ ( e ) => setField( 'captcha_site_key', e.target.value ) } />
-							</Field>
-							<Field label={ __( 'Secret key', 'gemsecurity' ) }>
-								<TextInput type="password" value={ form.captcha_secret_key ?? '' } onChange={ ( e ) => setField( 'captcha_secret_key', e.target.value ) } />
-							</Field>
-						</div>
-						{ /* Prove the keys here rather than on the login form:
-						     renders the real widget and verifies its token. */ }
-						<TestCaptcha
-							provider={ form.captcha_provider || 'recaptcha_v2' }
-							siteKey={ form.captcha_site_key || '' }
-							secretKey={ form.captcha_secret_key || '' }
-						/>
-						{ form.captcha_provider === 'recaptcha_v3' && (
-							<Field label={ __( 'v3 score threshold', 'gemsecurity' ) } description={ __( '0.0–1.0; requests scoring below this are blocked (0.5 recommended).', 'gemsecurity' ) }>
-								<NumberInput step="0.1" min="0" max="1" value={ form.captcha_v3_threshold ?? 0.5 } onChange={ ( e ) => setField( 'captcha_v3_threshold', Number( e.target.value ) ) } />
-							</Field>
-						) }
-						<div className="gs-toggle-list">
-							<Toggle label={ __( 'On login form', 'gemsecurity' ) } checked={ form.captcha_on_login } onChange={ ( v ) => setField( 'captcha_on_login', v ) } />
-							<Toggle label={ __( 'On registration form', 'gemsecurity' ) } checked={ form.captcha_on_register } onChange={ ( v ) => setField( 'captcha_on_register', v ) } />
-							<Toggle label={ __( 'On lost-password form', 'gemsecurity' ) } checked={ form.captcha_on_lostpassword } onChange={ ( v ) => setField( 'captcha_on_lostpassword', v ) } />
-						</div>
-						<p className="gs-card__desc">
-							{ __( 'To put this CAPTCHA on the comment form, turn it on under Anti-Spam, where the rest of the comment controls live.', 'gemsecurity' ) }
-						</p>
-					</>
-				) }
 			</Card>
 
 			<Card

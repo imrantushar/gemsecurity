@@ -17,6 +17,7 @@ import Firewall from '@Containers/pages/Firewall';
 import ThreatDefense from '@Containers/pages/ThreatDefense';
 import VirtualPatch from '@Containers/pages/VirtualPatch';
 import LoginSecurity from '@Containers/pages/LoginSecurity';
+import Captcha from '@Containers/pages/Captcha';
 import TwoFactor from '@Containers/pages/TwoFactor';
 import SocialLogin from '@Containers/pages/SocialLogin';
 import Geolocation from '@Containers/pages/Geolocation';
@@ -29,6 +30,7 @@ import IncidentResponse from '@Containers/pages/IncidentResponse';
 import Logs from '@Containers/pages/Logs';
 import Backup from '@Containers/pages/Backup';
 import Monitoring from '@Containers/pages/Monitoring';
+import Notifications from '@Containers/pages/Notifications';
 import Settings from '@Containers/pages/Settings';
 
 const PAGES = {
@@ -38,6 +40,7 @@ const PAGES = {
 	'gemsecurity-threats': ThreatDefense,
 	'gemsecurity-virtual-patch': VirtualPatch,
 	'gemsecurity-login-security': LoginSecurity,
+	'gemsecurity-captcha': Captcha,
 	'gemsecurity-two-factor': TwoFactor,
 	'gemsecurity-social-login': SocialLogin,
 	'gemsecurity-geolocation': Geolocation,
@@ -52,6 +55,7 @@ const PAGES = {
 	'gemsecurity-logs': Logs,
 	'gemsecurity-backup': Backup,
 	'gemsecurity-monitoring': Monitoring,
+	'gemsecurity-notifications': Notifications,
 	'gemsecurity-settings': Settings,
 };
 

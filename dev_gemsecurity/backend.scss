@@ -115,6 +115,11 @@ html {
 
 	*, *::before, *::after { box-sizing: border-box; }
 
+	/* wp-admin's common.css colours headings on the element itself (h1/h2/h3 ->
+	   #1d2327), which beats the colour this wrapper passes down and leaves every
+	   heading dark-on-dark once the dark theme is on. Put them back on the token. */
+	h1, h2, h3, h4, h5, h6 { color: $gs-text; }
+
 	/* ---------------- Layout ---------------- */
 	.gs-app { display: flex; min-height: calc(100vh - 32px); }
 
@@ -344,6 +349,9 @@ html {
 	.gs-badge {
 		display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px;
 		font-size: 11.5px; font-weight: 700; text-transform: capitalize; line-height: 1.7;
+		/* Capitalisation suits a raw severity token ("critical"); it mangles a
+		   badge that carries a sentence ("22 issue(s)" -> "22 Issue(S)"). */
+		&--text { text-transform: none; }
 		&--info { background: #e7efff; color: #2952cc; }
 		&--success { background: #e3f6ea; color: #157f3b; }
 		&--warning { background: #fdf0dd; color: #a4600a; }
@@ -444,14 +452,121 @@ html {
 		&__msg { max-width: 380px; }
 	}
 	.gs-nowrap { white-space: nowrap; color: $gs-muted; }
+	/* "Show all 58" under a truncated findings table. */
+	.gs-tablemore {
+		display: flex; align-items: center; gap: 12px;
+		margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--gs-line);
+		font-size: 12.5px;
+	}
 
 	/* ---------------- Filters / pager ---------------- */
 	.gs-filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; .gs-input { max-width: 260px; } }
 	.gs-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; color: $gs-muted; }
 
 	/* ---------------- Scanner ---------------- */
-	.gs-scan-summary { display: flex; align-items: center; gap: 12px; }
+	.gs-scan-summary { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 	.gs-ok { display: flex; align-items: center; gap: 8px; color: $gs-success; font-weight: 500; .gs-icon { color: $gs-success; } }
+
+	/* The verdict, the timestamp and the button that produces both. Sits above
+	   everything else so the primary action is never buried in a settings
+	   panel the way it used to be. */
+	.gs-scanhero {
+		display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+		&__icon {
+			width: 54px; height: 54px; border-radius: 15px; flex-shrink: 0;
+			display: grid; place-items: center;
+			.gs-icon { color: currentColor; }
+			&--good { background: rgba(22, 163, 74, .12); color: $gs-success; }
+			&--bad  { background: rgba(220, 38, 38, .10); color: $gs-danger; }
+			&--idle { background: var(--gs-accent-soft); color: $gs-primary; }
+		}
+		&__text { flex: 1 1 240px; min-width: 0; }
+		&__title { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3; }
+		&__meta {
+			margin: 6px 0 0; color: $gs-muted; font-size: 12.5px;
+			display: flex; flex-wrap: wrap; align-items: center; gap: 3px 9px;
+			span + span::before { content: '·'; margin-right: 9px; color: var(--gs-track); }
+		}
+		&__actions { display: flex; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
+		/* Counts per area, so a long findings list can be read at a glance and
+		   jumped into without scrolling past the clean sections. */
+		&__jump {
+			display: flex; flex-wrap: wrap; gap: 8px; width: 100%;
+			margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gs-line);
+		}
+	}
+	.gs-jumpchip {
+		display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+		padding: 5px 13px 5px 6px; border-radius: 999px; font: inherit;
+		font-size: 12.5px; font-weight: 600; line-height: 1.6;
+		color: $gs-text; background: var(--gs-fill); border: 1px solid $gs-border;
+		&:hover { background: var(--gs-soft-hover); }
+		&__n {
+			min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+			display: inline-grid; place-items: center; font-size: 11.5px; font-weight: 700;
+			background: rgba(220, 38, 38, .10); color: $gs-danger;
+		}
+		&--warning .gs-jumpchip__n { background: rgba(217, 119, 6, .14); color: $gs-warning; }
+	}
+
+	/* ---------------- Notifications ---------------- */
+	/* A trigger and the module page that also owns it. The toggle keeps its own
+	   <label>, so the link has to sit outside it or clicking the link would
+	   flip the switch. */
+	.gs-alertrow {
+		/* A fixed second column, not `auto`: the module names differ in width,
+		   and with a flexible column every row's switch would land somewhere
+		   else down the list. */
+		display: grid; grid-template-columns: 1fr 150px;
+		align-items: center; gap: 18px; padding: 4px 0;
+		> .gs-toggle, > div:first-child { min-width: 0; }
+		> div:first-child > .gs-card__desc { margin: 3px 0 0; }
+		+ .gs-alertrow { border-top: 1px solid var(--gs-line); }
+		.gs-actionlist__go { justify-self: end; }
+		@media (max-width: 782px) {
+			grid-template-columns: 1fr;
+			.gs-actionlist__go { justify-self: start; }
+		}
+	}
+
+	/* ---------------- Findings list ---------------- */
+	.gs-findings { display: flex; flex-direction: column; gap: 12px; }
+	.gs-findings__label {
+		display: flex; align-items: center; gap: 12px; margin: 8px 2px 0;
+		font-size: 11.5px; font-weight: 700; letter-spacing: .05em;
+		text-transform: uppercase; color: $gs-muted;
+		/* The rule sits between the label and the trailing control rather than
+		   after both, so order them explicitly. */
+		&::after { content: ''; flex: 1; height: 1px; background: $gs-border; order: 1; }
+		.gs-btn { order: 2; padding: 4px 10px; font-size: 12px; text-transform: none; letter-spacing: 0; }
+	}
+
+	/* ---------------- Collapsible section ---------------- */
+	.gs-collapse {
+		/* Clear of the sticky WordPress admin bar when a jump chip scrolls
+		   a section to the top of the viewport. */
+		scroll-margin-top: 46px;
+		&__head { display: flex; align-items: center; gap: 12px; padding-right: 18px; }
+		&__heading { flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 700; }
+		&__toggle {
+			display: flex; align-items: center; gap: 10px; width: 100%;
+			padding: 16px 6px 16px 18px; border: 0; border-radius: $gs-radius;
+			background: transparent; cursor: pointer; text-align: left;
+			font: inherit; font-weight: 700; color: $gs-text;
+			&:hover { color: $gs-primary; }
+			&:focus-visible { outline: 2px solid $gs-primary; outline-offset: -3px; }
+		}
+		&__chevron {
+			flex-shrink: 0; color: $gs-muted;
+			transform: rotate(-90deg); transition: transform .18s ease;
+		}
+		&__desc { margin: -4px 0 16px; }
+		&__trailing { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+		&.is-open {
+			.gs-collapse__head { border-bottom: 1px solid $gs-border; }
+			.gs-collapse__chevron { transform: rotate(0); color: $gs-primary; }
+		}
+	}
 
 	/* ---------------- Tabs ---------------- */
 	.gs-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 4px; background: var(--gs-soft); border: 1px solid $gs-border; border-radius: 12px; flex-wrap: wrap; }
@@ -531,11 +646,43 @@ html {
 	.gs-geo-users__info { margin-bottom: 8px; }
 	.gs-geo-users__email { color: $gs-muted; font-size: 12.5px; margin-left: 8px; }
 	.gs-geo-users__pick { display: flex; gap: 10px; align-items: flex-start; .gs-rs { flex: 1; min-width: 0; } }
-	/* react-select look to match the kit */
-	.gs-rs__control { border-color: $gs-border !important; border-radius: 9px !important; min-height: 38px !important; box-shadow: none !important; }
+	/* react-select look to match the kit. Every colour goes through a token, so
+	   the control and its menu follow the dark theme like everything else —
+	   react-select paints its own white otherwise. */
+	/* react-select's container is a plain block, so inside the flex
+	   .gs-field__control it shrinks to its content instead of filling the row.
+	   Scoped to that context so the Geolocation per-user picker, which sets its
+	   own flex, keeps the full width it wants. */
+	.gs-field__control > .gs-rs { flex: 1 1 auto; min-width: 0; max-width: 520px; }
+	.gs-rs__control {
+		background: $gs-input-bg !important;
+		border-color: $gs-border !important; border-radius: 9px !important;
+		min-height: 38px !important; box-shadow: none !important;
+	}
 	.gs-rs__control--is-focused { border-color: $gs-primary !important; box-shadow: 0 0 0 3px rgba(47,107,255,.15) !important; }
+	.gs-rs__control--is-disabled { background: var(--gs-fill) !important; opacity: .7; }
 	.gs-rs__multi-value { background: var(--gs-accent-soft) !important; border-radius: 6px !important; }
 	.gs-rs__multi-value__label { color: $gs-primary !important; font-weight: 600; }
+	.gs-rs__multi-value__remove {
+		color: $gs-primary !important; border-radius: 0 6px 6px 0;
+		&:hover { background: var(--gs-soft-hover) !important; color: $gs-danger !important; }
+	}
+	.gs-rs__placeholder { color: $gs-muted !important; }
+	.gs-rs__input-container, .gs-rs__single-value, .gs-rs__input { color: $gs-text !important; }
+	.gs-rs__indicator-separator { background: $gs-border !important; }
+	.gs-rs__indicator { color: $gs-muted !important; &:hover { color: $gs-text !important; } }
+	.gs-rs__menu {
+		background: $gs-surface !important; border: 1px solid $gs-border !important;
+		border-radius: 10px !important; box-shadow: $gs-shadow !important;
+		overflow: hidden; z-index: 20 !important;
+	}
+	.gs-rs__option {
+		background: transparent !important; color: $gs-text !important;
+		font-size: 13.5px; cursor: pointer;
+		&--is-focused { background: var(--gs-soft) !important; }
+		&--is-selected { background: var(--gs-accent-soft) !important; color: $gs-primary !important; font-weight: 600; }
+	}
+	.gs-rs__menu-notice { color: $gs-muted !important; }
 
 	/* ---------------- Misc ---------------- */
 	.gs-block-action {

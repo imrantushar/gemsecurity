@@ -130,10 +130,11 @@ class Helper {
 	 * queryable any time GemSecurity itself is active, regardless of which
 	 * individual modules are on.
 	 *
-	 * `captcha` is special-cased: it isn't its own Registry module (the
-	 * Captcha class boots as part of the `two-factor` module), but "is
-	 * CAPTCHA protection active" is the semantic an external caller actually
-	 * wants, so this resolves it from the settings that actually govern it.
+	 * `captcha` is special-cased: it is a Registry module like any other, but
+	 * an active module there only means "the page exists and the class is
+	 * loaded". The semantic an external caller actually wants is "is CAPTCHA
+	 * protection challenging visitors right now", which additionally needs the
+	 * feature switched on and a working key pair.
 	 *
 	 * @param bool   $default
 	 * @param string $id
@@ -141,7 +142,9 @@ class Helper {
 	 */
 	public static function is_module_active( $default, $id ) {
 		if ( 'captcha' === $id ) {
-			return self::get_setting( 'captcha_enabled', false ) && \GemSecurity\Modules\Captcha::is_configured();
+			return \GemSecurity\Modules\Registry::is_active( 'captcha' )
+				&& self::get_setting( 'captcha_enabled', false )
+				&& \GemSecurity\Modules\Captcha::is_configured();
 		}
 		$all = \GemSecurity\Modules\Registry::all();
 		if ( ! isset( $all[ $id ] ) ) {

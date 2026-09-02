@@ -136,9 +136,6 @@ class Registry {
 				'category'      => 'access',
 				'recommended'   => true,
 				'page_slug'     => $slug . '-login-security',
-				// Captcha lives here, not with Two-Factor: every CAPTCHA control
-				// the UI offers is on the Login Security page, and gating it on a
-				// module the user never sees made the card save but do nothing.
 				'classes'       => [
 					LoginSecurity::class,
 					Sessions::class,
@@ -146,13 +143,29 @@ class Registry {
 					PasswordRotation::class,
 					CustomLogin::class,
 					LoginExtras::class,
-					Captcha::class,
 				],
 				'settings_keys' => [
 					'login_attempts_enabled', 'admin_session_timeout_enabled',
 					'password_policy_enabled', 'idle_timeout_enabled',
-					'custom_login_enabled', 'captcha_enabled',
+					'custom_login_enabled',
 				],
+			],
+			'captcha' => [
+				'icon'          => 'bot',
+				'category'      => 'access',
+				// On by default, and deliberately without `settings_keys`: the
+				// module is the *page*, not the feature. Deriving it from
+				// `captcha_enabled` would hide the page on every site that has
+				// no CAPTCHA configured yet — which is exactly the site that
+				// needs to find it. `captcha_enabled` stays as the granular
+				// switch inside the page, and turning the module off from the
+				// Modules page still removes the page and stops the class
+				// booting. Defaulting on also means sites upgrading from before
+				// this module existed (their stored state map has no key for it)
+				// keep the CAPTCHA they already had.
+				'recommended'   => true,
+				'page_slug'     => $slug . '-captcha',
+				'classes'       => [ Captcha::class ],
 			],
 			'two-factor' => [
 				'icon'          => 'key',
@@ -261,19 +274,32 @@ class Registry {
 				'settings_keys' => [ 'monitoring_enabled' ],
 			],
 
+			// ---- Notifications (core) ------------------------------------
+			// Alert delivery and the scheduled sends. Every module raises events;
+			// this is the one place that decides who hears about them, so it gets
+			// its own page rather than a card buried in Settings. Core, because a
+			// security plugin that cannot tell you anything is not one.
+			'notifications' => [
+				'icon'          => 'mail',
+				'category'      => 'core',
+				'core'          => true,
+				'page_slug'     => $slug . '-notifications',
+				'classes'       => [
+					Alerts::class,
+					DailyReport::class,
+				],
+			],
+
 			// ---- Settings (core) -----------------------------------------
-			// Notifications, the daily report, compliance/SIEM and lockdown are
-			// all configured on the Settings page, so they boot with it. Settings
-			// is core, so these are always available — which is what the page
-			// promises.
+			// Compliance/SIEM and lockdown are configured on the Settings page,
+			// so they boot with it. Settings is core, so these are always
+			// available — which is what the page promises.
 			'settings' => [
 				'icon'          => 'cog',
 				'category'      => 'core',
 				'core'          => true,
 				'page_slug'     => $slug . '-settings',
 				'classes'       => [
-					Alerts::class,
-					DailyReport::class,
 					Compliance::class,
 					Lockdown::class,
 				],
@@ -344,7 +370,11 @@ class Registry {
 			],
 			'login-security' => [
 				'title' => __( 'Login Security', 'gemsecurity' ),
-				'desc'  => __( 'Brute-force lockouts, login CAPTCHA, session limits, password policy and custom login URL.', 'gemsecurity' ),
+				'desc'  => __( 'Brute-force lockouts, session limits, password policy and custom login URL.', 'gemsecurity' ),
+			],
+			'captcha' => [
+				'title' => __( 'CAPTCHA', 'gemsecurity' ),
+				'desc'  => __( 'A bot challenge — reCAPTCHA, hCaptcha or Turnstile — on the login, registration, lost-password and comment forms.', 'gemsecurity' ),
 			],
 			'two-factor' => [
 				'title' => __( 'Two-Factor', 'gemsecurity' ),
@@ -390,9 +420,13 @@ class Registry {
 				'title' => __( 'Monitoring', 'gemsecurity' ),
 				'desc'  => __( 'Uptime, TLS-certificate expiry, DNS-change and email-authentication (SPF/DMARC) monitoring.', 'gemsecurity' ),
 			],
+			'notifications' => [
+				'title' => __( 'Notifications', 'gemsecurity' ),
+				'desc'  => __( 'Where alerts go, what raises one, and the reports sent on a schedule.', 'gemsecurity' ),
+			],
 			'settings' => [
 				'title' => __( 'Settings', 'gemsecurity' ),
-				'desc'  => __( 'Plugin-wide preferences: notifications, the daily report, compliance/SIEM, lockdown and import/export.', 'gemsecurity' ),
+				'desc'  => __( 'Plugin-wide preferences: compliance/SIEM, lockdown, log retention and import/export.', 'gemsecurity' ),
 			],
 		];
 	}

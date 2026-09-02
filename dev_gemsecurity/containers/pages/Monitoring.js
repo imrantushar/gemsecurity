@@ -49,7 +49,7 @@ export default function Monitoring() {
 				/>
 				{ form.monitoring_enabled && (
 					<p className="gs-card__desc">
-						{ __( 'Warnings go to the security email under Settings → Notifications, along with every other notification the plugin sends.', 'gemsecurity' ) }
+						{ __( 'Warnings go to the security email on the Notifications page, along with every other notification the plugin sends.', 'gemsecurity' ) }
 					</p>
 				) }
 				<div className="gs-savebar gs-savebar--inline">

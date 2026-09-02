@@ -266,7 +266,7 @@ class Captcha {
 					Logger::log(
 						'captcha_misconfigured',
 						sprintf(
-							'CAPTCHA secret key rejected by the provider (%s). Verification is being skipped so logins keep working — fix the keys on the Login Security page.',
+							'CAPTCHA secret key rejected by the provider (%s). Verification is being skipped so logins keep working — fix the keys on the CAPTCHA page.',
 							sanitize_text_field( (string) $code )
 						),
 						Logger::SEVERITY_CRITICAL,

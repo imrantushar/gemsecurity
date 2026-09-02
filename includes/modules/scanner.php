@@ -90,7 +90,10 @@ class Scanner {
 			'has_loader'       => ! empty( $mu['has_loader'] ),
 		];
 
+		// .htaccess findings count like any other: they are execution grants and
+		// traffic redirects, so a scan that found one is not a clean scan.
 		$issue_count = count( $core_issues ) + count( $foreign ) + count( $suspicious )
+			+ count( $htaccess )
 			+ ( $file_watcher ? (int) $file_watcher['issue_count'] : 0 )
 			+ ( $link_scan ? (int) $link_scan['issue_count'] : 0 )
 			+ $mu_summary['suspicious_count'];
@@ -125,11 +128,12 @@ class Scanner {
 		Logger::log(
 			'scan_completed',
 			sprintf(
-				'Security scan finished — %d issue(s) found (%d core, %d foreign file(s), %d suspicious file(s), %d changed file(s), %d injection(s), %d mu-plugin/drop-in, %d flagged link domain(s)).',
+				'Security scan finished — %d issue(s) found (%d core, %d foreign file(s), %d suspicious file(s), %d .htaccess rule(s), %d changed file(s), %d injection(s), %d mu-plugin/drop-in, %d flagged link domain(s)).',
 				$result['issue_count'],
 				count( $result['core_issues'] ),
 				count( $result['foreign_files'] ),
 				count( $result['suspicious'] ),
+				count( $result['htaccess'] ),
 				$fw ? (int) $fw['change_count'] : 0,
 				$fw ? (int) $fw['injection_count'] : 0,
 				(int) ( $result['mu_plugins']['suspicious_count'] ?? 0 ),

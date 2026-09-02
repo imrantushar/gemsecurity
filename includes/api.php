@@ -467,7 +467,7 @@ class Api {
 			] );
 		}
 
-		// Two-Factor (current-user enrollment) + login CAPTCHA module.
+		// Two-Factor (current-user enrollment).
 		if ( self::module( 'two-factor' ) ) {
 			register_rest_route( $ns, '/2fa', [
 				'methods'             => 'GET',

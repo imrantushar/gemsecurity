@@ -91,7 +91,7 @@ class Docs {
 				'setup'   => [
 					__( 'Set how long entries are kept in Settings → General (log retention, in days).', 'gemsecurity' ),
 					__( 'Use "What gets logged" at the top of this page to switch off any source you do not need — content is the noisiest on an active site.', 'gemsecurity' ),
-					__( 'Choose an alert channel and minimum severity in Settings → Notifications.', 'gemsecurity' ),
+					__( 'Choose an alert channel and minimum severity on the Notifications page.', 'gemsecurity' ),
 					__( 'Pro: enable the hash chain in Settings → Compliance & SIEM, then use Verify to prove the log is intact.', 'gemsecurity' ),
 				],
 				'notes'   => [
@@ -100,27 +100,43 @@ class Docs {
 				],
 			],
 
-			'settings' => [
-				'summary' => __( 'Plugin-wide preferences: log retention, notifications, compliance and SIEM forwarding, maintenance lockdown, and settings import/export.', 'gemsecurity' ),
+			'notifications' => [
+				'summary' => __( 'Where alerts go, what raises one, and the mail that arrives on a schedule. Every module feeds into this page.', 'gemsecurity' ),
 				'does'    => [
-					__( 'Notifications: one security email address and one set of channels — Slack, Telegram or a generic webhook — used by every alert, report and failure notice the plugin sends, with a minimum-severity filter and an optional weekly digest.', 'gemsecurity' ),
-					__( 'Compliance: log hash-chaining, SIEM/syslog forwarding and a severity floor for what gets shipped.', 'gemsecurity' ),
-					__( 'Maintenance: site lockdown with a custom message, and taking a backup before plugin or theme updates.', 'gemsecurity' ),
-					__( 'Daily report: a morning email listing every administrator and active plugin, and anything that changed since yesterday.', 'gemsecurity' ),
-					__( 'Settings import/export (Pro): move a whole configuration, including which modules are on, between sites.', 'gemsecurity' ),
+					__( 'Delivery: one security email address and one set of channels — Slack, Telegram or a generic webhook — used by every alert, report and failure notice the plugin sends, with a minimum-severity filter.', 'gemsecurity' ),
+					__( 'Triggers: every event a module can alert on, in one list — administrator sign-ins, new devices, rogue and hidden administrators, application passwords and backup failures.', 'gemsecurity' ),
+					__( 'Scheduled: a morning report listing every administrator and active plugin with anything that changed since yesterday, a weekly digest, and the daily security scan that finds most of it.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Set the security email once — backup failures, monitoring warnings, admin alerts and the daily report all use it. Then set the minimum severity so routine noise stays out of your inbox.', 'gemsecurity' ),
-					__( 'Turn on the daily report to get a morning inventory of administrators and active plugins, with new ones called out — then use "Send one now" to see what it looks like.', 'gemsecurity' ),
-					__( 'Use lockdown while you investigate an incident: visitors see your message, administrators keep full access.', 'gemsecurity' ),
+					__( 'Work down "What you get told about" and switch off anything you do not want to hear. A trigger whose module is switched off is not listed at all.', 'gemsecurity' ),
+					__( 'Turn on the daily report to get a morning inventory of administrators and active plugins, with new ones called out — then use "Send a report now" to see what it looks like.', 'gemsecurity' ),
 				],
 				'notes'   => [
 					__( 'Alerts are only as reliable as your site mail. If WordPress email is unreliable here, use Slack, Telegram or a webhook instead — use "Send a test email" to find out before an incident does.', 'gemsecurity' ),
-					__( 'What gets written to the activity log is configured on the Logs page, not here.', 'gemsecurity' ),
-					__( 'Lockdown blocks the front end for visitors — remember to switch it back off.', 'gemsecurity' ),
+					__( 'Each trigger also appears on the page of the module that raises it. Both write the same setting, so the two views can never disagree.', 'gemsecurity' ),
+					__( 'Turning a trigger off does not stop the event being recorded — it is still in the activity log on the Logs page, you just are not mailed about it.', 'gemsecurity' ),
 					__( 'Deactivating GemSecurity emails the alert address with a critical warning naming who did it, and pushes the same message to Slack, Telegram or your webhook — switching security off is the first move in most intrusions.', 'gemsecurity' ),
 					__( 'Every email names the site and its domain in the subject, after an emoji for the event type — so alerts from several installs stay apart in one inbox.', 'gemsecurity' ),
 					__( 'The first daily report has no baseline, so it lists the inventory without claiming everything is new. Comparisons start the next morning.', 'gemsecurity' ),
+				],
+			],
+
+			'settings' => [
+				'summary' => __( 'Plugin-wide preferences: log retention, compliance and SIEM forwarding, maintenance lockdown, and settings import/export.', 'gemsecurity' ),
+				'does'    => [
+					__( 'Compliance: log hash-chaining, SIEM/syslog forwarding and a severity floor for what gets shipped.', 'gemsecurity' ),
+					__( 'Maintenance: site lockdown with a custom message, and taking a backup before plugin or theme updates.', 'gemsecurity' ),
+					__( 'Settings import/export (Pro): move a whole configuration, including which modules are on, between sites.', 'gemsecurity' ),
+				],
+				'setup'   => [
+					__( 'Set log retention to suit the site — a busy install fills the log quickly, and 0 keeps entries forever.', 'gemsecurity' ),
+					__( 'Use lockdown while you investigate an incident: visitors see your message, administrators keep full access.', 'gemsecurity' ),
+				],
+				'notes'   => [
+					__( 'Alerts, the daily report and the weekly digest are configured on the Notifications page, not here.', 'gemsecurity' ),
+					__( 'What gets written to the activity log is configured on the Logs page, not here.', 'gemsecurity' ),
+					__( 'Lockdown blocks the front end for visitors — remember to switch it back off.', 'gemsecurity' ),
 				],
 			],
 
@@ -164,7 +180,7 @@ class Docs {
 				'does'    => [
 					__( 'Closes comments and pingbacks site-wide if the site does not use them.', 'gemsecurity' ),
 					__( 'Adds a hidden honeypot field and a minimum time-to-submit, both invisible to real visitors.', 'gemsecurity' ),
-					__( 'Optionally adds the CAPTCHA configured under Login Security to the comment form as well.', 'gemsecurity' ),
+					__( 'Optionally adds the CAPTCHA configured on the CAPTCHA page to the comment form as well.', 'gemsecurity' ),
 					__( 'Scores comments on link count and keyword matches, holding or rejecting the worst.', 'gemsecurity' ),
 				],
 				'setup'   => [
@@ -227,31 +243,50 @@ class Docs {
 			/* ---------------------------------------------------------- */
 
 			'login-security' => [
-				'summary' => __( 'Everything around the login form: brute-force lockouts, CAPTCHA, password rules, session limits, a renamed login URL and admin login alerts.', 'gemsecurity' ),
+				'summary' => __( 'Everything around the login form: brute-force lockouts, password rules, session limits, a renamed login URL and admin login alerts.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Locks out an IP after a number of failed attempts, for a duration you set.', 'gemsecurity' ),
 					__( 'Emails you when an administrator signs in, and ends administrator sessions after a set number of hours.', 'gemsecurity' ),
-					__( 'Adds a CAPTCHA (reCAPTCHA v2/v3, hCaptcha or Turnstile) to login, registration, lost-password and comment forms.', 'gemsecurity' ),
 					__( 'Enforces a password policy: minimum length, complexity, a breached-password check and optional expiry.', 'gemsecurity' ),
 					__( 'Moves wp-login.php to a URL of your choosing and 404s the old one, and logs idle users out.', 'gemsecurity' ),
 					__( 'Pro: remembers trusted devices and offers magic-link recovery.', 'gemsecurity' ),
 				],
 				'setup'   => [
 					__( 'Start with brute-force protection — a limit of 5 attempts and a 15–30 minute lockout suits most sites.', 'gemsecurity' ),
-					__( 'For CAPTCHA, create a site key and secret key with your chosen provider, paste both in, then pick which forms it guards.', 'gemsecurity' ),
 					__( 'If you enable a custom login URL, save the new address somewhere safe before logging out.', 'gemsecurity' ),
 					__( 'Set the password policy before onboarding new users; existing passwords are only checked at the next change.', 'gemsecurity' ),
+					__( 'Add a bot challenge on the CAPTCHA page as well — lockouts stop repeat guesses, a CAPTCHA stops the automation making them.', 'gemsecurity' ),
 				],
 				'notes'   => [
 					__( 'A custom login URL is obscurity, not authentication — keep brute-force protection and two-factor on as well.', 'gemsecurity' ),
-					__( 'reCAPTCHA v3 scores rather than challenges: lower the threshold if real users get rejected.', 'gemsecurity' ),
 					__( 'Short idle timeouts on a site with long editing sessions will cost people their unsaved work.', 'gemsecurity' ),
 					__( 'Lockouts are per IP, so several users behind one office connection share a bucket.', 'gemsecurity' ),
 				],
 			],
 
+			'captcha' => [
+				'summary' => __( 'A bot challenge in front of the forms strangers can submit: login, registration, lost password and comments. Supports Google reCAPTCHA v2 and v3, hCaptcha and Cloudflare Turnstile.', 'gemsecurity' ),
+				'does'    => [
+					__( 'Renders the provider widget on each form you select and verifies the token server-side before the submission is accepted.', 'gemsecurity' ),
+					__( 'Scores rather than challenges when reCAPTCHA v3 is selected, rejecting anything below the threshold you set.', 'gemsecurity' ),
+					__( 'Records every failed challenge in the activity log.', 'gemsecurity' ),
+				],
+				'setup'   => [
+					__( 'Pick a provider, then follow the steps shown for it to create a site key and secret key.', 'gemsecurity' ),
+					__( 'Paste both keys in and use Test CAPTCHA keys — it renders the real widget and verifies a real token, which is the only way to prove the pair before it reaches the login form.', 'gemsecurity' ),
+					__( 'Choose which forms the challenge guards. Login and registration are the ones bots actually hammer.', 'gemsecurity' ),
+					__( 'For the comment form, turn the CAPTCHA on under Anti-Spam, where the rest of the comment controls live.', 'gemsecurity' ),
+				],
+				'notes'   => [
+					__( 'The key pairs are not interchangeable between providers, or between reCAPTCHA v2 and v3 — switching provider means new keys.', 'gemsecurity' ),
+					__( 'reCAPTCHA v3 scores rather than challenges: lower the threshold if real users get rejected.', 'gemsecurity' ),
+					__( 'If the provider rejects the secret key outright, verification is skipped and a critical entry is written to the log rather than locking every user — administrators included — out of a form nobody can pass.', 'gemsecurity' ),
+					__( 'A CAPTCHA costs every real visitor a puzzle. On the comment form, the silent checks under Anti-Spam usually suffice on their own.', 'gemsecurity' ),
+				],
+			],
+
 			'two-factor' => [
-				'summary' => __( 'A second factor at login: app-based one-time codes with an email fallback, one-time backup codes, and enforcement per role. CAPTCHA is configured under Login Security.', 'gemsecurity' ),
+				'summary' => __( 'A second factor at login: app-based one-time codes with an email fallback, one-time backup codes, and enforcement per role.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Supports authenticator apps (TOTP) and email one-time codes.', 'gemsecurity' ),
 					__( 'Issues single-use backup codes for when the phone is not to hand.', 'gemsecurity' ),
@@ -267,7 +302,6 @@ class Docs {
 					__( 'TOTP depends on a correct server clock; a badly drifted clock rejects every valid code.', 'gemsecurity' ),
 					__( 'Emailed codes last 10 minutes and allow five guesses; after that the code is discarded and a new one must be requested. The message says which of those happened rather than always reporting an invalid code.', 'gemsecurity' ),
 					__( 'Email fallback is only as secure as the mailbox — use the app method for administrators.', 'gemsecurity' ),
-					__( 'The login CAPTCHA belongs to this module but is configured on the Login Security page.', 'gemsecurity' ),
 				],
 			],
 
@@ -456,7 +490,7 @@ class Docs {
 					__( 'Verifies SPF and DMARC records so your mail keeps arriving and is harder to spoof.', 'gemsecurity' ),
 				],
 				'setup'   => [
-					__( 'Enable monitoring. Warnings go to the security email under Settings → Notifications.', 'gemsecurity' ),
+					__( 'Enable monitoring. Warnings go to the security email on the Notifications page.', 'gemsecurity' ),
 					__( 'Review the Status panel after the first daily run and fix anything already flagged.', 'gemsecurity' ),
 				],
 				'notes'   => [

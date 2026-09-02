@@ -8,8 +8,10 @@ import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
 import { useDispatch } from 'react-redux';
 import { fetchSettings } from '@Redux/settingsSlice';
-import { setModules } from '@Utils/nav';
+import { useNavigate } from 'react-router-dom';
+import { setModules, pageUrl } from '@Utils/nav';
 import { isPro, ProBadge } from '@Components/ui/Pro';
+import Icon from '@Components/ui/Icon';
 
 const KEYS = [
 	'logs_retention_days',
@@ -19,24 +21,35 @@ const KEYS = [
 	'siem_endpoint',
 	'siem_syslog',
 	'siem_min_severity',
-	// Notifications. `alert_to_email` is the one address every alert, report
-	// and failure notice on the site goes to.
-	'alerts_enabled',
-	'alert_min_severity',
-	'alert_to_email',
-	'alert_slack_webhook',
-	'alert_telegram_token',
-	'alert_telegram_chat',
-	'alert_webhook_url',
-	'digest_enabled',
-	// Daily morning report.
-	'daily_report_enabled',
-	'daily_report_hour',
 	// Lockdown + backup.
 	'lockdown_enabled',
 	'lockdown_message',
 	'backup_before_updates',
 ];
+
+/** Takes you to the page these settings moved to. */
+function NotificationsLink() {
+	const navigate = useNavigate();
+	const href = pageUrl( 'gemsecurity-notifications' );
+
+	return (
+		<a
+			className="gs-actionlist__go"
+			href={ href }
+			onClick={ ( e ) => {
+				// Modifier-clicks keep their normal open-in-new-tab behaviour.
+				if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+					return;
+				}
+				e.preventDefault();
+				navigate( href );
+			} }
+		>
+			{ __( 'Open Notifications', 'gemsecurity' ) }
+			<Icon name="arrow-right" size={ 14 } />
+		</a>
+	);
+}
 
 export default function Settings() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
@@ -45,7 +58,6 @@ export default function Settings() {
 	const pro = isPro();
 	const [ verifyResult, setVerifyResult ] = useState( null );
 	const [ verifying, setVerifying ] = useState( false );
-	const [ sendingReport, setSendingReport ] = useState( false );
 	const [ busy, setBusy ] = useState( '' );
 
 	/* ------------------------- Settings portability ------------------------- */
@@ -146,17 +158,6 @@ export default function Settings() {
 		setVerifying( false );
 	};
 
-	const sendDailyNow = async () => {
-		setSendingReport( true );
-		try {
-			const { data } = await api.post( 'reports/daily', {} );
-			toast( data.message, data.success ? 'success' : 'error' );
-		} catch ( e ) {
-			toast( e?.response?.data?.message || __( 'Could not send the report.', 'gemsecurity' ), 'error' );
-		}
-		setSendingReport( false );
-	};
-
 	const downloadReport = async () => {
 		try {
 			const r = await api.get( 'logs/report', { params: { days: 30 } } );
@@ -244,115 +245,17 @@ export default function Settings() {
 				) }
 			</Card>
 
-			<Card
-				title={ __( 'Daily report', 'gemsecurity' ) }
-				description={ __( 'A morning email listing every administrator and active plugin, and anything that changed since yesterday — so an unexpected change is visible even when no alert fired.', 'gemsecurity' ) }
-				actions={
-					<Button variant="secondary" onClick={ sendDailyNow } loading={ sendingReport }>
-						{ __( 'Send one now', 'gemsecurity' ) }
-					</Button>
-				}
-			>
-				<Toggle
-					label={ __( 'Email a daily report', 'gemsecurity' ) }
-					description={ __( 'Sent to the security email configured under Notifications.', 'gemsecurity' ) }
-					checked={ form.daily_report_enabled }
-					onChange={ ( v ) => setField( 'daily_report_enabled', v ) }
-				/>
-				{ form.daily_report_enabled && (
-					<div className="gs-row">
-						<Field
-							label={ __( 'Send at', 'gemsecurity' ) }
-							description={ __( 'In your site’s timezone.', 'gemsecurity' ) }
-						>
-							<Select
-								value={ String( form.daily_report_hour ?? 7 ) }
-								onChange={ ( e ) => setField( 'daily_report_hour', Number( e.target.value ) ) }
-								options={ Array.from( { length: 24 }, ( _, h ) => ( {
-									value: String( h ),
-									label: `${ String( h ).padStart( 2, '0' ) }:00`,
-								} ) ) }
-							/>
-						</Field>
+			{ /* Alert delivery, the per-module triggers and the scheduled sends
+			     moved to their own page — they are the one thing every module
+			     feeds into, and they were unfindable as a card down here. */ }
+			<Card title={ __( 'Notifications & reports', 'gemsecurity' ) }>
+				<div className="gs-alertrow">
+					<div>
+						<strong>{ __( 'Configured on the Notifications page', 'gemsecurity' ) }</strong>
+						<p className="gs-card__desc">{ __( 'The security email and its channels, what each module alerts on, the daily report and the weekly digest.', 'gemsecurity' ) }</p>
 					</div>
-				) }
-			</Card>
-
-			<Card
-				title={ __( 'Notifications', 'gemsecurity' ) }
-				description={ __( 'Where GemSecurity sends everything: real-time alerts, the daily report, the weekly digest, backup failures and monitoring notices. One address and one set of channels for the whole plugin.', 'gemsecurity' ) }
-			>
-				<Field
-					label={ __( 'Security email', 'gemsecurity' ) }
-					description={ __( 'Every notification the plugin sends goes here. Leave empty to use the WordPress admin email.', 'gemsecurity' ) }
-				>
-					<TextInput type="email" value={ form.alert_to_email ?? '' } onChange={ ( e ) => setField( 'alert_to_email', e.target.value ) } placeholder={ __( 'Defaults to the admin email', 'gemsecurity' ) } />
-				</Field>
-				<TestCredentials
-					target="email"
-					getValues={ () => ( { to: form.alert_to_email || '' } ) }
-					label={ __( 'Send a test email', 'gemsecurity' ) }
-				/>
-
-				<Toggle
-					label={ __( 'Enable real-time alerts', 'gemsecurity' ) }
-					description={ __( 'Send an email — and a message to each channel below — as soon as a qualifying event is logged.', 'gemsecurity' ) }
-					checked={ form.alerts_enabled }
-					onChange={ ( v ) => setField( 'alerts_enabled', v ) }
-				/>
-				{ form.alerts_enabled && (
-					<>
-						<div className="gs-row">
-							<Field label={ __( 'Alert on severity', 'gemsecurity' ) }>
-								<Select
-									value={ form.alert_min_severity || 'critical' }
-									onChange={ ( e ) => setField( 'alert_min_severity', e.target.value ) }
-									options={ [
-										{ value: 'critical', label: __( 'Critical only', 'gemsecurity' ) },
-										{ value: 'warning', label: __( 'Warning & above', 'gemsecurity' ) },
-										{ value: 'notice', label: __( 'Notice & above', 'gemsecurity' ) },
-									] }
-								/>
-							</Field>
-						</div>
-						<SetupGuide id="alerts.slack" />
-						<Field label={ __( 'Slack incoming webhook URL', 'gemsecurity' ) }>
-							<TextInput value={ form.alert_slack_webhook ?? '' } onChange={ ( e ) => setField( 'alert_slack_webhook', e.target.value ) } placeholder="https://hooks.slack.com/services/…" />
-						</Field>
-						<TestCredentials
-							target="slack"
-							getValues={ () => ( { url: form.alert_slack_webhook || '' } ) }
-							label={ __( 'Send a test message', 'gemsecurity' ) }
-						/>
-						<SetupGuide id="alerts.telegram" />
-						<div className="gs-row">
-							<Field label={ __( 'Telegram bot token', 'gemsecurity' ) }>
-								<TextInput value={ form.alert_telegram_token ?? '' } onChange={ ( e ) => setField( 'alert_telegram_token', e.target.value ) } />
-							</Field>
-							<Field label={ __( 'Telegram chat ID', 'gemsecurity' ) }>
-								<TextInput value={ form.alert_telegram_chat ?? '' } onChange={ ( e ) => setField( 'alert_telegram_chat', e.target.value ) } />
-							</Field>
-						</div>
-						<TestCredentials
-							target="telegram"
-							getValues={ () => ( {
-								token: form.alert_telegram_token || '',
-								chat_id: form.alert_telegram_chat || '',
-							} ) }
-							label={ __( 'Test bot & chat', 'gemsecurity' ) }
-						/>
-						<SetupGuide id="alerts.webhook" />
-						<Field label={ __( 'Generic webhook URL', 'gemsecurity' ) }>
-							<TextInput value={ form.alert_webhook_url ?? '' } onChange={ ( e ) => setField( 'alert_webhook_url', e.target.value ) } placeholder="https://example.com/webhook" />
-						</Field>
-						<TestCredentials
-							target="webhook"
-							getValues={ () => ( { url: form.alert_webhook_url || '' } ) }
-							label={ __( 'Send a test event', 'gemsecurity' ) }
-						/>
-					</>
-				) }
-				<Toggle label={ __( 'Send a weekly security digest', 'gemsecurity' ) } description={ __( 'A summary email (and channel message) every week.', 'gemsecurity' ) } checked={ form.digest_enabled } onChange={ ( v ) => setField( 'digest_enabled', v ) } />
+					<NotificationsLink />
+				</div>
 			</Card>
 
 			<Card

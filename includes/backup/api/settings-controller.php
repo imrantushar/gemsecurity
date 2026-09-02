@@ -55,7 +55,7 @@ class Settings_Controller extends Rest_Controller {
 		$merged = array_merge( $current, $incoming );
 
 		// Sanitize known keys. The notification recipient and webhook are
-		// plugin-wide (Settings → Notifications), so they are deliberately not
+		// plugin-wide (the Notifications page), so they are deliberately not
 		// accepted here.
 		$merged['backup_retention']           = max( 1, (int) ( $merged['backup_retention'] ?? 10 ) );
 		$merged['backup_logs_retention_days'] = max( 1, (int) ( $merged['backup_logs_retention_days'] ?? 30 ) );

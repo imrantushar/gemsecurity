@@ -11,8 +11,8 @@ const KEYS = [
 	'antispam_max_links',
 	'antispam_keywords',
 	// Every comment control lives here now. `captcha_on_comments` was on the
-	// Login Security page and `comments_disabled` in the firewall's hardening
-	// list, so deciding how comments are handled meant visiting three screens.
+	// CAPTCHA page and `comments_disabled` in the firewall's hardening list, so
+	// deciding how comments are handled meant visiting three screens.
 	'captcha_on_comments',
 	'comments_disabled',
 ];
@@ -51,7 +51,7 @@ export default function AntiSpam() {
 				) }
 				<Toggle
 					label={ __( 'Also show a CAPTCHA on the comment form', 'gemsecurity' ) }
-					description={ __( 'A visible challenge on top of the silent checks. Configure the provider under Login Security → CAPTCHA; without one this does nothing.', 'gemsecurity' ) }
+					description={ __( 'A visible challenge on top of the silent checks. Configure the provider on the CAPTCHA page; without one this does nothing.', 'gemsecurity' ) }
 					checked={ form.captcha_on_comments }
 					onChange={ ( v ) => setField( 'captcha_on_comments', v ) }
 				/>
