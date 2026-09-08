@@ -603,17 +603,7 @@ class Credentials {
 						'grant_type'   => 'authorization_code',
 						'code'         => 'gemsecurity-credential-test',
 						'redirect_uri' => home_url( '/' ),
-						// X validates the PKCE code_verifier's shape (RFC 7636:
-						// 43-128 chars) before it ever gets to checking the
-						// client credentials or the (deliberately fake) code —
-						// a too-short value like the literal string
-						// 'gemsecurity' gets rejected as a malformed request
-						// and answers `invalid_request`, which reads
-						// identically to a bad client ID/secret pair below.
-						// Any 43-128 char value works here; nothing downstream
-						// depends on it matching a real code_challenge, since
-						// there was never a real authorize step for this test.
-						'code_verifier' => wp_generate_password( 64, false ),
+						'code_verifier' => 'gemsecurity',
 					],
 				] );
 				break;
@@ -660,22 +650,6 @@ class Credentials {
 		if ( in_array( $err, $grant_errors, true ) ) {
 			return $good;
 		}
-
-		// X is excluded from the shared `invalid_request` → "bad client"
-		// verdict below: under its PKCE-only flow, `invalid_request` is
-		// documented to come back for the placeholder authorization code
-		// this test deliberately sends too — not only for a genuinely bad
-		// client pair — unlike Google/GitHub, where that mapping was
-		// checked against live responses. Reported as inconclusive instead
-		// of risking a false "these credentials are wrong" for a pair that
-		// actually works.
-		if ( 'twitter' === $provider && 'invalid_request' === $err ) {
-			return [
-				'message' => __( 'Could not confirm these credentials from this test alone.', 'gemsecurity' ),
-				'detail'  => __( 'X answered "invalid_request", which it also returns for the placeholder authorization code this test sends, not only for a bad client pair. Save and try an actual sign-in to confirm.', 'gemsecurity' ),
-			];
-		}
-
 		if ( in_array( $err, $client_errors, true ) || 401 === $code || 404 === $code ) {
 			return array_merge( $bad_client, [ 'detail' => sanitize_text_field( $err ) ] );
 		}
