@@ -57,9 +57,19 @@ class SocialLogin {
 			],
 			'twitter' => [
 				'label'     => 'Twitter',
-				'authorize' => 'https://twitter.com/i/oauth2/authorize',
-				'token'     => 'https://api.twitter.com/2/oauth2/token',
-				'userinfo'  => 'https://api.twitter.com/2/users/me?user.fields=profile_image_url',
+				// X retired the twitter.com/api.twitter.com OAuth2 domains —
+				// twitter.com/i/oauth2/authorize now 404s ("Page doesn't
+				// exist"), and api.twitter.com/2/... along with it. x.com /
+				// api.x.com are the only endpoints that still work, and are
+				// what X's own docs point at. Credentials::test_social()
+				// already used api.x.com for its token check; these three
+				// were the only ones still on the dead domain, which broke
+				// the *real* sign-in flow (start_flow()'s redirect, and the
+				// callback's token exchange + profile fetch) even though the
+				// credential test could still look fine.
+				'authorize' => 'https://x.com/i/oauth2/authorize',
+				'token'     => 'https://api.x.com/2/oauth2/token',
+				'userinfo'  => 'https://api.x.com/2/users/me?user.fields=profile_image_url',
 				'scope'     => 'users.read tweet.read',
 				'pkce'      => true,
 				'color'     => '#1da1f2',
