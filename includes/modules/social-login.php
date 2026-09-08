@@ -564,6 +564,28 @@ class SocialLogin {
 		if ( ! is_wp_error( $user_id ) ) {
 			update_user_meta( $user_id, $meta_key, $profile['id'] );
 			update_user_meta( $user_id, '_gemsec_oauth_registered_via', $provider );
+
+			if ( $requested_role ) {
+				/**
+				 * Fires after a new account is created via social login
+				 * with a caller-supplied role that was actually honored —
+				 * never for the generic login-page button, which never
+				 * passes a role and so never fires this. Lets the caller
+				 * (e.g. Academy's registration forms, via
+				 * AcademyProSocialLogin\Hooks) complete whatever
+				 * additional bookkeeping its own system normally attaches
+				 * to registering a user with that role — user meta, admin
+				 * notifications, its own hooks — since GemSecurity itself
+				 * has no notion of what a "student" or "instructor" is
+				 * beyond the plain WordPress role.
+				 *
+				 * @param int    $user_id
+				 * @param string $role     The exact role that was honored (same as $requested_role).
+				 * @param string $provider
+				 * @param array  $profile
+				 */
+				do_action( 'gemsecurity/social_login/role_registered', $user_id, $requested_role, $provider, $profile );
+			}
 		}
 		return $user_id;
 	}
