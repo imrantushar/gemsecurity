@@ -57,9 +57,19 @@ class SocialLogin {
 			],
 			'twitter' => [
 				'label'     => 'Twitter',
-				'authorize' => 'https://twitter.com/i/oauth2/authorize',
-				'token'     => 'https://api.twitter.com/2/oauth2/token',
-				'userinfo'  => 'https://api.twitter.com/2/users/me?user.fields=profile_image_url',
+				// X retired the twitter.com/api.twitter.com OAuth2 domains —
+				// twitter.com/i/oauth2/authorize now 404s ("Page doesn't
+				// exist"), and api.twitter.com/2/... along with it. x.com /
+				// api.x.com are the only endpoints that still work, and are
+				// what X's own docs point at. Credentials::test_social()
+				// already used api.x.com for its token check; these three
+				// were the only ones still on the dead domain, which broke
+				// the *real* sign-in flow (start_flow()'s redirect, and the
+				// callback's token exchange + profile fetch) even though the
+				// credential test could still look fine.
+				'authorize' => 'https://x.com/i/oauth2/authorize',
+				'token'     => 'https://api.x.com/2/oauth2/token',
+				'userinfo'  => 'https://api.x.com/2/users/me?user.fields=profile_image_url',
 				'scope'     => 'users.read tweet.read',
 				'pkce'      => true,
 				'color'     => '#1da1f2',
@@ -134,6 +144,15 @@ class SocialLogin {
 			'provider'    => $provider,
 			'redirect_to' => isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : admin_url(),
 			'time'        => time(),
+			// Carries the role a caller (e.g. Academy's per-page registration
+			// forms via buttons_html()'s $role param) wants a *new* account
+			// created with, through the redirect round-trip to the provider
+			// and back. Re-validated against the site's actual roles in
+			// create_user() rather than trusted as-is, since this travels
+			// through a public query string. Empty when the caller didn't
+			// specify one, or when it came from a form that isn't asking for
+			// a specific role — see buttons_html()'s default.
+			'role'        => isset( $_GET['gemsec_role'] ) ? sanitize_key( wp_unslash( $_GET['gemsec_role'] ) ) : '',
 		];
 
 		$params = [
@@ -316,7 +335,12 @@ class SocialLogin {
 			$this->bail( __( 'Could not read your profile from the provider.', 'gemsecurity' ) );
 		}
 
-		$this->login_user( $provider, $profile, isset( $data['redirect_to'] ) ? $data['redirect_to'] : admin_url() );
+		$this->login_user(
+			$provider,
+			$profile,
+			isset( $data['redirect_to'] ) ? $data['redirect_to'] : admin_url(),
+			isset( $data['role'] ) ? $data['role'] : ''
+		);
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -462,7 +486,7 @@ class SocialLogin {
 	/* User resolution                                                     */
 	/* ------------------------------------------------------------------ */
 
-	private function login_user( $provider, $profile, $redirect_to ) {
+	private function login_user( $provider, $profile, $redirect_to, $role = '' ) {
 		$meta_key = "_gemsec_oauth_{$provider}_id";
 
 		// 1. Already linked.
@@ -483,7 +507,7 @@ class SocialLogin {
 			if ( ! Helper::get_setting( 'social_allow_registration', true ) ) {
 				$this->bail( __( 'No account is linked to this profile and registration is disabled.', 'gemsecurity' ) );
 			}
-			$user_id = $this->create_user( $provider, $profile, $meta_key );
+			$user_id = $this->create_user( $provider, $profile, $meta_key, $role );
 			if ( is_wp_error( $user_id ) ) {
 				$this->bail( $user_id->get_error_message() );
 			}
@@ -505,7 +529,7 @@ class SocialLogin {
 		exit;
 	}
 
-	private function create_user( $provider, $profile, $meta_key ) {
+	private function create_user( $provider, $profile, $meta_key, $role = '' ) {
 		$email = $profile['email'];
 		if ( ! $email || ! is_email( $email ) ) {
 			// Twitter and locked-down accounts may not expose an email.
@@ -524,17 +548,54 @@ class SocialLogin {
 			$i++;
 		}
 
+		// A caller-supplied role (e.g. Academy's student/instructor
+		// registration forms, via buttons_html()'s $role param) only wins
+		// when it names one of the site's actual roles — it travelled here
+		// through a public query string and a redirect round-trip to the
+		// OAuth provider, so it's re-validated rather than trusted as-is.
+		// Falls back to the module's own site-wide default otherwise, same
+		// as before this parameter existed.
+		$requested_role = $role && array_key_exists( $role, wp_roles()->roles ) ? $role : '';
+		$final_role      = apply_filters(
+			'gemsecurity/social_login/registration_role',
+			$requested_role ? $requested_role : Helper::get_setting( 'social_default_role', 'subscriber' ),
+			$provider,
+			$profile
+		);
+
 		$user_id = wp_insert_user( [
 			'user_login'   => $username,
 			'user_email'   => $email,
 			'user_pass'    => wp_generate_password( 24, true, true ),
 			'display_name' => $profile['name'] ?: $username,
-			'role'         => Helper::get_setting( 'social_default_role', 'subscriber' ),
+			'role'         => $final_role,
 		] );
 
 		if ( ! is_wp_error( $user_id ) ) {
 			update_user_meta( $user_id, $meta_key, $profile['id'] );
 			update_user_meta( $user_id, '_gemsec_oauth_registered_via', $provider );
+
+			if ( $requested_role ) {
+				/**
+				 * Fires after a new account is created via social login
+				 * with a caller-supplied role that was actually honored —
+				 * never for the generic login-page button, which never
+				 * passes a role and so never fires this. Lets the caller
+				 * (e.g. Academy's registration forms, via
+				 * AcademyProSocialLogin\Hooks) complete whatever
+				 * additional bookkeeping its own system normally attaches
+				 * to registering a user with that role — user meta, admin
+				 * notifications, its own hooks — since GemSecurity itself
+				 * has no notion of what a "student" or "instructor" is
+				 * beyond the plain WordPress role.
+				 *
+				 * @param int    $user_id
+				 * @param string $role     The exact role that was honored (same as $requested_role).
+				 * @param string $provider
+				 * @param array  $profile
+				 */
+				do_action( 'gemsecurity/social_login/role_registered', $user_id, $requested_role, $provider, $profile );
+			}
 		}
 		return $user_id;
 	}
@@ -548,9 +609,22 @@ class SocialLogin {
 		echo $this->buttons_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with escaping below.
 	}
 
-	/** Front-end login forms (StoreEngine, Academy) — echoed after the form. */
-	public function render_frontend() {
-		echo $this->buttons_html( true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with escaping below.
+	/**
+	 * Front-end login forms (StoreEngine, Academy) — echoed after the form.
+	 *
+	 * @param string $role Optional. A specific role new accounts created
+	 *                     from this rendering should get (e.g. a caller
+	 *                     invoking this directly for a role-specific
+	 *                     registration page, rather than via the generic
+	 *                     `academy/templates/shortcode/after_login` /
+	 *                     `storeengine/templates/shortcode/after_login`
+	 *                     hooks this method is also registered on, which
+	 *                     always call it with no arguments). Ignored unless
+	 *                     it names one of the site's actual roles — see
+	 *                     create_user().
+	 */
+	public function render_frontend( $role = '' ) {
+		echo $this->buttons_html( true, $role ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with escaping below.
 	}
 
 	/** Core wp_login_form() / WooCommerce — appended to the returned markup. */
@@ -562,10 +636,13 @@ class SocialLogin {
 	 * Build the provider-button markup. Returns an empty string when no provider
 	 * is fully configured (enabled + client id + secret).
 	 *
-	 * @param bool $frontend When true, prepend the stylesheet once inline (the
-	 *                       `login` style handle only exists on wp-login.php).
+	 * @param bool   $frontend When true, prepend the stylesheet once inline (the
+	 *                         `login` style handle only exists on wp-login.php).
+	 * @param string $role     Optional. See render_frontend()'s matching param —
+	 *                         threaded through the button URL's `gemsec_role`
+	 *                         query arg so start_flow() can pick it up.
 	 */
-	private function buttons_html( $frontend = false ) {
+	private function buttons_html( $frontend = false, $role = '' ) {
 		$providers = self::enabled_providers();
 		if ( empty( $providers ) ) {
 			return '';
@@ -586,7 +663,7 @@ class SocialLogin {
 		$out .= '<div class="gemsec-social"><div class="gemsec-social__sep"><span>' . esc_html__( 'or sign in with', 'gemsecurity' ) . '</span></div>';
 		foreach ( $providers as $key => $meta ) {
 			$url  = add_query_arg(
-				array_filter( [ 'gemsec_oauth' => $key, 'redirect_to' => $redirect ] ),
+				array_filter( [ 'gemsec_oauth' => $key, 'redirect_to' => $redirect, 'gemsec_role' => $role ] ),
 				site_url( 'wp-login.php' )
 			);
 			$out .= sprintf(
