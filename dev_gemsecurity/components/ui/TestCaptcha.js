@@ -69,12 +69,19 @@ function loadScript( provider, siteKey ) {
 	} );
 }
 
-/** Wait for the provider global to appear (scripts init asynchronously). */
-function waitForGlobal( provider, tries = 60 ) {
+/**
+ * Wait for the provider global to appear AND expose the specific method
+ * about to be called. The script's own `load` event only means the file
+ * downloaded — providers (Google's especially) can attach a stub global
+ * first and finish wiring up methods like `render` moments later, so
+ * accepting any truthy method as "ready" let `render()` get called before
+ * it existed (`n.render is not a function` in the minified build).
+ */
+function waitForGlobal( provider, method, tries = 60 ) {
 	return new Promise( ( resolve, reject ) => {
 		const tick = ( left ) => {
 			const api_ = window[ GLOBAL[ provider ] ];
-			if ( api_ && ( api_.render || api_.execute || api_.ready ) ) {
+			if ( api_ && typeof api_[ method ] === 'function' ) {
 				resolve( api_ );
 				return;
 			}
@@ -143,7 +150,10 @@ export default function TestCaptcha( { provider, siteKey, secretKey } ) {
 
 		try {
 			await loadScript( provider, siteKey );
-			const widget = await waitForGlobal( provider );
+			const widget = await waitForGlobal(
+				provider,
+				'recaptcha_v3' === provider ? 'ready' : 'render'
+			);
 
 			// v3 is scored, not solved: ask for a token directly.
 			if ( 'recaptcha_v3' === provider ) {
