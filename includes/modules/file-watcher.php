@@ -42,7 +42,11 @@ class FileWatcher {
 
 	const BASELINE_OPTION = 'gemsecurity_file_baseline';
 
-	/** Bounds so the watcher is always safe to run inside a web request. */
+	/**
+	 * Bounds so the watcher is always safe to run inside a web request.
+	 * MAX_FILES is the *default* cap — see {@see max_files()}, which lets an
+	 * addon raise it when it also widens the watched roots.
+	 */
 	const MAX_FILES      = 8000;
 	const MAX_FILE_BYTES = 2097152;   // 2 MB — skip hashing/reading larger files.
 	const MAX_DB_OPTIONS = 1500;   // cap on options matching the SQL pre-filter.
@@ -154,6 +158,7 @@ class FileWatcher {
 		$exts    = array_flip( self::watched_extensions() );
 		$hashes  = [];
 		$scanned = 0;
+		$max     = self::max_files();
 
 		foreach ( self::watched_roots() as $root ) {
 			if ( ! is_dir( $root ) ) {
@@ -168,7 +173,7 @@ class FileWatcher {
 			}
 
 			foreach ( $it as $file ) {
-				if ( $scanned >= self::MAX_FILES ) {
+				if ( $scanned >= $max ) {
 					break 2;
 				}
 				if ( ! $file->isFile() ) {
@@ -259,7 +264,82 @@ class FileWatcher {
 			get_template_directory(),
 			WP_CONTENT_DIR . '/mu-plugins',
 		];
+
+		/**
+		 * Directories the baseline covers.
+		 *
+		 * There is exactly one file-change baseline on a site. Pro widens it to
+		 * core / plugins / all themes through this filter rather than running a
+		 * second baseline of its own — two baselines meant two snapshots, two
+		 * crons and two "files changed" lists over overlapping trees.
+		 *
+		 * Widening this widens *hashing* only. The injection heuristics run
+		 * over {@see heuristic_roots()}, which is deliberately not filterable.
+		 *
+		 * @param string[] $roots Absolute directory paths.
+		 */
+		$roots = (array) apply_filters( 'gemsecurity/file_watcher/roots', $roots );
+
 		return array_values( array_unique( array_filter( $roots ) ) );
+	}
+
+	/**
+	 * Directories whose *contents* are worth pattern-matching.
+	 *
+	 * Only the locations with no authoritative checksum. WordPress core has
+	 * one — {@see Scanner::scan_core_integrity()} verifies it file by file
+	 * against api.wordpress.org — so running content heuristics over core adds
+	 * nothing and costs a great deal: core legitimately ships gzinflate/eval
+	 * idioms (class-wp-http-encoding.php, class-pclzip.php, Requests, SimplePie)
+	 * and minified assets that match the hidden-off-screen-block signature
+	 * (wp-tinymce.js). Every one of those was reported as malware the moment
+	 * the baseline scopes were widened to include wp-admin and wp-includes.
+	 *
+	 * Not filterable on purpose: an addon may widen what is hashed, but
+	 * widening what is pattern-matched is how a scanner starts crying wolf.
+	 *
+	 * @return string[]
+	 */
+	private static function heuristic_roots() {
+		$roots = [
+			get_stylesheet_directory(),
+			get_template_directory(),
+			WP_CONTENT_DIR . '/mu-plugins',
+		];
+		return array_values( array_unique( array_filter( $roots ) ) );
+	}
+
+	/**
+	 * Is this ABSPATH-relative path inside a directory we pattern-match?
+	 *
+	 * @param string $rel
+	 * @return bool
+	 */
+	private static function is_heuristic_target( $rel ) {
+		$abs = wp_normalize_path( ABSPATH . $rel );
+		foreach ( self::heuristic_roots() as $root ) {
+			if ( 0 === strpos( $abs, trailingslashit( wp_normalize_path( $root ) ) ) ) {
+				return true;
+			}
+		}
+		// Drop-ins sit loose in wp-content and are watched individually.
+		return in_array( $abs, array_map( 'wp_normalize_path', self::dropin_files() ), true );
+	}
+
+	/**
+	 * Upper bound on files hashed in one pass.
+	 *
+	 * @return int
+	 */
+	private static function max_files() {
+		/**
+		 * Filter the file cap. Anything adding roots via
+		 * `gemsecurity/file_watcher/roots` should raise this to match, or the
+		 * walk stops part-way through and the diff reports phantom removals.
+		 *
+		 * @param int $max
+		 */
+		return max( 1, (int) apply_filters( 'gemsecurity/file_watcher/max_files', self::MAX_FILES ) );
 	}
 
 	/**
@@ -295,6 +375,12 @@ class FileWatcher {
 
 		// ---- Files -------------------------------------------------------
 		foreach ( array_keys( $watched ) as $rel ) {
+			// Hashed-but-not-heuristic locations (core, when Pro widens the
+			// baseline) are diffed for change and left alone otherwise.
+			if ( ! self::is_heuristic_target( $rel ) ) {
+				continue;
+			}
+
 			$path = ABSPATH . $rel;
 			$code = @file_get_contents( $path );
 			if ( false === $code ) {

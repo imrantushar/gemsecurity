@@ -3,6 +3,8 @@ namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
 use GemSecurity\Logger;
+use GemSecurity\Mailer;
+use GemSecurity\Security\AdminAudit;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,6 +22,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  *  - An existing user that is promoted to administrator while not whitelisted
  *    is reverted to their previous role (or deleted, per the configured
  *    `rogue_admin_action`).
+ *  - An unapproved administrator cannot sign in, and an existing session
+ *    belonging to one is ended on its next request.
+ *
+ * The creation hooks alone are not a guard. They only see accounts that pass
+ * through WordPress's own user API while this module is active, so an admin
+ * written straight into the database, created while the module was off, or
+ * promoted with add_role() stays an administrator and can log in normally —
+ * which is precisely the back door this feature exists to close. Login and
+ * session enforcement is what makes the whitelist hold for accounts the hooks
+ * never saw.
  *
  * Hard safety guards — these accounts are NEVER auto-removed regardless of the
  * whitelist: the user performing the request, user ID 1, the site owner
@@ -36,6 +48,9 @@ class AdminGuard {
 	 */
 	private static $creating = [];
 
+	/** Recurring sweep for unapproved administrators already on the site. */
+	const CRON_HOOK = 'gemsecurity_admin_guard_sweep';
+
 	public static function init() {
 		$self = new self();
 		add_filter( 'insert_user_meta', [ $self, 'mark_creating' ], 10, 3 );
@@ -45,6 +60,65 @@ class AdminGuard {
 		// so hooking those would double-process and corrupt the role — we don't.
 		add_action( 'user_register', [ $self, 'on_user_register' ], 99, 1 );
 		add_action( 'set_user_role', [ $self, 'on_set_user_role' ], 99, 3 );
+		// add_role() does not fire set_user_role, so a promotion made that way
+		// would slip past the hooks above.
+		add_action( 'add_user_role', [ $self, 'on_add_user_role' ], 99, 2 );
+
+		// Enforcement for accounts the hooks never saw. Priority 99 puts this
+		// after WordPress has authenticated the credentials, so an unapproved
+		// account is only revealed to someone who already knows its password.
+		add_filter( 'authenticate', [ $self, 'block_login' ], 99, 1 );
+		// And end a session that predates the whitelist.
+		add_action( 'init', [ $self, 'guard_session' ], 1 );
+
+		// Dormant accounts never reach either check, so sweep for them: hourly,
+		// and immediately whenever the whitelist itself changes.
+		add_action( self::CRON_HOOK, [ __CLASS__, 'run_scheduled_sweep' ] );
+		add_action( 'init', [ __CLASS__, 'schedule_sweep' ] );
+		add_action( 'update_option_' . GEMSECURITY_SETTINGS_NAME, [ __CLASS__, 'on_settings_saved' ], 10, 2 );
+	}
+
+	/** Keep the recurring sweep scheduled while the guard is enabled. */
+	public static function schedule_sweep() {
+		$self      = new self();
+		$scheduled = wp_next_scheduled( self::CRON_HOOK );
+
+		if ( $self->enforcement_active() ) {
+			if ( ! $scheduled ) {
+				wp_schedule_event( time() + MINUTE_IN_SECONDS, 'hourly', self::CRON_HOOK );
+			}
+		} elseif ( $scheduled ) {
+			wp_unschedule_event( $scheduled, self::CRON_HOOK );
+		}
+	}
+
+	/** Cron callback. */
+	public static function run_scheduled_sweep() {
+		self::sweep( 'cron' );
+	}
+
+	/**
+	 * Re-sweep when the whitelist or the guard's own switches change, so
+	 * approving or un-approving somebody takes effect at once instead of at
+	 * the next scheduled run.
+	 *
+	 * @param mixed $old
+	 * @param mixed $new
+	 */
+	public static function on_settings_saved( $old, $new ) {
+		$keys = [ 'admin_whitelist_enabled', 'admin_whitelist', 'rogue_admin_action' ];
+		foreach ( $keys as $key ) {
+			$before = is_array( $old ) && isset( $old[ $key ] ) ? $old[ $key ] : null;
+			$after  = is_array( $new ) && isset( $new[ $key ] ) ? $new[ $key ] : null;
+			if ( $before !== $after ) {
+				// `init` has already run by the time settings are saved, so
+				// start (or stop) the recurring sweep here rather than leaving
+				// it until the next page load.
+				self::schedule_sweep();
+				self::sweep( 'settings' );
+				return;
+			}
+		}
 	}
 
 	/**
@@ -116,22 +190,238 @@ class AdminGuard {
 		$this->remove_rogue_admin( $user, $action, 'promotion', $fallback );
 	}
 
+	/**
+	 * Role added via add_role() rather than set_role().
+	 *
+	 * @param int    $user_id
+	 * @param string $role
+	 */
+	public function on_add_user_role( $user_id, $role ) {
+		if ( ! $this->guard_enabled() || 'administrator' !== $role ) {
+			return;
+		}
+		// set_role() internally calls remove_user_role/add_user_role, so skip
+		// when set_user_role is going to handle it, and during creation.
+		if ( isset( self::$creating[ (int) $user_id ] ) || doing_action( 'set_user_role' ) ) {
+			return;
+		}
+
+		$user = get_user_by( 'id', $user_id );
+		if ( ! $this->is_unapproved_admin( $user ) ) {
+			return;
+		}
+
+		$action = Helper::get_setting( 'rogue_admin_action', 'demote' );
+		$this->remove_rogue_admin( $user, $action, 'promotion', $this->pick_fallback_role( $user->roles ) );
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Login & session enforcement                                            */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Refuse a login from an administrator who is not on the whitelist.
+	 *
+	 * Runs after the password has been verified, so this never tells an
+	 * anonymous prober whether an account exists. The configured remediation
+	 * runs too: an account that reaches the login form unapproved is one the
+	 * creation hooks missed, so leaving it an administrator would just defer
+	 * the problem to the next request.
+	 *
+	 * @param \WP_User|\WP_Error|null $user
+	 * @return \WP_User|\WP_Error|null
+	 */
+	public function block_login( $user ) {
+		if ( ! $user instanceof \WP_User || ! $this->enforcement_active() ) {
+			return $user;
+		}
+		if ( ! $this->is_unapproved_admin( $user, false ) ) {
+			return $user;
+		}
+
+		$login = $user->user_login;
+		$email = $user->user_email;
+
+		Logger::log(
+			'rogue_admin_login_blocked',
+			sprintf( 'Blocked a sign-in by unapproved administrator "%s" (%s).', $login, $email ),
+			Logger::SEVERITY_CRITICAL,
+			[ 'context' => [ 'target_user_id' => $user->ID, 'target_email' => $email ] ]
+		);
+
+		$this->remove_rogue_admin(
+			$user,
+			Helper::get_setting( 'rogue_admin_action', 'demote' ),
+			'login',
+			$this->pick_fallback_role( $user->roles )
+		);
+
+		return new \WP_Error(
+			'gemsecurity_admin_not_approved',
+			__( '<strong>Sign-in blocked.</strong> This administrator account is not on the approved list.', 'gemsecurity' )
+		);
+	}
+
+	/**
+	 * End a session belonging to an unapproved administrator.
+	 *
+	 * Covers the account that was already signed in when the whitelist was
+	 * turned on, or that was promoted out-of-band mid-session — blocking the
+	 * login form alone would leave those sessions untouched.
+	 */
+	public function guard_session() {
+		if ( ! is_user_logged_in() || ! $this->enforcement_active() ) {
+			return;
+		}
+
+		$user = wp_get_current_user();
+		// $allow_self = false: here the unapproved administrator *is* the
+		// current user, so the usual self-protection would disable the check.
+		if ( ! $this->is_unapproved_admin( $user, false ) ) {
+			return;
+		}
+
+		Logger::log(
+			'rogue_admin_session_ended',
+			sprintf( 'Ended the session of unapproved administrator "%s" (%s).', $user->user_login, $user->user_email ),
+			Logger::SEVERITY_CRITICAL,
+			[ 'context' => [ 'target_user_id' => $user->ID, 'target_email' => $user->user_email ] ]
+		);
+
+		$this->remove_rogue_admin(
+			$user,
+			Helper::get_setting( 'rogue_admin_action', 'demote' ),
+			'session',
+			$this->pick_fallback_role( $user->roles )
+		);
+
+		wp_logout();
+
+		// Only a page view can be redirected. Ending the session is the point;
+		// bouncing a REST, AJAX, cron or CLI request to the login screen would
+		// just corrupt its response.
+		if ( wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			return;
+		}
+
+		wp_safe_redirect( wp_login_url() );
+		exit;
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Sweep of existing accounts                                             */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Remove every administrator that is not on the whitelist.
+	 *
+	 * Blocking logins stops an unapproved administrator being *used*, but the
+	 * account still exists, still holds the role, and still comes back the
+	 * moment this module is switched off. The sweep is what actually removes
+	 * it — including accounts that never log in, which is the usual shape of a
+	 * back door left behind for later.
+	 *
+	 * Administrators are read from the filter-proof audit source, so an account
+	 * hidden from the users list by a `pre_user_query` filter is swept too.
+	 *
+	 * @param string $origin  Why the sweep ran: cron | settings | manual.
+	 * @param bool   $dry_run Report what would happen without touching anything.
+	 * @return array { checked, removed[], protected[], action, ran }
+	 */
+	public static function sweep( $origin = 'manual', $dry_run = false ) {
+		$self   = new self();
+		$action = Helper::get_setting( 'rogue_admin_action', 'demote' );
+		$out    = [
+			'checked'   => 0,
+			'removed'   => [],
+			'protected' => [],
+			'action'    => $action,
+			'ran'       => false,
+		];
+
+		// Same rule as login enforcement: an empty whitelist means "not
+		// configured", and sweeping on it would remove every administrator.
+		if ( ! $self->enforcement_active() ) {
+			return $out;
+		}
+
+		$out['ran'] = true;
+
+		foreach ( AdminAudit::raw_admin_ids() as $user_id ) {
+			$user = get_userdata( (int) $user_id );
+			if ( ! $user instanceof \WP_User ) {
+				continue;
+			}
+			$out['checked']++;
+
+			if ( $self->is_whitelisted( $user ) ) {
+				continue;
+			}
+
+			// Protected accounts are reported, never removed — the sweep must
+			// not be able to orphan a site. `$allow_self` stays on so a manual
+			// run from the admin cannot delete the operator running it.
+			if ( $self->is_protected( $user ) ) {
+				$out['protected'][] = [
+					'id'    => (int) $user->ID,
+					'login' => $user->user_login,
+					'email' => $user->user_email,
+				];
+				continue;
+			}
+
+			$out['removed'][] = [
+				'id'    => (int) $user->ID,
+				'login' => $user->user_login,
+				'email' => $user->user_email,
+			];
+
+			if ( ! $dry_run ) {
+				$self->remove_rogue_admin( $user, $action, 'sweep:' . $origin, $self->pick_fallback_role( $user->roles ) );
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Whether login/session enforcement should run.
+	 *
+	 * Deliberately stricter than the hook path: with an empty whitelist every
+	 * administrator is "unapproved", and enforcing that would lock the site's
+	 * owner out of their own site with no way back in. An empty list means the
+	 * feature is not configured yet, not that nobody is allowed.
+	 *
+	 * @return bool
+	 */
+	private function enforcement_active() {
+		return $this->guard_enabled() && ! empty( $this->whitelist() );
+	}
+
 	/* --------------------------------------------------------------------- */
 	/* Core logic                                                             */
 	/* --------------------------------------------------------------------- */
 
 	/**
 	 * @param \WP_User|false $user
+	 * @param bool           $allow_self Treat the current user as protected.
+	 *                                   True on the hook paths (an admin
+	 *                                   editing users must not remove
+	 *                                   themselves mid-request); false on the
+	 *                                   login and session paths, where the
+	 *                                   unapproved administrator is the
+	 *                                   current user and self-protection would
+	 *                                   disable the check entirely.
 	 * @return bool True when the user is an administrator that is not approved.
 	 */
-	private function is_unapproved_admin( $user ) {
+	private function is_unapproved_admin( $user, $allow_self = true ) {
 		if ( ! $user instanceof \WP_User ) {
 			return false;
 		}
 		if ( ! in_array( 'administrator', (array) $user->roles, true ) ) {
 			return false;
 		}
-		if ( $this->is_protected( $user ) ) {
+		if ( $this->is_protected( $user, $allow_self ) ) {
 			return false;
 		}
 		return ! $this->is_whitelisted( $user );
@@ -140,27 +430,16 @@ class AdminGuard {
 	/**
 	 * Accounts that must never be auto-removed.
 	 *
+	 * Delegates to {@see AdminAudit::is_protected()} — the guard and the audit
+	 * used to carry byte-identical copies of these rules, so a rule added to
+	 * one silently did not apply to the other.
+	 *
 	 * @param \WP_User $user
+	 * @param bool     $allow_self Whether the current user is protected.
 	 * @return bool
 	 */
-	private function is_protected( $user ) {
-		// The user performing the current request.
-		if ( get_current_user_id() && (int) $user->ID === get_current_user_id() ) {
-			return true;
-		}
-		// Founding user.
-		if ( 1 === (int) $user->ID ) {
-			return true;
-		}
-		// Site owner address.
-		if ( strtolower( trim( $user->user_email ) ) === strtolower( trim( (string) get_option( 'admin_email' ) ) ) ) {
-			return true;
-		}
-		// Multisite super admins.
-		if ( is_multisite() && is_super_admin( $user->ID ) ) {
-			return true;
-		}
-		return false;
+	private function is_protected( $user, $allow_self = true ) {
+		return AdminAudit::is_protected( $user, $allow_self );
 	}
 
 	/**
@@ -205,19 +484,11 @@ class AdminGuard {
 	 */
 	private function remove_rogue_admin( $user, $action, $origin, $fallback = 'subscriber' ) {
 		if ( 'delete' === $action ) {
-			require_once ABSPATH . 'wp-admin/includes/user.php';
 			$email = $user->user_email;
 			$login = $user->user_login;
 			$id    = $user->ID;
 
-			if ( is_multisite() ) {
-				require_once ABSPATH . 'wp-admin/includes/ms.php';
-				wpmu_delete_user( $id );
-			} else {
-				// Reassign any content to the site owner to avoid data loss.
-				$owner = get_user_by( 'email', get_option( 'admin_email' ) );
-				wp_delete_user( $id, $owner ? $owner->ID : null );
-			}
+			AdminAudit::delete_user( $id );
 
 			$this->log_removal( 'rogue_admin_deleted', $login, $email, $id, 'delete', $origin );
 			$this->maybe_notify( $login, $email, 'delete', $origin );
@@ -262,23 +533,45 @@ class AdminGuard {
 			return;
 		}
 
-		$to   = get_option( 'admin_email' );
-		$site = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
+		$to   = \GemSecurity\Mailer::recipient();
 		$verb = 'delete' === $action ? __( 'deleted', 'gemsecurity' ) : __( 'demoted', 'gemsecurity' );
 
-		$subject = sprintf( __( '[%s] Unapproved administrator blocked', 'gemsecurity' ), $site );
-		$body = implode( "\n", [
-			sprintf( __( 'GemSecurity %s an unapproved administrator account on %s.', 'gemsecurity' ), $verb, $site ),
-			'',
-			sprintf( __( 'Username: %s', 'gemsecurity' ), $login ),
-			sprintf( __( 'Email:    %s', 'gemsecurity' ), $email ),
-			sprintf( __( 'Trigger:  %s', 'gemsecurity' ), $origin ),
-			sprintf( __( 'IP:       %s', 'gemsecurity' ), Helper::get_ip_address() ),
-			'',
-			__( 'If this administrator was legitimate, add their email to the GemSecurity admin whitelist and recreate the account.', 'gemsecurity' ),
-		] );
-
-		wp_mail( $to, $subject, $body );
+		Mailer::send(
+			$to,
+			'🚨',
+			__( 'Unapproved administrator blocked', 'gemsecurity' ),
+			[
+				[
+					'type' => 'notice',
+					'tone' => 'critical',
+					'text' => sprintf(
+						/* translators: 1: username, 2: deleted|demoted */
+						__( 'The administrator account <strong>%1$s</strong> was not on the approved list and has been %2$s.', 'gemsecurity' ),
+						esc_html( $login ),
+						esc_html( $verb )
+					),
+				],
+				[
+					'type'    => 'table',
+					'heading' => __( 'Account', 'gemsecurity' ),
+					'rows'    => [
+						[ __( 'Username', 'gemsecurity' ), esc_html( $login ) ],
+						[ __( 'Email', 'gemsecurity' ), esc_html( $email ) ],
+						[ __( 'Trigger', 'gemsecurity' ), esc_html( $origin ) ],
+						[ __( 'IP address', 'gemsecurity' ), esc_html( Helper::get_ip_address() ) ],
+					],
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'If this administrator was legitimate, add their email to the whitelist and recreate the account.', 'gemsecurity' ),
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-admin-guard' ),
+					'label' => __( 'Review Admin Guard', 'gemsecurity' ),
+				],
+			]
+		);
 	}
 
 	/* --------------------------------------------------------------------- */

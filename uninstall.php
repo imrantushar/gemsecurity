@@ -18,6 +18,9 @@ $options = [
 	'gemsecurity_vuln_scan',
 	'gemsecurity_hidden_admin_scan',
 	'gemsecurity_hidden_admin_state',
+	'gemsecurity_daily_report_snapshot',
+	'gemsecurity_watchdog_alert',
+	'gemsecurity_safe_files',
 	// Backup subsystem.
 	'gemsecurity_backup_settings',
 	'gembackup_db_version',
@@ -75,9 +78,12 @@ $wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE '\_gemsec\_oaut
 
 // Scheduled events (security + backup).
 $hooks = [
+	'gemsecurity_password_rotation',
 	'gemsecurity_prune_logs',
 	'gemsecurity_daily_scan',
 	'gemsecurity_weekly_digest',
+	'gemsecurity_admin_guard_sweep',
+	'gemsecurity_daily_report',
 	'gembackup_daily_event',
 	'gembackup_weekly_event',
 	'gembackup_monthly_event',

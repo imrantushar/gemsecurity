@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -179,48 +180,56 @@ class LoginSecurity {
 			return;
 		}
 
-		$to = trim( (string) Helper::get_setting( 'admin_login_alert_email', get_option( 'admin_email' ) ) );
-		if ( ! is_email( $to ) ) {
-			$to = get_option( 'admin_email' );
-		}
+		$to = Mailer::recipient();
 
-		$site    = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$when     = wp_date( 'F j, Y \a\t g:i a' );
-		$agent   = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : 'unknown';
+		// Mailer::subject() supplies the site identity, so the title only needs
+		// to say what happened.
+		$when  = wp_date( 'F j, Y \a\t g:i a' );
+		$agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : 'unknown';
 
-		$subject = sprintf(
-			/* translators: 1: site name, 2: user login. */
-			__( '[%1$s] Administrator login: %2$s', 'gemsecurity' ),
-			$site,
-			$user->user_login
-		);
-
-		$lines = [
-			sprintf( __( 'An administrator just signed in to %s.', 'gemsecurity' ), $site ),
-			'',
-			sprintf( __( 'User:    %s (%s)', 'gemsecurity' ), $user->user_login, $user->user_email ),
-			sprintf( __( 'Time:    %s', 'gemsecurity' ), $when ),
-			sprintf( __( 'IP:      %s', 'gemsecurity' ), $ip ),
-			sprintf( __( 'Browser: %s', 'gemsecurity' ), $agent ),
-			'',
-			__( 'If this was not expected, secure the account immediately and review the GemSecurity activity log.', 'gemsecurity' ),
+		$blocks = [
+			[
+				'type' => 'paragraph',
+				'text' => sprintf(
+					/* translators: %s: username. */
+					__( 'An administrator account, <strong>%s</strong>, just signed in.', 'gemsecurity' ),
+					esc_html( $user->user_login )
+				),
+			],
+			[
+				'type'    => 'table',
+				'heading' => __( 'Sign-in details', 'gemsecurity' ),
+				'rows'    => [
+					[ __( 'User', 'gemsecurity' ), esc_html( $user->user_login . ' (' . $user->user_email . ')' ) ],
+					[ __( 'Time', 'gemsecurity' ), esc_html( $when ) ],
+					[ __( 'IP address', 'gemsecurity' ), esc_html( $ip ) ],
+					[ __( 'Browser', 'gemsecurity' ), esc_html( $agent ) ],
+				],
+			],
+			[
+				'type' => 'paragraph',
+				'text' => __( 'If this was not expected, secure the account immediately and review the activity log.', 'gemsecurity' ),
+			],
 		];
-
-		$body = implode( "\n", $lines );
 
 		/**
 		 * Filter the administrator login alert email payload.
 		 *
-		 * @param array    $payload { to, subject, body }
+		 * @param array    $payload { to, emoji, title, blocks }
 		 * @param \WP_User $user
 		 */
 		$payload = apply_filters(
 			'gemsecurity/admin_login_alert_email',
-			[ 'to' => $to, 'subject' => $subject, 'body' => $body ],
+			[
+				'to'     => $to,
+				'emoji'  => '🔑',
+				'title'  => __( 'Administrator signed in', 'gemsecurity' ),
+				'blocks' => $blocks,
+			],
 			$user
 		);
 
-		wp_mail( $payload['to'], $payload['subject'], $payload['body'] );
+		Mailer::send( $payload['to'], $payload['emoji'], $payload['title'], $payload['blocks'] );
 	}
 
 	/* --------------------------------------------------------------------- */

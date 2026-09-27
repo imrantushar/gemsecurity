@@ -46,12 +46,23 @@ class Database {
 	}
 
 	/**
-	 * Cron: run the integrity scan after an update, when auto-scan is enabled.
+	 * Cron: re-run the integrity scan after an update.
+	 *
+	 * This used to be gated on `scanner_auto_scan`, which meant a site with
+	 * daily scanning off kept serving the pre-update result forever. After a
+	 * core update every core file legitimately differs from the old scan, so
+	 * the dashboard reported the update itself as a wall of "modified or
+	 * missing core file" criticals until somebody scanned by hand.
+	 *
+	 * Refreshing a result the plugin is already displaying is not the same
+	 * decision as scanning on a schedule, so it no longer asks that setting.
 	 */
 	public function run_post_update_scan() {
-		if ( Helper::get_setting( 'scanner_auto_scan', false ) ) {
-			Modules\Scanner::run_and_store();
+		// Nothing to refresh if no scan has ever run — that is its own finding.
+		if ( ! is_array( Modules\Scanner::get_last_result() ) ) {
+			return;
 		}
+		Modules\Scanner::run_and_store();
 	}
 
 	/**

@@ -2,22 +2,108 @@
     "packages": [
         {
             "name": "storeengine/wordpress-sdk",
-            "version": "1.5.2",
-            "version_normalized": "1.5.2.0",
+            "version": "v1.5.6",
+            "version_normalized": "1.5.6.0",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:imrantushar/storeengine-sdk-for-wordpress.git",
+                "reference": "c2fd07992ea0fb79d9b64d4398c55e234a0922af"
+            },
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/imrantushar/storeengine-sdk-for-wordpress/zip/907b1f0213a3a4ccb8769695d75897278c19f4fa"
+                "url": "https://api.github.com/repos/imrantushar/storeengine-sdk-for-wordpress/zipball/c2fd07992ea0fb79d9b64d4398c55e234a0922af",
+                "reference": "c2fd07992ea0fb79d9b64d4398c55e234a0922af",
+                "shasum": ""
             },
+            "require": {
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+                "phpcompatibility/php-compatibility": "^9.3",
+                "phpcompatibility/phpcompatibility-wp": "^2.1",
+                "phpstan/extension-installer": "^1.4",
+                "squizlabs/php_codesniffer": "^3.9",
+                "szepeviktor/phpstan-wordpress": "^2.0",
+                "wp-coding-standards/wpcs": "^3.0"
+            },
+            "time": "2026-08-26T06:42:31+00:00",
             "type": "library",
+            "extra": {
+                "scripts-description": {
+                    "phpcs": "Analyze code against the WordPress coding standards with PHP_CodeSniffer",
+                    "phpcbf": "Fix coding standards warnings/errors automatically with PHP Code Beautifier",
+                    "phpstan": "Analyze code with static analyser"
+                }
+            },
             "installation-source": "dist",
             "autoload": {
                 "files": [
                     "init.php"
                 ]
             },
+            "scripts": {
+                "phpcs": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "phpcs -p -s --colors"
+                ],
+                "phpcs-pre-commit": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "phpcs -s -p -n"
+                ],
+                "phpcbf": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "phpcbf -p"
+                ],
+                "phpcs:ci": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "phpcs --standard=phpcompat.xml -p -s --colors"
+                ],
+                "phpstan": [
+                    "./vendor/bin/phpstan analyse phpstan.neon --memory-limit 2G"
+                ]
+            },
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Kodezen Limited",
+                    "email": "support@kodezen.com",
+                    "role": "Maintainer"
+                },
+                {
+                    "name": "Kudratullah",
+                    "email": "hi@kudratullah.dev",
+                    "role": "Lead Developer"
+                }
+            ],
+            "description": "Official StoreEngine SDK for WordPress licensing and telemetry insights.",
+            "homepage": "https://storeengine.pro",
+            "keywords": [
+                "insights",
+                "license",
+                "plugin",
+                "sdk",
+                "storeengine",
+                "theme",
+                "wordpress",
+                "wordpress-plugin",
+                "wordpress-theme"
+            ],
+            "support": {
+                "source": "https://github.com/imrantushar/storeengine-sdk-for-wordpress",
+                "issues": "https://github.com/imrantushar/storeengine-sdk-for-wordpress/issues"
+            },
+            "funding": [
+                {
+                    "type": "custom",
+                    "url": "https://storeengine.pro"
+                }
+            ],
             "install-path": "../storeengine/wordpress-sdk"
         }
     ],
-    "dev": false,
+    "dev": true,
     "dev-package-names": []
 }

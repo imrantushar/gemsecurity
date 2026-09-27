@@ -989,6 +989,12 @@ final class SE_License_SDK_Insights {
 		$reason  = sanitize_text_field( $_REQUEST['reason_id'] );
 		$details = isset( $_REQUEST['reason_info'] ) ? trim( sanitize_textarea_field( $_REQUEST['reason_info'] ) ) : '';
 
+		// The deactivation modal shows the admin a clear, plain-language list of
+		// every data point below before they click "Submit & Deactivate", and
+		// offers "Skip & Deactivate" (which sends nothing) as the cancel path.
+		// Submitting is therefore informed consent. See WP.org review
+		// "hidden_sensitive_deactivation_payload" and the disclosure in
+		// views/insights-deactivation-reasons.php.
 		$current_user = wp_get_current_user();
 
 		if ( $current_user->first_name ) {
@@ -1198,10 +1204,26 @@ final class SE_License_SDK_Insights {
 		$admin_user        = $this->client->get_admin_data();
 		$displayName       = $admin_user->first_name ? trim( $admin_user->first_name . ' ' . $admin_user->last_name ) : $admin_user->display_name;
 		$showSupportTicket = ! empty( $this->supportURL );
+
+		// Plain-language disclosure of every data point sent when the user
+		// opts in via the consent checkbox. Kept in sync with the opt-in
+		// branch of uninstall_reason_submission(). See WP.org review
+		// "hidden_sensitive_deactivation_payload".
+		$dataCollectionList = [
+			__( 'Your admin name and email address', 'storeengine-sdk' ),
+			__( 'Your site name and URL', 'storeengine-sdk' ),
+			__( 'Your server IP address and operating-system details', 'storeengine-sdk' ),
+			__( 'PHP, database, and web-server names and versions', 'storeengine-sdk' ),
+			__( 'WordPress version, locale, and key environment settings', 'storeengine-sdk' ),
+			__( 'A list of your active and inactive plugins and active theme', 'storeengine-sdk' ),
+		];
+		$serverHost       = $this->client->get_license_server_host();
+		$privacyPolicyUrl = $this->privacy_policy_url;
 		?>
 		<div class="se-sdk-product-<?php echo esc_attr( $this->client->getSlug() ); ?> se-sdk-deactivation-modal"
 			 id="<?php echo esc_attr( $this->client->getSlug() ); ?>-se-sdk-deactivation-modal"
 			 data-slug="<?php echo esc_attr( $this->client->getSlug() ); ?>"
+			 data-plugin="<?php echo esc_attr( $this->client->getBasename() ); ?>"
 			 data-uninstall-action="<?php echo esc_attr( $this->client->getHookName( 'submit-uninstall-reason' ) ); ?>"
 			 data-support-action="<?php echo esc_attr( $this->client->getHookName( 'submit-support-ticket' ) ); ?>"
 			 data-nonce="<?php echo esc_attr( wp_create_nonce( $this->client->getHookName( 'insight_action' ) ) ); ?>"

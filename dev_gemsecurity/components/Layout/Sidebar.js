@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '@Components/ui/Icon';
-import { NAV_ITEMS, useActivePage, pageUrl } from '@Utils/nav';
+import { useNavItems, useActivePage, pageUrl } from '@Utils/nav';
 
 export default function Sidebar() {
 	const current = useActivePage();
+	const navItems = useNavItems();
 
 	return (
 		<aside className="gs-sidebar">
@@ -15,7 +16,7 @@ export default function Sidebar() {
 				<span className="gs-brand__name">GemSecurity</span>
 			</div>
 			<nav className="gs-nav">
-				{ NAV_ITEMS.map( ( item ) => (
+				{ navItems.map( ( item ) => (
 					<Link
 						key={ item.key }
 						to={ pageUrl( item.key ) }

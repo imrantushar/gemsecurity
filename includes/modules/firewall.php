@@ -52,11 +52,13 @@ class Firewall {
 			add_filter( 'rest_endpoints', [ $self, 'maybe_remove_users_endpoint' ] );
 		}
 
-		if ( Helper::get_setting( 'disable_application_passwords', false ) ) {
-			// Priority 20: WordPress core registers __return_true at priority 10
-			// on `init`; running after it ensures our false wins.
-			add_filter( 'wp_is_application_passwords_available', '__return_false', 20 );
+		// Same job as the two switches above — stop the login form confirming
+		// which usernames exist — so it belongs with them rather than on the
+		// API page, where it was gated by a different module.
+		if ( Helper::get_setting( 'login_errors_generic', false ) ) {
+			add_filter( 'login_errors', [ $self, 'generic_login_error' ] );
 		}
+
 	}
 
 	/* --------------------------------------------------------------------- */
@@ -186,5 +188,16 @@ class Firewall {
 			}
 		}
 		return $endpoints;
+	}
+
+	/**
+	 * Replace WordPress's specific login failure text ("unknown username",
+	 * "the password you entered … is incorrect") with one message that reveals
+	 * nothing about which half was wrong.
+	 *
+	 * @return string
+	 */
+	public function generic_login_error() {
+		return __( 'The username or password you entered is incorrect.', 'gemsecurity' );
 	}
 }

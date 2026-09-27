@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Toggle, Field, NumberInput, TextInput, Select, Button } from '@Components/ui/Controls';
+import { Card, Toggle, Field, NumberInput, TextInput, Button, MultiSelect, toOptions } from '@Components/ui/Controls';
+import Icon from '@Components/ui/Icon';
+import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
 import { ProSection, isPro } from '@Components/ui/Pro';
 
@@ -11,25 +13,17 @@ const KEYS = [
 	'login_attempts_limit',
 	'login_lockout_duration',
 	'admin_login_alert_enabled',
-	'admin_login_alert_email',
 	'admin_session_timeout_enabled',
 	'admin_session_timeout_hours',
-	// CAPTCHA.
-	'captcha_enabled',
-	'captcha_provider',
-	'captcha_site_key',
-	'captcha_secret_key',
-	'captcha_on_login',
-	'captcha_on_register',
-	'captcha_on_lostpassword',
-	'captcha_on_comments',
-	'captcha_v3_threshold',
-	'comment_honeypot_enabled',
 	// Password policy.
 	'password_policy_enabled',
 	'password_min_length',
 	'password_require_complexity',
 	'password_check_breached',
+	// Forced rotation.
+	'password_rotation_enabled',
+	'password_rotation_days',
+	'password_rotation_roles',
 	'password_expiry_days',
 	// Custom login URL.
 	'custom_login_enabled',
@@ -112,9 +106,191 @@ function ActiveSessions() {
 	);
 }
 
+const ROTATION_KEYS = [ 'password_rotation_enabled', 'password_rotation_days', 'password_rotation_roles' ];
+
+/**
+ * Forced password resets: one click now, or on a schedule, scoped by role.
+ *
+ * The scope is previewed before anything happens — this destroys sessions and
+ * locks every affected account out until its owner sets a new password, so a
+ * mis-scoped click is expensive.
+ */
+function PasswordRotation() {
+	const { form, setField, save, saving, dirty } = useSettingsForm( ROTATION_KEYS );
+	const toast = useToast();
+	const roles = GS.roles || {};
+	const scoped = form.password_rotation_roles || [];
+	const [ preview, setPreview ] = useState( null );
+	const [ busy, setBusy ] = useState( '' );
+	const [ includeSelf, setIncludeSelf ] = useState( false );
+	const [ notify, setNotify ] = useState( true );
+
+	const load = async () => {
+		setBusy( 'preview' );
+		try {
+			const { data } = await api.get( 'passwords/rotate', {
+				params: { roles: scoped, include_self: includeSelf ? 1 : 0 },
+			} );
+			setPreview( data );
+		} catch ( e ) {
+			toast( __( 'Could not check who this would affect.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const run = async () => {
+		setBusy( 'run' );
+		try {
+			const { data } = await api.post( 'passwords/rotate', {
+				roles: scoped,
+				include_self: includeSelf,
+				notify,
+			} );
+			toast(
+				sprintf(
+					/* translators: 1: users reset, 2: emails sent. */
+					__( 'Reset forced for %1$d user(s); %2$d reset link(s) emailed.', 'gemsecurity' ),
+					data.count,
+					data.notified
+				),
+				'success'
+			);
+			setPreview( { targets: 0, pending: data.pending } );
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not force the reset.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const clearAll = async () => {
+		setBusy( 'clear' );
+		try {
+			const { data } = await api.post( 'passwords/rotate', { action: 'clear' } );
+			toast(
+				sprintf( /* translators: %d: users. */ __( 'Cleared the reset requirement for %d user(s).', 'gemsecurity' ), data.cleared ),
+				'success'
+			);
+			setPreview( ( p ) => ( { ...( p || {} ), pending: data.pending } ) );
+		} catch ( e ) {
+			toast( __( 'Could not clear it.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	return (
+		<Card
+			title={ __( 'Password rotation', 'gemsecurity' ) }
+			description={ __( 'Force users to choose a new password. Sessions are ended and the old password stops working immediately — the standard response after a breach.', 'gemsecurity' ) }
+		>
+			<Field
+				label={ __( 'Apply to roles', 'gemsecurity' ) }
+				description={ __( 'Leave empty to apply to every user.', 'gemsecurity' ) }
+			>
+				<MultiSelect
+					options={ toOptions( roles ) }
+					value={ scoped }
+					onChange={ ( next ) => setField( 'password_rotation_roles', next ) }
+					placeholder={ __( 'Every user', 'gemsecurity' ) }
+				/>
+			</Field>
+
+			<Toggle
+				label={ __( 'Email each user a reset link', 'gemsecurity' ) }
+				description={ __( 'Without this they must use “Lost your password?” themselves. Passwords are never generated or emailed.', 'gemsecurity' ) }
+				checked={ notify }
+				onChange={ setNotify }
+			/>
+			<Toggle
+				label={ __( 'Include my own account', 'gemsecurity' ) }
+				description={ __( 'Off by default so a site-wide reset cannot lock you out in the middle of an incident.', 'gemsecurity' ) }
+				checked={ includeSelf }
+				onChange={ setIncludeSelf }
+			/>
+
+			<div className="gs-addrow">
+				<Button variant="secondary" onClick={ load } loading={ busy === 'preview' }>
+					{ __( 'Check who this affects', 'gemsecurity' ) }
+				</Button>
+				{ preview && preview.targets > 0 && (
+					<Button variant="danger" onClick={ run } loading={ busy === 'run' }>
+						{ sprintf(
+							/* translators: %d: number of users. */
+							__( 'Force a reset for %d user(s)', 'gemsecurity' ),
+							preview.targets
+						) }
+					</Button>
+				) }
+				{ preview && preview.pending > 0 && (
+					<Button variant="secondary" onClick={ clearAll } loading={ busy === 'clear' }>
+						{ sprintf( /* translators: %d: users. */ __( 'Cancel for %d waiting user(s)', 'gemsecurity' ), preview.pending ) }
+					</Button>
+				) }
+			</div>
+
+			{ preview && (
+				<div className={ `gs-alert gs-alert--${ preview.targets ? 'warning' : 'info' }` }>
+					<Icon name={ preview.targets ? 'alert' : 'check' } size={ 18 } />
+					<span>
+						{ sprintf(
+							/* translators: 1: affected users, 2: users already waiting. */
+							__( '%1$d user(s) would be signed out and required to set a new password. %2$d are already waiting to do so.', 'gemsecurity' ),
+							preview.targets,
+							preview.pending
+						) }
+					</span>
+				</div>
+			) }
+
+			<Toggle
+				label={ __( 'Rotate passwords automatically', 'gemsecurity' ) }
+				description={ __( 'Runs daily and forces a reset for anyone in the selected roles whose password is older than the age below.', 'gemsecurity' ) }
+				checked={ form.password_rotation_enabled }
+				onChange={ ( v ) => setField( 'password_rotation_enabled', v ) }
+			/>
+			{ form.password_rotation_enabled && (
+				<div className="gs-row">
+					<Field label={ __( 'Maximum password age', 'gemsecurity' ) } suffix={ __( 'days', 'gemsecurity' ) }>
+						<NumberInput
+							min="1"
+							value={ form.password_rotation_days ?? 90 }
+							onChange={ ( e ) => setField( 'password_rotation_days', Number( e.target.value ) ) }
+						/>
+					</Field>
+				</div>
+			) }
+
+			<div className="gs-savebar gs-savebar--inline">
+				<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
+					{ __( 'Save rotation settings', 'gemsecurity' ) }
+				</Button>
+			</div>
+		</Card>
+	);
+}
+
 export default function LoginSecurity() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
 	const loginBase = ( GS.site_url || '' ).replace( /\/$/, '' ) + '/';
+
+	// Mirror of the server's sanitize_title() + reserved-slug rule, so the
+	// preview shows the address that will actually work. Typing "Secret Login"
+	// used to preview /Secret Login and then serve /secret-login — bookmark the
+	// preview and you get a 404 from a site whose wp-login.php is now hidden.
+	const RESERVED_SLUGS = [
+		'wp-admin', 'wp-login', 'wp-content', 'wp-includes',
+		'wp-json', 'admin', 'login', 'feed', 'trackback',
+	];
+	const cleanSlug = ( raw ) => {
+		const slug = ( raw || '' )
+			.toString()
+			.normalize( 'NFD' )
+			.replace( /[\u0300-\u036f]/g, '' )   // strip accents, as sanitize_title does
+			.toLowerCase()
+			.replace( /[^a-z0-9\-_]+/g, '-' )
+			.replace( /-+/g, '-' )
+			.replace( /^-|-$/g, '' );
+		return RESERVED_SLUGS.includes( slug ) ? '' : slug;
+	};
 
 	return (
 		<div className="gs-page">
@@ -157,18 +333,11 @@ export default function LoginSecurity() {
 					checked={ form.admin_login_alert_enabled }
 					onChange={ ( v ) => setField( 'admin_login_alert_enabled', v ) }
 				/>
-				<Field
-					label={ __( 'Notification email', 'gemsecurity' ) }
-					description={ __( 'The alert (with user, time, IP and browser) is sent here. Defaults to the site admin email.', 'gemsecurity' ) }
-				>
-					<TextInput
-						type="email"
-						placeholder="security@example.com"
-						value={ form.admin_login_alert_email ?? '' }
-						onChange={ ( e ) => setField( 'admin_login_alert_email', e.target.value ) }
-						disabled={ ! form.admin_login_alert_enabled }
-					/>
-				</Field>
+				{ form.admin_login_alert_enabled && (
+					<p className="gs-card__desc">
+						{ __( 'The alert — user, time, IP and browser — goes to the security email on the Notifications page, along with every other notification the plugin sends.', 'gemsecurity' ) }
+					</p>
+				) }
 			</Card>
 
 			<Card
@@ -195,58 +364,6 @@ export default function LoginSecurity() {
 			</Card>
 
 			<Card
-				title={ __( 'CAPTCHA', 'gemsecurity' ) }
-				description={ __( 'Add a bot challenge to the login, registration and lost-password forms.', 'gemsecurity' ) }
-			>
-				<Toggle
-					label={ __( 'Enable CAPTCHA', 'gemsecurity' ) }
-					checked={ form.captcha_enabled }
-					onChange={ ( v ) => setField( 'captcha_enabled', v ) }
-				/>
-				{ form.captcha_enabled && (
-					<>
-						<Field label={ __( 'Provider', 'gemsecurity' ) }>
-							<Select
-								value={ form.captcha_provider || 'recaptcha_v2' }
-								onChange={ ( e ) => setField( 'captcha_provider', e.target.value ) }
-								options={ [
-									{ value: 'recaptcha_v2', label: 'Google reCAPTCHA v2 (checkbox)' },
-									{ value: 'recaptcha_v3', label: 'Google reCAPTCHA v3 (score)' },
-									{ value: 'hcaptcha', label: 'hCaptcha' },
-									{ value: 'turnstile', label: 'Cloudflare Turnstile' },
-								] }
-							/>
-						</Field>
-						<div className="gs-row">
-							<Field label={ __( 'Site key', 'gemsecurity' ) }>
-								<TextInput value={ form.captcha_site_key ?? '' } onChange={ ( e ) => setField( 'captcha_site_key', e.target.value ) } />
-							</Field>
-							<Field label={ __( 'Secret key', 'gemsecurity' ) }>
-								<TextInput type="password" value={ form.captcha_secret_key ?? '' } onChange={ ( e ) => setField( 'captcha_secret_key', e.target.value ) } />
-							</Field>
-						</div>
-						{ form.captcha_provider === 'recaptcha_v3' && (
-							<Field label={ __( 'v3 score threshold', 'gemsecurity' ) } description={ __( '0.0–1.0; requests scoring below this are blocked (0.5 recommended).', 'gemsecurity' ) }>
-								<NumberInput step="0.1" min="0" max="1" value={ form.captcha_v3_threshold ?? 0.5 } onChange={ ( e ) => setField( 'captcha_v3_threshold', Number( e.target.value ) ) } />
-							</Field>
-						) }
-						<div className="gs-toggle-list">
-							<Toggle label={ __( 'On login form', 'gemsecurity' ) } checked={ form.captcha_on_login } onChange={ ( v ) => setField( 'captcha_on_login', v ) } />
-							<Toggle label={ __( 'On registration form', 'gemsecurity' ) } checked={ form.captcha_on_register } onChange={ ( v ) => setField( 'captcha_on_register', v ) } />
-							<Toggle label={ __( 'On lost-password form', 'gemsecurity' ) } checked={ form.captcha_on_lostpassword } onChange={ ( v ) => setField( 'captcha_on_lostpassword', v ) } />
-							<Toggle label={ __( 'On comment form', 'gemsecurity' ) } checked={ form.captcha_on_comments } onChange={ ( v ) => setField( 'captcha_on_comments', v ) } />
-						</div>
-					</>
-				) }
-				<Toggle
-					label={ __( 'Comment spam honeypot', 'gemsecurity' ) }
-					description={ __( 'Silently blocks bot comments with a hidden decoy field and a too-fast-submit check. Needs no CAPTCHA keys and skips logged-in users.', 'gemsecurity' ) }
-					checked={ form.comment_honeypot_enabled }
-					onChange={ ( v ) => setField( 'comment_honeypot_enabled', v ) }
-				/>
-			</Card>
-
-			<Card
 				title={ __( 'Password policy', 'gemsecurity' ) }
 				description={ __( 'Enforce strong passwords on every account and reject leaked ones.', 'gemsecurity' ) }
 			>
@@ -263,6 +380,13 @@ export default function LoginSecurity() {
 						</div>
 						<Toggle label={ __( 'Require mixed case, number & symbol', 'gemsecurity' ) } checked={ form.password_require_complexity } onChange={ ( v ) => setField( 'password_require_complexity', v ) } />
 						<Toggle label={ __( 'Reject passwords found in data breaches', 'gemsecurity' ) } description={ __( 'Checks Have I Been Pwned using k-anonymity (the password is never sent).', 'gemsecurity' ) } checked={ form.password_check_breached } onChange={ ( v ) => setField( 'password_check_breached', v ) } />
+						{ form.password_check_breached && (
+							<TestCredentials
+								target="service"
+								getValues={ () => ( { service: 'breached_passwords' } ) }
+								label={ __( 'Test connection', 'gemsecurity' ) }
+							/>
+						) }
 					</>
 				) }
 			</Card>
@@ -274,11 +398,40 @@ export default function LoginSecurity() {
 				<Toggle label={ __( 'Enable custom login URL', 'gemsecurity' ) } checked={ form.custom_login_enabled } onChange={ ( v ) => setField( 'custom_login_enabled', v ) } />
 				{ form.custom_login_enabled && (
 					<>
-						<Field label={ __( 'Login slug', 'gemsecurity' ) } description={ `${ __( 'Your login page will be:', 'gemsecurity' ) } ${ loginBase }${ form.custom_login_slug || 'your-slug' }` }>
+						<Field
+							label={ __( 'Login slug', 'gemsecurity' ) }
+							description={
+								cleanSlug( form.custom_login_slug )
+									? `${ __( 'Your login page will be:', 'gemsecurity' ) } ${ loginBase }${ cleanSlug( form.custom_login_slug ) }`
+									: __( 'Lowercase letters, numbers and hyphens. Anything else is converted, and addresses WordPress already owns (wp-admin, login, admin…) cannot be used.', 'gemsecurity' )
+							}
+						>
 							<TextInput value={ form.custom_login_slug ?? '' } onChange={ ( e ) => setField( 'custom_login_slug', e.target.value ) } placeholder="secret-login" />
 						</Field>
+						{ form.custom_login_slug && cleanSlug( form.custom_login_slug ) !== form.custom_login_slug && (
+							<div className="gs-alert gs-alert--warning">
+								<Icon name="alert" size={ 18 } />
+								<span>
+									{ cleanSlug( form.custom_login_slug )
+										? sprintf(
+											/* translators: 1: typed slug, 2: slug that will be saved. */
+											__( '“%1$s” will be saved as “%2$s” — that is the address to bookmark.', 'gemsecurity' ),
+											form.custom_login_slug,
+											cleanSlug( form.custom_login_slug )
+										)
+										: __( 'That slug cannot be used, so the custom login URL will stay switched off and wp-login.php will remain reachable. Pick another.', 'gemsecurity' ) }
+								</span>
+							</div>
+						) }
 						<div className="gs-alert gs-alert--warning">
-							<span>{ __( 'Bookmark the new URL. If you get locked out, remove custom_login_enabled from the gemsecurity_settings option via the database.', 'gemsecurity' ) }</span>
+							<Icon name="alert" size={ 18 } />
+							<span>
+								{ __( 'Bookmark the new URL before you save. wp-admin will stop redirecting to the login page — that redirect is what would otherwise give the address away — so visiting it while logged out sends you to the front page instead.', 'gemsecurity' ) }
+								{ ' ' }
+								{ __( 'If you ever get locked out, add this line to wp-config.php:', 'gemsecurity' ) }
+								{ ' ' }
+								<code>define( &apos;GEMSECURITY_DISABLE_CUSTOM_LOGIN&apos;, true );</code>
+							</span>
 						</div>
 					</>
 				) }
@@ -328,6 +481,8 @@ export default function LoginSecurity() {
 					{ form.magic_link_enabled && isPro() && <MagicLinkSender /> }
 				</Card>
 			</ProSection>
+
+			<PasswordRotation />
 
 			<div className="gs-savebar">
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>

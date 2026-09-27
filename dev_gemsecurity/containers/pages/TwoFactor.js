@@ -3,7 +3,7 @@ import { __ } from '@wordpress/i18n';
 import { QRCodeSVG } from 'qrcode.react';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Toggle, Field, TextInput, Button, Badge, Loading } from '@Components/ui/Controls';
+import { Card, Toggle, Field, TextInput, Button, Badge, Loading, MultiSelect, toOptions } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
 
@@ -195,11 +195,6 @@ function Enforcement() {
 	const roles = GS.roles || {};
 	const enforced = form.two_factor_enforced_roles || [];
 
-	const toggleRole = ( slug, on ) => {
-		const next = on ? [ ...new Set( [ ...enforced, slug ] ) ] : enforced.filter( ( r ) => r !== slug );
-		setField( 'two_factor_enforced_roles', next );
-	};
-
 	return (
 		<>
 			<Card title={ __( 'Two-factor system', 'gemsecurity' ) } description={ __( 'Site-wide two-factor settings (administrators only).', 'gemsecurity' ) }>
@@ -212,17 +207,18 @@ function Enforcement() {
 			</Card>
 
 			<Card title={ __( 'Require two-factor by role', 'gemsecurity' ) } description={ __( 'Selected roles must pass a second step at login. Users without an app get an emailed code automatically.', 'gemsecurity' ) }>
-				<div className="gs-toggle-list">
-					{ Object.entries( roles ).map( ( [ slug, name ] ) => (
-						<Toggle
-							key={ slug }
-							label={ name }
-							checked={ enforced.includes( slug ) }
-							onChange={ ( v ) => toggleRole( slug, v ) }
-							disabled={ ! form.two_factor_enabled }
-						/>
-					) ) }
-				</div>
+				<Field
+					label={ __( 'Required for', 'gemsecurity' ) }
+					description={ __( 'Leave empty to require it of nobody — users can still enroll themselves.', 'gemsecurity' ) }
+				>
+					<MultiSelect
+						options={ toOptions( roles ) }
+						value={ enforced }
+						onChange={ ( next ) => setField( 'two_factor_enforced_roles', next ) }
+						placeholder={ __( 'No role is required to use it', 'gemsecurity' ) }
+						disabled={ ! form.two_factor_enabled }
+					/>
+				</Field>
 				<div className="gs-savebar">
 					<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
 				</div>

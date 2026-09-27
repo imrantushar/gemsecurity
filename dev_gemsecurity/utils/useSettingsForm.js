@@ -14,13 +14,22 @@ export default function useSettingsForm( keys ) {
 	const toast = useToast();
 	const { data, saving } = useSelector( ( s ) => s.settings );
 
+	// Depend on what the keys *are*, not on the identity of the array holding
+	// them. A caller passing an inline literal — `useSettingsForm( [ 'a', 'b' ] )`
+	// — hands over a new array on every render, which made `initial` new every
+	// render, which made the effect below setState on every render: an infinite
+	// update loop that froze the whole admin, not just that page. Callers should
+	// not have to know that, so the hook is responsible for it.
+	const signature = ( keys || [] ).join( '\u0000' );
+
 	const initial = useMemo( () => {
 		const o = {};
 		( keys || [] ).forEach( ( k ) => {
 			o[ k ] = data ? data[ k ] : undefined;
 		} );
 		return o;
-	}, [ data, keys ] );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ data, signature ] );
 
 	const [ form, setForm ] = useState( initial );
 

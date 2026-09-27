@@ -69,6 +69,33 @@ require_once __DIR__ . '/vendor/autoload.php'
 > <br>
 > The SDK is designed with a fail-safe mechanism that always loads the latest available version if multiple copies are found within a WordPress installation.
 
+### Important: loading order when multiple plugins bundle the SDK
+
+The fail-safe "newest version wins" election only works for copies whose
+`init.php` **actually executes**. Composer's `autoload_files` (what
+`vendor/autoload.php` runs) de-duplicates included files by a *package-stable*
+hash — the hash is derived from the package name + file path, **not** the
+absolute vendor location. So if two active plugins each ship
+`storeengine/wordpress-sdk` via Composer, only the **first** plugin's
+`vendor/autoload.php` includes `init.php`; every other copy's `init.php` is
+silently skipped and never registers its version. If that first plugin bundles
+an **older** SDK, the newer copies lose the election even though they're newer.
+
+To be immune to load order, **require `init.php` directly** instead of relying
+on Composer's autoload-files (this is what StoreEngine core does):
+
+```php
+// Loads this copy's init.php unconditionally, before plugins_loaded.
+require_once __DIR__ . '/vendor/storeengine/wordpress-sdk/init.php';
+// (vendor/autoload.php is still fine to load for your other classes.)
+```
+
+Each `init.php` guards itself against re-declaration, so requiring it directly
+is safe even when several plugins do the same — every copy registers its
+version and the newest genuinely wins. If your product is a **pro add-on that
+depends on a free plugin already shipping the SDK**, prefer not bundling the SDK
+at all and just calling the global `se_license_init()` the free plugin exposes.
+
 ## Usage
 
 Integrating the SDK into your plugin or theme is designed to be drop-in simple.
@@ -142,8 +169,32 @@ toggled on with minimal additional code.
 
 
 > **For Plugin:** Call `se_license_init()` from the main plugin file (`your-plugin-slug/your-plugin-slug.php`).
-> <br>
-> **For Theme:** Instructions coming soon.
+
+### Themes
+
+Themes are supported end-to-end: licensing UI, automatic updates, pre-swap
+package validation and one-click rollback all work the same as for plugins. Call
+`se_license_init()` from your theme's `functions.php`, on `after_setup_theme`
+(themes have no `plugins_loaded`). Set `package_type` to `theme` (or let the SDK
+auto-detect it), and use your theme's stylesheet folder as the `slug`:
+
+```php
+add_action( 'after_setup_theme', function () {
+	se_license_init( [
+		'package_file'    => get_stylesheet_directory() . '/functions.php',
+		'package_name'    => __( 'Your Amazing Theme', 'textdomain' ),
+		'product_id'      => 27871,
+		'is_free'         => false,
+		'slug'            => 'your-amazing-theme',      // stylesheet folder name
+		'package_type'    => 'theme',
+		'package_version' => wp_get_theme()->get( 'Version' ),
+		'license_server'  => 'https://your-website.com',
+		// …same optional keys as the plugin example.
+	] );
+} );
+```
+
+The “Manage License” screen is added under **Appearance** for themes.
 
 ## Isolated REST API
 
@@ -158,6 +209,38 @@ Endpoints are prefixed with your plugin slug: `/wp-json/storeengine-sdk/v1/{slug
 - **Insights Opt-in/Out**: `POST /insights/optin` (use `?opt_in=true/false`).
 
 All endpoints require the `manage_options` capability.
+
+## Events / Hooks
+
+The SDK fires documented lifecycle events so your plugin/theme can react to
+license and update changes. Every event is namespaced per-product, so subscribe
+through the client's `add_action()` helper (it prefixes the hook name for you):
+
+```php
+$client = se_license_init( [ /* … */ ] ); // or SE_License_SDK::get_registered_by_slug( 'your-slug' )
+
+$client->add_action( 'license_activated', function ( $license ) {
+	// e.g. flush caps, provision features, log.
+} );
+```
+
+| Event | Fired when | Args |
+| --- | --- | --- |
+| `license_activated` | A license is successfully activated. | `$license` |
+| `license_deactivated` | License deactivated by the user, or by a server verdict on the scheduled check. | `$license` |
+| `license_grace_expired` | The server was unreachable past the offline grace period, so the license failed closed. | `$license` |
+| `license_check_deferred` | A scheduled check couldn't reach the server but the license is still honoured (within grace). | `$license` |
+| `update_installed` | This product's files were updated in place (native "Update now"/bulk/auto-update, or the SDK installer). | `$previous_version` |
+| `update_failed` | An SDK-driven install failed. | `$wp_error, $target_version, $current_version` |
+
+### Offline grace period
+
+If the license server can't be reached during the daily re-check (DNS/timeout/TLS
+failure, a blocked outbound request, or a 5xx), a previously-valid license keeps
+working for a grace window (default **14 days** since the last successful
+verification) instead of being deactivated by a transient outage. Configure it
+with the `license_grace_period` init arg (seconds; `0` = fail closed
+immediately) or the `{hook}_license_grace_period` filter.
 
 ## Learn More
 

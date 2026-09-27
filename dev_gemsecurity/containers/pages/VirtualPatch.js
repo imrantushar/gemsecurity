@@ -19,7 +19,7 @@ export default function VirtualPatch() {
 			<Card
 				title={ __( 'Virtual patching', 'gemsecurity' ) }
 				description={ __( 'Blocks exploit attempts against known vulnerabilities in your installed plugins and themes — even when no update exists yet. Only rules that match this site’s software are enforced.', 'gemsecurity' ) }
-				actions={ data ? <Badge tone={ data.count ? 'success' : 'info' }>{ `${ data.count } ${ __( 'active mitigations', 'gemsecurity' ) }` }</Badge> : null }
+				actions={ data ? <Badge tone={ data.count ? 'success' : 'info' }>{ `${ data.count } ${ __( 'protections active', 'gemsecurity' ) }` }</Badge> : null }
 			>
 				<Toggle
 					label={ __( 'Enable virtual patching', 'gemsecurity' ) }
@@ -33,7 +33,13 @@ export default function VirtualPatch() {
 				</div>
 			</Card>
 
-			<Card title={ __( 'Active mitigations', 'gemsecurity' ) }>
+			<Card
+				title={ __( 'Shields currently active', 'gemsecurity' ) }
+				description={ __(
+					'Each row is a protection that is switched on and blocking attacks right now. Nothing here is a problem with your site, and there is nothing to fix — the severity shown is how dangerous the attack would be if it were not blocked.',
+					'gemsecurity'
+				) }
+			>
 				{ ! data ? (
 					<p className="gs-muted">{ __( 'Loading…', 'gemsecurity' ) }</p>
 				) : data.items.length === 0 ? (
@@ -45,9 +51,10 @@ export default function VirtualPatch() {
 					<table className="gs-table">
 						<thead><tr>
 							<th>{ __( 'CVE / Rule', 'gemsecurity' ) }</th>
-							<th>{ __( 'Protects against', 'gemsecurity' ) }</th>
-							<th>{ __( 'Target', 'gemsecurity' ) }</th>
-							<th>{ __( 'Severity', 'gemsecurity' ) }</th>
+							<th>{ __( 'Blocks', 'gemsecurity' ) }</th>
+							<th>{ __( 'Applies to', 'gemsecurity' ) }</th>
+							<th>{ __( 'Attack severity', 'gemsecurity' ) }</th>
+							<th>{ __( 'Status', 'gemsecurity' ) }</th>
 						</tr></thead>
 						<tbody>
 							{ data.items.map( ( it ) => (
@@ -56,10 +63,13 @@ export default function VirtualPatch() {
 									<td>{ it.title }</td>
 									<td className="gs-nowrap">
 										{ it.plugin === '*'
-											? __( 'all requests', 'gemsecurity' )
+											? __( 'every request (always on)', 'gemsecurity' )
 											: `${ it.plugin }${ it.installed_version ? ' @ ' + it.installed_version : '' }` }
 									</td>
-									<td><Badge tone={ it.severity === 'critical' ? 'danger' : 'warning' }>{ it.severity }</Badge></td>
+									{ /* The severity of the attack this blocks — not a rating of
+									     this site. A muted tone keeps it from reading as an alert. */ }
+									<td className="gs-nowrap gs-muted">{ it.severity }</td>
+									<td><Badge tone="success">{ __( 'Blocking', 'gemsecurity' ) }</Badge></td>
 								</tr>
 							) ) }
 						</tbody>

@@ -96,6 +96,146 @@ class Api {
 			],
 		] );
 
+		// Daily report: preview the morning letter or send it on demand.
+		register_rest_route( $ns, '/reports/daily', [
+			[
+				'methods'             => 'GET',
+				'callback'            => static function () {
+					$data = Modules\DailyReport::collect();
+					return rest_ensure_response( [
+						'success'      => true,
+						'admins'       => count( $data['admins'] ),
+						'plugins'      => count( $data['plugins'] ),
+						'new_plugins'  => count( $data['new_plugins'] ),
+						'new_admins'   => count( $data['new_admins'] ),
+						'first_run'    => $data['first_run'],
+						'next_run'     => wp_next_scheduled( Modules\DailyReport::CRON_HOOK ),
+					] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => static function () {
+					// force: send even while the schedule is off, and leave the
+					// "since yesterday" baseline untouched.
+					$sent = Modules\DailyReport::send( true );
+					return rest_ensure_response( [
+						'success' => (bool) $sent,
+						'message' => $sent
+							? __( 'Report sent.', 'gemsecurity' )
+							: __( 'WordPress could not send the email — check the site’s mail setup.', 'gemsecurity' ),
+					] );
+				},
+				'permission_callback' => $perm,
+			],
+		] );
+
+		// Forced password resets: preview the scope, force it, or clear it.
+		register_rest_route( $ns, '/passwords/rotate', [
+			[
+				'methods'             => 'GET',
+				'callback'            => static function ( $req ) {
+					$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
+					return rest_ensure_response( [
+						'success' => true,
+						'targets' => count( Modules\PasswordRotation::targets( [
+							'roles'            => $roles,
+							'exclude_user_ids' => $req->get_param( 'include_self' ) ? [] : [ get_current_user_id() ],
+						] ) ),
+						'pending' => Modules\PasswordRotation::pending_count(),
+					] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => static function ( $req ) {
+					if ( 'clear' === $req->get_param( 'action' ) ) {
+						return rest_ensure_response( [
+							'success' => true,
+							'cleared' => Modules\PasswordRotation::clear_all(),
+							'pending' => Modules\PasswordRotation::pending_count(),
+						] );
+					}
+
+					$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
+					// The administrator running this is excluded unless they opt
+					// in, so a site-wide reset cannot lock its operator out
+					// mid-incident.
+					$result = Modules\PasswordRotation::force_reset( [
+						'roles'            => $roles,
+						'exclude_user_ids' => $req->get_param( 'include_self' ) ? [] : [ get_current_user_id() ],
+						'notify'           => (bool) $req->get_param( 'notify' ),
+						'reason'           => 'manual',
+					] );
+
+					return rest_ensure_response( [ 'success' => true, 'pending' => Modules\PasswordRotation::pending_count() ] + $result );
+				},
+				'permission_callback' => $perm,
+			],
+		] );
+
+		// Files a person has reviewed and marked safe, so the scanners stop
+		// reporting them.
+		register_rest_route( $ns, '/safe-files', [
+			[
+				'methods'             => 'GET',
+				'callback'            => static function () {
+					return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'POST',
+				'callback'            => static function ( $req ) {
+					$path = (string) $req->get_param( 'path' );
+					// Accept either an absolute path or one relative to the
+					// install, since findings carry both.
+					$abs = ( 0 === strpos( wp_normalize_path( $path ), wp_normalize_path( ABSPATH ) ) )
+						? $path
+						: ABSPATH . ltrim( $path, '/' );
+
+					$res = Security\SafeFiles::mark( $abs );
+					if ( is_wp_error( $res ) ) {
+						return $res;
+					}
+					return rest_ensure_response( [ 'success' => true, 'entry' => $res, 'files' => Security\SafeFiles::for_js() ] );
+				},
+				'permission_callback' => $perm,
+			],
+			[
+				'methods'             => 'DELETE',
+				'callback'            => static function ( $req ) {
+					Security\SafeFiles::unmark( (string) $req->get_param( 'path' ) );
+					return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
+				},
+				'permission_callback' => $perm,
+			],
+		] );
+
+		// Credential tester — check third-party keys against the real provider
+		// before a typo reaches the login form. Core: the fields it tests live
+		// across several modules.
+		register_rest_route( $ns, '/credentials/test', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Credentials::class, 'test' ],
+			'permission_callback' => $perm,
+		] );
+
+		// In-product documentation for the help drawer, keyed by page slug.
+		register_rest_route( $ns, '/docs', [
+			'methods'             => 'GET',
+			'callback'            => static function () {
+				return rest_ensure_response( [
+					'success' => true,
+					'docs'    => Modules\Docs::for_js(),
+					'guides'  => Modules\Docs::guides(),
+				] );
+			},
+			'permission_callback' => $perm,
+		] );
+
 		// Dashboard overview.
 		register_rest_route( $ns, '/dashboard', [
 			'methods'             => 'GET',
@@ -222,6 +362,20 @@ class Api {
 				'callback'            => [ Rest\Admins::class, 'remove' ],
 				'permission_callback' => $perm,
 			] );
+			// Sweep every existing administrator against the whitelist. GET
+			// previews (dry run), POST carries it out.
+			register_rest_route( $ns, '/admins/sweep', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Rest\Admins::class, 'preview_sweep' ],
+					'permission_callback' => $perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Rest\Admins::class, 'sweep' ],
+					'permission_callback' => $perm,
+				],
+			] );
 		}
 
 		// Scanner: integrity/malware scan, baseline, MU-plugin inventory.
@@ -237,6 +391,11 @@ class Api {
 					'callback'            => [ Rest\Scanner::class, 'run' ],
 					'permission_callback' => $perm,
 				],
+			] );
+			register_rest_route( $ns, '/scan/quarantine', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Scanner::class, 'quarantine' ],
+				'permission_callback' => $perm,
 			] );
 			register_rest_route( $ns, '/scan/baseline', [
 				'methods'             => 'POST',
@@ -308,7 +467,7 @@ class Api {
 			] );
 		}
 
-		// Two-Factor (current-user enrollment) + login CAPTCHA module.
+		// Two-Factor (current-user enrollment).
 		if ( self::module( 'two-factor' ) ) {
 			register_rest_route( $ns, '/2fa', [
 				'methods'             => 'GET',

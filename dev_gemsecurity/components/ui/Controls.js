@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import ReactSelect from 'react-select';
+import Icon from '@Components/ui/Icon';
 
 /* ------------------------------------------------------------------ */
 /* Card                                                                */
@@ -17,6 +19,72 @@ export function Card( { title, description, actions, children, className = '' } 
 				</div>
 			) }
 			<div className="gs-card__body">{ children }</div>
+		</div>
+	);
+}
+
+/* ------------------------------------------------------------------ */
+/* Collapsible (accordion section)                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A Card whose body folds away behind its header.
+ *
+ * For pages that stack many result panels: the header keeps the title and a
+ * status summary in view, so a section that found nothing costs one row
+ * instead of a screenful and only the ones that matter are opened.
+ *
+ * Uncontrolled by default — pass `open` + `onToggle` to drive it from a
+ * parent. `syncKey` re-applies `defaultOpen` when it changes, which is how a
+ * fresh set of results re-opens whichever sections now carry findings.
+ */
+export function Collapsible( {
+	id,
+	title,
+	description,
+	badge,
+	actions,
+	defaultOpen = false,
+	open: openProp,
+	onToggle,
+	syncKey,
+	children,
+	className = '',
+} ) {
+	const [ selfOpen, setSelfOpen ] = useState( defaultOpen );
+	const controlled = undefined !== openProp;
+	const open = controlled ? openProp : selfOpen;
+
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	useEffect( () => setSelfOpen( defaultOpen ), [ defaultOpen, syncKey ] );
+
+	const toggle = () => ( controlled ? onToggle( ! open ) : setSelfOpen( ! open ) );
+
+	return (
+		<div id={ id } className={ `gs-card gs-collapse ${ open ? 'is-open' : '' } ${ className }` }>
+			<div className="gs-collapse__head">
+				<h3 className="gs-collapse__heading">
+					<button
+						type="button"
+						className="gs-collapse__toggle"
+						aria-expanded={ open }
+						onClick={ toggle }
+					>
+						<Icon name="chevron" size={ 16 } className="gs-collapse__chevron" />
+						<span>{ title }</span>
+					</button>
+				</h3>
+				<div className="gs-collapse__trailing">
+					{ badge }
+					{ open && actions ? <div className="gs-card__actions">{ actions }</div> : null }
+				</div>
+			</div>
+			{ open && (
+				<div className="gs-card__body">
+					{ description && <p className="gs-card__desc gs-collapse__desc">{ description }</p> }
+					{ children }
+				</div>
+			) }
 		</div>
 	);
 }
@@ -102,6 +170,50 @@ export function Select( { options, ...props } ) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Multi-select                                                        */
+/* ------------------------------------------------------------------ */
+
+/** Turn a `{ slug: label }` map — how roles arrive from PHP — into options. */
+export function toOptions( map ) {
+	return Object.entries( map || {} ).map( ( [ value, label ] ) => ( { value, label } ) );
+}
+
+/**
+ * Pick several values from a long list.
+ *
+ * `value` and `onChange` deal in a plain array of option values rather than
+ * react-select's option objects, because that is what every caller stores. A
+ * stored value with no matching option — a role a plugin has since removed —
+ * still shows as its own chip, so saving cannot quietly drop it.
+ *
+ * The menu renders in place rather than through a portal on `document.body`:
+ * the theme's custom properties are defined on the plugin wrapper, so a
+ * portalled menu falls out of the dark theme. Nothing here clips overflow, so
+ * there is nothing for a portal to escape.
+ */
+export function MultiSelect( { options, value, onChange, placeholder, disabled, inputId } ) {
+	const selected = ( Array.isArray( value ) ? value : [] ).map(
+		( v ) => options.find( ( o ) => o.value === v ) || { value: v, label: v }
+	);
+
+	return (
+		<ReactSelect
+			isMulti
+			inputId={ inputId }
+			className="gs-rs"
+			classNamePrefix="gs-rs"
+			options={ options }
+			value={ selected }
+			onChange={ ( opts ) => onChange( ( opts || [] ).map( ( o ) => o.value ) ) }
+			placeholder={ placeholder }
+			isDisabled={ disabled }
+			closeMenuOnSelect={ false }
+			hideSelectedOptions={ false }
+		/>
+	);
+}
+
+/* ------------------------------------------------------------------ */
 /* List input (textarea-backed list of emails / IPs)                   */
 /* ------------------------------------------------------------------ */
 
@@ -129,8 +241,8 @@ export function ListInput( { value, onChange, placeholder, rows = 5 } ) {
 /* Badge                                                               */
 /* ------------------------------------------------------------------ */
 
-export function Badge( { tone = 'info', children } ) {
-	return <span className={ `gs-badge gs-badge--${ tone }` }>{ children }</span>;
+export function Badge( { tone = 'info', className = '', children } ) {
+	return <span className={ `gs-badge gs-badge--${ tone } ${ className }` }>{ children }</span>;
 }
 
 /* ------------------------------------------------------------------ */

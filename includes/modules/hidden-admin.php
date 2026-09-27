@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 use GemSecurity\Security\AdminAudit;
 
@@ -249,35 +250,44 @@ class HiddenAdmin {
 	 * @param int    $count
 	 */
 	private static function notify( $result, $names, $count ) {
-		$to   = get_option( 'admin_email' );
-		$site = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-
-		$subject = sprintf(
-			/* translators: %s: site name. */
-			__( '[%s] Hidden administrator account detected', 'gemsecurity' ),
-			$site
+		Mailer::send(
+			\GemSecurity\Mailer::recipient(),
+			'🕵️',
+			__( 'Hidden administrator account detected', 'gemsecurity' ),
+			[
+				[
+					'type' => 'notice',
+					'tone' => 'critical',
+					'text' => sprintf(
+						/* translators: %d: number of hidden accounts. */
+						_n(
+							'%d administrator account is hidden from the WordPress Users screen. A hidden administrator almost always means the site has been compromised.',
+							'%d administrator accounts are hidden from the WordPress Users screen. A hidden administrator almost always means the site has been compromised.',
+							$count,
+							'gemsecurity'
+						),
+						$count
+					),
+				],
+				[
+					'type'    => 'table',
+					'heading' => __( 'What was found', 'gemsecurity' ),
+					'rows'    => [
+						[ __( 'Hidden account(s)', 'gemsecurity' ), esc_html( $names ) ],
+						[ __( 'Admins in the database', 'gemsecurity' ), (int) $result['raw_count'] ],
+						[ __( 'Admins visible in wp-admin', 'gemsecurity' ), (int) $result['visible_count'] ],
+					],
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'Review and remove the account, then run a full malware scan and rotate every administrator password.', 'gemsecurity' ),
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-admin-guard' ),
+					'label' => __( 'Open Admin Guard', 'gemsecurity' ),
+				],
+			]
 		);
-
-		$body = implode( "\n", [
-			sprintf(
-				/* translators: 1: count, 2: site name. */
-				_n(
-					'GemSecurity found %1$d administrator account on %2$s that is hidden from the WordPress Users screen.',
-					'GemSecurity found %1$d administrator accounts on %2$s that are hidden from the WordPress Users screen.',
-					$count,
-					'gemsecurity'
-				),
-				$count,
-				$site
-			),
-			'',
-			sprintf( __( 'Account(s):            %s', 'gemsecurity' ), $names ),
-			sprintf( __( 'Admins in database:    %d', 'gemsecurity' ), $result['raw_count'] ),
-			sprintf( __( 'Admins visible in wp-admin: %d', 'gemsecurity' ), $result['visible_count'] ),
-			'',
-			__( 'A hidden administrator almost always means the site has been compromised. Open GemSecurity → Admin Guard to review and remove the account, then run a full malware scan and rotate every administrator password.', 'gemsecurity' ),
-		] );
-
-		wp_mail( $to, $subject, $body );
 	}
 }

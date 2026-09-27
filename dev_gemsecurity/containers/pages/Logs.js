@@ -1,8 +1,68 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
 import api from '@Utils/api';
-import { Card, Badge, Button, Select, TextInput, Loading, EmptyState } from '@Components/ui/Controls';
+import useSettingsForm from '@Utils/useSettingsForm';
+import { Card, Badge, Button, Select, TextInput, Toggle, Loading, EmptyState } from '@Components/ui/Controls';
 import { useToast } from '@Components/ui/Toast';
+
+/*
+ * What the audit log records. These settings have always been live in PHP and
+ * accepted by the REST schema, but no screen ever rendered them — the only way
+ * to stop logging a category was to edit the option by hand.
+ */
+const AUDIT_KEYS = [
+	'audit_log_enabled',
+	'audit_content',
+	'audit_plugins_themes',
+	'audit_users',
+	'audit_settings',
+];
+
+const AUDIT_SOURCES = [
+	{ key: 'audit_users', label: __( 'User accounts', 'gemsecurity' ), desc: __( 'Registrations, role changes, deletions and profile edits.', 'gemsecurity' ) },
+	{ key: 'audit_plugins_themes', label: __( 'Plugins & themes', 'gemsecurity' ), desc: __( 'Activation, deactivation, installation, updates and deletion.', 'gemsecurity' ) },
+	{ key: 'audit_settings', label: __( 'Settings changes', 'gemsecurity' ), desc: __( 'Edits to WordPress options, including by other plugins.', 'gemsecurity' ) },
+	{ key: 'audit_content', label: __( 'Content', 'gemsecurity' ), desc: __( 'Posts and pages created, edited, published or deleted. The noisiest source on an active site.', 'gemsecurity' ) },
+];
+
+/** What gets written to the activity log. */
+function AuditSettings() {
+	const { form, setField, save, saving, dirty } = useSettingsForm( AUDIT_KEYS );
+
+	return (
+		<Card
+			title={ __( 'What gets logged', 'gemsecurity' ) }
+			description={ __( 'Choose which activity is recorded. Security events — logins, firewall blocks, scans, bans — are always logged and are not affected by these.', 'gemsecurity' ) }
+			actions={
+				dirty ? (
+					<Button variant="secondary" onClick={ () => save() } loading={ saving }>
+						{ __( 'Save', 'gemsecurity' ) }
+					</Button>
+				) : null
+			}
+		>
+			<Toggle
+				label={ __( 'Record activity in the audit log', 'gemsecurity' ) }
+				description={ __( 'Turning this off stops all of the below. Anything already logged is kept.', 'gemsecurity' ) }
+				checked={ form.audit_log_enabled ?? true }
+				onChange={ ( v ) => setField( 'audit_log_enabled', v ) }
+			/>
+			{ ( form.audit_log_enabled ?? true ) && (
+				<div className="gs-toggle-list">
+					{ AUDIT_SOURCES.map( ( a ) => (
+						<Toggle
+							key={ a.key }
+							label={ a.label }
+							description={ a.desc }
+							checked={ form[ a.key ] ?? true }
+							onChange={ ( v ) => setField( a.key, v ) }
+						/>
+					) ) }
+				</div>
+			) }
+		</Card>
+	);
+}
 
 const SEVERITY_TONE = { info: 'info', notice: 'info', warning: 'warning', critical: 'danger' };
 
@@ -99,6 +159,8 @@ export default function Logs() {
 
 	return (
 		<div className="gs-page">
+			<AuditSettings />
+
 			<Card
 				title={ __( 'Activity log', 'gemsecurity' ) }
 				description={ `${ state.total } ${ __( 'events', 'gemsecurity' ) }` }

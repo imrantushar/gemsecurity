@@ -2,6 +2,7 @@
 namespace GemSecurity\Rest;
 
 use GemSecurity\Helper;
+use GemSecurity\Modules\AdminGuard;
 use GemSecurity\Modules\HiddenAdmin;
 use GemSecurity\Security\AdminAudit;
 
@@ -75,6 +76,41 @@ class Admins {
 			'admins'  => $admins,
 			'audit'   => self::audit_payload( $audit ),
 		] );
+	}
+
+	/**
+	 * GET /admins/sweep — dry run.
+	 *
+	 * Shows exactly who the sweep would remove before anything happens, so a
+	 * mistyped whitelist is caught while it is still reversible.
+	 */
+	public static function preview_sweep() {
+		return rest_ensure_response( [
+			'success' => true,
+			'preview' => true,
+		] + AdminGuard::sweep( 'manual', true ) );
+	}
+
+	/**
+	 * POST /admins/sweep — remove every unapproved administrator now.
+	 */
+	public static function sweep() {
+		$result = AdminGuard::sweep( 'manual' );
+
+		if ( HiddenAdmin::enabled() ) {
+			$verdict = HiddenAdmin::verdict();
+			$admins  = $verdict['admins'];
+			$audit   = $verdict['result'];
+		} else {
+			$audit  = AdminAudit::audit();
+			$admins = AdminAudit::admins();
+		}
+
+		return rest_ensure_response( [
+			'success' => true,
+			'admins'  => $admins,
+			'audit'   => self::audit_payload( $audit ),
+		] + $result );
 	}
 
 	/**

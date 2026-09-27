@@ -32,7 +32,6 @@ class Settings {
 			'block_author_enumeration'      => 'bool',
 			'disable_user_rest'             => 'bool',
 			'hide_wp_version'               => 'bool',
-			'disable_application_passwords' => 'bool',
 			'comments_disabled'             => 'bool',
 
 			// Login security.
@@ -40,7 +39,6 @@ class Settings {
 			'login_attempts_limit'          => 'int',
 			'login_lockout_duration'        => 'int',
 			'admin_login_alert_enabled'     => 'bool',
-			'admin_login_alert_email'       => 'email',
 			'admin_session_timeout_enabled' => 'bool',
 			'admin_session_timeout_hours'   => 'int',
 
@@ -101,7 +99,6 @@ class Settings {
 			'captcha_on_lostpassword'       => 'bool',
 			'captcha_on_comments'           => 'bool',
 			'captcha_v3_threshold'          => 'float',
-			'comment_honeypot_enabled'      => 'bool',
 			'antispam_enabled'              => 'bool',
 			'antispam_min_seconds'          => 'int',
 			'antispam_heuristics'           => 'bool',
@@ -148,7 +145,6 @@ class Settings {
 
 			// Monitoring.
 			'monitoring_enabled'            => 'bool',
-			'monitor_alert_email'           => 'email',
 
 			// Vulnerability scanner.
 			'vuln_scan_enabled'             => 'bool',
@@ -187,6 +183,10 @@ class Settings {
 			'password_min_length'           => 'int',
 			'password_require_complexity'   => 'bool',
 			'password_check_breached'       => 'bool',
+			// Forced password rotation.
+			'password_rotation_enabled'     => 'bool',
+			'password_rotation_days'        => 'int',
+			'password_rotation_roles'       => 'array',
 			'password_expiry_days'          => 'int',
 
 			// Sessions.
@@ -195,7 +195,7 @@ class Settings {
 
 			// Custom login URL.
 			'custom_login_enabled'          => 'bool',
-			'custom_login_slug'             => 'text',
+			'custom_login_slug'             => 'login_slug',
 			'login_honeypot_enabled'        => 'bool',
 			'trusted_devices_enabled'       => 'bool',
 			'trusted_devices_alert'         => 'bool',
@@ -210,6 +210,9 @@ class Settings {
 			'alert_telegram_chat'           => 'text',
 			'alert_webhook_url'             => 'text',
 			'digest_enabled'                => 'bool',
+			// Daily morning report.
+			'daily_report_enabled'          => 'bool',
+			'daily_report_hour'             => 'int',
 
 			// Lockdown + backup.
 			'lockdown_enabled'              => 'bool',
@@ -281,6 +284,14 @@ class Settings {
 		$now_enabled = ! empty( $merged['admin_whitelist_enabled'] );
 		if ( $now_enabled && ! $was_whitelist_enabled && empty( $merged['admin_whitelist'] ) ) {
 			$merged['admin_whitelist'] = AdminGuard::current_admin_emails();
+		}
+
+		// A custom login URL with no usable slug is not a custom login URL. The
+		// module bails out when the slug is empty, so leaving the switch on
+		// would show the login page as hidden while wp-login.php stayed wide
+		// open — the one state this feature must never report.
+		if ( ! empty( $merged['custom_login_enabled'] ) && '' === trim( (string) $merged['custom_login_slug'] ) ) {
+			$merged['custom_login_enabled'] = false;
 		}
 
 		// Install/remove the extended-protection mu-plugin when toggled.
@@ -357,6 +368,22 @@ class Settings {
 
 			case 'textarea':
 				return sanitize_textarea_field( (string) $value );
+
+			case 'login_slug':
+				// Store exactly what CustomLogin will serve. It runs the value
+				// through sanitize_title() at boot, so anything with a space,
+				// a capital or an accent used to be stored raw, previewed raw,
+				// and then served from a different address — bookmark the one
+				// the screen showed you and you get a 404 from a site whose
+				// wp-login.php is now hidden too.
+				$slug = sanitize_title( (string) $value );
+				// Addresses WordPress already owns. Taking one of these either
+				// shadows the admin or produces a login page nobody can reach.
+				$reserved = [
+					'wp-admin', 'wp-login', 'wp-content', 'wp-includes',
+					'wp-json', 'admin', 'login', 'feed', 'trackback',
+				];
+				return in_array( $slug, $reserved, true ) ? '' : $slug;
 
 			case 'slug_list':
 				$list = self::to_array( $value );

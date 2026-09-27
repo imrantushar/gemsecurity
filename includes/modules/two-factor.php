@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 use GemSecurity\Security\Totp;
 
@@ -74,12 +75,15 @@ class TwoFactor {
 		$remember = ! empty( $_POST['rememberme'] );
 		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : admin_url();
 
-		$token = wp_generate_password( 32, false );
-		set_transient(
-			self::PENDING_PREFIX . $token,
-			[ 'user_id' => $user->ID, 'remember' => $remember, 'redirect' => $redirect, 'method' => $method ],
-			5 * MINUTE_IN_SECONDS
-		);
+		$token   = wp_generate_password( 32, false );
+		$pending = [ 'user_id' => $user->ID, 'remember' => $remember, 'redirect' => $redirect, 'method' => $method ];
+
+		set_transient( self::PENDING_PREFIX . $token, $pending, 5 * MINUTE_IN_SECONDS );
+		// The transient can be gone by the time the code is submitted — an
+		// object cache that is not shared, a second app server — and the only
+		// symptom is being bounced back to the login form after entering a
+		// correct code. The same payload rides along in a signed cookie.
+		self::set_pending_cookie( $token, $pending );
 
 		if ( 'email' === $method ) {
 			$this->send_email_otp( $user );
@@ -98,8 +102,26 @@ class TwoFactor {
 		$token   = isset( $_POST['gemsec_2fa_token'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_token'] ) ) : '';
 		$pending = $token ? get_transient( self::PENDING_PREFIX . $token ) : false;
 
+		if ( ! $pending && $token ) {
+			$pending = self::pending_from_cookie( $token );
+		}
+
 		if ( ! $pending || empty( $pending['user_id'] ) ) {
-			wp_safe_redirect( wp_login_url() );
+			// Bouncing to the login form with no explanation is what made this
+			// look like "the code did not work" when the code was never
+			// checked: the challenge itself had expired or been lost.
+			Logger::log(
+				'2fa_challenge_lost',
+				'A second-factor code was submitted but the pending challenge could not be found. It expired, was already used, or the browser did not return the cookie.',
+				Logger::SEVERITY_WARNING,
+				[ 'user_id' => 0 ]
+			);
+			login_header( __( 'Two-Factor Authentication', 'gemsecurity' ), '', new \WP_Error(
+				'gemsec_2fa_expired',
+				__( 'That sign-in attempt expired before the code was entered. Please sign in again.', 'gemsecurity' )
+			) );
+			echo '<p id="backtoblog"><a href="' . esc_url( wp_login_url() ) . '">' . esc_html__( 'Back to sign in', 'gemsecurity' ) . '</a></p>';
+			login_footer();
 			exit;
 		}
 
@@ -123,14 +145,31 @@ class TwoFactor {
 		$ok = $this->verify_factor( $user, $method, $code );
 
 		if ( ! $ok ) {
-			Logger::log( '2fa_failed', sprintf( 'Failed second factor for "%s".', $user->user_login ), Logger::SEVERITY_WARNING, [ 'user_id' => $user->ID ] );
-			$this->render_form( $token, $method, __( 'Invalid code. Please try again.', 'gemsecurity' ) );
+			// "Invalid code" is wrong — and unhelpful — when the code was never
+			// compared because it had expired, or when guessing is now locked.
+			$reason  = self::otp_failure();
+			$message = __( 'Invalid code. Please try again.', 'gemsecurity' );
+			if ( 'expired' === $reason ) {
+				$message = __( 'That code has expired. Use “Resend code” to get a new one.', 'gemsecurity' );
+			} elseif ( 'locked' === $reason ) {
+				$message = __( 'Too many incorrect codes. Request a new one and try again.', 'gemsecurity' );
+			}
+
+			Logger::log(
+				'2fa_failed',
+				sprintf( 'Failed second factor for "%s" (%s).', $user->user_login, $reason ? $reason : $method ),
+				Logger::SEVERITY_WARNING,
+				[ 'user_id' => $user->ID ]
+			);
+			$this->render_form( $token, $method, $message );
 			exit;
 		}
 
 		// Success — complete the login.
 		delete_transient( self::PENDING_PREFIX . $token );
+		self::clear_pending_cookie();
 		delete_transient( self::EMAIL_OTP_PREFIX . $user->ID );
+		delete_user_meta( $user->ID, self::OTP_META );
 
 		self::$passed = true;
 		wp_set_current_user( $user->ID );
@@ -175,10 +214,98 @@ class TwoFactor {
 		}
 
 		if ( 'email' === $method ) {
-			$stored = get_transient( self::EMAIL_OTP_PREFIX . $user->ID );
-			return $stored && hash_equals( (string) $stored, preg_replace( '/\D/', '', $code ) );
+			return self::verify_email_otp( $user, $code );
 		}
 
+		return false;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Email OTP storage                                                   */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Where the emailed code lives while it waits to be used.
+	 *
+	 * User meta, not a transient. The code is written when the challenge is
+	 * issued and read on the next request, and on a host whose object cache is
+	 * not shared between workers the transient is simply gone by then — so a
+	 * correct code comes back as "invalid". User meta is always backed by the
+	 * database, so the two requests agree.
+	 *
+	 * Stored hashed, with an expiry and an attempt count: a six-digit code with
+	 * unlimited guesses is not a second factor.
+	 */
+	const OTP_META = '_gemsec_2fa_otp';
+
+	/** Guesses allowed against one emailed code. */
+	const OTP_MAX_TRIES = 5;
+
+	/** Why the last email OTP check failed: expired | locked | mismatch. */
+	private static $otp_failure = '';
+
+	/** @return string */
+	public static function otp_failure() {
+		return self::$otp_failure;
+	}
+
+	/**
+	 * @param \WP_User $user
+	 * @param string   $code
+	 */
+	private static function store_email_otp( $user, $code ) {
+		update_user_meta(
+			$user->ID,
+			self::OTP_META,
+			[
+				'hash'    => hash_hmac( 'sha256', $code, wp_salt( 'auth' ) ),
+				'expires' => time() + 10 * MINUTE_IN_SECONDS,
+				'tries'   => 0,
+			]
+		);
+	}
+
+	/**
+	 * @param \WP_User $user
+	 * @param string   $code
+	 * @return bool
+	 */
+	private static function verify_email_otp( $user, $code ) {
+		self::$otp_failure = '';
+		$digits = preg_replace( '/\D/', '', $code );
+		$record = get_user_meta( $user->ID, self::OTP_META, true );
+
+		// A code issued before this changed still lives in the old transient.
+		if ( ! is_array( $record ) ) {
+			$legacy = get_transient( self::EMAIL_OTP_PREFIX . $user->ID );
+			if ( $legacy && hash_equals( (string) $legacy, $digits ) ) {
+				delete_transient( self::EMAIL_OTP_PREFIX . $user->ID );
+				return true;
+			}
+			self::$otp_failure = 'expired';
+			return false;
+		}
+
+		if ( empty( $record['expires'] ) || time() > (int) $record['expires'] ) {
+			delete_user_meta( $user->ID, self::OTP_META );
+			self::$otp_failure = 'expired';
+			return false;
+		}
+
+		if ( (int) $record['tries'] >= self::OTP_MAX_TRIES ) {
+			delete_user_meta( $user->ID, self::OTP_META );
+			self::$otp_failure = 'locked';
+			return false;
+		}
+
+		if ( hash_equals( (string) $record['hash'], hash_hmac( 'sha256', $digits, wp_salt( 'auth' ) ) ) ) {
+			delete_user_meta( $user->ID, self::OTP_META );
+			return true;
+		}
+
+		$record['tries'] = (int) $record['tries'] + 1;
+		update_user_meta( $user->ID, self::OTP_META, $record );
+		self::$otp_failure = 'mismatch';
 		return false;
 	}
 
@@ -194,16 +321,28 @@ class TwoFactor {
 	 */
 	public function send_email_otp( $user ) {
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
-		set_transient( self::EMAIL_OTP_PREFIX . $user->ID, $code, 10 * MINUTE_IN_SECONDS );
+		self::store_email_otp( $user, $code );
 
-		$site    = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
-		$subject = sprintf( __( '[%s] Your login verification code', 'gemsecurity' ), $site );
-		$body    = implode( "\n", [
-			sprintf( __( 'Your verification code is: %s', 'gemsecurity' ), $code ),
-			'',
-			__( 'It expires in 10 minutes. If you did not try to log in, change your password immediately.', 'gemsecurity' ),
-		] );
-		wp_mail( $user->user_email, $subject, $body );
+		Mailer::send(
+			$user->user_email,
+			'🔢',
+			__( 'Your login verification code', 'gemsecurity' ),
+			[
+				[
+					'type' => 'notice',
+					'tone' => 'info',
+					'text' => sprintf(
+						/* translators: %s: 6-digit code. */
+						__( 'Your verification code is <strong style="letter-spacing:3px;font-size:20px;">%s</strong>', 'gemsecurity' ),
+						esc_html( $code )
+					),
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'It expires in 10 minutes. If you did not try to sign in, change your password immediately.', 'gemsecurity' ),
+				],
+			]
+		);
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -296,6 +435,56 @@ class TwoFactor {
 			return false;
 		}
 		return isset( $GLOBALS['pagenow'] ) && 'wp-login.php' === $GLOBALS['pagenow'];
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Pending-challenge fallback                                          */
+	/* ------------------------------------------------------------------ */
+
+	/** Cookie holding the pending challenge, for when the transient is gone. */
+	private static function cookie_name() {
+		return 'gemsec_2fa_pending';
+	}
+
+	/**
+	 * @param string $token
+	 * @param array  $pending
+	 */
+	private static function set_pending_cookie( $token, array $pending ) {
+		setcookie(
+			self::cookie_name(),
+			Helper::sign_payload( [ 'token' => $token ] + $pending ),
+			[
+				'expires'  => time() + 5 * MINUTE_IN_SECONDS,
+				'path'     => '/',
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			]
+		);
+	}
+
+	/**
+	 * @param string $token
+	 * @return array|false
+	 */
+	private static function pending_from_cookie( $token ) {
+		if ( empty( $_COOKIE[ self::cookie_name() ] ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$data = Helper::verify_signed_payload( wp_unslash( $_COOKIE[ self::cookie_name() ] ), 5 * MINUTE_IN_SECONDS );
+		if ( ! is_array( $data ) || empty( $data['token'] ) || ! hash_equals( (string) $data['token'], (string) $token ) ) {
+			return false;
+		}
+
+		unset( $data['token'] );
+		return $data;
+	}
+
+	private static function clear_pending_cookie() {
+		setcookie( self::cookie_name(), '', [ 'expires' => time() - 3600, 'path' => '/' ] );
 	}
 
 	/* ------------------------------------------------------------------ */

@@ -64,6 +64,7 @@ class MuLoader {
 	 */
 	private static function template() {
 		$bans_table = $GLOBALS['wpdb']->prefix . 'gemsecurity_bans';
+		$basename   = defined( 'GEMSECURITY_PLUGIN_BASENAME' ) ? GEMSECURITY_PLUGIN_BASENAME : 'gemsecurity/gemsecurity.php';
 
 		return <<<PHP
 <?php
@@ -77,6 +78,61 @@ class MuLoader {
  */
 
 if ( ! defined( 'ABSPATH' ) ) { return; }
+
+/*
+ * Watchdog.
+ *
+ * GemSecurity removes this file when it is deactivated normally, so finding it
+ * still here while the plugin is NOT active means the plugin was switched off
+ * without going through WordPress — a row edited in the database, or the
+ * directory renamed or deleted. That is what an intrusion looks like, and it is
+ * the one case the deactivation hook can never report, because it never ran.
+ *
+ * Deliberately independent of the plugin: nothing of GemSecurity is loaded at
+ * this point. Runs on `init` because wp_mail() does not exist yet during
+ * mu-plugin load, and alerts at most once every 12 hours.
+ */
+add_action( 'init', function () {
+	try {
+		\$active = (array) get_option( 'active_plugins', array() );
+		if ( is_multisite() ) {
+			\$active = array_merge( \$active, array_keys( (array) get_site_option( 'active_sitewide_plugins', array() ) ) );
+		}
+		if ( in_array( '{$basename}', \$active, true ) ) { return; }
+
+		\$last = (int) get_option( 'gemsecurity_watchdog_alert', 0 );
+		if ( \$last && ( time() - \$last ) < 12 * HOUR_IN_SECONDS ) { return; }
+		update_option( 'gemsecurity_watchdog_alert', time(), false );
+
+		\$name = wp_specialchars_decode( (string) get_option( 'blogname' ), ENT_QUOTES );
+		\$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		\$ip   = isset( \$_SERVER['REMOTE_ADDR'] ) ? (string) \$_SERVER['REMOTE_ADDR'] : 'unknown';
+
+		wp_mail(
+			\GemSecurity\Mailer::recipient(),
+			sprintf( '\xf0\x9f\x9a\xa8 [%s \xc2\xb7 %s] DANGER: GemSecurity is no longer active', \$name, \$host ),
+			implode( "\n", array(
+				'GemSecurity is not active on ' . home_url() . ', but its early-protection file is still installed.',
+				'',
+				'That combination means the plugin was disabled WITHOUT using the WordPress plugins screen —',
+				'for example by editing the database directly or renaming the plugin directory. A normal',
+				'deactivation removes this file. Treat it as an intrusion until proven otherwise.',
+				'',
+				'Detected at: ' . current_time( 'mysql' ),
+				'Request IP:  ' . \$ip,
+				'',
+				'What to do now:',
+				'1. Reactivate GemSecurity and run a full malware scan.',
+				'2. Change every administrator password and end all sessions.',
+				'3. Check the administrator list for accounts you do not recognise.',
+				'',
+				'This warning is sent at most once every 12 hours.',
+			) )
+		);
+	} catch ( \Throwable \$e ) {
+		// Never break the site over a warning.
+	}
+}, 1 );
 
 ( function () {
 	try {

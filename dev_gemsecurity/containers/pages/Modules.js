@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { __ } from '@wordpress/i18n';
-import api, { GS } from '@Utils/api';
+import { __, sprintf } from '@wordpress/i18n';
+import api from '@Utils/api';
+import { useModules, setModules, getModules } from '@Utils/nav';
 import Icon from '@Components/ui/Icon';
-import { Card, Badge, Toggle, Button, Loading } from '@Components/ui/Controls';
+import { Card, Badge, Toggle, Loading } from '@Components/ui/Controls';
+import { useToast } from '@Components/ui/Toast';
 import { ProBadge, isPro, upgradeUrl } from '@Components/ui/Pro';
 
 /* Friendly, ordered category buckets for the manager grid. */
@@ -16,15 +18,12 @@ const CATEGORIES = [
 ];
 
 export default function Modules() {
-	const [ modules, setModules ] = useState(
-		Array.isArray( GS.modules ) ? GS.modules : []
-	);
+	// The module list lives in the shared nav store, so every toggle here is
+	// reflected in the plugin nav and the WordPress admin menu right away.
+	const modules = useModules();
 	const [ loading, setLoading ] = useState( ! modules.length );
 	const [ savingId, setSavingId ] = useState( null );
-	const [ error, setError ] = useState( null );
-	// Set once a toggle succeeds — the WP menu + REST are registered server-side,
-	// so a reload is needed for the change to fully take effect.
-	const [ pendingReload, setPendingReload ] = useState( false );
+	const toast = useToast();
 
 	// Refresh authoritative state from the server on mount.
 	useEffect( () => {
@@ -53,26 +52,42 @@ export default function Modules() {
 	const activeCount = modules.filter( ( m ) => m.active ).length;
 
 	const toggle = async ( mod, next ) => {
-		setError( null );
 		setSavingId( mod.id );
-		// Optimistic update.
-		setModules( ( prev ) =>
-			prev.map( ( m ) => ( m.id === mod.id ? { ...m, active: next } : m ) )
+		// Optimistic update. A non-core module's menu entry follows its
+		// activation, so `visible` moves with it until the server confirms.
+		setModules(
+			getModules().map( ( m ) =>
+				m.id === mod.id
+					? { ...m, active: next, visible: m.core ? true : next }
+					: m
+			)
 		);
 		try {
 			const r = await api.post( 'modules', { id: mod.id, active: next } );
 			if ( Array.isArray( r.data?.modules ) ) {
 				setModules( r.data.modules );
 			}
-			setPendingReload( true );
+			toast(
+				next
+					// translators: %s: module name, e.g. "Firewall".
+					? sprintf( __( '%s activated — its menu is now available.', 'gemsecurity' ), mod.title )
+					// translators: %s: module name, e.g. "Firewall".
+					: sprintf( __( '%s deactivated — removed from the menu.', 'gemsecurity' ), mod.title ),
+				'success'
+			);
 		} catch ( e ) {
 			// Roll back on failure.
-			setModules( ( prev ) =>
-				prev.map( ( m ) => ( m.id === mod.id ? { ...m, active: ! next } : m ) )
+			setModules(
+				getModules().map( ( m ) =>
+					m.id === mod.id
+						? { ...m, active: ! next, visible: m.core ? true : ! next }
+						: m
+				)
 			);
-			setError(
+			toast(
 				e?.response?.data?.message ||
-					__( 'Could not update the module. Please try again.', 'gemsecurity' )
+					__( 'Could not update the module. Please try again.', 'gemsecurity' ),
+				'error'
 			);
 		} finally {
 			setSavingId( null );
@@ -85,6 +100,8 @@ export default function Modules() {
 
 	return (
 		<div className="gs-page gs-modules">
+			{ /* Toggling reports through a toast, like the rest of the admin, so
+			     this card carries no body. */ }
 			<Card
 				title={ __( 'Security modules', 'gemsecurity' ) }
 				description={ __(
@@ -101,24 +118,7 @@ export default function Modules() {
 							__( 'active', 'gemsecurity' ) }
 					</Badge>
 				}
-			>
-				{ error && <div className="gs-notice gs-notice--error">{ error }</div> }
-				{ pendingReload && (
-					<div className="gs-notice gs-notice--info">
-						{ __(
-							'Module changes are saved. Reload the page to apply the updated menu and features.',
-							'gemsecurity'
-						) }
-						<Button
-							variant="secondary"
-							onClick={ () => window.location.reload() }
-							style={ { marginLeft: 12 } }
-						>
-							{ __( 'Reload now', 'gemsecurity' ) }
-						</Button>
-					</div>
-				) }
-			</Card>
+			/>
 
 			{ CATEGORIES.map( ( cat ) => {
 				const items = grouped[ cat.key ];

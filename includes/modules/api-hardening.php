@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Mailer;
 use GemSecurity\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -11,9 +12,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * API & access hardening.
  *
- * Closes the recon + non-interactive-auth surface that sits beside the normal
- * login form: the REST API, application passwords (which bypass 2FA and are
- * long-lived), and username enumeration via login error deltas.
+ * Closes the non-interactive-auth surface that sits beside the normal login
+ * form: the REST API and application passwords, which bypass the login form,
+ * two-factor and CAPTCHA and are long-lived.
+ *
+ * Username-enumeration hardening lives with the firewall's other recon
+ * switches (author scans, the REST users endpoint) rather than here.
  *
  * Each behaviour is individually gated by its own setting so activating the
  * module doesn't change anything until the site owner opts in.
@@ -29,7 +33,9 @@ class ApiHardening {
 		// --- Application passwords -------------------------------------
 		if ( Helper::get_setting( 'app_pw_disabled', false ) ) {
 			// Turn the feature off site-wide (also hides it from user profiles).
-			add_filter( 'wp_is_application_passwords_available', '__return_false' );
+			// Priority 20: WordPress core registers __return_true at priority 10
+			// on `init`, so running after it ensures our false wins.
+			add_filter( 'wp_is_application_passwords_available', '__return_false', 20 );
 		} else {
 			// Log + optionally alert whenever a new application password is minted.
 			add_action( 'wp_create_application_password', [ $self, 'on_app_password_created' ], 10, 4 );
@@ -42,10 +48,6 @@ class ApiHardening {
 			add_filter( 'rest_pre_dispatch', [ $self, 'rest_rate_limit' ], 10, 3 );
 		}
 
-		// --- Username-enumeration hardening ----------------------------
-		if ( Helper::get_setting( 'login_errors_generic', false ) ) {
-			add_filter( 'login_errors', [ $self, 'generic_login_error' ] );
-		}
 	}
 
 	/**
@@ -84,21 +86,31 @@ class ApiHardening {
 		}
 
 		$user = get_userdata( $user_id );
-		$to   = get_option( 'admin_email' );
-		wp_mail(
-			$to,
-			sprintf(
-				/* translators: %s: site name. */
-				__( '[%s] New application password created', 'gemsecurity' ),
-				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
-			),
-			sprintf(
-				/* translators: 1: label, 2: user login, 3: site url. */
-				__( "An application password \"%1\$s\" was just created for user \"%2\$s\" on %3\$s.\n\nIf this wasn't expected, review it under GemSecurity → API & Access.", 'gemsecurity' ),
-				$name,
-				$user ? $user->user_login : $user_id,
-				home_url()
-			)
+
+		Mailer::send(
+			\GemSecurity\Mailer::recipient(),
+			'🔐',
+			__( 'New application password created', 'gemsecurity' ),
+			[
+				[
+					'type' => 'paragraph',
+					'text' => sprintf(
+						/* translators: 1: password label, 2: username. */
+						__( 'An application password <strong>%1$s</strong> was just created for <strong>%2$s</strong>. Application passwords bypass the login form, two-factor and CAPTCHA.', 'gemsecurity' ),
+						esc_html( $name ),
+						esc_html( $user ? $user->user_login : (string) $user_id )
+					),
+				],
+				[
+					'type' => 'paragraph',
+					'text' => __( 'If this was not expected, revoke it now.', 'gemsecurity' ),
+				],
+				[
+					'type'  => 'button',
+					'url'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-api-hardening' ),
+					'label' => __( 'Review application passwords', 'gemsecurity' ),
+				],
+			]
 		);
 	}
 
@@ -173,15 +185,5 @@ class ApiHardening {
 
 		set_transient( $key, $count + 1, $window * MINUTE_IN_SECONDS );
 		return $result;
-	}
-
-	/**
-	 * Replace specific login errors with a generic message so an attacker can't
-	 * tell valid usernames apart from wrong passwords.
-	 *
-	 * @return string
-	 */
-	public function generic_login_error() {
-		return __( 'The username or password you entered is incorrect.', 'gemsecurity' );
 	}
 }

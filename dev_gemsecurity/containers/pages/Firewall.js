@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, ListInput, Select, TextInput, NumberInput, Button, Badge, EmptyState } from '@Components/ui/Controls';
+import { isPro, ProBadge } from '@Components/ui/Pro';
 
 const KEYS = [
 	'firewall_enabled',
@@ -12,11 +13,28 @@ const KEYS = [
 	'trusted_proxies',
 	'xmlrpc_disabled',
 	'disable_file_editing',
+	'hide_wp_version',
+	// Username enumeration.
 	'block_author_enumeration',
 	'disable_user_rest',
-	'hide_wp_version',
-	'disable_application_passwords',
-	'comments_disabled',
+	'login_errors_generic',
+	// WAF + rate limiting + bot control. These are free-tier protections
+	// enforced by the Waf class; they used to be configurable only from the
+	// Pro-gated Threat Defense page, where a free install could not reach them.
+	'waf_enabled',
+	'waf_block_sqli',
+	'waf_block_xss',
+	'waf_block_lfi',
+	'waf_block_rce',
+	'waf_inspect_body',
+	'rate_limit_enabled',
+	'rate_limit_max',
+	'rate_limit_window',
+	'throttle_404_enabled',
+	'throttle_404_max',
+	'throttle_404_window',
+	'block_bad_bots',
+	'block_empty_ua',
 	// Security headers.
 	'security_headers_enabled',
 	'header_x_frame_options',
@@ -31,6 +49,12 @@ const KEYS = [
 	'header_csp_value',
 	'header_csp_report_only',
 	'header_csp_report',
+	// Pro hardening pack.
+	'admin_ip_allowlist_enabled',
+	'admin_ip_allowlist',
+	'block_sensitive_files_enabled',
+	'block_php_in_uploads',
+	'force_https_enabled',
 	// Bot control.
 	'block_ai_crawlers',
 	'verify_search_bots',
@@ -115,16 +139,24 @@ function CspViolations() {
 
 const HARDENING = [
 	{ key: 'disable_file_editing', label: __( 'Disable theme & plugin file editor', 'gemsecurity' ), desc: __( 'Stops attackers editing PHP from wp-admin (DISALLOW_FILE_EDIT).', 'gemsecurity' ) },
-	{ key: 'block_author_enumeration', label: __( 'Block author enumeration', 'gemsecurity' ), desc: __( 'Prevents ?author=N scans that reveal usernames.', 'gemsecurity' ) },
-	{ key: 'disable_user_rest', label: __( 'Block REST user enumeration', 'gemsecurity' ), desc: __( 'Hides /wp/v2/users from anonymous requests.', 'gemsecurity' ) },
 	{ key: 'xmlrpc_disabled', label: __( 'Disable XML-RPC', 'gemsecurity' ), desc: __( 'Closes a common brute-force and DDoS vector.', 'gemsecurity' ) },
 	{ key: 'hide_wp_version', label: __( 'Hide WordPress version', 'gemsecurity' ), desc: __( 'Removes the generator meta tag and version from feeds.', 'gemsecurity' ) },
-	{ key: 'disable_application_passwords', label: __( 'Disable application passwords', 'gemsecurity' ), desc: __( 'Turns off the REST application-password feature.', 'gemsecurity' ) },
-	{ key: 'comments_disabled', label: __( 'Disable comments entirely', 'gemsecurity' ), desc: __( 'Closes comments & pingbacks everywhere, hides existing ones, and removes the comment UI. Comments are a common spam / malicious-content vector.', 'gemsecurity' ) },
+];
+
+/*
+ * Every switch whose job is to stop the site confirming which usernames exist.
+ * These were previously split between here and the API & Access page, which put
+ * two halves of one decision on two screens.
+ */
+const ENUMERATION = [
+	{ key: 'block_author_enumeration', label: __( 'Block author enumeration', 'gemsecurity' ), desc: __( 'Prevents ?author=N scans that reveal usernames.', 'gemsecurity' ) },
+	{ key: 'disable_user_rest', label: __( 'Block REST user enumeration', 'gemsecurity' ), desc: __( 'Hides /wp/v2/users from anonymous requests.', 'gemsecurity' ) },
+	{ key: 'login_errors_generic', label: __( 'Generic login error messages', 'gemsecurity' ), desc: __( 'Replaces “unknown username” / “incorrect password” with one message, so a failed login never confirms an account exists.', 'gemsecurity' ) },
 ];
 
 export default function Firewall() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
+	const pro = isPro();
 
 	return (
 		<div className="gs-page">
@@ -177,6 +209,68 @@ export default function Firewall() {
 			>
 				<div className="gs-toggle-list">
 					{ HARDENING.map( ( h ) => (
+						<Toggle
+							key={ h.key }
+							label={ h.label }
+							description={ h.desc }
+							checked={ form[ h.key ] }
+							onChange={ ( v ) => setField( h.key, v ) }
+						/>
+					) ) }
+				</div>
+			</Card>
+
+			<Card
+				title={ __( 'Web Application Firewall', 'gemsecurity' ) }
+				description={ __( 'Inspect incoming requests and block common attack patterns. Administrators are always exempt.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Enable request inspection (WAF)', 'gemsecurity' ) }
+					checked={ form.waf_enabled }
+					onChange={ ( v ) => setField( 'waf_enabled', v ) }
+				/>
+				{ form.waf_enabled && (
+					<div className="gs-toggle-list">
+						<Toggle label={ __( 'Block SQL injection', 'gemsecurity' ) } checked={ form.waf_block_sqli } onChange={ ( v ) => setField( 'waf_block_sqli', v ) } />
+						<Toggle label={ __( 'Block cross-site scripting (XSS)', 'gemsecurity' ) } checked={ form.waf_block_xss } onChange={ ( v ) => setField( 'waf_block_xss', v ) } />
+						<Toggle label={ __( 'Block path traversal / file inclusion', 'gemsecurity' ) } checked={ form.waf_block_lfi } onChange={ ( v ) => setField( 'waf_block_lfi', v ) } />
+						<Toggle label={ __( 'Block remote code execution patterns', 'gemsecurity' ) } checked={ form.waf_block_rce } onChange={ ( v ) => setField( 'waf_block_rce', v ) } />
+						<Toggle
+							label={ __( 'Also inspect POST request bodies', 'gemsecurity' ) }
+							description={ __( 'Stronger, but can false-positive on legitimate form content.', 'gemsecurity' ) }
+							checked={ form.waf_inspect_body }
+							onChange={ ( v ) => setField( 'waf_inspect_body', v ) }
+						/>
+					</div>
+				) }
+			</Card>
+
+			<Card
+				title={ __( 'Rate limiting & throttling', 'gemsecurity' ) }
+				description={ __( 'Cap how hard a single IP can hit the front end. REST API requests are limited separately on the API & Access page.', 'gemsecurity' ) }
+			>
+				<Toggle label={ __( 'Limit request rate per IP', 'gemsecurity' ) } checked={ form.rate_limit_enabled } onChange={ ( v ) => setField( 'rate_limit_enabled', v ) } />
+				{ form.rate_limit_enabled && (
+					<div className="gs-row">
+						<Field label={ __( 'Max requests', 'gemsecurity' ) }><NumberInput min="10" value={ form.rate_limit_max ?? 240 } onChange={ ( e ) => setField( 'rate_limit_max', Number( e.target.value ) ) } /></Field>
+						<Field label={ __( 'Per window', 'gemsecurity' ) } suffix={ __( 'minutes', 'gemsecurity' ) }><NumberInput min="1" value={ form.rate_limit_window ?? 1 } onChange={ ( e ) => setField( 'rate_limit_window', Number( e.target.value ) ) } /></Field>
+					</div>
+				) }
+				<Toggle label={ __( 'Throttle 404 floods (vulnerability scanners)', 'gemsecurity' ) } checked={ form.throttle_404_enabled } onChange={ ( v ) => setField( 'throttle_404_enabled', v ) } />
+				{ form.throttle_404_enabled && (
+					<div className="gs-row">
+						<Field label={ __( 'Max 404s', 'gemsecurity' ) }><NumberInput min="3" value={ form.throttle_404_max ?? 20 } onChange={ ( e ) => setField( 'throttle_404_max', Number( e.target.value ) ) } /></Field>
+						<Field label={ __( 'Per window', 'gemsecurity' ) } suffix={ __( 'minutes', 'gemsecurity' ) }><NumberInput min="1" value={ form.throttle_404_window ?? 5 } onChange={ ( e ) => setField( 'throttle_404_window', Number( e.target.value ) ) } /></Field>
+					</div>
+				) }
+			</Card>
+
+			<Card
+				title={ __( 'Username enumeration', 'gemsecurity' ) }
+				description={ __( 'Stop the site handing out valid usernames before an attacker even tries a password.', 'gemsecurity' ) }
+			>
+				<div className="gs-toggle-list">
+					{ ENUMERATION.map( ( h ) => (
 						<Toggle
 							key={ h.key }
 							label={ h.label }
@@ -279,8 +373,22 @@ export default function Firewall() {
 
 			<Card
 				title={ __( 'Bot control', 'gemsecurity' ) }
-				description={ __( 'Govern automated traffic: block AI scrapers and reject crawlers that impersonate search engines.', 'gemsecurity' ) }
+				description={ __( 'Govern automated traffic in one place: known-bad scanners, AI scrapers and crawlers that impersonate search engines. Custom user-agent patterns and bot analytics are on the Threat Defense page.', 'gemsecurity' ) }
 			>
+				<Toggle
+					label={ __( 'Block malicious bots & scanners', 'gemsecurity' ) }
+					description={ __( 'Blocks known-bad user agents such as sqlmap, nikto and nuclei.', 'gemsecurity' ) }
+					checked={ form.block_bad_bots }
+					onChange={ ( v ) => setField( 'block_bad_bots', v ) }
+				/>
+				{ form.block_bad_bots && (
+					<Toggle
+						label={ __( 'Also block empty / missing user agents', 'gemsecurity' ) }
+						description={ __( 'Requests that send no User-Agent header at all are almost always bots or scanners.', 'gemsecurity' ) }
+						checked={ form.block_empty_ua ?? true }
+						onChange={ ( v ) => setField( 'block_empty_ua', v ) }
+					/>
+				) }
 				<Toggle
 					label={ __( 'Block AI crawlers & scrapers', 'gemsecurity' ) }
 					description={ __( 'Deny GPTBot, ClaudeBot, CCBot, PerplexityBot, Bytespider and other AI/scraper user-agents.', 'gemsecurity' ) }
@@ -292,6 +400,52 @@ export default function Firewall() {
 					description={ __( 'Confirm Googlebot / Bingbot / YandexBot / Applebot via reverse DNS and block spoofed impostors (a common way to bypass firewalls).', 'gemsecurity' ) }
 					checked={ form.verify_search_bots }
 					onChange={ ( v ) => setField( 'verify_search_bots', v ) }
+				/>
+			</Card>
+
+			<Card
+				title={ <>{ __( 'Hardening pack', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
+				description={ __( 'Extra request-level protections: restrict wp-admin by IP, deny sensitive files, stop PHP running in uploads and force HTTPS.', 'gemsecurity' ) }
+			>
+				<Toggle
+					label={ __( 'Restrict wp-admin by IP', 'gemsecurity' ) }
+					description={ __( 'Only the IPs below may reach wp-admin. An empty list never locks anyone out.', 'gemsecurity' ) }
+					checked={ form.admin_ip_allowlist_enabled }
+					onChange={ ( v ) => setField( 'admin_ip_allowlist_enabled', v ) }
+					disabled={ ! pro }
+				/>
+				{ pro && form.admin_ip_allowlist_enabled && (
+					<Field
+						label={ __( 'Allowed IPs', 'gemsecurity' ) }
+						description={ __( 'One IP or CIDR range per line. This is a network allowlist for wp-admin — the approved-administrator list on the Admin Guard page is about accounts, not addresses.', 'gemsecurity' ) }
+					>
+						<ListInput
+							value={ form.admin_ip_allowlist }
+							onChange={ ( v ) => setField( 'admin_ip_allowlist', v ) }
+							placeholder={ '203.0.113.10\n198.51.100.0/24' }
+						/>
+					</Field>
+				) }
+				<Toggle
+					label={ __( 'Block sensitive files', 'gemsecurity' ) }
+					description={ __( 'Denies readme.html, license.txt, *.sql, *.bak, debug.log, dotfiles and similar.', 'gemsecurity' ) }
+					checked={ form.block_sensitive_files_enabled }
+					onChange={ ( v ) => setField( 'block_sensitive_files_enabled', v ) }
+					disabled={ ! pro }
+				/>
+				<Toggle
+					label={ __( 'Block PHP execution in /uploads', 'gemsecurity' ) }
+					description={ __( 'Stops uploaded PHP shells from running.', 'gemsecurity' ) }
+					checked={ form.block_php_in_uploads }
+					onChange={ ( v ) => setField( 'block_php_in_uploads', v ) }
+					disabled={ ! pro }
+				/>
+				<Toggle
+					label={ __( 'Force HTTPS', 'gemsecurity' ) }
+					description={ __( 'Redirect HTTP to HTTPS and upgrade insecure requests.', 'gemsecurity' ) }
+					checked={ form.force_https_enabled }
+					onChange={ ( v ) => setField( 'force_https_enabled', v ) }
+					disabled={ ! pro }
 				/>
 			</Card>
 

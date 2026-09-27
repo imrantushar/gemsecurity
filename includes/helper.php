@@ -39,6 +39,58 @@ class Helper {
 	}
 
 	/**
+	 * Sign a short-lived payload for a round trip through the browser.
+	 *
+	 * Login flows park their state in a transient and read it back on the next
+	 * request. That breaks quietly wherever the two requests are not served by
+	 * the same cache — a per-process object cache, a second app server, a flush
+	 * mid-flow — and the visitor just lands back on the login form with nothing
+	 * logged. A signed cookie carries the same payload through the browser so
+	 * the flow can complete without shared server-side storage.
+	 *
+	 * The value is signed, not encrypted: never put anything in it that the
+	 * user may not see.
+	 *
+	 * @param array $data
+	 * @return string
+	 */
+	public static function sign_payload( array $data ) {
+		$data['_t'] = time();
+		$json       = wp_json_encode( $data );
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		return base64_encode( $json ) . '.' . hash_hmac( 'sha256', $json, wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * Verify and decode a payload produced by sign_payload().
+	 *
+	 * @param string $value
+	 * @param int    $max_age Seconds the payload stays valid.
+	 * @return array|false
+	 */
+	public static function verify_signed_payload( $value, $max_age = 600 ) {
+		$parts = explode( '.', (string) $value );
+		if ( 2 !== count( $parts ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$json = base64_decode( $parts[0], true );
+		if ( false === $json || ! hash_equals( hash_hmac( 'sha256', $json, wp_salt( 'auth' ) ), $parts[1] ) ) {
+			return false;
+		}
+
+		$data = json_decode( $json, true );
+		if ( ! is_array( $data ) || empty( $data['_t'] ) || ( time() - (int) $data['_t'] ) > $max_age ) {
+			return false;
+		}
+
+		unset( $data['_t'] );
+		return $data;
+	}
+
+	/**
 	 * The full settings array, resolved once per request.
 	 *
 	 * @return array
@@ -78,10 +130,11 @@ class Helper {
 	 * queryable any time GemSecurity itself is active, regardless of which
 	 * individual modules are on.
 	 *
-	 * `captcha` is special-cased: it isn't its own Registry module (the
-	 * Captcha class boots as part of the `two-factor` module), but "is
-	 * CAPTCHA protection active" is the semantic an external caller actually
-	 * wants, so this resolves it from the settings that actually govern it.
+	 * `captcha` is special-cased: it is a Registry module like any other, but
+	 * an active module there only means "the page exists and the class is
+	 * loaded". The semantic an external caller actually wants is "is CAPTCHA
+	 * protection challenging visitors right now", which additionally needs the
+	 * feature switched on and a working key pair.
 	 *
 	 * @param bool   $default
 	 * @param string $id
@@ -89,7 +142,9 @@ class Helper {
 	 */
 	public static function is_module_active( $default, $id ) {
 		if ( 'captcha' === $id ) {
-			return self::get_setting( 'captcha_enabled', false ) && \GemSecurity\Modules\Captcha::is_configured();
+			return \GemSecurity\Modules\Registry::is_active( 'captcha' )
+				&& self::get_setting( 'captcha_enabled', false )
+				&& \GemSecurity\Modules\Captcha::is_configured();
 		}
 		$all = \GemSecurity\Modules\Registry::all();
 		if ( ! isset( $all[ $id ] ) ) {
@@ -109,23 +164,29 @@ class Helper {
 	 * @return array<string,array{title:string,desc:string}>
 	 */
 	public static function get_pro_features() {
-		$features = [
-			GEMSECURITY_PLUGIN_SLUG . '-threats'     => [
-				'title' => __( 'Threat Defense', 'gemsecurity' ),
-				'desc'  => __( 'Escalating auto-bans, the ban ledger and the early-load request firewall.', 'gemsecurity' ),
-			],
-			GEMSECURITY_PLUGIN_SLUG . '-geolocation' => [
-				'title' => __( 'Geolocation', 'gemsecurity' ),
-				'desc'  => __( 'Country access control and per-user location lock.', 'gemsecurity' ),
-			],
-			GEMSECURITY_PLUGIN_SLUG . '-malware'     => [
-				'title' => __( 'Malware Scan', 'gemsecurity' ),
-				'desc'  => __( 'Signature malware scan, database injection scan, quarantine/restore and the post-hack recovery toolkit.', 'gemsecurity' ),
-			],
-			GEMSECURITY_PLUGIN_SLUG . '-pro-tools'   => [
-				'title' => __( 'Pro Tools', 'gemsecurity' ),
-				'desc'  => __( 'Hardening pack, file-change baseline, auto-update enforcement and settings import/export.', 'gemsecurity' ),
-			],
+		// Derived from the registry so a module flagged `is_pro` is locked in
+		// the UI automatically. Hand-maintaining this list let Pro modules
+		// (virtual patching, payment integrity, incident response, monitoring)
+		// render unlocked for free installs because nobody remembered to add
+		// them here.
+		$features = [];
+		$labels   = \GemSecurity\Modules\Registry::labels();
+
+		foreach ( \GemSecurity\Modules\Registry::all() as $id => $module ) {
+			if ( empty( $module['is_pro'] ) ) {
+				continue;
+			}
+			$features[ $module['page_slug'] ] = [
+				'title' => isset( $labels[ $id ]['title'] ) ? $labels[ $id ]['title'] : $id,
+				'desc'  => isset( $labels[ $id ]['desc'] ) ? $labels[ $id ]['desc'] : '',
+			];
+		}
+
+		// Sections that are Pro but are not modules of their own: the malware
+		// suite is a tab inside the (free) Scanner module.
+		$features[ GEMSECURITY_PLUGIN_SLUG . '-malware' ] = [
+			'title' => __( 'Malware Scan', 'gemsecurity' ),
+			'desc'  => __( 'Signature malware scan, database injection scan, quarantine/restore and plugin integrity verification.', 'gemsecurity' ),
 		];
 
 		return apply_filters( 'gemsecurity/pro_features', $features );
@@ -171,13 +232,18 @@ class Helper {
 	public static function get_admin_menu_list() {
 		$menu = [];
 
+		// Labels are fetched here rather than from the registry itself: the
+		// registry is read during plugins_loaded, and translating there loads a
+		// text domain before init. This runs on admin_menu, which is safe.
+		$labels = \GemSecurity\Modules\Registry::labels();
+
 		foreach ( \GemSecurity\Modules\Registry::all() as $id => $module ) {
 			if ( ! \GemSecurity\Modules\Registry::is_visible( $id ) ) {
 				continue;
 			}
 			$menu[ $module['page_slug'] ] = [
 				'parent_slug' => GEMSECURITY_PLUGIN_SLUG,
-				'title'       => $module['title'],
+				'title'       => isset( $labels[ $id ]['title'] ) ? $labels[ $id ]['title'] : $id,
 				'capability'  => 'manage_options',
 				'is_pro'      => $module['is_pro'],
 			];

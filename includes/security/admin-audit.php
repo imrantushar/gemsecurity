@@ -250,30 +250,60 @@ class AdminAudit {
 	}
 
 	/**
-	 * Accounts that must never be auto-removed — mirrors AdminGuard's hard
-	 * safety guards: the current user, user ID 1, the site-owner address and
-	 * multisite super admins.
+	 * Accounts that must never be auto-removed.
+	 *
+	 * The one definition of "protected" on the site: the guard, the hidden-admin
+	 * sweep and the REST remove endpoint all ask here, so a rule added in one
+	 * place cannot go missing from another.
 	 *
 	 * @param \WP_User $user
+	 * @param bool     $allow_self Whether the user making the current request
+	 *                             is protected. False when previewing a sweep,
+	 *                             where the operator wants to see themselves
+	 *                             listed if they are genuinely unapproved.
 	 * @return bool
 	 */
-	public static function is_protected( $user ) {
+	public static function is_protected( $user, $allow_self = true ) {
 		if ( ! $user instanceof \WP_User ) {
 			return false;
 		}
-		if ( get_current_user_id() && (int) $user->ID === get_current_user_id() ) {
+		// The user performing the current request.
+		if ( $allow_self && get_current_user_id() && (int) $user->ID === get_current_user_id() ) {
 			return true;
 		}
+		// Founding user.
 		if ( 1 === (int) $user->ID ) {
 			return true;
 		}
+		// Site owner address.
 		if ( strtolower( trim( $user->user_email ) ) === strtolower( trim( (string) get_option( 'admin_email' ) ) ) ) {
 			return true;
 		}
+		// Multisite super admins.
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Delete a user, reassigning their content to the site owner so nothing is
+	 * lost with the account. Multisite-aware.
+	 *
+	 * @param int $user_id
+	 * @return void
+	 */
+	public static function delete_user( $user_id ) {
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+
+		if ( is_multisite() ) {
+			require_once ABSPATH . 'wp-admin/includes/ms.php';
+			wpmu_delete_user( (int) $user_id );
+			return;
+		}
+
+		$owner = get_user_by( 'email', get_option( 'admin_email' ) );
+		wp_delete_user( (int) $user_id, $owner ? $owner->ID : null );
 	}
 
 	/**
@@ -306,15 +336,7 @@ class AdminAudit {
 			return true;
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/user.php';
-		if ( is_multisite() ) {
-			require_once ABSPATH . 'wp-admin/includes/ms.php';
-			wpmu_delete_user( $user_id );
-		} else {
-			// Reassign any content to the site owner to avoid data loss.
-			$owner = get_user_by( 'email', get_option( 'admin_email' ) );
-			wp_delete_user( $user_id, $owner ? $owner->ID : null );
-		}
+		self::delete_user( $user_id );
 
 		self::log_removal( 'hidden_admin_deleted', $login, $email, $user_id, 'delete', $hidden );
 		return true;

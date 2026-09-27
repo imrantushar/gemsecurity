@@ -116,6 +116,37 @@ final class SE_License_SDK_Client {
 	protected $slug;
 
 	/**
+	 * Package-relative paths that MUST exist in an update package for it to be
+	 * considered complete. Used by the Updater to abort an incomplete update
+	 * before the live plugin folder is swapped. Null means "use the SDK default".
+	 *
+	 * @var ?array
+	 */
+	protected $critical_paths = null;
+
+	/**
+	 * Core / free plugin this (pro) product depends on. When set, the Updater
+	 * refuses to apply a pro update until the core plugin is present, active,
+	 * and at least the required version — so pro never out-runs its free plugin
+	 * (e.g. while the matching free release is held in wordpress.org's review
+	 * window). Shape: [ 'slug' => '', 'basename' => '', 'name' => '', 'min_version' => '' ].
+	 * Null means "no core dependency".
+	 *
+	 * @var ?array
+	 */
+	protected $requires_core = null;
+
+	/**
+	 * How long (seconds) a previously-valid license keeps working when the
+	 * license server can't be reached for its scheduled re-check. Prevents a
+	 * transient outage or blocked outbound request from deactivating a paying
+	 * customer's product. Null = use the default from getLicenseGracePeriod().
+	 *
+	 * @var ?int
+	 */
+	protected $license_grace_period = null;
+
+	/**
 	 * The project purchase/checkout URL.
 	 *
 	 * @var string|null
@@ -184,6 +215,13 @@ final class SE_License_SDK_Client {
 	 * @var ?SE_License_SDK_Update_State
 	 */
 	private $update_state;
+
+	/**
+	 * Per-client core/free plugin dependency gate.
+	 *
+	 * @var ?SE_License_SDK_Core_Dependency
+	 */
+	private $core_dependency;
 
 	private $js_param_name;
 
@@ -275,6 +313,9 @@ final class SE_License_SDK_Client {
 			'allow_local'     => false,
 			'product_logo'    => null,
 			'primary_color'   => '#008DFF',
+			'critical_paths'  => null,
+			'requires_core'   => null,
+			'license_grace_period' => null,
 		] );
 
 		if ( ! $args['license_server'] ) {
@@ -298,6 +339,9 @@ final class SE_License_SDK_Client {
 		$this->slug              = $args['slug'];
 		$this->type              = $args['package_type'];
 		$this->package_version   = $args['package_version'];
+		$this->critical_paths    = is_array( $args['critical_paths'] ) ? $args['critical_paths'] : null;
+		$this->requires_core     = $this->normalize_requires_core( $args['requires_core'] );
+		$this->license_grace_period = is_null( $args['license_grace_period'] ) ? null : absint( $args['license_grace_period'] );
 
 		if ( ! $this->basename || ! $this->slug || ! $this->type || ! $this->package_version ) {
 			$this->set_basename_and_slug();
@@ -446,11 +490,36 @@ final class SE_License_SDK_Client {
 		}
 	}
 
+	/**
+	 * Whether this product is network-activated on a multisite install. When it
+	 * is, the license + SDK state live at the network level (one license for the
+	 * whole network) and the license UI moves to the Network Admin.
+	 *
+	 * @return bool
+	 */
+	public function is_network_activated(): bool {
+		if ( ! is_multisite() || ! $this->isPlugin() ) {
+			return false;
+		}
+
+		if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		return is_plugin_active_for_network( $this->getBasename() );
+	}
+
 	protected function load_software_data() {
 		if ( null === $this->software_data ) {
-			// No hooks please...
-			remove_all_filters( "pre_option_$this->software_data_option" );
-			$this->software_data = get_option( $this->software_data_option );
+			if ( $this->is_network_activated() ) {
+				// No hooks please...
+				remove_all_filters( "pre_site_option_$this->software_data_option" );
+				$this->software_data = get_site_option( $this->software_data_option );
+			} else {
+				// No hooks please...
+				remove_all_filters( "pre_option_$this->software_data_option" );
+				$this->software_data = get_option( $this->software_data_option );
+			}
 
 			if ( ! $this->software_data || ! is_array( $this->software_data ) ) {
 				$this->software_data = [];
@@ -491,7 +560,11 @@ final class SE_License_SDK_Client {
 		// Force save.
 		$this->software_data['last-updated'] = current_time( 'mysql', 1 );
 
-		update_option( $this->software_data_option, $this->software_data );
+		if ( $this->is_network_activated() ) {
+			update_site_option( $this->software_data_option, $this->software_data );
+		} else {
+			update_option( $this->software_data_option, $this->software_data );
+		}
 	}
 
 	public function get_device_id(): string {
@@ -800,6 +873,27 @@ final class SE_License_SDK_Client {
 	}
 
 	/**
+	 * Core / free plugin dependency gate for this client.
+	 */
+	public function core_dependency(): SE_License_SDK_Core_Dependency {
+		if ( ! is_null( $this->core_dependency ) ) {
+			return $this->core_dependency;
+		}
+
+		// Defensive load — see require_sibling() in Updater.php for why.
+		if ( ! class_exists( 'SE_License_SDK_Core_Dependency', false ) ) {
+			$path = __DIR__ . DIRECTORY_SEPARATOR . 'SE_License_SDK_Core_Dependency.php';
+			if ( is_readable( $path ) ) {
+				require_once $path;
+			}
+		}
+
+		$this->core_dependency = new SE_License_SDK_Core_Dependency( $this );
+
+		return $this->core_dependency;
+	}
+
+	/**
 	 * Build a fresh Install_Job. A new job is created per install request so
 	 * each REST call gets its own job_id + log slot.
 	 */
@@ -830,13 +924,25 @@ final class SE_License_SDK_Client {
 
 		if ( $this->isPro() ) {
 			$data['license'] = $this->license()->get_public_data();
+			// Whether the license is currently honoured under the offline grace
+			// period (server unreachable, last-known-good still active).
+			$data['license_in_grace'] = $this->license()->is_in_grace();
+			// Where the customer manages/downloads the product.
+			$data['store_dashboard_url'] = $this->license()->get_manage_license_url();
+			$data['purchase_url']        = $this->get_purchase_url() ?: null;
 		}
 
 		if ( $this->maybe_init_update() ) {
 			$data['package'] = [
+				'name'    => $this->getPackageName(),
 				'version' => $this->getProjectVersion(),
 				'type'    => $this->getType(),
 			];
+
+			// Manual-install fallback target shown when an automatic update fails.
+			$data['upload_url'] = $this->isPlugin()
+				? self_admin_url( 'plugin-install.php?tab=upload' )
+				: self_admin_url( 'theme-install.php?upload' );
 
 			if ( 'plugin' === $this->getType() ) {
 				$update = $this->updater()->plugins_api_filter( false, 'plugin_information', (object) [ 'slug' => $this->getSlug(), ] );
@@ -1182,11 +1288,16 @@ final class SE_License_SDK_Client {
 
 		if ( in_array( $args['route'], $routes, true ) ) {
 			if ( is_wp_error( $response ) ) {
+				// Transport-level failure (DNS, timeout, TLS, connection refused,
+				// blocked outbound request): the server never gave a verdict, so
+				// callers must NOT treat this as "license invalid". Flagged so the
+				// license check can hold the last-known-good state (grace period).
 				return [
-					'success' => false,
-					'error'   => $response->get_error_message(),
-					'code'    => $response->get_error_code(),
-					'data'    => $response->get_error_data( $response->get_error_code() ),
+					'success'         => false,
+					'error'           => $response->get_error_message(),
+					'code'            => $response->get_error_code(),
+					'data'            => $response->get_error_data( $response->get_error_code() ),
+					'transport_error' => true,
 				];
 			}
 
@@ -1203,11 +1314,18 @@ final class SE_License_SDK_Client {
 			}
 
 			if ( $code && $code >= 400 ) {
+				// 5xx / 408 / 429 (and a missing/empty status) mean the server or
+				// an edge in front of it is unhealthy — not a license rejection.
+				// Mark them transport-level too so the grace period applies. Only
+				// a genuine 4xx business error is treated as a definitive verdict.
+				$is_transport = ( $code >= 500 ) || in_array( (int) $code, [ 408, 429 ], true );
+
 				return [
-					'success' => false,
-					'error'   => $body['message'] ?? __( 'Unknown error.', 'storeengine-sdk' ),
-					'code'    => $body['code'] ?? 'UNKNOWN_ERROR',
-					'data'    => $body['data'] ?? [],
+					'success'         => false,
+					'error'           => $body['message'] ?? __( 'Unknown error.', 'storeengine-sdk' ),
+					'code'            => $body['code'] ?? 'UNKNOWN_ERROR',
+					'data'            => $body['data'] ?? [],
+					'transport_error' => $is_transport,
 				];
 			}
 
@@ -1381,6 +1499,84 @@ final class SE_License_SDK_Client {
 	 */
 	public function getSlug(): string {
 		return $this->slug;
+	}
+
+	/**
+	 * Package-relative paths that must exist for an update package to be
+	 * considered complete. Null when the consumer didn't declare any (the
+	 * Updater falls back to a conservative default).
+	 *
+	 * @return ?array
+	 */
+	public function getCriticalPaths() {
+		return $this->critical_paths;
+	}
+
+	/**
+	 * Normalize the `requires_core` init arg into a predictable shape (or null).
+	 * A bare string is treated as the core plugin slug for convenience.
+	 *
+	 * @param mixed $value
+	 *
+	 * @return ?array{slug:string, basename:string, name:string, min_version:string}
+	 */
+	protected function normalize_requires_core( $value ): ?array {
+		if ( is_string( $value ) && '' !== $value ) {
+			$value = [ 'slug' => $value ];
+		}
+
+		if ( ! is_array( $value ) ) {
+			return null;
+		}
+
+		$core = wp_parse_args( $value, [
+			'slug'        => '',
+			'basename'    => '',
+			'name'        => '',
+			'min_version' => '',
+		] );
+
+		$core['slug']        = is_string( $core['slug'] ) ? sanitize_key( $core['slug'] ) : '';
+		$core['basename']    = is_string( $core['basename'] ) ? trim( $core['basename'] ) : '';
+		$core['name']        = is_string( $core['name'] ) ? trim( $core['name'] ) : '';
+		$core['min_version'] = is_string( $core['min_version'] ) ? trim( $core['min_version'] ) : '';
+
+		// Derive a basename from the slug when only the slug was given
+		// (matches the common "slug/slug.php" plugin layout).
+		if ( '' === $core['basename'] && '' !== $core['slug'] ) {
+			$core['basename'] = $core['slug'] . '/' . $core['slug'] . '.php';
+		}
+
+		// Nothing usable to identify the core plugin — treat as unconfigured.
+		if ( '' === $core['slug'] && '' === $core['basename'] ) {
+			return null;
+		}
+
+		return $core;
+	}
+
+	/**
+	 * The core / free plugin this product depends on, or null when none was
+	 * declared. Shape: [ slug, basename, name, min_version ].
+	 *
+	 * @return ?array
+	 */
+	public function getRequiresCore(): ?array {
+		return $this->requires_core;
+	}
+
+	/**
+	 * How long a previously-valid license is honoured while the license server
+	 * is unreachable. Defaults to 14 days; overridable per-product via the
+	 * `license_grace_period` init arg or the `{hook}_license_grace_period`
+	 * filter. Returning 0 disables the grace period (fail closed immediately).
+	 *
+	 * @return int Seconds.
+	 */
+	public function getLicenseGracePeriod(): int {
+		$default = is_null( $this->license_grace_period ) ? 14 * DAY_IN_SECONDS : $this->license_grace_period;
+
+		return (int) max( 0, apply_filters( $this->getHookName( 'license_grace_period' ), $default ) );
 	}
 
 	/**

@@ -5,6 +5,7 @@ import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { COUNTRY_OPTIONS, countryName } from '@Utils/countries';
 import { Card, Toggle, Field, Select, TextInput, Button, Badge, Loading } from '@Components/ui/Controls';
+import TestCredentials from '@Components/ui/TestCredentials';
 import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
 
@@ -120,6 +121,13 @@ export default function Geolocation() {
 					description={ __( 'Master switch for every rule below.', 'gemsecurity' ) }
 					checked={ form.geo_enabled }
 					onChange={ ( v ) => setField( 'geo_enabled', v ) }
+				/>
+				{ /* The lookup runs from the server, so a firewalled host
+				     silently resolves nobody — prove it works here. */ }
+				<TestCredentials
+					target="service"
+					getValues={ () => ( { service: 'geolocation' } ) }
+					label={ __( 'Test country lookup', 'gemsecurity' ) }
 				/>
 				{ detected && detected.country !== undefined && (
 					<p className="gs-muted">

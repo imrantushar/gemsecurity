@@ -12,8 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
  * default wp-login.php for logged-out visitors. Stops the bulk of automated
  * login attacks.
  *
- * Recovery if locked out: remove the `custom_login_*` keys from the
- * `gemsecurity_settings` option (e.g. via wp-cli or the database).
+ * The slug is only a secret for as long as nothing hands it out. WordPress
+ * redirects a logged-out visitor from wp-admin to the login page, and because
+ * this class rewrites login URLs, that redirect pointed straight at the secret
+ * address — so anyone could type /wp-admin and be told where the login lives.
+ * Logged-out wp-admin requests are therefore refused with a 404 rather than
+ * redirected; see {@see block_admin_when_logged_out()}.
+ *
+ * Recovery if locked out: add
+ * `define( 'GEMSECURITY_DISABLE_CUSTOM_LOGIN', true );` to wp-config.php,
+ * which turns the whole module off and puts wp-login.php back. Removing the
+ * `custom_login_*` keys from the `gemsecurity_settings` option works too.
  */
 class CustomLogin {
 
@@ -21,6 +30,14 @@ class CustomLogin {
 	private $serving = false;
 
 	public static function init() {
+		// Recovery hatch. Being locked out of your own site by a security
+		// plugin is the worst thing it can do to you, and telling somebody to
+		// go and edit an option in the database is not a recovery plan — plenty
+		// of people who can edit wp-config.php cannot comfortably do that.
+		if ( defined( 'GEMSECURITY_DISABLE_CUSTOM_LOGIN' ) && GEMSECURITY_DISABLE_CUSTOM_LOGIN ) {
+			return;
+		}
+
 		$slug = sanitize_title( (string) Helper::get_setting( 'custom_login_slug', '' ) );
 		if ( ! Helper::get_setting( 'custom_login_enabled', false ) || '' === $slug ) {
 			return;
@@ -39,6 +56,11 @@ class CustomLogin {
 		// available); 404 the default wp-login.php from inside its own bootstrap.
 		add_action( 'wp_loaded', [ $self, 'serve_slug' ], 1 );
 		add_action( 'login_init', [ $self, 'block_default_login' ], 0 );
+
+		// wp_loaded fires from wp-settings.php, which wp-admin/admin.php has
+		// already run by the time it calls auth_redirect() — so this lands
+		// before the redirect that would leak the slug.
+		add_action( 'wp_loaded', [ $self, 'block_admin_when_logged_out' ], 1 );
 	}
 
 	private function new_login_url( $scheme = null ) {
@@ -88,6 +110,23 @@ class CustomLogin {
 		if ( 'postpass' === $action || 'logout' === $action ) {
 			return; // Don't break password-protected posts or logout links.
 		}
+
+		// Social sign-in returns to wp-login.php with the provider's code. That
+		// URL is registered with Google and friends and cannot be moved to the
+		// secret slug, so 404ing it here would break every social login the
+		// moment a custom login URL is switched on. Both parameters are
+		// dispatched immediately afterwards on login_init.
+		if ( isset( $_GET['gemsec_oauth'] ) || isset( $_GET['gemsec_oauth_cb'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		// The second-factor form posts back here while the visitor is still
+		// logged out, so denying it would break every 2FA sign-in the moment a
+		// custom login URL is switched on. The token in the request is what
+		// authorises it, and it is verified immediately afterwards.
+		if ( 'gemsec_2fa' === $action ) {
+			return;
+		}
 		if ( ! is_user_logged_in() ) {
 			$this->deny();
 		} else {
@@ -96,6 +135,49 @@ class CustomLogin {
 			wp_safe_redirect( admin_url() );
 			exit;
 		}
+	}
+
+	/**
+	 * Send logged-out wp-admin requests to the front page instead of the login.
+	 *
+	 * auth_redirect() sends anonymous visitors to the login URL, and this class
+	 * rewrites that URL to the secret slug — which turned /wp-admin into a
+	 * public "where is the login page?" oracle and made the whole feature
+	 * pointless.
+	 *
+	 * The redirect goes to the home page rather than to a 404. Both reveal
+	 * nothing about the slug, but the two failure modes are not equivalent: if
+	 * this ever misjudges a real administrator — an expired cookie, a session
+	 * that has not been recognised yet — a 404 reads as "my site is broken and
+	 * I am locked out", while the home page leaves them one click from their
+	 * own login. A security feature should degrade towards the owner keeping
+	 * access, not towards losing it.
+	 *
+	 * Endpoints inside wp-admin that are legitimately public are left alone:
+	 * admin-ajax.php and admin-post.php both serve logged-out callers by
+	 * design, and blocking them would break front-end forms, payment callbacks
+	 * and anything else that posts to them.
+	 *
+	 * @return void
+	 */
+	public function block_admin_when_logged_out() {
+		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+			return;
+		}
+		if ( ! is_admin() || is_user_logged_in() ) {
+			return;
+		}
+		if ( ( defined( 'DOING_AJAX' ) && DOING_AJAX ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return;
+		}
+
+		$script = basename( (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '', PHP_URL_PATH ) );
+		if ( in_array( $script, [ 'admin-ajax.php', 'admin-post.php' ], true ) ) {
+			return;
+		}
+
+		wp_safe_redirect( home_url( '/' ) );
+		exit;
 	}
 
 	private function deny() {

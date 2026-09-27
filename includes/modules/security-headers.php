@@ -55,6 +55,9 @@ class SecurityHeaders {
 
 		$contact = trim( (string) Helper::get_setting( 'securitytxt_contact', '' ) );
 		if ( '' === $contact ) {
+			// The site's public contact for security reports — deliberately the
+			// WordPress admin address and not the internal alert recipient,
+			// which is where *our* notifications go, not where researchers write.
 			$contact = 'mailto:' . get_option( 'admin_email' );
 		} elseif ( false === strpos( $contact, ':' ) ) {
 			// Bare email or URL → normalise to a mailto:/https: URI.

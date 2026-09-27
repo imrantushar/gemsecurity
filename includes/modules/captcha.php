@@ -55,13 +55,6 @@ class Captcha {
 	public static function init() {
 		$self = new self();
 
-		// Comment honeypot is self-contained (no provider/keys needed) and runs
-		// independently of the CAPTCHA provider — a zero-friction spam filter.
-		if ( Helper::get_setting( 'comment_honeypot_enabled', true ) ) {
-			add_action( 'comment_form', [ $self, 'render_honeypot' ] );
-			add_filter( 'preprocess_comment', [ $self, 'verify_honeypot' ], 1 );
-		}
-
 		if ( ! Helper::get_setting( 'captcha_enabled', false ) || ! self::is_configured() ) {
 			return;
 		}
@@ -217,47 +210,6 @@ class Captcha {
 
 	/* ---------------------------- Honeypot ----------------------------- */
 
-	/**
-	 * Render a hidden decoy field + a submit timestamp inside the comment form.
-	 * A human never sees or fills the field; naive bots fill everything.
-	 */
-	public function render_honeypot() {
-		if ( is_user_logged_in() ) {
-			return;
-		}
-		echo '<div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true">'
-			. '<label>' . esc_html__( 'Leave this field empty', 'gemsecurity' )
-			. '<input type="text" name="gs_comment_hp" value="" tabindex="-1" autocomplete="off" /></label>'
-			. '</div>';
-		printf( '<input type="hidden" name="gs_comment_ts" value="%d" />', (int) time() );
-	}
-
-	/**
-	 * Reject a comment when the decoy field was filled or it was submitted
-	 * implausibly fast (both strong bot signals). Runs before other checks.
-	 *
-	 * @param array $commentdata
-	 * @return array
-	 */
-	public function verify_honeypot( $commentdata ) {
-		if ( is_user_logged_in() ) {
-			return $commentdata;
-		}
-
-		$filled  = ! empty( $_POST['gs_comment_hp'] );
-		$ts      = isset( $_POST['gs_comment_ts'] ) ? (int) $_POST['gs_comment_ts'] : 0;
-		$tooFast = $ts > 0 && ( time() - $ts ) < 3; // Submitted in under 3 seconds.
-
-		if ( $filled || $tooFast ) {
-			$this->log_fail( 'comment_honeypot' );
-			wp_die(
-				esc_html__( 'Your comment was flagged as spam.', 'gemsecurity' ),
-				esc_html__( 'Comment blocked', 'gemsecurity' ),
-				[ 'response' => 403, 'back_link' => true ]
-			);
-		}
-		return $commentdata;
-	}
 
 	/**
 	 * Verify the submitted token with the provider.
@@ -302,6 +254,27 @@ class Captcha {
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( empty( $body['success'] ) ) {
+			// Distinguish "this visitor failed the challenge" from "this site
+			// is misconfigured". A wrong or missing secret makes the provider
+			// reject *every* submission, which would lock every user —
+			// administrators included — out of a form nobody can pass. That is
+			// a site problem, not an attack, so fail open and shout about it in
+			// the log rather than bolting the door with the keys inside.
+			$errors = isset( $body['error-codes'] ) ? (array) $body['error-codes'] : [];
+			foreach ( $errors as $code ) {
+				if ( false !== strpos( (string) $code, 'secret' ) ) {
+					Logger::log(
+						'captcha_misconfigured',
+						sprintf(
+							'CAPTCHA secret key rejected by the provider (%s). Verification is being skipped so logins keep working — fix the keys on the CAPTCHA page.',
+							sanitize_text_field( (string) $code )
+						),
+						Logger::SEVERITY_CRITICAL,
+						[ 'user_id' => 0 ]
+					);
+					return true;
+				}
+			}
 			return false;
 		}
 

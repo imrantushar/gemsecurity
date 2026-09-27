@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Toggle, Field, TextInput, Button, Badge } from '@Components/ui/Controls';
+import { Card, Toggle, Button, Badge } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
 
-const KEYS = [ 'monitoring_enabled', 'monitor_alert_email' ];
+const KEYS = [ 'monitoring_enabled' ];
 
 function Row( { label, ok, value, tone } ) {
 	return (
@@ -48,9 +48,9 @@ export default function Monitoring() {
 					onChange={ ( v ) => setField( 'monitoring_enabled', v ) }
 				/>
 				{ form.monitoring_enabled && (
-					<Field label={ __( 'Alert email', 'gemsecurity' ) } description={ __( 'Defaults to the admin email.', 'gemsecurity' ) }>
-						<TextInput type="email" value={ form.monitor_alert_email ?? '' } onChange={ ( e ) => setField( 'monitor_alert_email', e.target.value ) } />
-					</Field>
+					<p className="gs-card__desc">
+						{ __( 'Warnings go to the security email on the Notifications page, along with every other notification the plugin sends.', 'gemsecurity' ) }
+					</p>
 				) }
 				<div className="gs-savebar gs-savebar--inline">
 					<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save', 'gemsecurity' ) }</Button>

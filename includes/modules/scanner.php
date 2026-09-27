@@ -68,6 +68,7 @@ class Scanner {
 		$core_issues = self::scan_core_integrity();
 		$foreign     = self::scan_foreign_files();
 		$suspicious  = array_merge( self::scan_admin_concealment(), self::scan_suspicious_files() );
+		$htaccess    = \GemSecurity\Security\HtaccessScan::run();
 
 		// File change watcher — baseline diff + injection heuristics over the
 		// active theme, mu-plugins and drop-ins (and the database). Enabled by
@@ -89,7 +90,10 @@ class Scanner {
 			'has_loader'       => ! empty( $mu['has_loader'] ),
 		];
 
+		// .htaccess findings count like any other: they are execution grants and
+		// traffic redirects, so a scan that found one is not a clean scan.
 		$issue_count = count( $core_issues ) + count( $foreign ) + count( $suspicious )
+			+ count( $htaccess )
 			+ ( $file_watcher ? (int) $file_watcher['issue_count'] : 0 )
 			+ ( $link_scan ? (int) $link_scan['issue_count'] : 0 )
 			+ $mu_summary['suspicious_count'];
@@ -99,6 +103,7 @@ class Scanner {
 			'wp_version'      => get_bloginfo( 'version' ),
 			'core_issues'     => $core_issues,
 			'foreign_files'   => $foreign,
+			'htaccess'        => $htaccess,
 			'suspicious'      => $suspicious,
 			'file_watcher'    => $file_watcher,
 			'link_scan'       => $link_scan,
@@ -123,11 +128,12 @@ class Scanner {
 		Logger::log(
 			'scan_completed',
 			sprintf(
-				'Security scan finished — %d issue(s) found (%d core, %d foreign file(s), %d suspicious file(s), %d changed file(s), %d injection(s), %d mu-plugin/drop-in, %d flagged link domain(s)).',
+				'Security scan finished — %d issue(s) found (%d core, %d foreign file(s), %d suspicious file(s), %d .htaccess rule(s), %d changed file(s), %d injection(s), %d mu-plugin/drop-in, %d flagged link domain(s)).',
 				$result['issue_count'],
 				count( $result['core_issues'] ),
 				count( $result['foreign_files'] ),
 				count( $result['suspicious'] ),
+				count( $result['htaccess'] ),
 				$fw ? (int) $fw['change_count'] : 0,
 				$fw ? (int) $fw['injection_count'] : 0,
 				(int) ( $result['mu_plugins']['suspicious_count'] ?? 0 ),
@@ -261,7 +267,7 @@ class Scanner {
 					continue;
 				}
 				$rel = str_replace( '\\', '/', str_replace( ABSPATH, '', $file->getPathname() ) );
-				if ( ! isset( $checksums[ $rel ] ) ) {
+				if ( ! isset( $checksums[ $rel ] ) && ! \GemSecurity\Security\SafeFiles::is_safe( $file->getPathname() ) ) {
 					$findings[] = [
 						'file'     => $rel,
 						'reason'   => __( 'Executable file inside a WordPress core directory that is not part of the official release — a disguised implant hides here.', 'gemsecurity' ),
@@ -331,6 +337,13 @@ class Scanner {
 			$base = basename( $path );
 			if ( isset( $listed[ $base ] ) ) {
 				continue; // A legitimate single-file plugin (has a header).
+			}
+			// The same inert/reviewed test the suspicious-file pass uses.
+			// wp-content/plugins/index.php is WordPress's own silence stub and
+			// is in every install ever made; reporting it as a possible dropper
+			// is exactly the noise that teaches people to skim the list.
+			if ( \GemSecurity\Security\SafeFiles::is_safe( $path ) ) {
+				continue;
 			}
 			$rel = 'wp-content/plugins/' . $base;
 			if ( isset( $flagged[ $rel ] ) ) {
@@ -464,10 +477,23 @@ class Scanner {
 	}
 
 	/**
+	 * Heuristic pattern pass over uploads and mu-plugins.
+	 *
+	 * This is the free tier's malware check. When Pro is active its signature
+	 * scanner covers the same files with a far larger rule set, and running
+	 * both produced two overlapping lists of the same findings on one page —
+	 * so the heuristic pass stands down and the "Suspicious files" card gives
+	 * way to the malware scanner's results.
+	 *
+	 * The uploads-directory PHP check is not a heuristic and stays either way:
+	 * an executable file there is a finding regardless of its contents, and
+	 * the signature scanner deliberately skips asset directories.
+	 *
 	 * @return array List of { file, reason, severity }.
 	 */
 	private static function scan_suspicious_files() {
-		$findings = [];
+		$findings       = [];
+		$patterns_only  = ! Helper::is_pro_active();
 
 		$upload_dir = wp_upload_dir();
 		$roots = [
@@ -504,6 +530,12 @@ class Scanner {
 				$path = $file->getPathname();
 				$rel  = str_replace( ABSPATH, '', $path );
 
+				// "Silence is golden" index.php files, and anything a person
+				// has reviewed and marked safe, are not findings.
+				if ( \GemSecurity\Security\SafeFiles::is_safe( $path ) ) {
+					continue;
+				}
+
 				// PHP in the uploads directory is a strong red flag on its own.
 				if ( 'uploads' === $label && in_array( $ext, [ 'php', 'phtml', 'php5', 'php7', 'phar' ], true ) ) {
 					$findings[] = [
@@ -516,6 +548,9 @@ class Scanner {
 				}
 
 				// Pattern scan PHP files.
+				if ( ! $patterns_only ) {
+					continue;
+				}
 				if ( ! in_array( $ext, [ 'php', 'phtml', 'php5', 'php7', 'inc' ], true ) ) {
 					continue;
 				}
