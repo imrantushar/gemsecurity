@@ -175,19 +175,30 @@ export default function TestCaptcha( { provider, siteKey, secretKey } ) {
 			}
 
 			setState( 'waiting' );
-			widget.render( box.current, {
-				sitekey: siteKey,
-				callback: verify,
-				'error-callback': () =>
-					fail(
-						__(
-							'The provider rejected this site key for this domain.',
-							'gemsecurity'
-						)
-					),
-				'expired-callback': () =>
-					fail( __( 'The challenge expired — run the test again.', 'gemsecurity' ) ),
-			} );
+			const renderWidget = () =>
+				widget.render( box.current, {
+					sitekey: siteKey,
+					callback: verify,
+					'error-callback': () =>
+						fail(
+							__(
+								'The provider rejected this site key for this domain.',
+								'gemsecurity'
+							)
+						),
+					'expired-callback': () =>
+						fail( __( 'The challenge expired — run the test again.', 'gemsecurity' ) ),
+				} );
+
+			// grecaptcha attaches `render` before its internal client is
+			// actually ready, so `render` existing isn't enough — Google's
+			// own docs gate every call behind `ready()`. hCaptcha/Turnstile
+			// don't expose this, so only gate when it's there.
+			if ( 'function' === typeof widget.ready ) {
+				widget.ready( renderWidget );
+			} else {
+				renderWidget();
+			}
 		} catch ( e ) {
 			// render() throws synchronously on a malformed site key.
 			fail( e.message || __( 'The provider rejected this site key.', 'gemsecurity' ) );
