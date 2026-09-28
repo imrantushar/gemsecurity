@@ -437,7 +437,7 @@ export default function AdminGuard() {
 				</div>
 			</Card>
 
-			<div className="gs-savebar">
+			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
 					{ __( 'Save changes', 'gemsecurity' ) }
 				</Button>

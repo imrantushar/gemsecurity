@@ -101,7 +101,7 @@ html {
 		.gs-badge--info { background: rgba(90, 139, 255, .16); color: #9db8ff; }
 		.gs-badge--success { background: rgba(52, 198, 127, .16); color: #6ee0a8; }
 		.gs-badge--warning { background: rgba(233, 162, 59, .16); color: #eab469; }
-		.gs-badge--danger { background: rgba(242, 109, 109, .16); color: #f6a9a9; }
+		.gs-badge--danger, .gs-badge--error { background: rgba(242, 109, 109, .16); color: #f6a9a9; }
 	}
 
 	margin: 0 0 0 -20px;
@@ -338,11 +338,31 @@ html {
 	.gs-select { max-width: 360px; }
 
 	/* ---------------- Save bar ---------------- */
+	// Clean: a plain right-aligned button in the page flow. Dirty: it lifts
+	// into a solid bar pinned to the viewport bottom so it never floats
+	// transparently over toggles, and says why it is there.
 	.gs-savebar {
-		display: flex; justify-content: flex-end; gap: 10px;
-		position: sticky; bottom: 0;
-		padding: 14px 0;
+		display: flex; justify-content: flex-end; align-items: center; gap: 12px;
+		position: static;
+		padding: 6px 0;
 		&--inline { position: static; padding: 8px 0 0; }
+
+		&:not(.gs-savebar--inline):has(> .gs-btn:not(:disabled)),
+		&:not(.gs-savebar--inline):has(> .gs-btn.is-loading) {
+			position: sticky; bottom: 16px; z-index: 20;
+			justify-content: space-between;
+			padding: 10px 12px 10px 18px;
+			background: $gs-surface;
+			border: 1px solid $gs-border;
+			border-radius: $gs-radius;
+			box-shadow: 0 10px 30px rgba(16, 24, 40, .16);
+
+			&::before {
+				content: attr(data-label);
+				display: inline-flex; align-items: center; gap: 8px;
+				font-size: 13px; font-weight: 600; color: $gs-text;
+			}
+		}
 	}
 
 	/* ---------------- Badges ---------------- */
@@ -355,7 +375,7 @@ html {
 		&--info { background: #e7efff; color: #2952cc; }
 		&--success { background: #e3f6ea; color: #157f3b; }
 		&--warning { background: #fdf0dd; color: #a4600a; }
-		&--danger { background: #fde5e5; color: #c02626; }
+		&--danger, &--error { background: #fde5e5; color: #c02626; }
 	}
 
 	/* ---------------- Dashboard ---------------- */
@@ -441,7 +461,8 @@ html {
 	.gs-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 	.gs-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--gs-soft); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 12.5px;
 		button { border: 0; background: #d7dce6; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; line-height: 1; font-size: 13px; color: #555; } }
-	.gs-addrow { display: flex; gap: 10px; margin-top: 16px; align-items: center; .gs-input { max-width: 340px; } }
+	.gs-field__control > .gs-addrow { flex: 1 1 auto; margin-top: 0; }
+	.gs-addrow { display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap; .gs-input { max-width: 340px; flex: 1 1 160px; } .gs-input--number { flex: 0 1 230px; max-width: 230px; } .gs-btn { flex: 0 0 auto; white-space: nowrap; } }
 
 	/* ---------------- Tables ---------------- */
 	.gs-table {
@@ -746,6 +767,26 @@ html {
 	.gs-pro-gate {
 		position: relative;
 		min-height: 360px;
+
+		// A locked block inside an otherwise-free page: the upsell sits as a
+		// compact strip inside the block instead of a tall card that spills
+		// over whatever follows it.
+		&--compact {
+			min-height: 150px;
+			margin-bottom: 20px;
+
+			.gs-pro-gate__overlay { align-items: center; padding: 16px; }
+			.gs-pro-gate__card {
+				display: flex; align-items: center; gap: 14px;
+				max-width: 640px; padding: 16px 20px; text-align: left;
+			}
+			.gs-pro-gate__mark { flex: 0 0 auto; width: 40px; height: 40px; margin: 0; }
+			.gs-pro-gate__body { flex: 1 1 auto; min-width: 0; }
+			.gs-pro-gate__title { margin: 0 0 2px; font-size: 15px; display: flex; align-items: center; gap: 4px; }
+			.gs-pro-gate__desc { margin: 0; font-size: 13px; }
+			.gs-btn { flex: 0 0 auto; }
+			.gs-pro-gate__preview > .gs-card { margin-bottom: 0; }
+		}
 
 		&__preview {
 			filter: blur(3px) saturate(.7);

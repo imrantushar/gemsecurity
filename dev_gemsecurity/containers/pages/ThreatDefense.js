@@ -52,7 +52,7 @@ function BannedIps() {
 	const [ bans, setBans ] = useState( null );
 	const [ ip, setIp ] = useState( '' );
 	const [ reason, setReason ] = useState( '' );
-	const [ duration, setDuration ] = useState( 0 );
+	const [ duration, setDuration ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 
 	const load = useCallback( () => {
@@ -64,7 +64,7 @@ function BannedIps() {
 		if ( ! ip.trim() ) { return; }
 		setBusy( true );
 		try {
-			const r = await api.post( 'bans', { ip: ip.trim(), reason, duration: Number( duration ) } );
+			const r = await api.post( 'bans', { ip: ip.trim(), reason, duration: Number( duration ) || 0 } );
 			setBans( r.data.bans );
 			setIp( '' ); setReason( '' );
 			toast( __( 'IP banned.', 'gemsecurity' ), 'success' );
@@ -85,7 +85,7 @@ function BannedIps() {
 			<div className="gs-addrow">
 				<TextInput placeholder="203.0.113.10" value={ ip } onChange={ ( e ) => setIp( e.target.value ) } />
 				<TextInput placeholder={ __( 'Reason (optional)', 'gemsecurity' ) } value={ reason } onChange={ ( e ) => setReason( e.target.value ) } />
-				<NumberInput min="0" placeholder={ __( 'Minutes (0 = forever)', 'gemsecurity' ) } value={ duration } onChange={ ( e ) => setDuration( e.target.value ) } />
+				<NumberInput min="0" title={ __( 'Ban length in minutes — leave empty to ban permanently', 'gemsecurity' ) } placeholder={ __( 'Minutes (empty = forever)', 'gemsecurity' ) } value={ duration } onChange={ ( e ) => setDuration( e.target.value ) } />
 				<Button onClick={ add } loading={ busy }>{ __( 'Ban IP', 'gemsecurity' ) }</Button>
 			</div>
 
@@ -224,7 +224,7 @@ export default function ThreatDefense() {
 
 	return (
 		<div className="gs-page">
-			<Card title={ __( 'Escalating auto-ban', 'gemsecurity' ) } description={ __( 'Automatically ban IPs that repeatedly trigger the protections above.', 'gemsecurity' ) }>
+			<Card title={ __( 'Escalating auto-ban', 'gemsecurity' ) } description={ __( 'Automatically ban IPs that keep tripping the firewall, WAF, rate limits or login lockouts.', 'gemsecurity' ) }>
 				<Toggle label={ __( 'Enable auto-ban', 'gemsecurity' ) } checked={ form.autoban_enabled } onChange={ ( v ) => setField( 'autoban_enabled', v ) } />
 				{ form.autoban_enabled && (
 					<div className="gs-row">
@@ -282,7 +282,7 @@ export default function ThreatDefense() {
 				/>
 			</Card>
 
-			<div className="gs-savebar">
+			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
 			</div>
 

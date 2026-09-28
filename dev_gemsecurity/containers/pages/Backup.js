@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { __ } from '@wordpress/i18n';
-import backupApi from '@Utils/backupApi';
+import backupApi, { loadDestinations } from '@Utils/backupApi';
 import { useToast } from '@Components/ui/Toast';
 import { Card, Button, Toggle, Field, Select, Badge, EmptyState } from '@Components/ui/Controls';
 import { isPro, ProBadge } from '@Components/ui/Pro';
@@ -38,6 +38,9 @@ export default function Backup() {
 	const [ items, setItems ] = useState( [] );
 	const [ type, setType ] = useState( 'full' );
 	const [ encrypt, setEncrypt ] = useState( false );
+	const [ destination, setDestination ] = useState( 'local' );
+	const [ destinations, setDestinations ] = useState( [] );
+	const [ encryptReady, setEncryptReady ] = useState( true );
 	const [ creating, setCreating ] = useState( false );
 	const [ busy, setBusy ] = useState( '' );
 	const pollRef = useRef( null );
@@ -53,7 +56,15 @@ export default function Backup() {
 
 	useEffect( () => {
 		load();
-	}, [ load ] );
+		if ( pro ) {
+			loadDestinations().then( setDestinations );
+			// Encryption needs it switched on and a passphrase saved in Backup
+			// settings; without both the runner quietly writes a plain archive.
+			backupApi.get( 'settings' )
+				.then( ( { data } ) => setEncryptReady( !! ( data?.encryption_enabled && data?.encryption_passphrase_set ) ) )
+				.catch( () => {} );
+		}
+	}, [ load, pro ] );
 
 	// Poll while any backup is in progress.
 	useEffect( () => {
@@ -75,7 +86,7 @@ export default function Backup() {
 	const create = async () => {
 		setCreating( true );
 		try {
-			await backupApi.post( 'backups', { type, drivers: [ 'local' ], encrypted: pro && encrypt } );
+			await backupApi.post( 'backups', { type, drivers: [ pro ? destination : 'local' ], encrypted: pro && encrypt } );
 			toast( __( 'Backup started.', 'gemsecurity' ), 'success' );
 			load();
 		} catch ( e ) {
@@ -125,7 +136,7 @@ export default function Backup() {
 		<div className="gs-page">
 			<Card
 				title={ __( 'Create a backup', 'gemsecurity' ) }
-				description={ __( 'Back up to local storage. Cloud destinations and encryption are available in Pro.', 'gemsecurity' ) }
+				description={ pro ? __( 'Run a one-off backup now.', 'gemsecurity' ) : __( 'Back up to local storage. Cloud destinations and encryption are available in Pro.', 'gemsecurity' ) }
 				actions={
 					<Button loading={ creating } onClick={ create }>
 						{ __( 'Create backup', 'gemsecurity' ) }
@@ -135,23 +146,28 @@ export default function Backup() {
 				<Field label={ __( 'What to back up', 'gemsecurity' ) }>
 					<Select options={ TYPES } value={ type } onChange={ ( e ) => setType( e.target.value ) } />
 				</Field>
-				<Field label={ __( 'Destination', 'gemsecurity' ) }>
+				<Field
+					label={ <span>{ __( 'Destination', 'gemsecurity' ) } { ! pro && <ProBadge /> }</span> }
+					description={ pro
+						? ( destinations.length > 1 ? null : __( 'Enable and connect a cloud destination under Storage destinations below to send backups off-site.', 'gemsecurity' ) )
+						: __( 'Cloud destinations (S3, R2, Backblaze, Google Drive, Dropbox, OneDrive, FTP) are available in Pro.', 'gemsecurity' ) }
+				>
 					<Select
-						options={ [
-							{ value: 'local', label: __( 'Local storage', 'gemsecurity' ) },
-							...( pro ? [] : [ { value: 'cloud', label: __( 'Cloud (Pro) — configure on the Storage page', 'gemsecurity' ) } ] ),
-						] }
-						value="local"
-						disabled
+						options={ pro && destinations.length ? destinations : [ { value: 'local', label: __( 'Local storage', 'gemsecurity' ) } ] }
+						value={ pro ? destination : 'local' }
+						disabled={ ! pro || destinations.length < 2 }
+						onChange={ ( e ) => setDestination( e.target.value ) }
 					/>
 				</Field>
 				<Toggle
 					label={
 						<span>{ __( 'Encrypt backup', 'gemsecurity' ) } { ! pro && <ProBadge /> }</span>
 					}
-					description={ __( 'AES-encrypt the archive at rest.', 'gemsecurity' ) }
-					checked={ pro && encrypt }
-					disabled={ ! pro }
+					description={ pro && ! encryptReady
+						? __( 'Turn on encryption and save a passphrase under Backup settings below first.', 'gemsecurity' )
+						: __( 'AES-encrypt the archive at rest.', 'gemsecurity' ) }
+					checked={ pro && encryptReady && encrypt }
+					disabled={ ! pro || ! encryptReady }
 					onChange={ ( v ) => setEncrypt( v ) }
 				/>
 			</Card>

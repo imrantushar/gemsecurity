@@ -70,8 +70,8 @@ export default function Monitoring() {
 							value={ ssl.days_left !== undefined && ssl.days_left !== null ? `${ ssl.days_left } ${ __( 'days left', 'gemsecurity' ) }` : ( ssl.note || '' ) }
 						/>
 						<Row label={ __( 'DNS A record', 'gemsecurity' ) } ok={ ! dns.changed } tone={ dns.changed ? 'danger' : 'success' } value={ dns.ip || '' } />
-						<Row label={ __( 'SPF record', 'gemsecurity' ) } ok={ !! email.spf } tone={ email.spf ? 'success' : 'warning' } />
-						<Row label={ __( 'DMARC record', 'gemsecurity' ) } ok={ !! email.dmarc } tone={ email.dmarc ? 'success' : 'warning' } value={ email.dmarc_policy ? `p=${ email.dmarc_policy }` : '' } />
+						<Row label={ __( 'SPF record', 'gemsecurity' ) } ok={ !! email.spf } tone={ email.spf ? 'success' : 'warning' } value={ email.spf ? '' : __( 'Not found', 'gemsecurity' ) } />
+						<Row label={ __( 'DMARC record', 'gemsecurity' ) } ok={ !! email.dmarc } tone={ email.dmarc ? 'success' : 'warning' } value={ email.dmarc_policy ? `p=${ email.dmarc_policy }` : ( email.dmarc ? '' : __( 'Not found', 'gemsecurity' ) ) } />
 					</ul>
 				) }
 				<p className="gs-muted" style={ { marginTop: 10, fontSize: 12 } }>

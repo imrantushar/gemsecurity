@@ -9,6 +9,7 @@ import TestCredentials from '@Components/ui/TestCredentials';
 import SetupGuide from '@Components/ui/SetupGuide';
 import Icon from '@Components/ui/Icon';
 import { useToast } from '@Components/ui/Toast';
+import { isPro, ProBadge } from '@Components/ui/Pro';
 
 /* Stable reference: an inline array would be a new value on every render. */
 const KEYS = [
@@ -60,6 +61,7 @@ const TRIGGERS = [
 		key: 'trusted_devices_alert',
 		module: 'login-security',
 		label: __( 'Someone signs in from an unrecognised device', 'gemsecurity' ),
+		pro: true,
 		needs: 'trusted_devices_enabled',
 		needsNote: __( 'Device tracking is off, so no device is ever unrecognised.', 'gemsecurity' ),
 	},
@@ -246,13 +248,15 @@ export default function Notifications() {
 					<p className="gs-muted">{ __( 'No module that raises alerts is active yet.', 'gemsecurity' ) }</p>
 				) : (
 					rows.map( ( t ) => {
-						const blocked = ( t.needs && ! form[ t.needs ] ) || ( t.needsNot && form[ t.needsNot ] );
+						const proLocked = t.pro && ! isPro();
+						const blocked = proLocked || ( t.needs && ! form[ t.needs ] ) || ( t.needsNot && form[ t.needsNot ] );
 						return (
 							<div className="gs-alertrow" key={ t.key }>
 								<Toggle
-									label={ t.label }
-									description={ blocked ? t.needsNote : undefined }
-									checked={ !! form[ t.key ] }
+									label={ proLocked ? <span>{ t.label } <ProBadge /></span> : t.label }
+									description={ proLocked ? __( 'Trusted-device tracking is part of GemSecurity Pro.', 'gemsecurity' ) : ( blocked ? t.needsNote : undefined ) }
+									// A switch that cannot fire is shown off, whatever is stored.
+									checked={ ! blocked && !! form[ t.key ] }
 									onChange={ ( v ) => setField( t.key, v ) }
 									disabled={ blocked }
 								/>
@@ -344,7 +348,7 @@ export default function Notifications() {
 
 			{ /* Always present, disabled when clean — same as the Settings page
 			     this sits next to, so the save button never moves. */ }
-			<div className="gs-savebar">
+			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
 					{ __( 'Save changes', 'gemsecurity' ) }
 				</Button>

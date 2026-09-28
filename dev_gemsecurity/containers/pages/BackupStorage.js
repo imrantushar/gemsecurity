@@ -51,7 +51,9 @@ export default function BackupStorage() {
 	const load = useCallback( async () => {
 		try {
 			const { data } = await backupApi.get( 'storage' );
-			setDrivers( Array.isArray( data ) ? data : Object.values( data ) );
+			// The endpoint returns { active, drivers: { key: {...} } }.
+			const list = data?.drivers ?? data ?? [];
+			setDrivers( ( Array.isArray( list ) ? list : Object.values( list ) ).filter( ( d ) => d && d.key ) );
 		} catch ( e ) {
 			setDrivers( [] );
 		}
@@ -227,10 +229,13 @@ export default function BackupStorage() {
 															{ isOpen ? __( 'Close', 'gemsecurity' ) : __( 'Configure', 'gemsecurity' ) }
 														</Button>
 													) }
-													{ ' ' }
-													<Button variant="secondary" loading={ busy === `en:${ d.key }` } onClick={ () => toggleEnabled( d ) }>
-														{ d.enabled ? __( 'Disable', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) }
-													</Button>
+													{ /* Local is the fallback every backup can always reach; it is not switchable. */ }
+													{ ! free && ' ' }
+													{ ! free && (
+														<Button variant="secondary" loading={ busy === `en:${ d.key }` } onClick={ () => toggleEnabled( d ) }>
+															{ d.enabled ? __( 'Disable', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) }
+														</Button>
+													) }
 												</>
 											) }
 										</td>

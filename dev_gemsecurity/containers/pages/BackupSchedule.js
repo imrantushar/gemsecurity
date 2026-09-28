@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { __ } from '@wordpress/i18n';
-import backupApi from '@Utils/backupApi';
+import backupApi, { loadDestinations } from '@Utils/backupApi';
 import { useToast } from '@Components/ui/Toast';
 import { Card, Button, Field, Select, TextInput, Badge, EmptyState, Loading } from '@Components/ui/Controls';
-import { isPro, ProBadge } from '@Components/ui/Pro';
+import { isPro } from '@Components/ui/Pro';
 
 export default function BackupSchedule() {
 	const toast = useToast();
@@ -12,6 +12,8 @@ export default function BackupSchedule() {
 	const [ items, setItems ] = useState( null );
 	const [ form, setForm ] = useState( { schedule_name: 'Daily backup', backup_type: 'full', frequency: 'daily', run_time: '02:00' } );
 	const [ busy, setBusy ] = useState( '' );
+	const [ destinations, setDestinations ] = useState( [] );
+	const [ destination, setDestination ] = useState( 'local' );
 
 	const load = useCallback( async () => {
 		try {
@@ -24,14 +26,17 @@ export default function BackupSchedule() {
 
 	useEffect( () => {
 		load();
-	}, [ load ] );
+		if ( pro ) {
+			loadDestinations().then( setDestinations );
+		}
+	}, [ load, pro ] );
 
 	const set = ( k, v ) => setForm( ( f ) => ( { ...f, [ k ]: v } ) );
 
 	const create = async () => {
 		setBusy( 'create' );
 		try {
-			await backupApi.post( 'schedules', { ...form, storage_drivers: [ 'local' ] } );
+			await backupApi.post( 'schedules', { ...form, storage_drivers: [ pro ? destination : 'local' ] } );
 			toast( __( 'Schedule created.', 'gemsecurity' ), 'success' );
 			load();
 		} catch ( e ) {
@@ -104,7 +109,7 @@ export default function BackupSchedule() {
 			</Card>
 
 			<Card
-				title={ <span>{ __( 'New schedule', 'gemsecurity' ) } { ! pro && <ProBadge /> }</span> }
+				title={ __( 'New schedule', 'gemsecurity' ) }
 				description={ pro ? __( 'Multiple schedules, cloud destinations and weekly/monthly frequency.', 'gemsecurity' ) : __( 'Free includes a single daily local schedule. Upgrade for more frequencies, multiple schedules and cloud.', 'gemsecurity' ) }
 				actions={
 					<Button loading={ busy === 'create' } disabled={ atFreeLimit } onClick={ create }>
@@ -127,9 +132,14 @@ export default function BackupSchedule() {
 				<Field label={ __( 'Frequency', 'gemsecurity' ) }>
 					<Select options={ freqOptions } value={ form.frequency } onChange={ ( e ) => set( 'frequency', pro ? e.target.value : 'daily' ) } />
 				</Field>
-				<Field label={ __( 'Run at', 'gemsecurity' ) }>
-					<TextInput value={ form.run_time } onChange={ ( e ) => set( 'run_time', e.target.value ) } placeholder="02:00" />
+				<Field label={ __( 'Run at', 'gemsecurity' ) } description={ __( 'Site time.', 'gemsecurity' ) }>
+					<TextInput type="time" className="gs-input gs-input--number" value={ form.run_time } onChange={ ( e ) => set( 'run_time', e.target.value ) } />
 				</Field>
+				{ pro && destinations.length > 1 && (
+					<Field label={ __( 'Destination', 'gemsecurity' ) }>
+						<Select options={ destinations } value={ destination } onChange={ ( e ) => setDestination( e.target.value ) } />
+					</Field>
+				) }
 			</Card>
 		</>
 	);

@@ -185,7 +185,7 @@ export default function Geolocation() {
 				{ form.geo_user_lock_enabled && <PerUserLock /> }
 			</Card>
 
-			<div className="gs-savebar">
+			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
 				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
 			</div>
 		</div>

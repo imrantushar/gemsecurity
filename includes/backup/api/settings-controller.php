@@ -25,7 +25,26 @@ class Settings_Controller extends Rest_Controller {
 	}
 
 	public function get_settings() {
-		return $this->ok( self::effective() );
+		return $this->ok( self::for_client( self::effective() ) );
+	}
+
+	/**
+	 * What the settings screen may see.
+	 *
+	 * The option row also holds every storage driver's credentials (written
+	 * by the storage controller under `<driver>_*` keys) and the encryption
+	 * passphrase. None of that belongs in a settings payload: only the keys
+	 * this screen owns go out, and the passphrase is reduced to whether one
+	 * is set.
+	 *
+	 * @param array $settings
+	 * @return array
+	 */
+	private static function for_client( $settings ) {
+		$out = array_intersect_key( $settings, \GemBackup\Installer::defaults() );
+		$out['encryption_passphrase_set'] = '' !== (string) ( $settings['encryption_passphrase'] ?? '' );
+		$out['encryption_passphrase']     = '';
+		return $out;
 	}
 
 	/**
@@ -52,6 +71,17 @@ class Settings_Controller extends Rest_Controller {
 			return $this->fail( 'gembackup_invalid_payload', __( 'Invalid payload.', 'gembackup' ) );
 		}
 
+		// Only the keys this screen owns; driver credentials are the storage
+		// controller's business and must not be writable from here.
+		$incoming = array_intersect_key( $incoming, \GemBackup\Installer::defaults() );
+		unset( $incoming['local_path'], $incoming['enabled_drivers'], $incoming['active_storage'] );
+
+		// The passphrase is never sent to the client, so a blank one means
+		// "unchanged", not "clear it".
+		if ( isset( $incoming['encryption_passphrase'] ) && '' === (string) $incoming['encryption_passphrase'] ) {
+			unset( $incoming['encryption_passphrase'] );
+		}
+
 		$merged = array_merge( $current, $incoming );
 
 		// Sanitize known keys. The notification recipient and webhook are
@@ -73,6 +103,6 @@ class Settings_Controller extends Rest_Controller {
 		update_option( GEMBACKUP_SETTINGS_NAME, $merged );
 		do_action( 'gembackup/settings_updated', $merged );
 
-		return $this->ok( $merged );
+		return $this->ok( self::for_client( $merged ) );
 	}
 }

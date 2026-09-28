@@ -102,9 +102,32 @@ export function ProGate( { title, description, children } ) {
  * body. Sprinkle around any block you want to reserve for Pro.
  */
 export function ProSection( { title, description, children } ) {
+	if ( isPro() ) {
+		return children;
+	}
+
 	return (
-		<ProGate title={ title } description={ description }>
-			{ children }
-		</ProGate>
+		<div className="gs-pro-gate gs-pro-gate--compact">
+			<div className="gs-pro-gate__preview" aria-hidden="true" inert="">
+				{ children }
+			</div>
+			<div className="gs-pro-gate__overlay">
+				<div className="gs-pro-gate__card">
+					<span className="gs-pro-gate__mark">
+						<Icon name="lock" size={ 20 } />
+					</span>
+					<div className="gs-pro-gate__body">
+						<h3 className="gs-pro-gate__title">
+							{ title || __( 'This is a Pro feature', 'gemsecurity' ) }
+							<ProBadge />
+						</h3>
+						{ description && (
+							<p className="gs-pro-gate__desc">{ description }</p>
+						) }
+					</div>
+					<UpgradeButton />
+				</div>
+			</div>
+		</div>
 	);
 }

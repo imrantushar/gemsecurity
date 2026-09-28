@@ -4,6 +4,7 @@ import backupApi from '@Utils/backupApi';
 import { useToast } from '@Components/ui/Toast';
 import { Card, Button, Toggle, Field, NumberInput, TextInput, ListInput, Loading } from '@Components/ui/Controls';
 import { pageUrl } from '@Utils/nav';
+import { isPro, ProBadge } from '@Components/ui/Pro';
 
 /**
  * Backup configuration.
@@ -18,6 +19,7 @@ import { pageUrl } from '@Utils/nav';
  */
 export default function BackupSettings() {
 	const toast = useToast();
+	const pro = isPro();
 	const [ form, setForm ] = useState( null );
 	const [ dirty, setDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
@@ -44,7 +46,10 @@ export default function BackupSettings() {
 	const save = async () => {
 		setSaving( true );
 		try {
-			await backupApi.put( 'settings', form );
+			const { data } = await backupApi.put( 'settings', form );
+			if ( data && typeof data === 'object' ) {
+				setForm( data );
+			}
 			toast( __( 'Backup settings saved.', 'gemsecurity' ), 'success' );
 			setDirty( false );
 		} catch ( e ) {
@@ -84,16 +89,23 @@ export default function BackupSettings() {
 			</div>
 
 			<Toggle
-				label={ __( 'Encrypt backup archives', 'gemsecurity' ) }
+				label={ <span>{ __( 'Encrypt backup archives', 'gemsecurity' ) } { ! pro && <ProBadge /> }</span> }
 				description={ __( 'Encrypts each archive before it leaves the server. Without the passphrase a backup cannot be restored — store it somewhere other than this site.', 'gemsecurity' ) }
-				checked={ !! form.encryption_enabled }
+				checked={ pro && !! form.encryption_enabled }
+				disabled={ ! pro }
 				onChange={ ( v ) => set( 'encryption_enabled', v ) }
 			/>
-			{ form.encryption_enabled && (
-				<Field label={ __( 'Encryption passphrase', 'gemsecurity' ) }>
+			{ pro && form.encryption_enabled && (
+				<Field
+					label={ __( 'Encryption passphrase', 'gemsecurity' ) }
+					description={ form.encryption_passphrase_set
+						? __( 'A passphrase is set. Leave this blank to keep it.', 'gemsecurity' )
+						: __( 'Required — encryption is skipped until a passphrase is saved.', 'gemsecurity' ) }
+				>
 					<TextInput
 						type="password"
 						value={ form.encryption_passphrase ?? '' }
+						placeholder={ form.encryption_passphrase_set ? '••••••••' : '' }
 						onChange={ ( e ) => set( 'encryption_passphrase', e.target.value ) }
 						autoComplete="new-password"
 					/>
