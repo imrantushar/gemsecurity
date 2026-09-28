@@ -3,7 +3,7 @@
  * Plugin Name:		GemSecurity
  * Plugin URI:		http://gemsecurity.net
  * Description:		All-in-one WordPress security dashboard — firewall, login protection, malware scanner, and activity logs.
- * Version:			1.0-beta1
+ * Version:			1.0-beta2
  * Requires at least:	6.4
  * Requires PHP:		7.4
  * Author:			GemSecurity
@@ -40,7 +40,7 @@ final class GemSecurity {
 	}
 
 	public function define_constants() {
-		define( 'GEMSECURITY_VERSION', '1.0-beta1' );
+		define( 'GEMSECURITY_VERSION', '1.0-beta2' );
 		define( 'GEMSECURITY_DB_VERSION', '2.1' );
 		define( 'GEMSECURITY_SETTINGS_NAME', 'gemsecurity_settings' );
 		define( 'GEMSECURITY_PLUGIN_FILE', __FILE__ );

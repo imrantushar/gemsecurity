@@ -104,6 +104,6 @@
             "install-path": "../storeengine/wordpress-sdk"
         }
     ],
-    "dev": true,
+    "dev": false,
     "dev-package-names": []
 }
