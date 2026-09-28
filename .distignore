@@ -16,6 +16,8 @@ node_modules
 package.json
 package-lock.json
 yarn.lock
+bun.lock
+bun.lockb
 webpack.config.js
 .babelrc
 .eslintrc*

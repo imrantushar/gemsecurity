@@ -1,6 +1,6 @@
 # GemSecurity — Implemented Features
 
-All-in-one WordPress security plugin. Version **1.0-beta1**, DB schema **2.0**.
+All-in-one WordPress security plugin. Version **1.0-beta2**, DB schema **2.0**.
 This list reflects what is **actually shipped in the code** — 20 modules, 20 admin pages,
 REST API + React SPA — audited against `includes/modules/registry.php` and the page
 components in `dev_gemsecurity/containers/pages/`.
