@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-3.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: GemSecurity 1.0-beta2\n"
+"Project-Id-Version: GemSecurity 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/gemsecurity\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-28T12:11:16+00:00\n"
+"POT-Creation-Date: 2026-09-28T13:43:42+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -33,7 +33,7 @@ msgid "All-in-one WordPress security dashboard — firewall, login protection, m
 msgstr ""
 
 #: includes/admin/menu.php:38
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "PRO"
 msgstr ""
 
@@ -95,7 +95,7 @@ msgstr ""
 #: includes/backup/engine/backup-runner.php:408
 #: includes/backup/engine/backup-runner.php:435
 #: includes/modules/registry.php:416
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Backup"
 msgstr ""
 
@@ -109,13 +109,14 @@ msgstr ""
 
 #: includes/backup/engine/backup-runner.php:410
 #: includes/backup/engine/backup-runner.php:437
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Destination"
 msgstr ""
 
 #: includes/backup/engine/backup-runner.php:411
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:26
 msgid "When"
 msgstr ""
 
@@ -131,7 +132,7 @@ msgid "Backup completed: %s"
 msgstr ""
 
 #: includes/backup/engine/backup-runner.php:436
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Size"
 msgstr ""
 
@@ -156,7 +157,7 @@ msgid "Last successful backup"
 msgstr ""
 
 #: includes/backup/helpers/health-monitor.php:61
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "never"
 msgstr ""
 
@@ -208,7 +209,7 @@ msgstr ""
 #: includes/modules/alerts.php:74
 #: includes/modules/login-extras.php:123
 #: includes/modules/login-security.php:204
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Time"
 msgstr ""
 
@@ -258,14 +259,14 @@ msgid "<strong>Sign-in blocked.</strong> This administrator account is not on th
 msgstr ""
 
 #: includes/modules/admin-guard.php:537
-#: assets/build/backend.1.0-beta2.js:23
-#: assets/build/backend.1.0-beta2.js:24
+#: assets/build/backend.1.0.0.js:23
+#: assets/build/backend.1.0.0.js:24
 msgid "deleted"
 msgstr ""
 
 #: includes/modules/admin-guard.php:537
-#: assets/build/backend.1.0-beta2.js:23
-#: assets/build/backend.1.0-beta2.js:24
+#: assets/build/backend.1.0.0.js:23
+#: assets/build/backend.1.0.0.js:24
 msgid "demoted"
 msgstr ""
 
@@ -284,7 +285,7 @@ msgid "Account"
 msgstr ""
 
 #: includes/modules/admin-guard.php:558
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Username"
 msgstr ""
 
@@ -306,16 +307,16 @@ msgid "Review Admin Guard"
 msgstr ""
 
 #: includes/modules/alerts.php:72
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Event"
 msgstr ""
 
 #: includes/modules/alerts.php:73
-#: assets/build/backend.1.0-beta2.js:8
-#: assets/build/backend.1.0-beta2.js:11
-#: assets/build/backend.1.0-beta2.js:13
-#: assets/build/backend.1.0-beta2.js:15
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:8
+#: assets/build/backend.1.0.0.js:11
+#: assets/build/backend.1.0.0.js:13
+#: assets/build/backend.1.0.0.js:15
+#: assets/build/backend.1.0.0.js:26
 msgid "Severity"
 msgstr ""
 
@@ -366,7 +367,7 @@ msgstr ""
 
 #: includes/modules/alerts.php:190
 #: includes/modules/daily-report.php:293
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Critical"
 msgstr ""
 
@@ -518,7 +519,7 @@ msgstr ""
 
 #: includes/modules/daily-report.php:366
 #: includes/modules/login-security.php:203
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "User"
 msgstr ""
 
@@ -527,12 +528,12 @@ msgid "Active plugins"
 msgstr ""
 
 #: includes/modules/daily-report.php:381
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Plugin"
 msgstr ""
 
 #: includes/modules/daily-report.php:381
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Version"
 msgstr ""
 
@@ -1902,7 +1903,7 @@ msgid "Obfuscated code loader (e.g. eval on decoded/inflated data) — a common 
 msgstr ""
 
 #: includes/modules/finder.php:50
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Enter at least 2 characters to search."
 msgstr ""
 
@@ -1990,7 +1991,7 @@ msgstr ""
 
 #: includes/modules/geolocation.php:350
 #: includes/modules/two-factor.php:518
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Verify"
 msgstr ""
 
@@ -2146,7 +2147,7 @@ msgid "Sign-in details"
 msgstr ""
 
 #: includes/modules/login-security.php:206
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Browser"
 msgstr ""
 
@@ -2269,7 +2270,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: includes/modules/registry.php:348
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Dashboard"
 msgstr ""
 
@@ -2287,8 +2288,8 @@ msgstr ""
 
 #: includes/modules/registry.php:356
 #: includes/security/security-score.php:135
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Firewall"
 msgstr ""
 
@@ -2329,7 +2330,7 @@ msgid "Brute-force lockouts, session limits, password policy and custom login UR
 msgstr ""
 
 #: includes/modules/registry.php:376
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "CAPTCHA"
 msgstr ""
 
@@ -2354,7 +2355,7 @@ msgid "Let users sign in with Google, Facebook, GitHub or X."
 msgstr ""
 
 #: includes/modules/registry.php:388
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Geolocation"
 msgstr ""
 
@@ -2363,7 +2364,7 @@ msgid "Country access control and per-user location lock."
 msgstr ""
 
 #: includes/modules/registry.php:392
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Admin Guard"
 msgstr ""
 
@@ -2380,7 +2381,7 @@ msgid "REST API rate limiting and application-password governance."
 msgstr ""
 
 #: includes/modules/registry.php:400
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Scanner"
 msgstr ""
 
@@ -2417,7 +2418,7 @@ msgid "Scheduled site backups with local (and Pro remote) storage."
 msgstr ""
 
 #: includes/modules/registry.php:420
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Monitoring"
 msgstr ""
 
@@ -2434,7 +2435,7 @@ msgid "Where alerts go, what raises one, and the reports sent on a schedule."
 msgstr ""
 
 #: includes/modules/registry.php:428
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Settings"
 msgstr ""
 
@@ -2649,8 +2650,8 @@ msgstr ""
 
 #: includes/modules/virtual-patch.php:173
 #: includes/modules/waf.php:500
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:19
 msgid "Blocked"
 msgstr ""
 
@@ -2691,7 +2692,7 @@ msgid "Unknown CAPTCHA provider."
 msgstr ""
 
 #: includes/rest/credentials.php:118
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Enter both the site key and the secret key first."
 msgstr ""
 
@@ -2709,7 +2710,7 @@ msgid "The secret key was rejected by the provider."
 msgstr ""
 
 #: includes/rest/credentials.php:162
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Solve the challenge to finish the test."
 msgstr ""
 
@@ -3105,7 +3106,7 @@ msgid "Turn on the firewall to block common attack traffic."
 msgstr ""
 
 #: includes/security/security-score.php:136
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Brute-force protection"
 msgstr ""
 
@@ -3138,7 +3139,7 @@ msgid "Check installed plugins and themes against known vulnerabilities."
 msgstr ""
 
 #: includes/security/security-score.php:140
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "File change watcher"
 msgstr ""
 
@@ -3147,7 +3148,7 @@ msgid "Baseline your theme, mu-plugins and drop-ins to detect tampering."
 msgstr ""
 
 #: includes/security/security-score.php:141
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Security headers"
 msgstr ""
 
@@ -3358,7 +3359,7 @@ msgid "Turn the module on"
 msgstr ""
 
 #: includes/security/vulnerability.php:39
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "WordPress core"
 msgstr ""
 
@@ -3366,4196 +3367,4269 @@ msgstr ""
 msgid "Known vulnerability"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Upgrade to Pro"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "This is a Pro feature"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Something went wrong on this page"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "This page hit an unexpected error. Other sections still work — pick another item from the menu, or reload to try again."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Reload"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Help"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Close help"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Loading guide…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "No guide for this page yet. Each card on the page describes what its settings do."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:1
+#: assets/build/backend.1.0.0.js:8
 msgid "What it does"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "How to set it up"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Good to know"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Security score"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Logins (24h)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Failed logins (24h)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Lockouts (7d)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Blocked requests (7d)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Bots blocked (24h)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Rogue admins stopped (7d)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Banned IPs"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:1
+#: assets/build/backend.1.0.0.js:15
 msgid "Known vulnerabilities"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Critical events (7d)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:1
+#: assets/build/backend.1.0.0.js:5
 msgid "Failed to load."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Good"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
+#: assets/build/backend.1.0.0.js:1
 msgid "Fair"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:1
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:1
+#: assets/build/backend.1.0.0.js:19
 msgid "Needs attention"
 msgstr ""
 
 #. translators: 1: active protections, 2: total protections.
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 #, js-format
 msgid "%1$d of %2$d protections active"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "What needs your attention"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "No active threats and every recommended protection is on. Nicely done."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Activity (last 7 days)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Recent events"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "No events yet."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Last scan"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:7
 msgid "Clean"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Issues found"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "issue(s)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Core"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Firewall & threats"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Login & access"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Scanning"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Logging"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Maintenance"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Always on"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Upgrade"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Settings saved."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Could not save settings."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "File permissions"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Over-permissive files let a compromised process rewrite your site. World-writable paths are flagged."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:11
 msgid "Path"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Current"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Recommended"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:8
-#: assets/build/backend.1.0-beta2.js:18
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:8
+#: assets/build/backend.1.0.0.js:18
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Status"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:18
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:18
+#: assets/build/backend.1.0.0.js:19
 msgid "OK"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:18
 msgid "Checking…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Recent CSP violations"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Directive"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Loading…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Disable theme & plugin file editor"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Stops attackers editing PHP from wp-admin (DISALLOW_FILE_EDIT)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Disable XML-RPC"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Closes a common brute-force and DDoS vector."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Hide WordPress version"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Removes the generator meta tag and version from feeds."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Block author enumeration"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Prevents ?author=N scans that reveal usernames."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Block REST user enumeration"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Hides /wp/v2/users from anonymous requests."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Generic login error messages"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Replaces “unknown username” / “incorrect password” with one message, so a failed login never confirms an account exists."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Live traffic"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Recent front-end requests (refreshes every 5s). Enable “Live traffic” above to populate."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:26
 msgid "IP"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:5
 msgid "Method"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "URI"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "No traffic captured yet."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Banned IP addresses"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Auto-banned and manually banned IPs. Permanent unless an expiry is shown."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Reason (optional)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-msgid "Minutes (0 = forever)"
+#: assets/build/backend.1.0.0.js:2
+msgid "Ban length in minutes — leave empty to ban permanently"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
+msgid "Minutes (empty = forever)"
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:2
 msgid "IP banned."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Could not ban IP."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Ban IP"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "No banned IPs"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Offending IPs will appear here automatically."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:8
-#: assets/build/backend.1.0-beta2.js:11
-#: assets/build/backend.1.0-beta2.js:13
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:8
+#: assets/build/backend.1.0.0.js:11
+#: assets/build/backend.1.0.0.js:13
+#: assets/build/backend.1.0.0.js:15
 msgid "Reason"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Strikes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:19
 msgid "Expires"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "permanent"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Removed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Unban"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Bot activity (last 7 days)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Blocked (24h)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Blocked (7d)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Top triggered patterns (7d)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Pattern"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Hits"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Custom bot patterns"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Block additional user agents beyond the built-in bad-bot list. Use * as a wildcard — bot* blocks any UA starting with \"bot\", *crawler* blocks any UA containing \"crawler\". No wildcard = substring match anywhere in the UA. Turn on “Block malicious bots & scanners” on the Firewall page for these to apply."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "e.g. *crawler* or badbot*"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Add pattern"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "No custom patterns"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Add a pattern above to block additional user agents."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Pattern (* = wildcard)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:11
 msgid "Remove"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:5
 msgid "The test could not be run."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Test credentials"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "username or email"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Login link emailed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Could not send."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Send login link"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Your active sessions"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Other sessions ended."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:2
+#: assets/build/backend.1.0.0.js:26
 msgid "Failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Log out other sessions"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Signed in"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Password rotation"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Force users to choose a new password. Sessions are ended and the old password stops working immediately — the standard response after a breach."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Apply to roles"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Leave empty to apply to every user."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Every user"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Email each user a reset link"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Without this they must use “Lost your password?” themselves. Passwords are never generated or emailed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Include my own account"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Off by default so a site-wide reset cannot lock you out in the middle of an incident."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Could not check who this would affect."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:2
+#: assets/build/backend.1.0.0.js:2
 msgid "Check who this affects"
 msgstr ""
 
 #. translators: 1: users reset, 2: emails sent.
-#: assets/build/backend.1.0-beta2.js:3
+#: assets/build/backend.1.0.0.js:3
 #, js-format
 msgid "Reset forced for %1$d user(s); %2$d reset link(s) emailed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:3
+#: assets/build/backend.1.0.0.js:3
 msgid "Could not force the reset."
 msgstr ""
 
 #. translators: %d: number of users.
-#: assets/build/backend.1.0-beta2.js:4
+#: assets/build/backend.1.0.0.js:4
 #, js-format
 msgid "Force a reset for %d user(s)"
 msgstr ""
 
 #. translators: %d: users.
-#: assets/build/backend.1.0-beta2.js:4
+#: assets/build/backend.1.0.0.js:4
 #, js-format
 msgid "Cleared the reset requirement for %d user(s)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:4
+#: assets/build/backend.1.0.0.js:4
 msgid "Could not clear it."
 msgstr ""
 
 #. translators: %d: users.
-#: assets/build/backend.1.0-beta2.js:4
+#: assets/build/backend.1.0.0.js:4
 #, js-format
 msgid "Cancel for %d waiting user(s)"
 msgstr ""
 
 #. translators: 1: affected users, 2: users already waiting.
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 #, js-format
 msgid "%1$d user(s) would be signed out and required to set a new password. %2$d are already waiting to do so."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Rotate passwords automatically"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Runs daily and forces a reset for anyone in the selected roles whose password is older than the age below."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Maximum password age"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "days"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Save rotation settings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Open provider console"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "The provider’s script could not be loaded — check the network and any content blockers."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "The provider’s script did not initialise."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "The provider rejected this site key."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "The provider rejected this site key for this domain."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "The challenge expired — run the test again."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Test CAPTCHA keys"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Requesting a token from the provider…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Save these one-time backup codes now. Each works once if you lose access to your device. They will not be shown again."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:26
 msgid "Download"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "I have saved them"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "My two-factor"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Your backup codes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Two-factor is active on your account."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Authenticator app"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Email code"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Backup codes left"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Could not regenerate."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Regenerate backup codes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Disable two-factor for your account?"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Two-factor disabled."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
 msgid "Disable"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Two-factor is required for your role and cannot be disabled."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Protect your account with a second step at login."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Two-factor is required for your role. Until you set up an app, a code will be emailed to you at each login."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Scan this QR code with Google Authenticator, Authy or 1Password."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Or enter this key manually"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Enter the 6-digit code from your app"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Authenticator app enabled."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Invalid code."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Verify & enable"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Cancel"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Could not start setup."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Set up authenticator app"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Email verification enabled."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Could not enable."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Use email codes instead"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Two-factor system"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Site-wide two-factor settings (administrators only)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Enable two-factor authentication"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Turns the feature on for the whole site. Users still choose to enroll unless required below."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Require two-factor by role"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Selected roles must pass a second step at login. Users without an app get an emailed code automatically."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Required for"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Leave empty to require it of nobody — users can still enroll themselves."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "No role is required to use it"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:20
-#: assets/build/backend.1.0-beta2.js:26
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:20
+#: assets/build/backend.1.0.0.js:26
+#: assets/build/backend.1.0.0.js:28
+msgid "Unsaved changes"
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:20
+#: assets/build/backend.1.0.0.js:26
+#: assets/build/backend.1.0.0.js:28
 msgid "Save changes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
 msgid "Enabled"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
 msgid "Off"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Client ID"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Client secret"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Twitter rarely returns an email — accounts are created with a placeholder address you can change later."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Search a user by name or email…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:18
 msgid "Search"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Showing users with assigned countries; search to add countries to any user. A user with no assigned countries is not location-locked."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "No matching users."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Allowed countries…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Saved."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:19
 msgid "Could not save."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:11
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:11
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Save"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Application password revoked."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Could not revoke."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:26
 msgid "Application passwords"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Application passwords are not available on this site."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Existing application passwords"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Application passwords authenticate the REST API and bypass two-factor. Review and revoke any you don’t recognise."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Revoke ALL application passwords for every user?"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Revoke all"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "No application passwords"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "No user has created an application password yet."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:18
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:18
+#: assets/build/backend.1.0.0.js:19
 msgid "Name"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Created"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Last used"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Last IP"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Revoke this application password?"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Revoke"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Malware scanner"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Signature scan of wp-content plus a database injection scan."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "threat(s) found."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "No threats found."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:5
+#: assets/build/backend.1.0.0.js:11
 msgid "Scan failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Run scan"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Daily automatic scan"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Last scan:"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "threat(s)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:5
+#: assets/build/backend.1.0.0.js:5
 msgid "Infected files"
 msgstr ""
 
 #. translators: %d: number of files.
-#: assets/build/backend.1.0-beta2.js:6
+#: assets/build/backend.1.0.0.js:6
 #, js-format
 msgid "Move %d flagged file(s) out of the site into quarantine? Nothing is deleted — each one can be restored from the list below."
 msgstr ""
 
 #. translators: 1: moved, 2: failed.
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 #, js-format
 msgid "%1$d file(s) quarantined, %2$d could not be moved."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Could not quarantine the files."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Quarantine all"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "No flagged files."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Run a scan to check the filesystem."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:8
-#: assets/build/backend.1.0-beta2.js:11
-#: assets/build/backend.1.0-beta2.js:13
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:8
+#: assets/build/backend.1.0.0.js:11
+#: assets/build/backend.1.0.0.js:13
+#: assets/build/backend.1.0.0.js:18
 msgid "File"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Signature"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Quarantined"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:26
 msgid "File quarantined."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Could not quarantine the file."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:8
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:8
+#: assets/build/backend.1.0.0.js:26
 msgid "Quarantine"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Database findings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Injected payloads in post content or auto-loaded options. Removing one strips the malicious block and snapshots the original to quarantine so it can be undone."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Source"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Reference"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Match"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Review manually"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Remove the injected payload from this database entry? The original is snapshotted to quarantine so you can undo it."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Injected payload removed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Could not clean the entry."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Quarantined files and cleaned database entries are held here and can be restored."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "DB"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Original restored."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Could not restore."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:26
 msgid "Restore"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Plugin integrity (WordPress.org)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Compare installed plugins against their official package to catch modified or injected files."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#. translators: %d: number of plugins
+#: assets/build/backend.1.0.0.js:7
+#, js-format
+msgid "%d plugin(s) could not be verified."
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:7
+msgid "All plugins checked."
+msgstr ""
+
+#. translators: 1: done, 2: total
+#: assets/build/backend.1.0.0.js:7
+#, js-format
+msgid "Verifying %1$d / %2$d…"
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:7
+msgid "Verify all"
+msgstr ""
+
+#. translators: %d: number of plugins
+#: assets/build/backend.1.0.0.js:7
+#, js-format
+msgid "Filter %d plugins…"
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:7
 msgid "Not on WP.org"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Verified clean"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "modified"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "extra"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:26
 msgid "Verification failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#. translators: %d: number of plugins
+#: assets/build/backend.1.0.0.js:7
+#, js-format
+msgid "Show %d more"
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:7
 msgid "Search failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Pick at least one place to search."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Search files & database"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Grep your whole site from here — find where a string lives across all wp-content files and the database (options, posts, meta, comments). Handy for tracking down an injected domain, base64_decode, eval, and the like. Read-only; nothing is changed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "e.g. chickenroad.de   or   base64_decode"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Files (wp-content)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:7
+#: assets/build/backend.1.0.0.js:19
 msgid "Database"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Regular expression"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "match(es)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "No matches"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "in files"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "in database"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "files scanned"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Results were capped. Must-use plugins, the active theme and drop-ins are always searched first, so injected code is still surfaced — narrow the term for the rest."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "File matches"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Line"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Database matches"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Table"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Row"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Nothing in your files or database matched that term."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "All plugins"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "All themes"
 msgstr ""
 
 #. translators: %d: number of findings.
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 #, js-format
 msgid "%d issue(s)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 msgid "Show fewer"
 msgstr ""
 
 #. translators: %d: total rows.
-#: assets/build/backend.1.0-beta2.js:7
+#: assets/build/backend.1.0.0.js:7
 #, js-format
 msgid "Show all %d"
 msgstr ""
 
 #. translators: 1: rows shown, 2: rows in total.
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 #, js-format
 msgid "Showing %1$d of %2$d"
 msgstr ""
 
 #. translators: %s: file path.
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 #, js-format
 msgid "Move %s into quarantine? It can be restored from Incident Response."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Moved into quarantine."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Could not move that file."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Edit by hand"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "No .htaccess file grants execution or redirects traffic."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Every installed plugin is current and present in the directory."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Note"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "No must-use plugins, drop-ins, obfuscated code or suspicious cron found."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:8
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Type"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Path / hook"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "WordPress.org did not return checksums for this version."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Could not check core files."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Check core files"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:8
+#: assets/build/backend.1.0.0.js:8
 msgid "Also quarantine files core does not ship"
 msgstr ""
 
 #. translators: 1: core files, 2: foreign files.
-#: assets/build/backend.1.0-beta2.js:9
+#: assets/build/backend.1.0.0.js:9
 #, js-format
 msgid "Replace %1$d core file(s) with clean copies from WordPress.org and quarantine %2$d file(s) core does not ship? The current version of each is saved to quarantine first, and wp-content is not touched."
 msgstr ""
 
 #. translators: 1: restored, 2: quarantined, 3: failed.
-#: assets/build/backend.1.0-beta2.js:10
+#: assets/build/backend.1.0.0.js:10
 #, js-format
 msgid "%1$d core file(s) restored, %2$d quarantined, %3$d failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:10
+#: assets/build/backend.1.0.0.js:10
 msgid "Core repair failed."
 msgstr ""
 
 #. translators: %d: number of files.
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 #, js-format
 msgid "Repair %d file(s)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Core matches WordPress.org"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Why"
 msgstr ""
 
 #. translators: %s: file path.
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 #, js-format
 msgid "%s marked as safe."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Could not mark that file."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Mark as safe"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Marked"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "changed since review"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "no longer exists"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "That file will be reported again."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Could not remove the mark."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:11
+#: assets/build/backend.1.0.0.js:26
 msgid "Run a scan automatically every day"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:11
+#: assets/build/backend.1.0.0.js:26
 msgid "Check core, plugins & themes for known vulnerabilities"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:11
+#: assets/build/backend.1.0.0.js:26
 msgid "Compares installed versions against a public vulnerability database during the daily scan."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Test vulnerability feed"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Test WordPress.org connection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Watch theme, must-use plugins & drop-ins for file changes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Baselines these files and reports any that are added, modified or removed. Also scans files and the database for hidden spam-link injections that core checksums cannot see."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Also baseline"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Widen the same baseline to more of the install. Bigger trees make each scan slower, so add only what this site needs watched."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Detect links to malicious or spam sites"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Lists every external site your content links to and flags blocklisted, hidden/cloaked, or spam-category (gambling, pharma, adult…) domains — catching injected backlink spam."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Link blocklist"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "One domain per line. Any content that links to these (or their subdomains) is flagged."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Link allowlist"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "One domain per line. Trusted external sites to never flag. Your own domain is always allowed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Auto-update enforcement"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Close the gap between a vulnerability being disclosed and this site being patched."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Auto-update vulnerable plugins & themes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Automatically update anything the vulnerability scan above has flagged."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Auto-update all plugins"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Auto-update all themes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Scan complete."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Clean baseline saved. Future scans compare against it."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Could not save the baseline."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Core file integrity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "All core files match the official checksums."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Issue"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Unexpected / foreign files"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Files that are not part of WordPress core and belong to no installed plugin — code hidden in wp-admin / wp-includes, loose files in the plugins folder, and plugins that run but never show on the Plugins screen."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "No unexpected files in core directories or the plugins folder."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Suspicious files"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Heuristic pattern check over uploads and must-use plugins."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "No suspicious files detected."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid ".htaccess rules"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Rules that grant execution or send traffic elsewhere. Directory lock-downs written by plugins are not listed — only directives that hand something out."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:11
+#: assets/build/backend.1.0.0.js:11
 msgid "Baseline integrity of your active theme, must-use plugins and drop-ins — plus hidden spam-link injection checks across those files and the database."
 msgstr ""
 
 #. translators: 1: changed file count, 2: injection count.
-#: assets/build/backend.1.0-beta2.js:12
+#: assets/build/backend.1.0.0.js:12
 #, js-format
 msgid "%1$d changed · %2$d injection(s)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:12
+#: assets/build/backend.1.0.0.js:12
 msgid "Set current files as clean baseline"
 msgstr ""
 
 #. translators: 1: number of baselined files, 2: date/time.
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 #, js-format
 msgid "Baseline: %1$d files · %2$s"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "No baseline captured yet"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "Baseline captured for the first time — later scans will flag any added, modified or deleted file. Anything already present is still checked by the injection scan below."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "Injected code / hidden spam links"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "Location"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "Changed files since baseline"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "Change"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "No file changes or code injections detected."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:13
+#: assets/build/backend.1.0.0.js:13
 msgid "Linked sites (outbound links)"
 msgstr ""
 
 #. translators: 1: external domain count, 2: total link count.
-#: assets/build/backend.1.0-beta2.js:14
+#: assets/build/backend.1.0.0.js:14
 #, js-format
 msgid "Your content links to %1$d external domain(s) across %2$d link(s). Flagged rows are blocklisted, hidden/cloaked, or match a spam category."
 msgstr ""
 
 #. translators: %d: number of external domains.
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 #, js-format
 msgid "%d domain(s) · clean"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "No links to blocklisted, hidden or spam-category sites."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Domain"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Links"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Scanned"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "No known vulnerabilities in your installed core, plugins or themes."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Component"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Vulnerability"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Fixed in"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Auto-executed code (mu-plugins & drop-ins)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:15
+#: assets/build/backend.1.0.0.js:15
 msgid "Every PHP file WordPress auto-runs from wp-content/mu-plugins, plus drop-ins like db.php and object-cache.php. None appear on the Plugins screen — review anything you did not install, especially a headerless file or an unexpected drop-in."
 msgstr ""
 
 #. translators: %d: number of auto-executed files.
-#: assets/build/backend.1.0-beta2.js:16
+#: assets/build/backend.1.0.0.js:16
 #, js-format
 msgid "%d file(s) · clean"
 msgstr ""
 
 #. translators: %s: mu-plugins directory path.
-#: assets/build/backend.1.0-beta2.js:17
+#: assets/build/backend.1.0.0.js:17
 #, js-format
 msgid "The must-use plugins directory has been relocated to %s via WPMU_PLUGIN_DIR. If you did not set this, treat it as a compromise."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:17
+#: assets/build/backend.1.0.0.js:17
 msgid "A must-use plugin loads PHP from a subfolder. That is a legitimate pattern, but also how malware hides its payload one level down — review any nested files flagged below."
 msgstr ""
 
 #. translators: %d: number of flagged files.
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 #, js-format
 msgid "%d auto-loaded file(s) look suspicious. A hidden back-door often lives here — review the flagged rows below."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Modified"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "drop-in"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "nested"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Malicious"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Review"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Placeholder"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "No must-use plugins or drop-ins are installed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Supply chain"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Installed plugins cross-checked against the WordPress.org directory — removed (possible takedown), abandoned, or outdated."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Re-check"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Persistence checks"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Places attackers hide to survive a cleanup: must-use plugins, drop-ins, obfuscated code and suspicious cron."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Files marked as safe"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Reviewed by you and skipped by every scan. A mark covers the exact contents that were reviewed — if the file changes, it is reported again."
 msgstr ""
 
 #. translators: %d: number of files.
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 #, js-format
 msgid "%d file(s)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Collapse all"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Expand all"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Integrity & files"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:18
+#: assets/build/backend.1.0.0.js:18
 msgid "Malware & recovery"
 msgstr ""
 
 #. translators: %d: number of findings.
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 #, js-format
 msgid "%d issue(s) need attention"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "No issues found"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "No scan yet"
 msgstr ""
 
 #. translators: %s: WordPress version.
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 #, js-format
 msgid "WordPress %s"
 msgstr ""
 
 #. translators: %s: date and time.
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 #, js-format
 msgid "Last scan %s"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Daily scan on"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Daily scan off"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "No file scan has run yet — start one to also check core files, uploads and outbound links."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Run scan now"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Scan settings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "What each scan looks at, and what happens automatically."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-msgid "Unsaved changes"
-msgstr ""
-
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Other checks"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Checks"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
+msgid "Local storage"
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:19
 msgid "User accounts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Registrations, role changes, deletions and profile edits."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Plugins & themes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Activation, deactivation, installation, updates and deletion."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Settings changes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Edits to WordPress options, including by other plugins."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Content"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Posts and pages created, edited, published or deleted. The noisiest source on an active site."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "What gets logged"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Choose which activity is recorded. Security events — logins, firewall blocks, scans, bans — are always logged and are not affected by these."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Record activity in the audit log"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Turning this off stops all of the below. Anything already logged is kept."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Pattern added to blocklist."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Could not add pattern."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Daily"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Weekly"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Weekly (Pro)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Monthly"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Monthly (Pro)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Scheduled backups"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "No schedules yet."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Create an automatic backup schedule below."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Frequency"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Next run"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Pause"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Activate"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:21
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:21
+#: assets/build/backend.1.0.0.js:26
 msgid "Delete"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "New schedule"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Multiple schedules, cloud destinations and weekly/monthly frequency."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Free includes a single daily local schedule. Upgrade for more frequencies, multiple schedules and cloud."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Schedule created."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Could not create the schedule."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Create schedule"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Free is limited to one schedule. Upgrade to Pro to add more."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "What to back up"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Full site"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Files"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Run at"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
+msgid "Site time."
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:19
 msgid "Access key ID"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Secret access key"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Region"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Bucket"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Folder (optional)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Account ID"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Key ID"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Application key"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Host"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Port"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Password"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Remote folder"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Use SFTP"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Connect your account to authorize backups to this destination."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Disconnect"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Could not start authorization."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Connect account"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "(unchanged)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Storage settings saved."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Connection successful."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Connection failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Test connection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Storage destinations"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Local storage is included. Cloud destinations are available in Pro."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Connected"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Ready"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Not configured"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Unlock in Pro"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Close"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Configure"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Could not update."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enable"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Amazon S3, Backblaze B2, Cloudflare R2, Dropbox, Google Drive, OneDrive and FTP are unlocked with GemSecurity Pro."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Backup settings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Retention, encryption, what to leave out, and when to warn that backups have stopped."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Backup settings saved."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Keep this many backups"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Older ones are pruned automatically after a successful run."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Backup log retention"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Backup job logs only. The security activity log has its own retention under Settings."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Encrypt backup archives"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Encrypts each archive before it leaves the server. Without the passphrase a backup cannot be restored — store it somewhere other than this site."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Encryption passphrase"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
+msgid "A passphrase is set. Leave this blank to keep it."
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:19
+msgid "Required — encryption is skipped until a passphrase is saved."
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:19
 msgid "Exclude paths"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "One path per line, relative to the WordPress root. Caches and upgrade temp directories are excluded by default because they rebuild themselves."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Skip transient & cache tables"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Leaves out tables that only hold regenerable data, which keeps database dumps much smaller."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Also exclude these tables"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "One table name per line."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Snapshot before restoring"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Takes a safety copy first, so a restore that turns out to be the wrong one can itself be undone."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Notify on backup failures"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Emails the site’s security address when a backup fails, and again when backups have gone quiet for too long. A silent backup failure is the worst outcome a backup can have."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Warn after this long without a successful backup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Backup notices go to the security email and webhook configured under"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "the Notifications page"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Loading backup settings…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Full site (database + files)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Database only"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Files only"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Attention"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "An administrator signs in"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Someone signs in from an unrecognised device"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Device tracking is off, so no device is ever unrecognised."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "A rogue administrator is blocked"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "An administrator hidden from the users list is found"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Hidden-administrator detection is off, so nothing looks for one."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "An application password is created"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Application passwords are switched off site-wide, so none can be created."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "A backup fails, or backups go quiet for too long"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Open Notifications"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 #, js-format
 msgid "%s activated — its menu is now available."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 #, js-format
 msgid "%s deactivated — removed from the menu."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Could not update the module. Please try again."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Loading modules…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Security modules"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Turn features on or off. Only active modules load their admin pages, settings and background code — activate just what this site needs."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "active"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Master switch for request-level protections and the IP blocklist."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enable firewall"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "IP blocklist"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "One IP address or CIDR range per line. Logged-in administrators are never blocked."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Real visitor IP detection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Every ban, rate-limit and geolocation rule relies on knowing the visitor’s real IP. Forwarding headers (X-Forwarded-For, CF-Connecting-IP) can be sent by anyone, so they’re only trusted from a proxy you name here — everyone else always resolves to the raw connection IP."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "This site is behind Cloudflare"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Trusts CF-Connecting-IP, but only for requests actually arriving from Cloudflare’s published IP ranges."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Other trusted proxies"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "For a custom load balancer, Varnish, or a CDN other than Cloudflare. One IP or CIDR range per line — only requests arriving from these addresses get their X-Forwarded-For / X-Real-IP header trusted. Leave empty if the site isn’t behind a proxy; an overly broad range (e.g. 0.0.0.0/0) defeats this protection entirely."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Hardening"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Recommended switches that close common WordPress attack surfaces."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Web Application Firewall"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Inspect incoming requests and block common attack patterns. Administrators are always exempt."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enable request inspection (WAF)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block SQL injection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block cross-site scripting (XSS)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block path traversal / file inclusion"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block remote code execution patterns"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Also inspect POST request bodies"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Stronger, but can false-positive on legitimate form content."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Rate limiting & throttling"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Cap how hard a single IP can hit the front end. REST API requests are limited separately on the API & Access page."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Limit request rate per IP"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Max requests"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "Per window"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "minutes"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Throttle 404 floods (vulnerability scanners)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Max 404s"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Username enumeration"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Stop the site handing out valid usernames before an attacker even tries a password."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Send hardening response headers on the front-end, admin and login pages."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enable security headers"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "X-Frame-Options"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Clickjacking protection."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Referrer-Policy"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "X-Content-Type-Options: nosniff"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Permissions-Policy"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "HSTS (Strict-Transport-Security)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Only sent over HTTPS. Be careful: forces HTTPS for the max-age duration."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Max-age"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "seconds"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Include subdomains"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Preload"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Content-Security-Policy"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Advanced — a wrong policy can break your site. Start in report-only mode."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "CSP directives"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Report-only (do not enforce)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Log violations without blocking. Turn off to enforce the policy."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Collect violation reports"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Send browser CSP violations to GemSecurity and list them below."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Bot control"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Govern automated traffic in one place: known-bad scanners, AI scrapers and crawlers that impersonate search engines. Custom user-agent patterns and bot analytics are on the Threat Defense page."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block malicious bots & scanners"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Blocks known-bad user agents such as sqlmap, nikto and nuclei."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Also block empty / missing user agents"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Requests that send no User-Agent header at all are almost always bots or scanners."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block AI crawlers & scrapers"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Deny GPTBot, ClaudeBot, CCBot, PerplexityBot, Bytespider and other AI/scraper user-agents."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Verify search-engine bots"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Confirm Googlebot / Bingbot / YandexBot / Applebot via reverse DNS and block spoofed impostors (a common way to bypass firewalls)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Hardening pack"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Extra request-level protections: restrict wp-admin by IP, deny sensitive files, stop PHP running in uploads and force HTTPS."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Restrict wp-admin by IP"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Only the IPs below may reach wp-admin. An empty list never locks anyone out."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Allowed IPs"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "One IP or CIDR range per line. This is a network allowlist for wp-admin — the approved-administrator list on the Admin Guard page is about accounts, not addresses."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block sensitive files"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Denies readme.html, license.txt, *.sql, *.bak, debug.log, dotfiles and similar."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block PHP execution in /uploads"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Stops uploaded PHP shells from running."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Force HTTPS"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Redirect HTTP to HTTPS and upgrade insecure requests."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "security.txt"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Publish /.well-known/security.txt (RFC 9116) so researchers know how to report vulnerabilities."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Serve security.txt"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Contact"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Email or URL. Defaults to the admin email."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "ISO 8601 date. Defaults to one year out."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Policy URL (optional)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Escalating auto-ban"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-msgid "Automatically ban IPs that repeatedly trigger the protections above."
+#: assets/build/backend.1.0.0.js:19
+msgid "Automatically ban IPs that keep tripping the firewall, WAF, rate limits or login lockouts."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enable auto-ban"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Strikes before ban"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Strike window"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Ban duration"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "minutes (0 = forever)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Extended protection (run firewall before other plugins)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Installs a must-use plugin so banned IPs and obvious attacks are blocked earlier, before WordPress fully loads."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Advanced detection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Behavioral scoring and credential-stuffing detection catch attacks that fixed rules and volumetric bans miss."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Behavioral anomaly detection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Score each request for suspicious shape (bad UA, huge payloads, encoded exploits) and log anomalies."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Anomaly score threshold"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Credential-stuffing detection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Ban an IP that tries many different usernames in a short window."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Distinct usernames before ban"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Live traffic monitor"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Record recent front-end requests for real-time triage (adds a small write per request)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Virtual patching"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Blocks exploit attempts against known vulnerabilities in your installed plugins and themes — even when no update exists yet. Only rules that match this site’s software are enforced."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "protections active"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enable virtual patching"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Shields currently active"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Each row is a protection that is switched on and blocking attacks right now. Nothing here is a problem with your site, and there is nothing to fix — the severity shown is how dangerous the attack would be if it were not blocked."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Nothing to mitigate right now"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "No installed plugin or theme matches a known-vulnerability rule. New rules arrive automatically with the Pro feed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "CVE / Rule"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Blocks"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Applies to"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Attack severity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "every request (always on)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Blocking"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Limit failed login attempts and lock out offending IP addresses."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Limit login attempts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Block further attempts from an IP once the limit is reached."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Max attempts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Lockout duration"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Administrator login alerts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Send an email notification whenever an administrator signs in."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Email me when an administrator logs in"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "The alert — user, time, IP and browser — goes to the security email on the Notifications page, along with every other notification the plugin sends."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Administrator session timeout"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Force administrators to be logged out automatically after a fixed period — even with “remember me”."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Auto-logout administrators"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:20
 msgid "Log out after"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "hours"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Default is 24 hours. Applies from the moment the administrator signed in."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Password policy"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enforce strong passwords on every account and reject leaked ones."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enforce password policy"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Minimum length"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "characters"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Expire passwords after"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:19
+#: assets/build/backend.1.0.0.js:26
 msgid "days (0 = never)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Require mixed case, number & symbol"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Reject passwords found in data breaches"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Checks Have I Been Pwned using k-anonymity (the password is never sent)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Custom login URL"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Hide wp-login.php behind a secret address to stop automated login attacks."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Enable custom login URL"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Login slug"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Your login page will be:"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:19
+#: assets/build/backend.1.0.0.js:19
 msgid "Lowercase letters, numbers and hyphens. Anything else is converted, and addresses WordPress already owns (wp-admin, login, admin…) cannot be used."
 msgstr ""
 
 #. translators: 1: typed slug, 2: slug that will be saved.
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 #, js-format
 msgid "“%1$s” will be saved as “%2$s” — that is the address to bookmark."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "That slug cannot be used, so the custom login URL will stay switched off and wp-login.php will remain reachable. Pick another."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Bookmark the new URL before you save. wp-admin will stop redirecting to the login page — that redirect is what would otherwise give the address away — so visiting it while logged out sends you to the front page instead."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "If you ever get locked out, add this line to wp-config.php:"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Idle session timeout"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Automatically log users out after a period of inactivity."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Enable idle timeout"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "minutes idle"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Login honeypot"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "A hidden field bots fill in but humans never see — an instant, frictionless bot trap that feeds the ban ledger."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Enable login honeypot"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Trusted devices & recovery"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "New-device sign-in alerts and one-time magic-link recovery."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Trusted devices"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Fingerprint each successful login and alert on unrecognised devices."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Track devices & detect new ones"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Email the user on a new-device sign-in"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Magic-link recovery"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Email a legitimate user a one-time, 15-minute login link — even if their IP is locked out."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Enable magic-link recovery"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Add a bot challenge to the login, registration and lost-password forms."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Enable CAPTCHA"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Provider"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Site key"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Secret key"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "v3 score threshold"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "0.0–1.0; requests scoring below this are blocked (0.5 recommended)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "On login form"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "On registration form"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "On lost-password form"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "To put this CAPTCHA on the comment form, turn it on under Anti-Spam, where the rest of the comment controls live."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Social login"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Let users sign in with their existing accounts."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Enable social login"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Shows the configured provider buttons on the WordPress login form."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Authorized redirect URI"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Paste this exact URL into each provider’s OAuth app settings."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Redirect URI copied."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Copy"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Account behavior"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Allow new account registration"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Create a WordPress account when someone signs in with a provider for the first time."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Link to existing accounts by email"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "If the provider email matches an existing user, link the accounts instead of creating a new one."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Default role for new accounts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Geolocation access control"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Allow or block sign-ins based on the visitor’s country."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Enable geolocation"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Master switch for every rule below."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Test country lookup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Your current detected location:"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "unknown"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Locked out by a rule? Add define( 'GEMSEC_GEO_DISABLE', true ); to wp-config.php to disable all geolocation gating."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Country whitelist"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Only the selected countries are allowed. Leave empty to allow all."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Allowed countries"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Select countries…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Block sign-in from other countries"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Reject logins from outside the allowed list."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Block entire site from other countries"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Return a 403 for all visitors outside the allowed list (logged-in admins are exempt)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Block when the country is unknown"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "By default unknown/local IPs are allowed so you are never locked out. Turn on only if you are sure."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Also apply the login block to administrators"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Off by default so an admin can always recover. Enabling this can lock out admins who travel."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Per-user location lock"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Restrict individual users to their own approved countries."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Enable per-user location lock"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "When a user signs in from a new country"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Email a verification code (recommended)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "Block the login"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "delete"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:20
+#: assets/build/backend.1.0.0.js:20
 msgid "demote"
 msgstr ""
 
 #. translators: 1: action verb, 2: username.
-#: assets/build/backend.1.0-beta2.js:21
+#: assets/build/backend.1.0.0.js:21
 #, js-format
 msgid "Are you sure you want to %1$s the administrator \"%2$s\"? This cannot be undone."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:21
+#: assets/build/backend.1.0.0.js:21
 msgid "Could not remove that administrator."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:21
+#: assets/build/backend.1.0.0.js:21
 msgid "Protected account"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:21
+#: assets/build/backend.1.0.0.js:21
 msgid "Demote"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:21
+#: assets/build/backend.1.0.0.js:21
 msgid "Hidden administrator detected"
 msgstr ""
 
 #. translators: 1: database admin count, 2: count visible in wp-admin.
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 #, js-format
 msgid "Your database contains %1$d administrator account(s) but only %2$d are visible on the WordPress Users screen. An account that is present but hidden from the list is a strong sign the site has been compromised — malicious code is filtering it out so it cannot be removed the normal way."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:22
+#: assets/build/backend.1.0.0.js:26
 msgid "Hidden"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Protected"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 #, js-format
 msgid "ID %d"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 #, js-format
 msgid "registered %s"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "After removing the account, run a full malware scan (Malware Scan detects the code that hides admins) and rotate every administrator password — the entry point that created this account is likely still present."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Suspicious administrator account"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "These administrator accounts have hallmarks of an injected back-door (for example a non-routable e-mail address). Review each one — if you do not recognise it, remove it and run a malware scan."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:22
+#: assets/build/backend.1.0.0.js:26
 msgid "Suspicious"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "How the Admin Guard works"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "When enabled, any administrator account whose email is not on the whitelist is automatically removed. A brand-new account that registers as an administrator is deleted; an existing user promoted to administrator is reverted (or deleted) per your chosen action. Your own account, user ID 1, the site-owner email and multisite super admins are always protected."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Whitelist guard"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Enforce the administrator whitelist"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Auto-remove unapproved administrators."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Your own administrator account is not on the whitelist. Add it below before saving, or you risk losing admin access."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Action for promoted users"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "What to do when an existing user is escalated to administrator without approval."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Demote to previous role (safer)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Delete the account"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Email the site owner when a rogue admin is blocked"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Existing administrators"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "The whitelist is swept hourly, and whenever you change it, so unapproved accounts that never sign in are removed too. Check what that would affect here."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Check for unapproved admins"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Delete them now"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "Demote them now"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:22
+#: assets/build/backend.1.0.0.js:22
 msgid "The sweep does not run while the whitelist is empty or the guard is off — otherwise every administrator would count as unapproved."
 msgstr ""
 
 #. translators: 1: count, 2: demoted|deleted
-#: assets/build/backend.1.0-beta2.js:23
+#: assets/build/backend.1.0.0.js:23
 #, js-format
 msgid "%1$d unapproved administrator(s) %2$s."
 msgstr ""
 
 #. translators: 1: checked, 2: count, 3: delete|demote
-#: assets/build/backend.1.0-beta2.js:24
+#: assets/build/backend.1.0.0.js:24
 #, js-format
 msgid "Checked %1$d administrator(s): %2$d not on the whitelist and would be %3$s."
 msgstr ""
 
 #. translators: %s: comma-separated usernames
-#: assets/build/backend.1.0-beta2.js:25
+#: assets/build/backend.1.0.0.js:25
 #, js-format
 msgid "Protected, never removed: %s"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:25
+#: assets/build/backend.1.0.0.js:25
 msgid "Hidden administrator detection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:25
+#: assets/build/backend.1.0.0.js:25
 msgid "Reconciles the real administrator list in the database against what the Users screen shows, exposing back-door accounts that malware hides with a query filter."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:25
+#: assets/build/backend.1.0.0.js:25
 msgid "Detect hidden administrators"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:25
+#: assets/build/backend.1.0.0.js:25
 msgid "Runs on the daily scan, when the Users screen is opened, and whenever this page is loaded."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:25
+#: assets/build/backend.1.0.0.js:25
 msgid "Email the site owner when a hidden admin is detected"
 msgstr ""
 
 #. translators: %d: administrator count.
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 #, js-format
 msgid "All %d administrator account(s) are accounted for — none are hidden or suspicious."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Approved administrators"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Check every administrator that should be allowed to keep their role. Unapproved accounts you do not recognise can be removed directly."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "You"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Approved"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Not approved"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Other approved emails"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Pre-approve an email address…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Add"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "REST API"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "The REST API is a common unauthenticated attack and recon surface. Rate-limit it for anonymous callers (logged-in administrators are never throttled)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Rate-limit the REST API"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Throttle anonymous REST requests per IP."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Application passwords grant long-lived REST access and bypass two-factor. Govern them here."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Disable application passwords site-wide"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Turn the feature off entirely (also hides it from user profiles)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Email an alert when a new one is created"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Auto-expire after"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Application passwords older than this are deleted on the daily scan."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Comments"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Comments are a common spam and malicious-content vector. If the site does not use them, closing them entirely removes the surface."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Disable comments entirely"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Closes comments and pingbacks everywhere, hides existing ones and removes the comment UI. The rest of this page has no effect while this is on."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Silent bot protection"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "A hidden honeypot plus a minimum time-on-page check stops automated comment and registration spam — with no puzzle for real visitors."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Enable silent anti-spam"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Applies to comment and registration forms."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Minimum time before submit"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Submissions faster than this are treated as bots."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Also show a CAPTCHA on the comment form"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "A visible challenge on top of the silent checks. Configure the provider on the CAPTCHA page; without one this does nothing."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Heuristic comment filtering"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Score comment content and auto-flag spam."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Comment heuristics"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Auto-flag spammy comments"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Max links before spam"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Spam keywords"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "One per line. A comment containing any of these is flagged. Your link blocklist is also checked."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Payment-page integrity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Detects unauthorised scripts injected into your checkout — the Magecart card-skimming pattern — and satisfies PCI-DSS 4.0 §6.4.3 / §11.6.1."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Monitor payment-page scripts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Adds a lightweight collector to checkout pages that reports which scripts the browser loaded."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Extra payment page IDs"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "WooCommerce checkout is detected automatically. Add other checkout page IDs here (one per line)."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Unauthorised scripts detected"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "New scripts appeared on your payment page that are not in the authorised baseline. Investigate immediately."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Script"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Page"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Authorised script inventory"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Latest scripts seen on a payment page. Authorise them to set your baseline."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Visit your checkout page once with monitoring on to capture the script inventory."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Current scripts authorised as the baseline."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Authorise current"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "No inventory yet"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Load your checkout page once to populate this."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Captured from:"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "check this is really your checkout page before authorising."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "authorised"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "unauthorised"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "pending"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Recovery actions"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Immediate containment steps after a suspected compromise. Each is destructive — read what it does before clicking."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Log everyone out"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Destroys every active session site-wide, which stops a hijacked session immediately."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Log out every user on the site? Everyone, including you, will need to sign in again."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "All sessions cleared."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Log out everyone"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Regenerate keys & salts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Rewrites the wp-config.php secret keys (backed up first) and invalidates every auth cookie."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Regenerate security keys & salts? This rewrites wp-config.php and signs everyone out immediately."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Keys regenerated — you will be signed out."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Could not regenerate keys."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Regenerate"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Roll back to last clean backup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Restores the most recent completed backup over the current files and database."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "No completed backup found to restore."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Restore the most recent backup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "This overwrites current files and database."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Rollback started from the latest backup."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Could not start rollback."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Restore latest backup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Forensic timeline"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Warning & critical security events across auth, files, firewall and admin — the last 7 days."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Refresh"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Nothing notable"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "No warning or critical events in the window."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Category"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Message"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Move a suspicious file out of harm’s way (reversible) instead of deleting it. This is the whole site’s quarantine — anything the malware scanner moved shows up here too."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "File path (relative to WordPress root)"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Item"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "database"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "file"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Restore from the malware scanner"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Restored."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Activity log"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "events"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Export failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Export CSV"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Clear all activity logs? This cannot be undone."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Logs cleared."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Clear logs"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "All categories"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Login & 2FA"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Bots"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Vulnerabilities"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Users"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "All severities"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Info"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Notice"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Warning"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Search message or IP…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "No events"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Nothing matches your filters yet."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "User / UA"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Previous"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Next"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Create a backup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
+msgid "Run a one-off backup now."
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:26
 msgid "Back up to local storage. Cloud destinations and encryption are available in Pro."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Backup started."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Could not start the backup."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Create backup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
-msgid "Local storage"
+#: assets/build/backend.1.0.0.js:26
+msgid "Enable and connect a cloud destination under Storage destinations below to send backups off-site."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
-msgid "Cloud (Pro) — configure on the Storage page"
+#: assets/build/backend.1.0.0.js:26
+msgid "Cloud destinations (S3, R2, Backblaze, Google Drive, Dropbox, OneDrive, FTP) are available in Pro."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Encrypt backup"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
+msgid "Turn on encryption and save a passphrase under Backup settings below first."
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:26
 msgid "AES-encrypt the archive at rest."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Backups"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "No backups yet."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Create your first backup above."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Download not available."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Restore this backup? It will overwrite current files and database."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Restore started."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Could not start restore."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Delete this backup permanently?"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Could not delete."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Watches for the early-warning signs of trouble outside the request path: certificate expiry, DNS changes, downtime and email-auth gaps."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Run checks now"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Enable daily monitoring & alerts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Warnings go to the security email on the Notifications page, along with every other notification the plugin sends."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Last checked"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Site reachable"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "TLS certificate"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "days left"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "DNS A record"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "SPF record"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
+msgid "Not found"
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:26
 msgid "DMARC record"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "DKIM is selector-specific and can’t be auto-detected; verify it with your email provider."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Where alerts go"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "One address and one set of channels for the whole plugin — real-time alerts, the daily report, the weekly digest, backup failures and monitoring notices all use these."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Security email"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Every notification the plugin sends goes here. Leave empty to use the WordPress admin email."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Defaults to the admin email"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Send a test email"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Enable real-time alerts"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Send an email — and a message to each channel below — as soon as a qualifying event is logged."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Alert on severity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Critical only"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Warning & above"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Notice & above"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Slack incoming webhook URL"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Send a test message"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Telegram bot token"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Telegram chat ID"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Test bot & chat"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Generic webhook URL"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Send a test event"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "What you get told about"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Every event a module can raise. Each switch also lives on the page of the module that raises it — changing it in either place changes the same setting."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Real-time alerts are off, so these events are still recorded in the log but nothing is sent. Switch them on above."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "No module that raises alerts is active yet."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
+msgid "Trusted-device tracking is part of GemSecurity Pro."
+msgstr ""
+
+#: assets/build/backend.1.0.0.js:26
 msgid "Sent on a schedule"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Mail that arrives whether or not anything happened — the quiet weeks are the point."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Daily report sent."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Could not send the report."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Send a report now"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Email a daily report"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "A morning email listing every administrator and active plugin, and anything that changed since yesterday — so an unexpected change is visible even when no alert fired."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Send at"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "In your site’s timezone."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Send a weekly security digest"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "A summary email (and channel message) every week."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Daily security scan"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Not a notification itself — it is what finds most of what you get notified about."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "General settings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Plugin-wide preferences. Firewall, login and admin options live on their own pages."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Log retention"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Activity log entries older than this are pruned daily. Set to 0 to keep them forever."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Compliance & SIEM"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Tamper-evident logging and forwarding for GDPR / PCI / SOC2 evidence."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Verify integrity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Could not generate report."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Download report"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Tamper-evident audit log"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Hash-chain each log entry so any edit or deletion is detectable."
 msgstr ""
 
 #. translators: %d rows
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 #, js-format
 msgid "Chain intact — %d entries verified."
 msgstr ""
 
 #. translators: %d id
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 #, js-format
 msgid "Tampering detected at log entry #%d."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Forward events to SIEM"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Stream security events to an external collector and/or system syslog."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "HTTP collector endpoint"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Minimum severity"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Info & above"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Also write to system syslog"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Notifications & reports"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Configured on the Notifications page"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "The security email and its channels, what each module alerts on, the daily report and the weekly digest."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Maintenance & recovery"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Emergency lockdown and pre-update backups."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Lockdown mode"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Close the public site to everyone except administrators (shows a 503 maintenance page). Login still works."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Maintenance message"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "We’ll be back shortly."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Back up before plugin/theme/core updates"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Runs a backup before any update starts. Needs the Backup module switched on."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Settings import / export"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Back up or migrate the whole GemSecurity configuration — settings and module activation — as JSON."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Settings exported."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Export settings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Importing…"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:26
+#: assets/build/backend.1.0.0.js:28
 msgid "Import settings"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:26
+#: assets/build/backend.1.0.0.js:26
 msgid "Import failed — that file is not valid JSON."
 msgstr ""
 
 #. translators: 1: settings count, 2: module count.
-#: assets/build/backend.1.0-beta2.js:27
+#: assets/build/backend.1.0.0.js:27
 #, js-format
 msgid "Imported %1$d settings and %2$d module states."
 msgstr ""
 
 #. translators: %s: comma-separated module ids.
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 #, js-format
 msgid "Skipped modules this site cannot enable: %s"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 msgid "Import failed."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 msgid "How this page works"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 msgid "Switch to light mode"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 msgid "Switch to dark mode"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 msgid "This module is turned off"
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 msgid "Activate it from the Modules page to use this feature."
 msgstr ""
 
-#: assets/build/backend.1.0-beta2.js:28
+#: assets/build/backend.1.0.0.js:28
 msgid "Go to Modules"
 msgstr ""

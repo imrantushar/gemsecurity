@@ -2,7 +2,7 @@ const defaultConfig = require('@wordpress/scripts/config/webpack.config');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const path = require('path');
 
-const GEMSECURITY_VERSION = '1.0-beta2';
+const GEMSECURITY_VERSION = '1.0.0';
 
 const config = {
 	...defaultConfig,

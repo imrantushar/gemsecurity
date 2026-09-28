@@ -4,7 +4,7 @@ Tags: security, firewall, two factor authentication, malware scanner, backup
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0-beta2
+Stable tag: 1.0.0
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
@@ -75,7 +75,7 @@ Yes. Everything described above works in the free plugin. Pro adds active threat
 
 == Changelog ==
 
-= 1.0-beta2 - 28/09/2026 =
+= 1.0.0 - 28/09/2026 =
 * Added - CAPTCHA is its own module, with its own page, instead of a card under Login Security. Sites that already use CAPTCHA keep it after the update.
 * Added - A Notifications page for alert recipients, Slack, Telegram and webhook delivery, and scheduled reports. These used to be on the Settings page.
 * Added - A daily report email, off by default. It lists every administrator and active plugin, and calls out any that were added or removed since the last report.

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit35ce793ad15933c6ba36e8afd63e9824
+class ComposerStaticInit267661c44b6e94a3424965ddc80fd8e4
 {
     public static $files = array (
         'f1ae818e1da44f578bbc5ae74a90afde' => __DIR__ . '/..' . '/storeengine/wordpress-sdk/init.php',
@@ -17,7 +17,7 @@ class ComposerStaticInit35ce793ad15933c6ba36e8afd63e9824
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->classMap = ComposerStaticInit35ce793ad15933c6ba36e8afd63e9824::$classMap;
+            $loader->classMap = ComposerStaticInit267661c44b6e94a3424965ddc80fd8e4::$classMap;
 
         }, null, ClassLoader::class);
     }
