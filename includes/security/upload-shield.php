@@ -283,55 +283,121 @@ class UploadShield {
 
 	const MARKER = 'GemSecurity Upload Shield';
 
+	/** uploads/.htaccess (kept for callers that only care about uploads). */
 	public static function htaccess_path() {
 		$up = wp_get_upload_dir();
 		return trailingslashit( $up['basedir'] ) . '.htaccess';
 	}
 
-	/** Write/refresh the deny block in uploads/.htaccess (Apache, LiteSpeed). */
+	/**
+	 * Directories that must never run code, with the few files core itself
+	 * needs reachable there. wp-content as a whole is NOT included: a rule
+	 * there applies to every plugin below it, and re-allowing plugins/ would
+	 * also override any password protection on the site.
+	 *
+	 * @return array<string,string[]> dir => allowed file names
+	 */
+	public static function htaccess_targets() {
+		$up      = wp_get_upload_dir();
+		$targets = [
+			untrailingslashit( $up['basedir'] )      => [],
+			untrailingslashit( ABSPATH ) . '/' . WPINC => [ 'wp-tinymce.php', 'ms-files.php' ],
+			WP_LANG_DIR                              => [],
+			WP_CONTENT_DIR . '/upgrade'              => [],
+			WP_CONTENT_DIR . '/upgrade-temp-backup'  => [],
+		];
+		/**
+		 * Filter the directories Upload Shield locks against script execution.
+		 *
+		 * @param array<string,string[]> $targets dir => allowed file names.
+		 */
+		$targets = (array) apply_filters( 'gemsecurity/no_exec_dirs', $targets );
+		return array_filter( $targets, static function ( $dir ) {
+			return is_dir( $dir );
+		}, ARRAY_FILTER_USE_KEY );
+	}
+
+	/** Write/refresh the deny block in every target's .htaccess (Apache, LiteSpeed). */
 	public static function install_htaccess() {
 		if ( ! function_exists( 'insert_with_markers' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/misc.php';
 		}
-		$exts  = implode( '|', array_diff( self::exec_extensions(), [ 'htaccess', 'exe', 'msi', 'dll', 'so', 'scr', 'com', 'bat', 'cmd', 'vbs', 'vbe', 'wsf', 'ps1', 'jar' ] ) );
-		$lines = [
-			'<FilesMatch "(?i)\.(' . $exts . ')(\.|$)">',
-			'	<IfModule mod_authz_core.c>',
-			'		Require all denied',
-			'	</IfModule>',
-			'	<IfModule !mod_authz_core.c>',
-			'		Order allow,deny',
-			'		Deny from all',
-			'	</IfModule>',
-			'</FilesMatch>',
-		];
-		$path = self::htaccess_path();
-		if ( ! file_exists( $path ) && ! is_writable( dirname( $path ) ) ) {
-			return false;
+		$exts = implode( '|', array_diff( self::exec_extensions(), [ 'htaccess', 'exe', 'msi', 'dll', 'so', 'scr', 'com', 'bat', 'cmd', 'vbs', 'vbe', 'wsf', 'ps1', 'jar' ] ) );
+		$ok   = true;
+		foreach ( self::htaccess_targets() as $dir => $allow ) {
+			$lines = [
+				'<FilesMatch "(?i)\.(' . $exts . ')(\.|$)">',
+				'	<IfModule mod_authz_core.c>',
+				'		Require all denied',
+				'	</IfModule>',
+				'	<IfModule !mod_authz_core.c>',
+				'		Order allow,deny',
+				'		Deny from all',
+				'	</IfModule>',
+				'</FilesMatch>',
+			];
+			foreach ( $allow as $file ) {
+				$lines = array_merge( $lines, [
+					'<Files "' . $file . '">',
+					'	<IfModule mod_authz_core.c>',
+					'		Require all granted',
+					'	</IfModule>',
+					'	<IfModule !mod_authz_core.c>',
+					'		Order allow,deny',
+					'		Allow from all',
+					'	</IfModule>',
+					'</Files>',
+				] );
+			}
+			$path = $dir . '/.htaccess';
+			if ( ! file_exists( $path ) && ! is_writable( $dir ) ) {
+				$ok = false;
+				continue;
+			}
+			$ok = insert_with_markers( $path, self::MARKER, $lines ) && $ok;
 		}
-		return insert_with_markers( $path, self::MARKER, $lines );
+		return $ok;
 	}
 
 	public static function remove_htaccess() {
 		if ( ! function_exists( 'insert_with_markers' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/misc.php';
 		}
-		$path = self::htaccess_path();
-		if ( ! is_file( $path ) ) {
-			return true;
-		}
-		$ok = insert_with_markers( $path, self::MARKER, [] );
-		// If our (now empty) block is all that is left, remove the file we created.
-		$rest = preg_replace( '/# BEGIN ' . preg_quote( self::MARKER, '/' ) . '.*?# END ' . preg_quote( self::MARKER, '/' ) . '/s', '', (string) @file_get_contents( $path ) ); // phpcs:ignore
-		if ( '' === trim( $rest ) ) {
-			@unlink( $path ); // phpcs:ignore
+		$ok = true;
+		foreach ( array_keys( self::htaccess_targets() ) as $dir ) {
+			$path = $dir . '/.htaccess';
+			if ( ! is_file( $path ) ) {
+				continue;
+			}
+			// Cut our whole section (markers included) and keep everything else
+			// byte-for-byte; delete the file only if nothing else was in it.
+			$body = (string) @file_get_contents( $path ); // phpcs:ignore
+			$rest = preg_replace( '/\n?# BEGIN ' . preg_quote( self::MARKER, '/' ) . '.*?# END ' . preg_quote( self::MARKER, '/' ) . '\n?/s', '', $body );
+			if ( '' === trim( (string) $rest ) ) {
+				@unlink( $path ); // phpcs:ignore
+			} elseif ( $rest !== $body ) {
+				$ok = false !== @file_put_contents( $path, $rest, LOCK_EX ) && $ok; // phpcs:ignore
+			}
 		}
 		return $ok;
 	}
 
+	/** True when every target directory carries the block. */
 	public static function htaccess_installed() {
-		$path = self::htaccess_path();
-		return is_file( $path ) && false !== strpos( (string) @file_get_contents( $path ), 'BEGIN ' . self::MARKER ); // phpcs:ignore
+		foreach ( array_keys( self::htaccess_targets() ) as $dir ) {
+			$path = $dir . '/.htaccess';
+			if ( ! is_file( $path ) || false === strpos( (string) @file_get_contents( $path ), 'BEGIN ' . self::MARKER ) ) { // phpcs:ignore
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** Relative paths of the protected directories (for the UI). */
+	public static function htaccess_dirs() {
+		return array_map( static function ( $dir ) {
+			return str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $dir ) );
+		}, array_keys( self::htaccess_targets() ) );
 	}
 
 	/**
@@ -371,8 +437,13 @@ class UploadShield {
 
 	/** Server config to paste where .htaccess has no effect. */
 	public static function nginx_snippet() {
-		$up   = wp_get_upload_dir();
-		$path = wp_parse_url( $up['baseurl'], PHP_URL_PATH );
-		return "location ~* ^" . rtrim( (string) $path, '/' ) . "/.*\\.(php[0-9]?|phtml|phar|pht|phps|cgi|pl|py|sh)(\\.|$) {\n    deny all;\n}";
+		$paths = [];
+		foreach ( self::htaccess_dirs() as $rel ) {
+			$paths[] = preg_quote( '/' . ltrim( $rel, '/' ), '#' );
+		}
+		return "location ~* ^(" . implode( '|', $paths ) . ")/.*\\.(php[0-9]?|phtml|phar|pht|phps|cgi|pl|py|sh)(\\.|$) {\n"
+			. "    # wp-includes/js/tinymce/wp-tinymce.php and wp-includes/ms-files.php must stay reachable:\n"
+			. "    # put an exact-match location for them above this block if you use the classic editor or multisite.\n"
+			. "    deny all;\n}";
 	}
 }

@@ -311,8 +311,8 @@ export default function PluginGuard() {
 					</Card>
 
 					<Card
-						title={ __( 'Can PHP run inside uploads?', 'gemsecurity' ) }
-						description={ __( 'Last line of defence: even if a file reaches the uploads folder some other way (an exploited plugin, FTP), it must not be able to run. This test places a harmless PHP file in uploads, requests it, and deletes it.', 'gemsecurity' ) }
+						title={ __( 'Can PHP run where it should not?', 'gemsecurity' ) }
+						description={ __( 'Last line of defence: even if a file reaches uploads, wp-includes, languages or upgrade some other way (an exploited plugin, FTP), it must not be able to run. The test places a harmless PHP file in uploads, requests it, and deletes it.', 'gemsecurity' ) }
 						actions={ data.shield.probe ? (
 							<Badge tone={ data.shield.probe.result === 'blocked' ? 'success' : data.shield.probe.result === 'executes' ? 'danger' : 'info' }>
 								{ data.shield.probe.result === 'blocked' ? __( 'Protected', 'gemsecurity' ) : data.shield.probe.result === 'executes' ? __( 'PHP executes!', 'gemsecurity' ) : __( 'Unknown', 'gemsecurity' ) }
@@ -322,8 +322,9 @@ export default function PluginGuard() {
 						{ data.shield.probe && <p className={ data.shield.probe.result === 'executes' ? '' : 'gs-muted' }>{ data.shield.probe.detail } <span className="gs-muted">({ data.shield.probe.at })</span></p> }
 						<p className="gs-muted">
 							{ data.shield.htaccess
-								? __( 'uploads/.htaccess deny rules are installed (used by Apache and LiteSpeed).', 'gemsecurity' )
-								: __( 'uploads/.htaccess deny rules are not installed.', 'gemsecurity' ) }
+								? __( 'Deny rules are installed in .htaccess (used by Apache and LiteSpeed) for:', 'gemsecurity' )
+								: __( 'Deny rules are not (fully) installed for:', 'gemsecurity' ) }{ ' ' }
+							<code>{ ( data.shield.dirs || [] ).join( '  ' ) }</code>
 						</p>
 						{ ( data.shield.server === 'nginx' || data.shield.probe?.result === 'executes' ) && (
 							<>

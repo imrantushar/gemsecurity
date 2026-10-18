@@ -3,6 +3,7 @@ namespace GemSecurity\Rest;
 
 use GemSecurity\Modules\TwoFactor as TwoFactorModule;
 use GemSecurity\Security\Totp;
+use GemSecurity\Security\SecretBox;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -40,7 +41,7 @@ class TwoFactor {
 		$uid    = get_current_user_id();
 		$user   = wp_get_current_user();
 		$secret = Totp::generate_secret();
-		update_user_meta( $uid, '_gemsec_2fa_secret_pending', $secret );
+		update_user_meta( $uid, '_gemsec_2fa_secret_pending', SecretBox::seal( $secret ) );
 
 		$issuer = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$uri    = Totp::provisioning_uri( $secret, $user->user_email, $issuer );
@@ -60,7 +61,7 @@ class TwoFactor {
 	public static function activate( $request ) {
 		$uid    = get_current_user_id();
 		$code   = preg_replace( '/\D/', '', (string) $request->get_param( 'code' ) );
-		$secret = get_user_meta( $uid, '_gemsec_2fa_secret_pending', true );
+		$secret = SecretBox::open( get_user_meta( $uid, '_gemsec_2fa_secret_pending', true ) );
 
 		if ( ! $secret ) {
 			return new \WP_Error( 'no_pending', __( 'Start setup first.', 'gemsecurity' ), [ 'status' => 400 ] );
@@ -69,7 +70,7 @@ class TwoFactor {
 			return new \WP_Error( 'bad_code', __( 'That code is incorrect. Check your authenticator app and try again.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
-		update_user_meta( $uid, '_gemsec_2fa_secret', $secret );
+		update_user_meta( $uid, '_gemsec_2fa_secret', SecretBox::seal( $secret ) );
 		delete_user_meta( $uid, '_gemsec_2fa_secret_pending' );
 		update_user_meta( $uid, '_gemsec_2fa_method', 'totp' );
 		update_user_meta( $uid, '_gemsec_2fa_enabled', 1 );
