@@ -125,7 +125,13 @@ class TwoFactor {
 		if ( '' === $redirect ) {
 			// A front-end form (shop account page, member login widget) should
 			// land back where it was; wp-login.php keeps going to the dashboard.
-			$redirect = 'form' === $context && wp_get_referer() ? wp_get_referer() : admin_url();
+			// wp_get_referer() is false for a form that posts to its own URL
+			// (the common case), so fall back to the URL being requested.
+			$redirect = admin_url();
+			if ( 'form' === $context ) {
+				$here     = isset( $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI'] ) ? ( is_ssl() ? 'https://' : 'http://' ) . sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) . esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+				$redirect = wp_validate_redirect( wp_get_referer() ? wp_get_referer() : $here, admin_url() );
+			}
 		}
 
 		$token   = wp_generate_password( 32, false );
@@ -172,6 +178,9 @@ class TwoFactor {
 		if ( 'api' !== $this->login_context() || ! self::user_needs_2fa( $user ) ) {
 			return $user;
 		}
+		if ( $this->challenged_elsewhere( $user ) ) {
+			return $user;
+		}
 		Logger::log(
 			'2fa_api_login_blocked',
 			sprintf( 'Password login for "%s" refused: it came through %s, which cannot show the two-factor prompt.', $user->user_login, $this->api_channel() ),
@@ -186,6 +195,34 @@ class TwoFactor {
 				wp_login_url()
 			)
 		);
+	}
+
+	/**
+	 * Whether an integration will run its own second-factor challenge for
+	 * this API login (it hooks wp_login, tears the session down and asks for
+	 * the code), so refusing the password here would lock its users out.
+	 * Academy's REST login does exactly that.
+	 *
+	 * @param \WP_User $user
+	 * @return bool
+	 */
+	private function challenged_elsewhere( $user ) {
+		$route = isset( $GLOBALS['wp']->query_vars['rest_route'] ) ? '/' . trim( (string) $GLOBALS['wp']->query_vars['rest_route'], '/' ) : '';
+		$routes = class_exists( '\Academy\Integration\GemSecurity' ) ? [ '/academy/v1/login' ] : [];
+		/**
+		 * REST routes whose login handler challenges 2FA itself.
+		 *
+		 * @param string[] $routes
+		 */
+		$routes = (array) apply_filters( 'gemsecurity/2fa_challenge_routes', $routes );
+		/**
+		 * Whether this API password login is challenged by an integration.
+		 *
+		 * @param bool     $handled
+		 * @param \WP_User $user
+		 * @param string   $route Current REST route ('' outside REST).
+		 */
+		return (bool) apply_filters( 'gemsecurity/2fa_external_challenge', '' !== $route && in_array( $route, $routes, true ), $user, $route );
 	}
 
 	/**
