@@ -80,6 +80,10 @@ class Assets {
 			'version'          => GEMSECURITY_VERSION,
 			'roles'            => $this->get_editable_roles(),
 			'is_pro'           => Helper::is_pro_active(),
+			'gembackup'        => [
+				'active' => Helper::gembackup_active(),
+				'url'    => admin_url( 'admin.php?page=gembackup' ),
+			],
 			'pro_features'     => Helper::get_pro_features(),
 			'upgrade_url'      => Helper::upgrade_url(),
 		] );

@@ -115,11 +115,16 @@ export default function IncidentResponse() {
 					</div>
 					<Button variant="danger" onClick={ regenerateSalts } loading={ busy === 'salts' }>{ __( 'Regenerate', 'gemsecurity' ) }</Button>
 
-					<div>
-						<strong>{ __( 'Roll back to last clean backup', 'gemsecurity' ) }</strong>
-						<p className="gs-card__desc">{ __( 'Restores the most recent completed backup over the current files and database.', 'gemsecurity' ) }</p>
-					</div>
-					<Button variant="danger" onClick={ rollback } loading={ busy === 'rollback' }>{ __( 'Restore latest backup', 'gemsecurity' ) }</Button>
+					{ /* Backups come from the GemBackup plugin; without it there is nothing to roll back to. */ }
+					{ window.GemSecurityGlobal?.gembackup?.active && (
+						<>
+							<div>
+								<strong>{ __( 'Roll back to last clean backup', 'gemsecurity' ) }</strong>
+								<p className="gs-card__desc">{ __( 'Restores the most recent completed GemBackup backup over the current files and database.', 'gemsecurity' ) }</p>
+							</div>
+							<Button variant="danger" onClick={ rollback } loading={ busy === 'rollback' }>{ __( 'Restore latest backup', 'gemsecurity' ) }</Button>
+						</>
+					) }
 				</div>
 			</Card>
 

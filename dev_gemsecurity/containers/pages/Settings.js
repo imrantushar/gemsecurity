@@ -273,12 +273,15 @@ export default function Settings() {
 						<ListInput rows={ 2 } value={ form.lockdown_message || '' } onChange={ ( v ) => setField( 'lockdown_message', Array.isArray( v ) ? v.join( ' ' ) : v ) } placeholder={ __( 'We’ll be back shortly.', 'gemsecurity' ) } />
 					</Field>
 				) }
-				<Toggle
-					label={ __( 'Back up before plugin/theme/core updates', 'gemsecurity' ) }
-					description={ __( 'Runs a backup before any update starts. Needs the Backup module switched on.', 'gemsecurity' ) }
-					checked={ form.backup_before_updates }
-					onChange={ ( v ) => setField( 'backup_before_updates', v ) }
-				/>
+				{ /* Backups are the separate GemBackup plugin: only offer this when it can run. */ }
+				{ ( window.GemSecurityGlobal?.gembackup?.active ) && (
+					<Toggle
+						label={ __( 'Back up before plugin/theme/core updates', 'gemsecurity' ) }
+						description={ __( 'Asks GemBackup to take a backup before any update starts.', 'gemsecurity' ) }
+						checked={ form.backup_before_updates }
+						onChange={ ( v ) => setField( 'backup_before_updates', v ) }
+					/>
+				) }
 			</Card>
 
 			<Card

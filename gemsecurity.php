@@ -94,11 +94,6 @@ final class GemSecurity {
 			}
 		}
 
-		// Backup subsystem (re-homed GemBackup engine) — gated on its module.
-		if ( GemSecurity\Modules\Registry::is_active( 'backup' ) ) {
-			GemSecurity\Backup::init();
-		}
-
 		if ( is_admin() ) {
 			GemSecurity\Admin::init();
 		}
@@ -128,12 +123,10 @@ final class GemSecurity {
 		add_option( 'gemsecurity_first_install_time', time(), '', false );
 
 		GemSecurity\Installer::activate();
-		GemSecurity\Backup::activate();
 	}
 
 	public function deactivate() {
 		GemSecurity\Installer::deactivate();
-		GemSecurity\Backup::deactivate();
 	}
 
 }
