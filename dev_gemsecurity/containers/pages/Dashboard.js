@@ -12,7 +12,7 @@ function ScoreRing( { score, grade } ) {
 	const r = 52;
 	const c = 2 * Math.PI * r;
 	const offset = c - ( score / 100 ) * c;
-	const tone = score >= 75 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
+	const tone = score >= 75 ? 'var(--gs-success)' : score >= 50 ? 'var(--gs-warning)' : 'var(--gs-danger)';
 	return (
 		<div className="gs-score">
 			<svg width="140" height="140" viewBox="0 0 140 140">
