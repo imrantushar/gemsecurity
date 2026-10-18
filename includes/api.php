@@ -96,6 +96,13 @@ class Api {
 			],
 		] );
 
+		// First-run setup wizard: mark it finished or skipped.
+		register_rest_route( $ns, '/setup', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Setup::class, 'save' ],
+			'permission_callback' => $perm,
+		] );
+
 		// Daily report: preview the morning letter or send it on demand.
 		register_rest_route( $ns, '/reports/daily', [
 			[

@@ -8,6 +8,7 @@ const config = {
 	...defaultConfig,
 	entry: {
 		backend: path.resolve(__dirname, 'dev_gemsecurity/backend.js'),
+		setup: path.resolve(__dirname, 'dev_gemsecurity/setup.js'),
 	},
 	output: {
 		filename: `[name].${GEMSECURITY_VERSION}.js`,

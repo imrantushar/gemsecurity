@@ -58,7 +58,34 @@ function toNavItems( list ) {
 			icon: m.icon,
 			isPro: !! m.is_pro,
 			active: !! m.active,
+			group: m.group || 'settings',
 		} ) );
+}
+
+const GROUPS = Array.isArray( GS.groups ) ? GS.groups : [];
+
+/**
+ * Nav items bucketed by group, in group order. Empty groups are dropped;
+ * `lead` is the page a group link opens (its first visible module).
+ *
+ * @param {Array} items Output of toNavItems().
+ */
+function toNavGroups( items ) {
+	return GROUPS.map( ( g ) => {
+		const groupItems = items.filter( ( i ) => i.group === g.id );
+		return {
+			...g,
+			items: groupItems,
+			// Mirrors Registry::visible_groups(): prefer the page named after the group.
+			lead: ( groupItems.find( ( i ) => i.key === `${ SLUG }-${ g.id }` ) || groupItems[ 0 ] )?.key,
+		};
+	} ).filter( ( g ) => g.items.length );
+}
+
+/** Reactive grouped nav: [{ id, title, icon, lead, items }]. */
+export function useNavGroups() {
+	const items = useNavItems();
+	return useMemo( () => toNavGroups( items ), [ items ] );
 }
 
 /** Reactive nav items, keyed by the ?page= slug WordPress uses. */
@@ -71,11 +98,10 @@ export function useNavItems() {
  * Rebuild GemSecurity's entries in the native WordPress admin sidebar so they
  * match the current activation state.
  *
- * WordPress prints that submenu in PHP on page load: an inactive module has no
- * `<li>` in the DOM at all, so activating one has to *create* its item (hiding
- * alone only ever covers the deactivate direction). Items are (re)inserted in
- * registry order so the menu looks exactly as a fresh page load would render
- * it, and deactivated ones are removed outright.
+ * The sidebar shows one entry per group (see Admin\Menu::collapse_to_groups),
+ * linking to the group's first visible module. Toggling a module can empty a
+ * group or change its lead page, so the entries are simply rebuilt from the
+ * grouped list, keeping the highlight on the group of the current page.
  *
  * @param {Array} list Module descriptors, in registry order.
  */
@@ -93,56 +119,24 @@ export function syncAdminMenu( list ) {
 		return;
 	}
 
-	// Lookups stay scoped to the submenu: the top-level `<a>` points at the
-	// dashboard slug too, and matching it would drag the whole top-level menu
-	// item into its own submenu.
-	const subLinkFor = ( slug ) =>
-		submenu.querySelector( `a[href$="page=${ slug }"]` );
+	const current = getCurrentPage();
+	submenu
+		.querySelectorAll( ':scope > li:not(.wp-submenu-head)' )
+		.forEach( ( li ) => li.remove() );
 
-	// Walk the registry in order, keeping a cursor on the last item placed so
-	// every visible module lands in its registry position.
-	let cursor = submenu.querySelector( '.wp-submenu-head' );
-
-	list.forEach( ( m ) => {
-		if ( ! m.page_slug ) {
-			return;
+	toNavGroups( toNavItems( list ) ).forEach( ( g ) => {
+		const li = document.createElement( 'li' );
+		const a = document.createElement( 'a' );
+		a.href = pageUrl( g.lead );
+		a.textContent = g.title;
+		if ( g.items.some( ( i ) => i.key === current ) ) {
+			li.className = 'current';
+			a.className = 'current';
+			a.setAttribute( 'aria-current', 'page' );
 		}
-		const existing = subLinkFor( m.page_slug )?.closest( 'li' );
-
-		if ( ! m.visible ) {
-			if ( existing ) {
-				existing.remove();
-			}
-			return;
-		}
-
-		const item = existing || buildMenuItem( m );
-		if ( cursor ) {
-			cursor.after( item );
-		} else {
-			submenu.prepend( item );
-		}
-		cursor = item;
+		li.appendChild( a );
+		submenu.appendChild( li );
 	} );
-}
-
-/** A submenu `<li>` matching what PHP would have printed for this module. */
-function buildMenuItem( mod ) {
-	const li = document.createElement( 'li' );
-	const a = document.createElement( 'a' );
-	a.href = pageUrl( mod.page_slug );
-	a.textContent = mod.title;
-
-	// Mirror the PRO pill the menu prints for Pro-gated items (see Admin\Menu).
-	if ( mod.is_pro && ! GS.is_pro ) {
-		const pill = document.createElement( 'span' );
-		pill.className = 'gemsec-pro-pill';
-		pill.textContent = 'PRO';
-		a.append( ' ', pill );
-	}
-
-	li.appendChild( a );
-	return li;
 }
 
 /** Base admin path used for client-side router links, e.g. "/wp-admin/". */

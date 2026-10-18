@@ -224,6 +224,42 @@ html {
 		}
 	}
 
+	// Topbar group nav: one tab per module group, dropdown when it has several.
+	.gs-topbar__nav { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
+	.gs-topbar__left { flex: 0 1 auto; }
+	.gs-topnav {
+		display: flex; flex-wrap: wrap; justify-content: center; gap: 2px;
+		&__group { position: relative; }
+		&__tab {
+			display: inline-flex; align-items: center; gap: 7px;
+			padding: 8px 12px; border: 0; border-radius: 9px;
+			background: none; color: $gs-muted; font: inherit; font-size: 13.5px; font-weight: 500;
+			text-decoration: none; cursor: pointer; white-space: nowrap;
+			transition: color .15s, border-color .15s;
+			&:hover, &:focus { color: $gs-text; box-shadow: none; outline: none; }
+			&:focus-visible { outline: 2px solid $gs-primary; outline-offset: -2px; }
+			&:hover { background: $gs-soft; }
+			&.is-active { color: $gs-primary; background: $gs-accent-soft; font-weight: 600; }
+			.gs-icon:last-child:not(:first-child) { opacity: .7; transition: transform .15s; }
+		}
+		&__group.is-open &__tab .gs-icon:last-child { transform: rotate(180deg); }
+		&__menu {
+			position: absolute; top: calc(100% + 4px); left: 0; z-index: 1000;
+			min-width: 220px; padding: 6px;
+			background: $gs-surface; border: 1px solid $gs-border;
+			border-radius: $gs-radius; box-shadow: 0 12px 32px rgba(15, 23, 42, .16);
+			display: flex; flex-direction: column; gap: 2px;
+		}
+		&__item {
+			display: flex; align-items: center; gap: 10px;
+			padding: 8px 10px; border-radius: 8px;
+			color: $gs-muted; text-decoration: none; font-size: 13.5px; font-weight: 500; white-space: nowrap;
+			&:hover, &:focus { background: $gs-soft; color: $gs-text; box-shadow: none; }
+			&.is-active { background: $gs-accent-soft; color: $gs-primary; font-weight: 600; }
+			.gs-pro-badge { margin-left: auto; }
+		}
+	}
+
 	@media (max-width: 900px) {
 		.gs-shell { flex-direction: column; }
 		.gs-subnav {

@@ -26,6 +26,9 @@ final class GemSecurity {
 		register_activation_hook( __FILE__, [ $this, 'activate' ] );
 		register_deactivation_hook( __FILE__, [ $this, 'deactivate' ] );
 		add_action( 'plugins_loaded', [ $this, 'on_plugins_loaded' ] );
+		// Registered here, not on plugins_loaded: the activation request includes
+		// this file after plugins_loaded has already fired.
+		add_action( 'activated_plugin', [ GemSecurity\Admin\Setup::class, 'activated_redirect' ], 10, 2 );
 		add_action( 'gemsecurity_loaded', [ $this, 'init_plugin' ] );
 	}
 
@@ -120,7 +123,13 @@ final class GemSecurity {
 		// Feeds the SDK's insights/opt-in "days since install" timing.
 		// add_option() is a no-op if it already exists, so re-activation
 		// never resets it.
-		add_option( 'gemsecurity_first_install_time', time(), '', false );
+		$first_install = add_option( 'gemsecurity_first_install_time', time(), '', false );
+
+		// Sites that ran GemSecurity before the setup wizard existed are already
+		// configured — never push them through it on reactivation.
+		if ( ! $first_install ) {
+			add_option( GemSecurity\Admin\Setup::STATUS_OPTION, 'legacy', '', false );
+		}
 
 		GemSecurity\Installer::activate();
 	}

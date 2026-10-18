@@ -74,6 +74,7 @@ class Assets {
 			'route_path'       => wp_parse_url( admin_url(), PHP_URL_PATH ),
 			'menu'             => wp_json_encode( Helper::get_admin_menu_list() ),
 			'modules'          => Modules\Registry::for_js(),
+			'groups'           => Modules\Registry::groups_for_js(),
 			// For page pickers (e.g. where public login links point).
 			'pages'            => array_map( static function ( $p ) {
 				return [ 'value' => (string) $p->ID, 'label' => $p->post_title ? $p->post_title : sprintf( '#%d', $p->ID ) ];

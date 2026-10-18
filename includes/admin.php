@@ -9,5 +9,6 @@ class Admin {
 
 	public static function init() {
 		Admin\Menu::init();
+		Admin\Setup::init();
 	}
 }
