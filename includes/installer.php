@@ -39,6 +39,10 @@ class Installer {
 		// Remove the extended-protection mu-plugin so a deactivated plugin
 		// never leaves an orphaned early firewall behind.
 		\GemSecurity\Security\MuLoader::uninstall();
+		\GemSecurity\Security\PluginGuard::uninstall_mu();
+		require_once GEMSECURITY_INCLUDES_DIR_PATH . 'security/upload-shield.php';
+		\GemSecurity\Security\UploadShield::remove_htaccess();
+		wp_clear_scheduled_hook( \GemSecurity\Security\PluginGuard::CRON_HOOK );
 		flush_rewrite_rules();
 	}
 
