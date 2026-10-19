@@ -56,10 +56,12 @@ class Menu {
 	/**
 	 * Show one sidebar entry per navigation group instead of one per module.
 	 *
-	 * Every module page stays registered above (so its URL resolves and passes
-	 * the capability check); only the visible `$submenu` list is trimmed to
-	 * each group's lead page and relabelled with the group's title. The app's
-	 * topbar holds the per-module navigation inside each group.
+	 * Every module page stays in `$submenu` so WordPress's own page resolver
+	 * (`get_admin_page_parent()` iterates `$submenu` to find a module's parent,
+	 * which is what makes `?page=<module>` resolve to its real hook) keeps
+	 * working. The non-lead entries are given a `gemsec-hidden` CSS class and
+	 * hidden from the sidebar; the lead entries are relabelled with the group
+	 * title. The app's topbar holds the per-module navigation inside each group.
 	 */
 	private function collapse_to_groups() {
 		global $submenu;
@@ -73,14 +75,15 @@ class Menu {
 			$leads[ $group['lead'] ] = $group['title'];
 		}
 
-		$items = [];
-		foreach ( $submenu[ GEMSECURITY_PLUGIN_SLUG ] as $item ) {
+		foreach ( $submenu[ GEMSECURITY_PLUGIN_SLUG ] as $i => $item ) {
 			if ( isset( $leads[ $item[2] ] ) ) {
-				$item[0] = esc_html( $leads[ $item[2] ] );
-				$items[] = $item;
+				$submenu[ GEMSECURITY_PLUGIN_SLUG ][ $i ][0] = esc_html( $leads[ $item[2] ] ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			} else {
+				// Keep the entry (so the page still resolves) but hide it from
+				// the sidebar via CSS attached to its menu-slug class.
+				$submenu[ GEMSECURITY_PLUGIN_SLUG ][ $i ][4] = trim( ( $item[4] ?? '' ) . ' gemsec-hidden' ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 		}
-		$submenu[ GEMSECURITY_PLUGIN_SLUG ] = $items; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 	}
 
 	/**
@@ -108,7 +111,7 @@ class Menu {
 	 * every admin page because the submenu is always present in the DOM.
 	 */
 	public function menu_badge_styles() {
-		echo '<style>#adminmenu .gemsec-pro-pill{display:inline-block;margin-left:6px;padding:0 6px;font-size:9px;font-weight:700;line-height:16px;letter-spacing:.4px;border-radius:9px;background:#f59e0b;color:#1f2937;vertical-align:middle;}</style>';
+		echo '<style>#adminmenu .gemsec-pro-pill{display:inline-block;margin-left:6px;padding:0 6px;font-size:9px;font-weight:700;line-height:16px;letter-spacing:.4px;border-radius:9px;background:#f59e0b;color:#1f2937;vertical-align:middle;}#adminmenu .gemsec-hidden{display:none !important;}</style>';
 	}
 
 	public function load_main_template() {
