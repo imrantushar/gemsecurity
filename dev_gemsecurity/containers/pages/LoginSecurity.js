@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Toggle, Field, NumberInput, TextInput, Button, MultiSelect, toOptions } from '@Components/ui/Controls';
+import { Card, Toggle, Field, NumberInput, TextInput, Button, MultiSelect, Select, toOptions } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
 import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
@@ -28,6 +28,7 @@ const KEYS = [
 	// Custom login URL.
 	'custom_login_enabled',
 	'custom_login_slug',
+	'custom_login_public_page',
 	// Idle timeout.
 	'idle_timeout_enabled',
 	'idle_timeout_minutes',
@@ -433,6 +434,16 @@ export default function LoginSecurity() {
 								<code>define( &apos;GEMSECURITY_DISABLE_CUSTOM_LOGIN&apos;, true );</code>
 							</span>
 						</div>
+						<Field
+							label={ __( 'Public login links go to', 'gemsecurity' ) }
+							description={ __( 'Plugins and themes print “Log in” links on public pages. For visitors who are not signed in, those links point here instead of the secret address, so no page gives it away. Pick your members’ login page (for example your course dashboard) or leave it on the homepage. Signed-in users and the login screen itself still use the real address.', 'gemsecurity' ) }
+						>
+							<Select
+								value={ String( form.custom_login_public_page || 0 ) }
+								onChange={ ( e ) => setField( 'custom_login_public_page', Number( e.target.value ) ) }
+								options={ [ { value: '0', label: __( 'Homepage', 'gemsecurity' ) }, ...( GS.pages || [] ) ] }
+							/>
+						</Field>
 					</>
 				) }
 			</Card>

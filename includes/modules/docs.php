@@ -104,11 +104,11 @@ class Docs {
 				'summary' => __( 'Where alerts go, what raises one, and the mail that arrives on a schedule. Every module feeds into this page.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Delivery: one security email address and one set of channels — Slack, Telegram or a generic webhook — used by every alert, report and failure notice the plugin sends, with a minimum-severity filter.', 'gemsecurity' ),
-					__( 'Triggers: every event a module can alert on, in one list — administrator sign-ins, new devices, rogue and hidden administrators, application passwords and backup failures.', 'gemsecurity' ),
+					__( 'Triggers: every event a module can alert on, in one list — administrator sign-ins, new devices, rogue and hidden administrators, and application passwords.', 'gemsecurity' ),
 					__( 'Scheduled: a morning report listing every administrator and active plugin with anything that changed since yesterday, a weekly digest, and the daily security scan that finds most of it.', 'gemsecurity' ),
 				],
 				'setup'   => [
-					__( 'Set the security email once — backup failures, monitoring warnings, admin alerts and the daily report all use it. Then set the minimum severity so routine noise stays out of your inbox.', 'gemsecurity' ),
+					__( 'Set the security email once — monitoring warnings, admin alerts and the daily report all use it. Then set the minimum severity so routine noise stays out of your inbox.', 'gemsecurity' ),
 					__( 'Work down "What you get told about" and switch off anything you do not want to hear. A trigger whose module is switched off is not listed at all.', 'gemsecurity' ),
 					__( 'Turn on the daily report to get a morning inventory of administrators and active plugins, with new ones called out — then use "Send a report now" to see what it looks like.', 'gemsecurity' ),
 				],
@@ -126,7 +126,7 @@ class Docs {
 				'summary' => __( 'Plugin-wide preferences: log retention, compliance and SIEM forwarding, maintenance lockdown, and settings import/export.', 'gemsecurity' ),
 				'does'    => [
 					__( 'Compliance: log hash-chaining, SIEM/syslog forwarding and a severity floor for what gets shipped.', 'gemsecurity' ),
-					__( 'Maintenance: site lockdown with a custom message, and taking a backup before plugin or theme updates.', 'gemsecurity' ),
+					__( 'Maintenance: site lockdown with a custom message, and (with the GemBackup plugin) taking a backup before plugin or theme updates.', 'gemsecurity' ),
 					__( 'Settings import/export (Pro): move a whole configuration, including which modules are on, between sites.', 'gemsecurity' ),
 				],
 				'setup'   => [
@@ -464,7 +464,7 @@ class Docs {
 					__( 'Quarantines suspicious files out of the web root instead of deleting them, so they can be restored or examined.', 'gemsecurity' ),
 					__( 'Logs every user out at once, which invalidates stolen session cookies.', 'gemsecurity' ),
 					__( 'Regenerates the wp-config.php keys and salts, so every auth cookie on the site stops working at once.', 'gemsecurity' ),
-					__( 'Rolls the site back to the most recent completed backup.', 'gemsecurity' ),
+					__( 'Rolls the site back to the most recent completed backup (needs the GemBackup plugin).', 'gemsecurity' ),
 					__( 'Shows the whole site’s quarantine, including anything the malware scanner moved, so nothing is stranded in a list you cannot see.', 'gemsecurity' ),
 				],
 				'setup'   => [
@@ -483,25 +483,6 @@ class Docs {
 			/* Maintenance                                                 */
 			/* ---------------------------------------------------------- */
 
-			'backup' => [
-				'summary' => __( 'Scheduled backups of files and database, kept locally or — with Pro — pushed to remote storage.', 'gemsecurity' ),
-				'does'    => [
-					__( 'Creates on-demand or scheduled backups of the database, the files, or both.', 'gemsecurity' ),
-					__( 'Keeps a list of completed backups with their size and status for download.', 'gemsecurity' ),
-					__( 'Can run automatically before plugin and theme updates.', 'gemsecurity' ),
-				],
-				'setup'   => [
-					__( 'Take one backup by hand first to confirm the site has enough disk space and execution time.', 'gemsecurity' ),
-					__( 'Add a schedule — daily for the database, weekly for files suits most sites.', 'gemsecurity' ),
-					__( 'Configure a storage destination so copies live somewhere other than the server being backed up.', 'gemsecurity' ),
-					__( 'Download one archive and confirm it opens. An untested backup is not a backup.', 'gemsecurity' ),
-				],
-				'notes'   => [
-					__( 'Local-only backups die with the server. Keep at least one copy off-site.', 'gemsecurity' ),
-					__( 'Large sites can exceed PHP time or memory limits mid-backup; check the result rather than assuming success.', 'gemsecurity' ),
-					__( 'Schedules run on WP-Cron, which needs traffic — on a quiet site, wire up a real system cron.', 'gemsecurity' ),
-				],
-			],
 
 			'monitoring' => [
 				'summary' => __( 'Watches the things that break quietly: uptime, TLS certificate expiry, DNS changes and SPF/DMARC email authentication.', 'gemsecurity' ),

@@ -267,15 +267,8 @@ class Registry {
 			],
 
 			// ---- Maintenance ---------------------------------------------
-			'backup' => [
-				'icon'          => 'refresh',
-				'category'      => 'maintenance',
-				'recommended'   => true,
-				'page_slug'     => $slug . '-backup',
-				// The Backup subsystem boots via its own bootstrap (see gemsecurity.php),
-				// gated on this module. No plain module class here.
-				'classes'       => [],
-			],
+			// Backups live in the separate GemBackup plugin; GemSecurity only
+			// talks to it (pre-update backup, roll back, score) when it is active.
 			'monitoring' => [
 				'icon'          => 'globe',
 				'category'      => 'maintenance',
@@ -426,10 +419,6 @@ class Registry {
 			'logs' => [
 				'title' => __( 'Logs', 'gemsecurity' ),
 				'desc'  => __( 'Activity audit log and what gets recorded in it.', 'gemsecurity' ),
-			],
-			'backup' => [
-				'title' => __( 'Backup', 'gemsecurity' ),
-				'desc'  => __( 'Scheduled site backups with local (and Pro remote) storage.', 'gemsecurity' ),
 			],
 			'monitoring' => [
 				'title' => __( 'Monitoring', 'gemsecurity' ),

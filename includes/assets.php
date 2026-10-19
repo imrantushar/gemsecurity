@@ -74,12 +74,20 @@ class Assets {
 			'route_path'       => wp_parse_url( admin_url(), PHP_URL_PATH ),
 			'menu'             => wp_json_encode( Helper::get_admin_menu_list() ),
 			'modules'          => Modules\Registry::for_js(),
+			// For page pickers (e.g. where public login links point).
+			'pages'            => array_map( static function ( $p ) {
+				return [ 'value' => (string) $p->ID, 'label' => $p->post_title ? $p->post_title : sprintf( '#%d', $p->ID ) ];
+			}, get_pages( [ 'post_status' => 'publish', 'number' => 300, 'sort_column' => 'post_title' ] ) ),
 			'current_user_id'  => get_current_user_id(),
 			'is_rtl'           => is_rtl(),
 			'is_admin'         => is_admin(),
 			'version'          => GEMSECURITY_VERSION,
 			'roles'            => $this->get_editable_roles(),
 			'is_pro'           => Helper::is_pro_active(),
+			'gembackup'        => [
+				'active' => Helper::gembackup_active(),
+				'url'    => admin_url( 'admin.php?page=gembackup' ),
+			],
 			'pro_features'     => Helper::get_pro_features(),
 			'upgrade_url'      => Helper::upgrade_url(),
 		] );

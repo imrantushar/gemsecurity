@@ -123,6 +123,17 @@ class Helper {
 	}
 
 	/**
+	 * Whether the GemBackup plugin is active. Backups are not part of
+	 * GemSecurity; the features that use them (pre-update backup, roll back,
+	 * the score's recent-backup check) only appear when this is true.
+	 *
+	 * @return bool
+	 */
+	public static function gembackup_active() {
+		return (bool) apply_filters( 'gemsecurity/gembackup_active', class_exists( 'GemBackup', false ) && defined( 'GEMBACKUP_VERSION' ) );
+	}
+
+	/**
 	 * Backs the public `gemsecurity/module_active` filter — the integration
 	 * surface other plugins (e.g. Academy LMS) use to ask "is GemSecurity
 	 * module X active?" without depending on GemSecurity's internal classes

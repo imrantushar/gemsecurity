@@ -29,7 +29,6 @@ import PluginGuard from '@Containers/pages/PluginGuard';
 import PaymentIntegrity from '@Containers/pages/PaymentIntegrity';
 import IncidentResponse from '@Containers/pages/IncidentResponse';
 import Logs from '@Containers/pages/Logs';
-import Backup from '@Containers/pages/Backup';
 import Monitoring from '@Containers/pages/Monitoring';
 import Notifications from '@Containers/pages/Notifications';
 import Settings from '@Containers/pages/Settings';
@@ -55,7 +54,6 @@ const PAGES = {
 	// Legacy alias — the malware scanner is now a tab inside Scanner.
 	'gemsecurity-malware': Scanner,
 	'gemsecurity-logs': Logs,
-	'gemsecurity-backup': Backup,
 	'gemsecurity-monitoring': Monitoring,
 	'gemsecurity-notifications': Notifications,
 	'gemsecurity-settings': Settings,
