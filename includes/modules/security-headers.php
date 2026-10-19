@@ -34,6 +34,27 @@ class SecurityHeaders {
 		add_action( 'send_headers', [ $self, 'send' ], 99 );
 		add_action( 'admin_init', [ $self, 'send' ], 99 );
 		add_action( 'login_init', [ $self, 'send' ], 99 );
+		// REST requests are answered during parse_request, before core ever
+		// fires send_headers — without this, every /wp-json/ response goes out
+		// with none of the headers above.
+		add_filter( 'rest_post_dispatch', [ $self, 'add_to_rest_response' ], 99 );
+	}
+
+	/**
+	 * @param mixed $result
+	 * @return mixed
+	 */
+	public function add_to_rest_response( $result ) {
+		if ( $result instanceof \WP_HTTP_Response ) {
+			$existing = array_change_key_case( $result->get_headers(), CASE_LOWER );
+			foreach ( $this->build_headers() as $name => $value ) {
+				// Never override a header the endpoint set deliberately.
+				if ( '' !== $value && ! isset( $existing[ strtolower( $name ) ] ) ) {
+					$result->header( $name, $value );
+				}
+			}
+		}
+		return $result;
 	}
 
 	/* ------------------------------------------------------------------ */
