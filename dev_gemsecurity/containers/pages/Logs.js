@@ -103,6 +103,54 @@ function AddToBlocklist( { pattern, alreadyBlocked } ) {
 	);
 }
 
+/** Expanded detail for one log row: what changed, how, and from which login. */
+function LogDetails( { log, ctx, onPost } ) {
+	const changes = ctx?.changes && typeof ctx.changes === 'object' ? Object.entries( ctx.changes ) : [];
+	return (
+		<div className="gs-log-details">
+			{ changes.length > 0 && (
+				<table className="gs-log-details__diff">
+					<tbody>
+						{ changes.map( ( [ field, c ] ) => (
+							<tr key={ field }>
+								<th>{ field }</th>
+								<td><del>{ String( c?.old ?? '' ) || '—' }</del></td>
+								<td><ins>{ String( c?.new ?? '' ) || '—' }</ins></td>
+							</tr>
+						) ) }
+					</tbody>
+				</table>
+			) }
+			{ ctx?.meta_key && (
+				<p><strong>{ ctx.meta_key }</strong> → <code>{ ctx.new === null ? __( '(removed)', 'gemsecurity' ) : String( ctx.new ) }</code></p>
+			) }
+			{ Array.isArray( ctx?.new_links ) && ctx.new_links.length > 0 && (
+				<div className="gs-log-details__links">
+					<strong>{ __( 'New outbound links:', 'gemsecurity' ) }</strong>
+					<ul>{ ctx.new_links.map( ( u ) => <li key={ u }><code>{ u }</code></li> ) }</ul>
+				</div>
+			) }
+			<dl className="gs-log-details__meta">
+				{ ctx?.via && <><dt>{ __( 'Via', 'gemsecurity' ) }</dt><dd>{ ctx.via }</dd></> }
+				{ ctx?.session && <><dt>{ __( 'Login session', 'gemsecurity' ) }</dt><dd><code>{ ctx.session }</code></dd></> }
+				{ ctx?.ua && <><dt>{ __( 'Browser', 'gemsecurity' ) }</dt><dd>{ ctx.ua }</dd></> }
+			</dl>
+			<div className="gs-log-details__actions">
+				{ log.revision_url && (
+					<a className="gs-btn gs-btn--secondary" href={ log.revision_url } target="_blank" rel="noreferrer">
+						{ __( 'Compare / restore revision', 'gemsecurity' ) }
+					</a>
+				) }
+				{ ctx?.post_id && (
+					<Button variant="secondary" onClick={ () => onPost( ctx.post_id ) }>
+						{ __( 'History of this post', 'gemsecurity' ) }
+					</Button>
+				) }
+			</div>
+		</div>
+	);
+}
+
 export default function Logs() {
 	const toast = useToast();
 	const [ state, setState ] = useState( { logs: [], total: 0, total_pages: 1 } );
@@ -111,6 +159,9 @@ export default function Logs() {
 	const [ severity, setSeverity ] = useState( '' );
 	const [ category, setCategory ] = useState( '' );
 	const [ search, setSearch ] = useState( '' );
+	const [ userFilter, setUserFilter ] = useState( null ); // { id, name }
+	const [ postFilter, setPostFilter ] = useState( 0 );
+	const [ open, setOpen ] = useState( {} );
 	const [ botBlocklist, setBotBlocklist ] = useState( [] );
 
 	useEffect( () => {
@@ -122,11 +173,11 @@ export default function Logs() {
 
 	const load = useCallback( () => {
 		setLoading( true );
-		api.get( 'logs', { params: { page, severity, category, search, per_page: 20 } } )
+		api.get( 'logs', { params: { page, severity, category, search, per_page: 20, user_id: userFilter?.id || undefined, post_id: postFilter || undefined } } )
 			.then( ( r ) => setState( r.data ) )
 			.catch( () => {} )
 			.finally( () => setLoading( false ) );
-	}, [ page, severity, category, search ] );
+	}, [ page, severity, category, search, userFilter, postFilter ] );
 
 	useEffect( () => {
 		const t = setTimeout( load, search ? 350 : 0 );
@@ -208,6 +259,21 @@ export default function Logs() {
 					/>
 				</div>
 
+				{ ( userFilter || postFilter > 0 ) && (
+					<div className="gs-log-chips">
+						{ userFilter && (
+							<button type="button" className="gs-log-chip" onClick={ () => { setUserFilter( null ); setPage( 1 ); } }>
+								{ __( 'User:', 'gemsecurity' ) } <strong>{ userFilter.name }</strong> ×
+							</button>
+						) }
+						{ postFilter > 0 && (
+							<button type="button" className="gs-log-chip" onClick={ () => { setPostFilter( 0 ); setPage( 1 ); } }>
+								{ __( 'Post', 'gemsecurity' ) } <strong>#{ postFilter }</strong> ×
+							</button>
+						) }
+					</div>
+				) }
+
 				{ loading ? (
 					<Loading />
 				) : state.logs.length === 0 ? (
@@ -227,14 +293,21 @@ export default function Logs() {
 						<tbody>
 							{ state.logs.map( ( l ) => {
 								const ctx = l.context ? ( () => { try { return JSON.parse( l.context ); } catch { return null; } } )() : null;
+								const hasDetails = !! ( ctx && ( ctx.changes || ctx.meta_key || ctx.via || ctx.session ) );
 								return (
-									<tr key={ l.id }>
+									<React.Fragment key={ l.id }>
+									<tr>
 										<td><Badge tone={ SEVERITY_TONE[ l.severity ] || 'info' }>{ l.severity }</Badge></td>
 										<td><code>{ l.event_type }</code></td>
 										<td className="gs-table__msg">
 											{ l.message }
 											{ ctx?.matched && <span className="gs-muted"> · { ctx.matched }</span> }
 											{ ctx?.reason && <span className="gs-muted"> · { ctx.reason }</span> }
+											{ hasDetails && (
+												<button type="button" className="gs-link-btn" onClick={ () => setOpen( { ...open, [ l.id ]: ! open[ l.id ] } ) }>
+													{ open[ l.id ] ? __( 'Hide details', 'gemsecurity' ) : __( 'Details', 'gemsecurity' ) }
+												</button>
+											) }
 											{ l.event_type === 'seems_bot' && ctx?.suggested_pattern && (
 												<div style={ { marginTop: 6 } }>
 													<AddToBlocklist
@@ -247,12 +320,28 @@ export default function Logs() {
 										<td className="gs-table__msg">
 											{ ( l.event_type === 'waf_bad_bot' || l.event_type === 'seems_bot' ) && ctx?.ua
 												? <code title={ ctx.ua }>{ ctx.ua.length > 48 ? ctx.ua.slice( 0, 48 ) + '…' : ctx.ua }</code>
-												: ( l.user_display || '—' )
+												: ( l.user_id
+													? (
+														<button type="button" className="gs-link-btn" title={ __( 'Show everything this user did', 'gemsecurity' ) }
+															onClick={ () => { setUserFilter( { id: l.user_id, name: l.user_display } ); setPage( 1 ); } }>
+															{ l.user_display }{ ! String( l.user_display ).startsWith( '#' ) && <span className="gs-muted"> #{ l.user_id }</span> }
+														</button>
+													)
+													: '—' )
 											}
+											{ ctx?.via && <div className="gs-muted">{ ctx.via }</div> }
 										</td>
 										<td>{ l.ip_address || '—' }</td>
 										<td className="gs-nowrap">{ l.created_at }</td>
 									</tr>
+									{ open[ l.id ] && (
+										<tr className="gs-log-details-row">
+											<td colSpan={ 6 }>
+												<LogDetails log={ l } ctx={ ctx } onPost={ ( id ) => { setPostFilter( Number( id ) ); setUserFilter( null ); setPage( 1 ); } } />
+											</td>
+										</tr>
+									) }
+									</React.Fragment>
 								);
 							} ) }
 						</tbody>

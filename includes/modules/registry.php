@@ -318,6 +318,7 @@ class Registry {
 			$m['recommended']   = ! empty( $m['recommended'] );
 			$m['classes']       = isset( $m['classes'] ) ? (array) $m['classes'] : [];
 			$m['settings_keys'] = isset( $m['settings_keys'] ) ? (array) $m['settings_keys'] : [];
+			$m['group']         = isset( $m['group'] ) ? $m['group'] : self::default_group( $id, $m['category'] );
 		}
 		unset( $m );
 
@@ -331,6 +332,92 @@ class Registry {
 		self::$descriptors_cache = apply_filters( 'gemsecurity/modules', $modules );
 
 		return self::$descriptors_cache;
+	}
+
+	/**
+	 * Navigation group for a module that doesn't declare one, from its category.
+	 *
+	 * @param string $id       Module id.
+	 * @param string $category Module category.
+	 * @return string
+	 */
+	public static function default_group( $id, $category ) {
+		if ( 'dashboard' === $id ) {
+			return 'overview';
+		}
+		$map = [
+			'firewall'    => 'firewall',
+			'access'      => 'access',
+			'scanning'    => 'scanning',
+			'logging'     => 'logs',
+			'maintenance' => 'logs',
+		];
+		return isset( $map[ $category ] ) ? $map[ $category ] : 'settings';
+	}
+
+	/**
+	 * Navigation groups, in display order. The WP admin sidebar shows one entry
+	 * per group (linking to its first visible module) and the app topbar shows
+	 * them as dropdowns, so twenty-odd pages fit in six slots. Labels translate,
+	 * so this must only be called after `init`.
+	 *
+	 * @return array<string,array{title:string,icon:string}>
+	 */
+	public static function groups() {
+		return apply_filters( 'gemsecurity/module_groups', [
+			'overview' => [ 'title' => __( 'Dashboard', 'gemsecurity' ), 'icon' => 'grid' ],
+			'firewall' => [ 'title' => __( 'Firewall', 'gemsecurity' ), 'icon' => 'shield' ],
+			'access'   => [ 'title' => __( 'Login & Access', 'gemsecurity' ), 'icon' => 'lock' ],
+			'scanning' => [ 'title' => __( 'Scanning', 'gemsecurity' ), 'icon' => 'radar' ],
+			'logs'     => [ 'title' => __( 'Logs & Monitoring', 'gemsecurity' ), 'icon' => 'list' ],
+			'settings' => [ 'title' => __( 'Settings', 'gemsecurity' ), 'icon' => 'cog' ],
+		] );
+	}
+
+	/**
+	 * Group list for the React app, in display order.
+	 *
+	 * @return array<int,array{id:string,title:string,icon:string}>
+	 */
+	public static function groups_for_js() {
+		$out = [];
+		foreach ( self::groups() as $id => $g ) {
+			$out[] = [
+				'id'    => $id,
+				'title' => $g['title'],
+				'icon'  => $g['icon'],
+			];
+		}
+		return $out;
+	}
+
+	/**
+	 * Groups with their visible modules' page slugs, in registry order. Empty
+	 * groups are dropped; `lead` is the page the group's menu entry opens.
+	 *
+	 * @return array<string,array{title:string,icon:string,lead:string,pages:string[]}>
+	 */
+	public static function visible_groups() {
+		$out = [];
+		foreach ( self::groups() as $gid => $g ) {
+			$g['pages'] = [];
+			$out[ $gid ] = $g;
+		}
+		foreach ( self::all() as $id => $m ) {
+			if ( isset( $out[ $m['group'] ] ) && self::is_visible( $id ) ) {
+				$out[ $m['group'] ]['pages'][] = $m['page_slug'];
+			}
+		}
+		$out = array_filter( $out, static function ( $g ) {
+			return ! empty( $g['pages'] );
+		} );
+		// Lead with the page named after the group (Settings → Settings), else the first.
+		foreach ( $out as $gid => &$g ) {
+			$named     = GEMSECURITY_PLUGIN_SLUG . '-' . $gid;
+			$g['lead'] = in_array( $named, $g['pages'], true ) ? $named : $g['pages'][0];
+		}
+		unset( $g );
+		return $out;
 	}
 
 	/**
@@ -572,8 +659,10 @@ class Registry {
 				'desc'      => isset( $labels[ $id ]['desc'] ) ? $labels[ $id ]['desc'] : '',
 				'icon'      => $m['icon'],
 				'category'  => $m['category'],
+				'group'     => $m['group'],
 				'core'      => $m['core'],
 				'is_pro'    => $m['is_pro'],
+				'recommended' => $m['recommended'],
 				'page_slug' => $m['page_slug'],
 				'active'    => self::is_active( $id ),
 				'visible'   => self::is_visible( $id ),
