@@ -3,7 +3,8 @@ import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchSettings } from '@Redux/settingsSlice';
-import { useActivePage, useNavItems, useModuleBySlug, pageUrl } from '@Utils/nav';
+import { useActivePage, useNavItems, useNavGroups, useModuleBySlug, pageUrl, syncAdminMenu, getModules } from '@Utils/nav';
+import TopNav from '@Components/Layout/TopNav';
 import { Loading, EmptyState, Button } from '@Components/ui/Controls';
 import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/Pro';
 import ErrorBoundary from '@Components/ui/ErrorBoundary';
@@ -78,6 +79,8 @@ export default function App() {
 			el.scrollTo?.( 0, 0 );
 		}
 		window.scrollTo?.( 0, 0 );
+		// Keep the WP sidebar's group highlight in step with client-side routing.
+		syncAdminMenu( getModules() );
 	}, [ page ] );
 
 	// The malware scanner is now a tab inside Scanner — resolve the old slug.
@@ -85,6 +88,8 @@ export default function App() {
 	const PageComponent = PAGES[ resolvedPage ] || Dashboard;
 	const navItems = useNavItems();
 	const navItem = navItems.find( ( i ) => i.key === resolvedPage );
+	// Side nav lists only the current group's pages; the topbar switches groups.
+	const groupItems = useNavGroups().find( ( g ) => g.items.some( ( i ) => i.key === resolvedPage ) )?.items || [];
 	const locked = isLocked( resolvedPage );
 	const feature = proFeatures()[ resolvedPage ] || {};
 
@@ -136,7 +141,18 @@ export default function App() {
 								{ locked && <ProBadge /> }
 							</h1>
 						</div>
+						<div className="gs-topbar__nav">
+							<TopNav current={ resolvedPage } onNavigate={ navigate } />
+						</div>
 						<div className="gs-topbar__actions">
+							<a
+								className="gs-topbar__action"
+								href={ pageUrl( 'gemsecurity-setup' ) }
+								aria-label={ __( 'Setup wizard', 'gemsecurity' ) }
+								title={ __( 'Setup wizard', 'gemsecurity' ) }
+							>
+								<Icon name="zap" size={ 18 } />
+							</a>
 							<button
 								type="button"
 								className="gs-topbar__action"
@@ -159,8 +175,9 @@ export default function App() {
 					</div>
 				</header>
 				<div className="gs-shell">
+					{ groupItems.length > 1 && (
 					<nav className="gs-subnav">
-						{ navItems.map( ( item ) => {
+						{ groupItems.map( ( item ) => {
 							const href = pageUrl( item.key );
 							return (
 								<a
@@ -186,6 +203,7 @@ export default function App() {
 							);
 						} ) }
 					</nav>
+					) }
 					<div className="gs-content">
 						<ErrorBoundary key={ resolvedPage }>
 							{ renderPage() }

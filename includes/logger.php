@@ -33,6 +33,15 @@ class Logger {
 
 		$table = $wpdb->prefix . 'gemsecurity_logs';
 
+		/**
+		 * Filter an event's args before it is stored — lets the audit log stamp
+		 * every row with who/how context (channel, user agent, login session).
+		 *
+		 * @param array  $args
+		 * @param string $event_type
+		 */
+		$args = (array) apply_filters( 'gemsecurity/log_args', $args, $event_type );
+
 		$user_id    = isset( $args['user_id'] ) ? absint( $args['user_id'] ) : get_current_user_id();
 		$ip_address = isset( $args['ip_address'] ) ? $args['ip_address'] : Helper::get_ip_address();
 		$context    = isset( $args['context'] ) && ! empty( $args['context'] ) ? wp_json_encode( $args['context'] ) : null;

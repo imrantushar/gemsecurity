@@ -56,6 +56,19 @@ class Logs {
 			$params[] = $like;
 		}
 
+		// "Who did what": everything one account did, or everything done to one post.
+		$user_id = absint( $request->get_param( 'user_id' ) );
+		if ( $user_id ) {
+			$where[]  = 'user_id = %d';
+			$params[] = $user_id;
+		}
+		$post_id = absint( $request->get_param( 'post_id' ) );
+		if ( $post_id ) {
+			$where[]  = '(context LIKE %s OR context LIKE %s)';
+			$params[] = '%' . $wpdb->esc_like( '"post_id":' . $post_id . ',' ) . '%';
+			$params[] = '%' . $wpdb->esc_like( '"post_id":' . $post_id . '}' ) . '%';
+		}
+
 		$where_sql = implode( ' AND ', $where );
 
 		$count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}";
@@ -65,12 +78,19 @@ class Logs {
 		$list_sql    = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d";
 		$rows        = $wpdb->get_results( $wpdb->prepare( $list_sql, $list_params ), ARRAY_A );
 
-		// Attach display names for users referenced in the logs.
-		foreach ( (array) $rows as &$row ) {
+		// Attach display names for users referenced in the logs. Iterate the
+		// real array: by-reference over a `(array)` cast only edits a copy.
+		$rows = is_array( $rows ) ? $rows : [];
+		foreach ( $rows as &$row ) {
 			$row['user_display'] = '';
 			if ( ! empty( $row['user_id'] ) ) {
 				$user = get_userdata( (int) $row['user_id'] );
 				$row['user_display'] = $user ? $user->user_login : '#' . (int) $row['user_id'];
+			}
+			$row['revision_url'] = '';
+			$ctx = ! empty( $row['context'] ) ? json_decode( $row['context'], true ) : null;
+			if ( ! empty( $ctx['revision'] ) ) {
+				$row['revision_url'] = admin_url( 'revision.php?revision=' . (int) $ctx['revision'] );
 			}
 		}
 		unset( $row );

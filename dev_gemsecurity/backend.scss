@@ -27,7 +27,7 @@ $gs-soft-hover:  var(--gs-soft-hover);
 $gs-accent-soft: var(--gs-accent-soft);
 $gs-track:       var(--gs-track);
 $gs-input-bg:    var(--gs-input-bg);
-$gs-radius:      12px;
+$gs-radius:      8px;
 
 /* Reserve the window scrollbar gutter so the layout doesn't jump wider/narrower
    when navigating between short and long pages. This rule loads only on
@@ -44,64 +44,73 @@ html {
 }
 
 #gemsecuritywrap.gemsecuritywrap {
-	/* ---- Light theme (default) ---- */
-	--gs-bg: #f4f6fb;
-	--gs-surface: #ffffff;
-	--gs-border: #e3e8f0;
-	--gs-text: #1e2533;
-	--gs-muted: #6b7385;
-	--gs-primary: #2f6bff;
-	--gs-primary-d: #1f50d8;
-	--gs-danger: #dc2626;
-	--gs-warning: #d97706;
-	--gs-success: #16a34a;
-	--gs-shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
-	--gs-line: #f0f2f7;
-	--gs-fill: #f3f5f9;
-	--gs-soft: #eef1f7;
-	--gs-soft-hover: #e3e8f2;
-	--gs-accent-soft: #eef2fb;
-	--gs-track: #cdd4e0;
-	--gs-input-bg: #ffffff;
+	/* ---- Light theme (default) — GemCRM palette ---- */
+	--gs-bg: #F6F7F8;
+	--gs-surface: #FFFFFF;
+	--gs-border: #DFE1E5;
+	--gs-text: #131D2B;
+	--gs-label: #374151;
+	--gs-muted: #575E6C;
+	--gs-placeholder: #A2ADB9;
+	--gs-primary: #006BFF;
+	--gs-primary-d: #0057D1;
+	--gs-danger: #E2483D;
+	--gs-warning: #FDB022;
+	--gs-warning-ink: #B54708;
+	--gs-success: #00AD6B;
+	/* Border-only surfaces, as in GemCRM: no drop shadow on cards. */
+	--gs-shadow: none;
+	--gs-pop: 0 12px 32px rgba(19, 29, 43, .14);
+	--gs-line: #F3F4F6;
+	--gs-fill: #F6F7F8;
+	--gs-soft: #F6F7F8;
+	--gs-soft-hover: #EEF0F3;
+	--gs-accent-soft: #E3E7FF;
+	--gs-track: #CBD1D7;
+	--gs-input-bg: #FFFFFF;
 
 	/* ---- Dark theme ---- */
 	&[data-theme="dark"] {
-		--gs-bg: #0e131b;
-		--gs-surface: #171e2a;
-		--gs-border: #2a3342;
-		--gs-text: #e6eaf2;
-		--gs-muted: #98a2b6;
-		--gs-primary: #5a8bff;
-		--gs-primary-d: #3f74ff;
-		--gs-danger: #f26d6d;
-		--gs-warning: #e9a23b;
-		--gs-success: #34c67f;
-		--gs-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 1px 3px rgba(0, 0, 0, .5);
-		--gs-line: #232c3a;
-		--gs-fill: #1e2735;
-		--gs-soft: #1c2431;
-		--gs-soft-hover: #263041;
-		--gs-accent-soft: rgba(90, 139, 255, .16);
-		--gs-track: #3a4457;
-		--gs-input-bg: #10161f;
+		--gs-bg: #0F141A;
+		--gs-surface: #171C24;
+		--gs-border: #2C333F;
+		--gs-text: #E6E9EF;
+		--gs-label: #C4CBD6;
+		--gs-muted: #9AA4B2;
+		--gs-placeholder: #6B7280;
+		--gs-primary: #4C8DFF;
+		--gs-primary-d: #3A7BFF;
+		--gs-danger: #F87171;
+		--gs-warning: #FBBF24;
+		--gs-warning-ink: #FBBF24;
+		--gs-success: #34D399;
+		--gs-shadow: none;
+		--gs-pop: 0 12px 32px rgba(0, 0, 0, .5);
+		--gs-line: #232B35;
+		--gs-fill: #1E242C;
+		--gs-soft: #1E242C;
+		--gs-soft-hover: #262D37;
+		--gs-accent-soft: #172A45;
+		--gs-track: #3A424F;
+		--gs-input-bg: #171C24;
 
 		/* Semantic tints below use literal light colors — give them dark variants. */
 		.gs-btn--danger {
-			background: rgba(242, 109, 109, .14); border-color: rgba(242, 109, 109, .35);
-			&:hover:not(:disabled) { background: rgba(242, 109, 109, .22); }
+			background: color-mix(in srgb, var(--gs-danger) 14%, transparent); border-color: color-mix(in srgb, var(--gs-danger) 35%, transparent);
+			&:hover:not(:disabled) { background: color-mix(in srgb, var(--gs-danger) 22%, transparent); }
 		}
-		.gs-alert--warning { background: rgba(233, 162, 59, .12); color: #eab469; border-color: rgba(233, 162, 59, .3); }
-		.gs-alert--danger { background: rgba(242, 109, 109, .12); color: #f6a9a9; border-color: rgba(242, 109, 109, .3); .gs-icon { color: #f26d6d; } }
-		.gs-actionlist__item.is-threat { background: rgba(242, 109, 109, .12); border-color: rgba(242, 109, 109, .32); }
-		.gs-breach { border-color: rgba(242, 109, 109, .4); box-shadow: 0 0 0 3px rgba(242, 109, 109, .12); }
-		.gs-breach--warn { border-color: rgba(233, 162, 59, .4); box-shadow: 0 0 0 3px rgba(233, 162, 59, .12); }
-		.gs-admins__row--hidden { background: rgba(242, 109, 109, .1); }
-		.gs-breach--warn .gs-admins__row--hidden { background: rgba(233, 162, 59, .1); }
+		.gs-alert--warning { background: color-mix(in srgb, var(--gs-warning) 12%, transparent); color: var(--gs-warning); border-color: color-mix(in srgb, var(--gs-warning) 30%, transparent); }
+		.gs-alert--danger { background: color-mix(in srgb, var(--gs-danger) 12%, transparent); color: var(--gs-danger); border-color: color-mix(in srgb, var(--gs-danger) 30%, transparent); .gs-icon { color: var(--gs-danger); } }
+		.gs-actionlist__item.is-threat { background: color-mix(in srgb, var(--gs-danger) 12%, transparent); border-color: color-mix(in srgb, var(--gs-danger) 32%, transparent); }
+		.gs-breach { border-color: color-mix(in srgb, var(--gs-danger) 40%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-danger) 12%, transparent); }
+		.gs-breach--warn { border-color: color-mix(in srgb, var(--gs-warning) 40%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-warning) 12%, transparent); }
+		.gs-admins__row--hidden { background: color-mix(in srgb, var(--gs-danger) 10%, transparent); }
+		.gs-breach--warn .gs-admins__row--hidden { background: color-mix(in srgb, var(--gs-warning) 10%, transparent); }
 		.gs-chip button { background: var(--gs-track); color: var(--gs-text); }
-		.gs-badge--info { background: rgba(90, 139, 255, .16); color: #9db8ff; }
-		.gs-badge--success { background: rgba(52, 198, 127, .16); color: #6ee0a8; }
-		.gs-badge--warning { background: rgba(233, 162, 59, .16); color: #eab469; }
-		.gs-badge--danger, .gs-badge--error { background: rgba(242, 109, 109, .16); color: #f6a9a9; }
+		.gs-badge--info { background: color-mix(in srgb, var(--gs-primary) 16%, transparent); color: var(--gs-primary); }
+		.gs-badge--success { background: color-mix(in srgb, var(--gs-success) 16%, transparent); color: var(--gs-success); }
+		.gs-badge--warning { background: color-mix(in srgb, var(--gs-warning) 16%, transparent); color: var(--gs-warning); }
+		.gs-badge--danger, .gs-badge--error { background: color-mix(in srgb, var(--gs-danger) 16%, transparent); color: var(--gs-danger); }
 	}
 
 	margin: 0 0 0 -20px;
@@ -138,9 +147,9 @@ html {
 		padding: 4px 8px 20px;
 		color: #fff; font-weight: 700; font-size: 17px;
 		&__mark {
-			width: 34px; height: 34px; border-radius: 9px;
+			width: 34px; height: 34px; border-radius: 6px;
 			display: grid; place-items: center;
-			background: linear-gradient(135deg, #2f6bff, #6d4bff);
+			background: var(--gs-primary);
 			color: #fff;
 		}
 	}
@@ -148,11 +157,11 @@ html {
 	.gs-nav { display: flex; flex-direction: column; gap: 2px; }
 	.gs-nav__item {
 		display: flex; align-items: center; gap: 11px;
-		padding: 10px 12px; border-radius: 9px;
+		padding: 10px 12px; border-radius: 6px;
 		color: #c7d0e0; text-decoration: none; font-weight: 500;
 		transition: background .15s, color .15s;
 		&:hover { background: rgba(255,255,255,.06); color: #fff; }
-		&.is-active { background: $gs-primary; color: #fff; box-shadow: 0 4px 12px rgba(47,107,255,.35); }
+		&.is-active { background: $gs-primary; color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--gs-primary) 35%, transparent); }
 		.gs-icon { opacity: .9; }
 	}
 	.gs-sidebar__foot { margin-top: auto; padding: 14px 12px 0; color: #4b566b; font-size: 12px; }
@@ -176,9 +185,9 @@ html {
 		&__left { display: flex; align-items: center; gap: 12px; min-width: 0; }
 		&__logo {
 			flex-shrink: 0;
-			width: 36px; height: 36px; border-radius: 9px;
+			width: 36px; height: 36px; border-radius: 6px;
 			display: grid; place-items: center;
-			background: linear-gradient(135deg, #2f6bff, #6d4bff);
+			background: var(--gs-primary);
 			color: #fff;
 		}
 		&__title { margin: 0; font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -186,7 +195,7 @@ html {
 		&__theme, &__action {
 			flex-shrink: 0;
 			display: inline-grid; place-items: center;
-			width: 38px; height: 38px; border-radius: 9px;
+			width: 38px; height: 38px; border-radius: 6px;
 			border: 1px solid $gs-border; background: $gs-surface; color: $gs-muted;
 			cursor: pointer; transition: background .15s, color .15s, border-color .15s;
 			&:hover { color: $gs-text; background: $gs-soft; border-color: $gs-border; }
@@ -210,7 +219,7 @@ html {
 		display: flex; flex-direction: column; gap: 2px;
 		&__item {
 			display: flex; align-items: center; gap: 10px;
-			padding: 9px 12px; border-radius: 9px;
+			padding: 9px 12px; border-radius: 6px;
 			color: $gs-muted; text-decoration: none; font-weight: 500; font-size: 13.5px;
 			transition: background .15s, color .15s;
 			.gs-icon { opacity: .85; flex-shrink: 0; }
@@ -222,6 +231,74 @@ html {
 			&:hover { background: $gs-soft; color: $gs-text; }
 			&.is-active { background: $gs-accent-soft; color: $gs-primary; font-weight: 600; .gs-icon { opacity: 1; } }
 		}
+	}
+
+	// Topbar group nav: one tab per module group, dropdown when it has several.
+	.gs-topbar__nav { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
+	.gs-topbar__left { flex: 0 1 auto; }
+	.gs-topnav {
+		display: flex; flex-wrap: wrap; justify-content: center; gap: 2px;
+		&__group { position: relative; }
+		&__tab {
+			display: inline-flex; align-items: center; gap: 7px;
+			padding: 8px 12px; border: 0; border-radius: 6px;
+			background: none; color: $gs-muted; font: inherit; font-size: 13.5px; font-weight: 500;
+			text-decoration: none; cursor: pointer; white-space: nowrap;
+			transition: color .15s, border-color .15s;
+			&:hover, &:focus { color: $gs-text; box-shadow: none; outline: none; }
+			&:focus-visible { outline: 2px solid $gs-primary; outline-offset: -2px; }
+			&:hover { background: $gs-soft; }
+			&.is-active { color: $gs-primary; background: $gs-accent-soft; font-weight: 600; }
+			.gs-icon:last-child:not(:first-child) { opacity: .7; transition: transform .15s; }
+		}
+		&__group.is-open &__tab .gs-icon:last-child { transform: rotate(180deg); }
+		&__menu {
+			position: absolute; top: calc(100% + 4px); left: 0; z-index: 1000;
+			min-width: 220px; padding: 6px;
+			background: $gs-surface; border: 1px solid $gs-border;
+			border-radius: $gs-radius; box-shadow: var(--gs-pop);
+			display: flex; flex-direction: column; gap: 2px;
+		}
+		&__item {
+			display: flex; align-items: center; gap: 10px;
+			padding: 8px 10px; border-radius: 8px;
+			color: $gs-muted; text-decoration: none; font-size: 13.5px; font-weight: 500; white-space: nowrap;
+			&:hover, &:focus { background: $gs-soft; color: $gs-text; box-shadow: none; }
+			&.is-active { background: $gs-accent-soft; color: $gs-primary; font-weight: 600; }
+			.gs-pro-badge { margin-left: auto; }
+		}
+	}
+
+	// Activity log: who-did-what filters and expandable change details.
+	.gs-link-btn {
+		display: inline; padding: 0; margin: 0 0 0 6px; border: 0; background: none; cursor: pointer;
+		color: $gs-primary; font: inherit; font-size: 12.5px; font-weight: 600;
+		&:hover { text-decoration: underline; }
+		td > &:first-child { margin-left: 0; }
+	}
+	.gs-log-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+	.gs-log-chip {
+		display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; cursor: pointer;
+		border: 1px solid $gs-border; background: $gs-accent-soft; color: $gs-text; font: inherit; font-size: 12.5px;
+		&:hover { border-color: $gs-primary; }
+	}
+	.gs-log-details-row > td { background: $gs-fill; }
+	.gs-log-details {
+		display: flex; flex-direction: column; gap: 12px; padding: 6px 4px; font-size: 12.5px;
+		&__diff {
+			width: 100%; border-collapse: collapse; table-layout: fixed;
+			th { width: 90px; text-align: left; vertical-align: top; padding: 6px 8px; color: $gs-muted; font-weight: 600; text-transform: capitalize; }
+			td { vertical-align: top; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; }
+			del { text-decoration: none; display: block; padding: 6px 8px; border-radius: 6px; background: color-mix(in srgb, #{$gs-danger} 10%, transparent); }
+			ins { text-decoration: none; display: block; padding: 6px 8px; border-radius: 6px; background: color-mix(in srgb, #{$gs-success} 12%, transparent); }
+		}
+		&__links ul { margin: 6px 0 0 18px; list-style: disc; }
+		&__meta {
+			display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0;
+			dt { color: $gs-muted; font-weight: 600; }
+			dd { margin: 0; word-break: break-all; }
+		}
+		&__actions { display: flex; gap: 8px; flex-wrap: wrap; a.gs-btn { text-decoration: none; } }
 	}
 
 	@media (max-width: 900px) {
@@ -281,14 +358,14 @@ html {
 	/* ---------------- Buttons ---------------- */
 	.gs-btn {
 		display: inline-flex; align-items: center; gap: 7px;
-		padding: 9px 16px; border-radius: 9px; border: 1px solid transparent;
+		padding: 9px 16px; border-radius: 4px; border: 1px solid transparent;
 		font-size: 13px; font-weight: 600; cursor: pointer; line-height: 1;
 		text-decoration: none;
 		transition: background .15s, box-shadow .15s, opacity .15s;
 		&:hover, &:focus { text-decoration: none; }
 		&--primary { background: $gs-primary; color: #fff; &:hover:not(:disabled){ background: $gs-primary-d; } }
 		&--secondary { background: var(--gs-soft); color: $gs-text; border-color: $gs-border; &:hover:not(:disabled){ background: var(--gs-soft-hover); } }
-		&--danger { background: #fdecec; color: $gs-danger; border-color: #f6caca; &:hover:not(:disabled){ background: #fbdcdc; } }
+		&--danger { background: color-mix(in srgb, var(--gs-danger) 10%, transparent); color: $gs-danger; border-color: color-mix(in srgb, var(--gs-danger) 35%, transparent); &:hover:not(:disabled){ background: color-mix(in srgb, var(--gs-danger) 16%, transparent); } }
 		&:disabled { opacity: .55; cursor: not-allowed; }
 	}
 
@@ -329,9 +406,9 @@ html {
 
 	.gs-input {
 		width: 100%; max-width: 420px; padding: 9px 12px;
-		border: 1px solid $gs-border; border-radius: 9px; background: $gs-input-bg;
+		border: 1px solid $gs-border; border-radius: 4px; background: $gs-input-bg;
 		font-size: 14px; color: $gs-text; transition: border-color .15s, box-shadow .15s;
-		&:focus { outline: none; border-color: $gs-primary; box-shadow: 0 0 0 3px rgba(47,107,255,.15); }
+		&:focus { outline: none; border-color: $gs-primary; box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-primary) 15%, transparent); }
 		&--number { max-width: 130px; }
 	}
 	.gs-textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; max-width: 520px; }
@@ -372,10 +449,10 @@ html {
 		/* Capitalisation suits a raw severity token ("critical"); it mangles a
 		   badge that carries a sentence ("22 issue(s)" -> "22 Issue(S)"). */
 		&--text { text-transform: none; }
-		&--info { background: #e7efff; color: #2952cc; }
-		&--success { background: #e3f6ea; color: #157f3b; }
-		&--warning { background: #fdf0dd; color: #a4600a; }
-		&--danger, &--error { background: #fde5e5; color: #c02626; }
+		&--info { background: var(--gs-accent-soft); color: var(--gs-primary); }
+		&--success { background: color-mix(in srgb, var(--gs-success) 12%, transparent); color: var(--gs-success); }
+		&--warning { background: color-mix(in srgb, var(--gs-warning) 14%, transparent); color: var(--gs-warning-ink); }
+		&--danger, &--error { background: color-mix(in srgb, var(--gs-danger) 12%, transparent); color: var(--gs-danger); }
 	}
 
 	/* ---------------- Dashboard ---------------- */
@@ -388,9 +465,9 @@ html {
 	.gs-hero__status {
 		margin-top: 12px; font-size: 12px; font-weight: 700;
 		padding: 3px 12px; border-radius: 999px; letter-spacing: .01em;
-		&--good { background: rgba(22,163,74,.12); color: $gs-success; }
-		&--warn { background: rgba(217,119,6,.15); color: $gs-warning; }
-		&--bad  { background: rgba(220,38,38,.10); color: $gs-danger; }
+		&--good { background: color-mix(in srgb, var(--gs-success) 12%, transparent); color: $gs-success; }
+		&--warn { background: color-mix(in srgb, var(--gs-warning) 15%, transparent); color: $gs-warning; }
+		&--bad  { background: color-mix(in srgb, var(--gs-danger) 10%, transparent); color: $gs-danger; }
 	}
 	.gs-hero__count { margin: 10px 0 0; color: $gs-muted; font-size: 12.5px; line-height: 1.4; }
 	.gs-score { text-align: center; }
@@ -411,7 +488,7 @@ html {
 		display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px;
 		li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 		li.is-on { color: $gs-text; .gs-icon { color: $gs-success; } }
-		li.is-off { color: $gs-muted; .gs-icon { color: #c2c8d4; } }
+		li.is-off { color: $gs-muted; .gs-icon { color: var(--gs-track); } }
 	}
 
 	.gs-stat {
@@ -424,7 +501,7 @@ html {
 
 	.gs-bars { display: flex; align-items: flex-end; gap: 10px; height: 160px; padding-top: 10px; }
 	.gs-bars__col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
-	.gs-bars__bar { width: 100%; max-width: 38px; min-height: 4px; background: linear-gradient(180deg, #5a8bff, #2f6bff); border-radius: 6px 6px 0 0; }
+	.gs-bars__bar { width: 100%; max-width: 38px; min-height: 4px; background: var(--gs-primary); border-radius: 6px 6px 0 0; }
 	.gs-bars__label { font-size: 11px; color: $gs-muted; }
 
 	.gs-events { list-style: none; margin: 0; padding: 0; }
@@ -439,16 +516,16 @@ html {
 		p { margin: 4px 0 0; color: $gs-muted; font-size: 13px; }
 	}
 	.gs-alert {
-		display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 9px; margin: 12px 0; font-size: 13px;
-		&--warning { background: #fdf3e3; color: #92500a; border: 1px solid #f5dcae; .gs-icon { color: $gs-warning; } }
-		&--danger { align-items: flex-start; background: #fdeceb; color: #8a1c13; border: 1px solid #f3c6c1; .gs-icon { color: #d63a2b; margin-top: 1px; } p { margin: 4px 0 0; } strong { font-size: 14px; } }
+		display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 6px; margin: 12px 0; font-size: 13px;
+		&--warning { background: color-mix(in srgb, var(--gs-warning) 12%, transparent); color: var(--gs-warning-ink); border: 1px solid color-mix(in srgb, var(--gs-warning) 40%, transparent); .gs-icon { color: $gs-warning; } }
+		&--danger { align-items: flex-start; background: color-mix(in srgb, var(--gs-danger) 10%, transparent); color: var(--gs-danger); border: 1px solid color-mix(in srgb, var(--gs-danger) 35%, transparent); .gs-icon { color: var(--gs-danger); margin-top: 1px; } p { margin: 4px 0 0; } strong { font-size: 14px; } }
 	}
-	.gs-breach { border: 1px solid #f3c6c1; box-shadow: 0 0 0 3px rgba( 214, 58, 43, .07 ); }
-	.gs-breach--warn { border-color: #f5dcae; box-shadow: 0 0 0 3px rgba( 234, 160, 40, .08 ); }
+	.gs-breach { border: 1px solid color-mix(in srgb, var(--gs-danger) 35%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-danger) 7%, transparent); }
+	.gs-breach--warn { border-color: color-mix(in srgb, var(--gs-warning) 40%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-warning) 8%, transparent); }
 	.gs-breach__hint { margin: 12px 0 0; font-size: 12.5px; color: $gs-muted; }
 	.gs-admins--hidden { margin-top: 14px; }
-	.gs-admins__row--hidden { background: #fdf6f5; border-radius: 8px; padding: 11px 12px; border-bottom: 0; margin-bottom: 8px; }
-	.gs-breach--warn .gs-admins__row--hidden { background: #fdf8ee; }
+	.gs-admins__row--hidden { background: color-mix(in srgb, var(--gs-danger) 6%, transparent); border-radius: 8px; padding: 11px 12px; border-bottom: 0; margin-bottom: 8px; }
+	.gs-breach--warn .gs-admins__row--hidden { background: color-mix(in srgb, var(--gs-warning) 8%, transparent); }
 	.gs-admins__actions { display: flex; gap: 8px; }
 	.gs-admins__trailing { display: flex; align-items: center; gap: 10px; }
 	.gs-admins { list-style: none; margin: 0; padding: 0; }
@@ -460,7 +537,7 @@ html {
 	.gs-extra { margin-top: 16px; h4 { margin: 0 0 8px; font-size: 13px; } }
 	.gs-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 	.gs-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--gs-soft); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 12.5px;
-		button { border: 0; background: #d7dce6; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; line-height: 1; font-size: 13px; color: #555; } }
+		button { border: 0; background: var(--gs-track); width: 18px; height: 18px; border-radius: 50%; cursor: pointer; line-height: 1; font-size: 13px; color: var(--gs-text); } }
 	.gs-field__control > .gs-addrow { flex: 1 1 auto; margin-top: 0; }
 	.gs-addrow { display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap; .gs-input { max-width: 340px; flex: 1 1 160px; } .gs-input--number { flex: 0 1 230px; max-width: 230px; } .gs-btn { flex: 0 0 auto; white-space: nowrap; } }
 
@@ -497,8 +574,8 @@ html {
 			width: 54px; height: 54px; border-radius: 15px; flex-shrink: 0;
 			display: grid; place-items: center;
 			.gs-icon { color: currentColor; }
-			&--good { background: rgba(22, 163, 74, .12); color: $gs-success; }
-			&--bad  { background: rgba(220, 38, 38, .10); color: $gs-danger; }
+			&--good { background: color-mix(in srgb, var(--gs-success) 12%, transparent); color: $gs-success; }
+			&--bad  { background: color-mix(in srgb, var(--gs-danger) 10%, transparent); color: $gs-danger; }
 			&--idle { background: var(--gs-accent-soft); color: $gs-primary; }
 		}
 		&__text { flex: 1 1 240px; min-width: 0; }
@@ -525,9 +602,9 @@ html {
 		&__n {
 			min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
 			display: inline-grid; place-items: center; font-size: 11.5px; font-weight: 700;
-			background: rgba(220, 38, 38, .10); color: $gs-danger;
+			background: color-mix(in srgb, var(--gs-danger) 10%, transparent); color: $gs-danger;
 		}
-		&--warning .gs-jumpchip__n { background: rgba(217, 119, 6, .14); color: $gs-warning; }
+		&--warning .gs-jumpchip__n { background: color-mix(in srgb, var(--gs-warning) 14%, transparent); color: $gs-warning; }
 	}
 
 	/* ---------------- Notifications ---------------- */
@@ -593,7 +670,7 @@ html {
 	.gs-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 4px; background: var(--gs-soft); border: 1px solid $gs-border; border-radius: 12px; flex-wrap: wrap; }
 	.gs-tab {
 		display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
-		padding: 8px 16px; border: 0; border-radius: 9px; background: transparent;
+		padding: 8px 16px; border: 0; border-radius: 6px; background: transparent;
 		font-size: 14px; font-weight: 600; color: $gs-muted; line-height: 1.4;
 		transition: background .15s, color .15s;
 		.gs-icon { color: currentColor; }
@@ -615,12 +692,12 @@ html {
 		&::-webkit-scrollbar-thumb { background: var(--gs-track); border-radius: 8px; }
 	}
 	.gs-actionlist__item {
-		display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 10px;
+		display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 6px;
 		background: var(--gs-fill); border: 1px solid $gs-border;
 		// The text column takes the slack so the action sits hard right.
 		> div { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
 		strong { font-size: 13.5px; color: $gs-text; font-weight: 600; }
-		&.is-threat { background: #fef2f2; border-color: #fecaca; }
+		&.is-threat { background: color-mix(in srgb, var(--gs-danger) 8%, transparent); border-color: color-mix(in srgb, var(--gs-danger) 30%, transparent); }
 		&.is-todo .gs-icon { color: $gs-warning; margin-top: 1px; }
 	}
 	.gs-actionlist__fix { font-size: 12px; color: $gs-muted; }
@@ -677,10 +754,10 @@ html {
 	.gs-field__control > .gs-rs { flex: 1 1 auto; min-width: 0; max-width: 520px; }
 	.gs-rs__control {
 		background: $gs-input-bg !important;
-		border-color: $gs-border !important; border-radius: 9px !important;
+		border-color: $gs-border !important; border-radius: 6px !important;
 		min-height: 38px !important; box-shadow: none !important;
 	}
-	.gs-rs__control--is-focused { border-color: $gs-primary !important; box-shadow: 0 0 0 3px rgba(47,107,255,.15) !important; }
+	.gs-rs__control--is-focused { border-color: $gs-primary !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-primary) 15%, transparent) !important; }
 	.gs-rs__control--is-disabled { background: var(--gs-fill) !important; opacity: .7; }
 	.gs-rs__multi-value { background: var(--gs-accent-soft) !important; border-radius: 6px !important; }
 	.gs-rs__multi-value__label { color: $gs-primary !important; font-weight: 600; }
@@ -694,7 +771,7 @@ html {
 	.gs-rs__indicator { color: $gs-muted !important; &:hover { color: $gs-text !important; } }
 	.gs-rs__menu {
 		background: $gs-surface !important; border: 1px solid $gs-border !important;
-		border-radius: 10px !important; box-shadow: $gs-shadow !important;
+		border-radius: 6px !important; box-shadow: $gs-shadow !important;
 		overflow: hidden; z-index: 20 !important;
 	}
 	.gs-rs__option {
@@ -720,7 +797,7 @@ html {
 	.gs-spinner {
 		width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff;
 		border-radius: 50%; animation: gs-spin .7s linear infinite; display: inline-block;
-		&--lg { width: 26px; height: 26px; border-color: #d4dae6; border-top-color: $gs-primary; }
+		&--lg { width: 26px; height: 26px; border-color: var(--gs-border); border-top-color: $gs-primary; }
 	}
 	.gs-btn--secondary .gs-spinner { border-color: rgba(0,0,0,.2); border-top-color: $gs-text; }
 	@keyframes gs-spin { to { transform: rotate(360deg); } }
@@ -736,7 +813,7 @@ html {
 		.gs-toasts { top: calc(46px + 20px); right: 12px; left: 12px; }
 	}
 	.gs-toast {
-		padding: 12px 18px; border-radius: 10px; color: #fff; font-weight: 600; font-size: 13px;
+		padding: 12px 18px; border-radius: 6px; color: #fff; font-weight: 600; font-size: 13px;
 		box-shadow: 0 8px 24px rgba(16,24,40,.18); cursor: pointer; min-width: 220px;
 		animation: gs-slide .25s ease;
 		&--success { background: $gs-success; }
@@ -756,8 +833,8 @@ html {
 		font-weight: 700;
 		letter-spacing: .5px;
 		line-height: 1.4;
-		border-radius: 9px;
-		background: linear-gradient(135deg, #f59e0b, #d97706);
+		border-radius: 6px;
+		background: var(--gs-warning);
 		color: #fff;
 		white-space: nowrap;
 		vertical-align: middle;
@@ -824,7 +901,7 @@ html {
 			height: 52px;
 			margin-bottom: 12px;
 			border-radius: 50%;
-			background: rgba(245, 158, 11, .14);
+			background: color-mix(in srgb, var(--gs-warning) 14%, transparent);
 			color: $gs-warning;
 		}
 
@@ -849,7 +926,7 @@ html {
 
 	.gs-notice {
 		padding: 12px 14px;
-		border-radius: 10px;
+		border-radius: 6px;
 		font-size: 13px;
 		display: flex;
 		align-items: center;
@@ -857,15 +934,15 @@ html {
 		gap: 6px;
 
 		&--error {
-			background: rgba(220, 38, 38, .08);
+			background: color-mix(in srgb, var(--gs-danger) 8%, transparent);
 			color: $gs-danger;
-			border: 1px solid rgba(220, 38, 38, .25);
+			border: 1px solid color-mix(in srgb, var(--gs-danger) 25%, transparent);
 		}
 
 		&--info {
-			background: rgba(47, 107, 255, .08);
+			background: color-mix(in srgb, var(--gs-primary) 8%, transparent);
 			color: $gs-primary-d;
-			border: 1px solid rgba(47, 107, 255, .22);
+			border: 1px solid color-mix(in srgb, var(--gs-primary) 22%, transparent);
 		}
 	}
 
@@ -919,7 +996,7 @@ html {
 		transition: border-color .15s ease, box-shadow .15s ease;
 
 		&.is-active {
-			border-color: rgba(47, 107, 255, .45);
+			border-color: color-mix(in srgb, var(--gs-primary) 45%, transparent);
 		}
 
 		&.is-locked {
@@ -933,8 +1010,8 @@ html {
 			justify-content: center;
 			width: 40px;
 			height: 40px;
-			border-radius: 10px;
-			background: rgba(47, 107, 255, .1);
+			border-radius: 6px;
+			background: color-mix(in srgb, var(--gs-primary) 10%, transparent);
 			color: $gs-primary;
 		}
 
@@ -1008,7 +1085,7 @@ html {
 		}
 		&__body { flex: 1 1 auto; overflow-y: auto; padding: 20px 22px 40px; }
 		&__summary {
-			margin: 0 0 20px; padding: 12px 14px; border-radius: 10px;
+			margin: 0 0 20px; padding: 12px 14px; border-radius: 6px;
 			background: $gs-accent-soft; color: $gs-text;
 			font-size: 13.5px; line-height: 1.6;
 		}
@@ -1040,7 +1117,7 @@ html {
 
 	.gs-guide {
 		margin: 0 0 16px;
-		border: 1px solid $gs-border; border-radius: 10px;
+		border: 1px solid $gs-border; border-radius: 6px;
 		background: $gs-fill;
 		overflow: hidden;
 
@@ -1097,20 +1174,20 @@ html {
 
 		&__result {
 			display: flex; align-items: flex-start; gap: 8px;
-			padding: 9px 13px; border-radius: 9px;
+			padding: 9px 13px; border-radius: 6px;
 			font-size: 13px; line-height: 1.5;
 			border: 1px solid transparent;
 			.gs-icon { flex-shrink: 0; margin-top: 2px; }
 			strong { display: block; font-weight: 600; }
 
 			&.is-ok {
-				background: rgba(22, 163, 74, .08);
-				border-color: rgba(22, 163, 74, .28);
+				background: color-mix(in srgb, var(--gs-success) 8%, transparent);
+				border-color: color-mix(in srgb, var(--gs-success) 28%, transparent);
 				color: $gs-success;
 			}
 			&.is-fail {
-				background: rgba(220, 38, 38, .08);
-				border-color: rgba(220, 38, 38, .28);
+				background: color-mix(in srgb, var(--gs-danger) 8%, transparent);
+				border-color: color-mix(in srgb, var(--gs-danger) 28%, transparent);
 				color: $gs-danger;
 			}
 		}

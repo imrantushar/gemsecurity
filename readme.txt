@@ -4,7 +4,7 @@ Tags: security, firewall, two factor authentication, malware scanner, backup
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
@@ -74,6 +74,29 @@ The ones the in-plugin guides call out: a custom login URL (save the new address
 Yes. Everything described above works in the free plugin. Pro adds active threat protection, malware remediation and scale features.
 
 == Changelog ==
+
+= 1.1.0 - 19/10/2026 =
+* Added - Plugin Guard verifies every plugin against WordPress.org checksums with a trust list for premium, custom, theme and must-use plugins. With enforcement on, untrusted plugins are stopped before they load and deactivated, activation and non-.org installs are refused, unknown mu-plugins are quarantined, and a danger alert is sent. Runs from an early mu-plugin loader.
+* Added - Install Lock blocks zip uploads, all installs, or every file modification for every account, with a logged 15-minute timed unlock.
+* Added - Upload Shield (on by default) refuses executable files on every upload path, PHP hidden in images and scripted SVG, and writes uploads/.htaccess deny rules with a live PHP-execution probe and an nginx snippet.
+* Added - A first-run setup wizard (welcome, protection level, features, alerts, summary) opens once after a fresh activation and is reachable again from the topbar; pre-wizard installs are marked legacy.
+* Added - The admin menu is grouped into Dashboard, Firewall, Login & Access, Scanning, Logs & Monitoring and Settings. The WordPress sidebar shows one entry per group; existing module URLs keep working.
+* Added - The audit log records how every event arrived (admin, REST, REST via application password, XML-RPC, AJAX, WP-CLI, cron), the user agent, and a short login session id, via a new `gemsecurity/log_args` filter.
+* Added - Edits to live posts log a field-level diff (title, slug, content snippet, excerpt, author, date, parent, password, comments) and link the revision to compare or restore. New outbound links are listed and raise the event to warning.
+* Added - SEO meta (title and description, canonical, robots, redirect, focus keyword), page template and featured image changes are logged. User creation, role changes (admin promotions at warning) and email or password changes are logged.
+* Added - The Logs page lets you click a user to see everything they did, see the full history of a post, and expand a details row.
+* Added - A public page picker for the custom login URL. Logged-out login, lost-password and register links on public pages point at the chosen public page (default: homepage) and the logout link at the homepage, so the secret address is no longer printed to visitors and bots. New filter `gemsecurity/custom_login_public_url`.
+* Added - Front-end login forms outside wp-login.php are redirected to the 2FA challenge instead of skipping it. REST endpoints that run their own challenge (such as Academy's `/academy/v1/login`) can opt out via `gemsecurity/2fa_challenge_routes` and `gemsecurity/2fa_external_challenge`.
+* Changed - 2FA seeds are sealed with AES-256-GCM. The key lives in `GEMSECURITY_SECRET_KEY` or a wp-content key file, not the database and not the WordPress salts, so salt rotation can no longer lock users out. Existing seeds are migrated on admin load.
+* Changed - Password logins that cannot show the 2FA challenge (XML-RPC, HTTP basic auth, REST, AJAX popups) are refused for 2FA users; application passwords still work.
+* Changed - Security headers are now added to REST responses, served before `send_headers` ever fires; endpoint-set headers are kept.
+* Changed - Upload Shield's no-exec `.htaccess` now also covers wp-includes (core's wp-tinymce.php and ms-files.php stay allowed), languages and upgrade; removing it leaves other tools' rules byte-for-byte intact.
+* Changed - Backups move back to the standalone GemBackup plugin. The Backup module, page, REST routes and tables are gone from GemSecurity. When GemBackup is active, the pre-update backup option, Incident Response roll back and the security score's recent-backup check are kept and link to GemBackup. Uninstall no longer drops backup tables, archives or GemBackup's cron events.
+* Changed - Backup notification settings are removed from the Notifications page; they live in GemBackup's own settings.
+* Changed - Finder (database and site scan) now searches the whole install (web root, core directories, every theme and stray folders) and more database tables.
+* Changed - Admin UI adopts the GemCRM color system in light and dark, with border-only surfaces, 8px card radius and 4px buttons and inputs. Hard-coded semantic tints (alerts, badges, breach rows, danger buttons, threat items) use `color-mix()` on tokens so they follow both themes; brand gradients are replaced with solid brand blue.
+* Fixed - A self-posting front-end login form has no referer, so the 2FA challenge used to send users to the dashboard; it now returns them to the requested URL.
+* Fixed - `/logs` never returned the user display name, so the log never showed who did anything (a by-reference loop over an `(array)` cast wrote to a copy).
 
 = 1.0.0 - 28/09/2026 =
 * Added - CAPTCHA is its own module, with its own page, instead of a card under Login Security. Sites that already use CAPTCHA keep it after the update.

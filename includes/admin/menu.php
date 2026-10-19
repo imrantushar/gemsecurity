@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use GemSecurity\Helper;
+use GemSecurity\Modules\Registry;
 
 class Menu {
 
@@ -13,6 +14,7 @@ class Menu {
 		$self = new self();
 		add_action( 'admin_menu', [ $self, 'admin_menu' ] );
 		add_action( 'admin_head', [ $self, 'menu_badge_styles' ] );
+		add_filter( 'submenu_file', [ $self, 'highlight_group' ], 10, 2 );
 	}
 
 	public function admin_menu() {
@@ -47,6 +49,58 @@ class Menu {
 				[ $this, 'load_main_template' ]
 			);
 		}
+
+		$this->collapse_to_groups();
+	}
+
+	/**
+	 * Show one sidebar entry per navigation group instead of one per module.
+	 *
+	 * Every module page stays registered above (so its URL resolves and passes
+	 * the capability check); only the visible `$submenu` list is trimmed to
+	 * each group's lead page and relabelled with the group's title. The app's
+	 * topbar holds the per-module navigation inside each group.
+	 */
+	private function collapse_to_groups() {
+		global $submenu;
+
+		if ( empty( $submenu[ GEMSECURITY_PLUGIN_SLUG ] ) ) {
+			return;
+		}
+
+		$leads = [];
+		foreach ( Registry::visible_groups() as $group ) {
+			$leads[ $group['lead'] ] = $group['title'];
+		}
+
+		$items = [];
+		foreach ( $submenu[ GEMSECURITY_PLUGIN_SLUG ] as $item ) {
+			if ( isset( $leads[ $item[2] ] ) ) {
+				$item[0] = esc_html( $leads[ $item[2] ] );
+				$items[] = $item;
+			}
+		}
+		$submenu[ GEMSECURITY_PLUGIN_SLUG ] = $items; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+	}
+
+	/**
+	 * Highlight the group entry while any of its module pages is open.
+	 *
+	 * @param string|null $submenu_file Current submenu file.
+	 * @param string      $parent_file  Current parent file.
+	 * @return string|null
+	 */
+	public function highlight_group( $submenu_file, $parent_file ) {
+		if ( GEMSECURITY_PLUGIN_SLUG !== $parent_file ) {
+			return $submenu_file;
+		}
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		foreach ( Registry::visible_groups() as $group ) {
+			if ( in_array( $page, $group['pages'], true ) ) {
+				return $group['lead'];
+			}
+		}
+		return $submenu_file;
 	}
 
 	/**
