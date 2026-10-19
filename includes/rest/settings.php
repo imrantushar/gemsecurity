@@ -196,6 +196,7 @@ class Settings {
 			// Custom login URL.
 			'custom_login_enabled'          => 'bool',
 			'custom_login_slug'             => 'login_slug',
+			'custom_login_public_page'      => 'int',
 			'login_honeypot_enabled'        => 'bool',
 			'trusted_devices_enabled'       => 'bool',
 			'trusted_devices_alert'         => 'bool',

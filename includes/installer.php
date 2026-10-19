@@ -472,6 +472,7 @@ class Installer {
 			// Custom login URL.
 			'custom_login_enabled'         => false,
 			'custom_login_slug'            => '',
+			'custom_login_public_page'     => 0,
 
 			// Login extras.
 			'login_honeypot_enabled'       => true,

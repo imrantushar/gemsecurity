@@ -51,6 +51,8 @@ class CustomLogin {
 		add_filter( 'wp_redirect', [ $self, 'filter_redirect' ], 10, 1 );
 		add_filter( 'login_url', [ $self, 'login_url' ], 10, 1 );
 		add_filter( 'lostpassword_url', [ $self, 'login_url' ], 10, 1 );
+		add_filter( 'register_url', [ $self, 'login_url' ], 10, 1 );
+		add_filter( 'logout_url', [ $self, 'logout_url' ], 10, 1 );
 
 		// Serve the slug once WordPress is fully loaded (pluggable functions
 		// available); 404 the default wp-login.php from inside its own bootstrap.
@@ -202,8 +204,67 @@ class CustomLogin {
 		return $this->maybe_rewrite( $location );
 	}
 
+	/**
+	 * Login / lost-password / registration links.
+	 *
+	 * Plugins and themes print these on public pages — in menus, "log in to
+	 * continue" buttons, and the settings objects their scripts read — so
+	 * for a logged-out visitor every page would hand out the secret address.
+	 * There they point at the public login page chosen in settings (or the
+	 * homepage) instead. The real login screen itself, and signed-in users,
+	 * still get the secret address. Login forms embedded on public pages
+	 * keep posting to it (that goes through site_url()), or they would stop
+	 * working.
+	 *
+	 * @param string $url
+	 * @return string
+	 */
 	public function login_url( $url ) {
+		if ( $this->hide_from_visitor() ) {
+			return $this->public_login_url();
+		}
 		return $this->maybe_rewrite( $url );
+	}
+
+	/**
+	 * A visitor who is not signed in has nothing to log out of; the link
+	 * would only reveal the secret address.
+	 *
+	 * @param string $url
+	 * @return string
+	 */
+	public function logout_url( $url ) {
+		if ( $this->hide_from_visitor() ) {
+			return home_url( '/' );
+		}
+		return $this->maybe_rewrite( $url );
+	}
+
+	/** Logged-out request for anything other than the login screen itself. */
+	private function hide_from_visitor() {
+		if ( $this->serving || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+			return false;
+		}
+		if ( isset( $GLOBALS['pagenow'] ) && 'wp-login.php' === $GLOBALS['pagenow'] ) {
+			return false;
+		}
+		// Too early to know who is asking: leave it alone.
+		if ( ! function_exists( 'is_user_logged_in' ) || ! did_action( 'plugins_loaded' ) ) {
+			return false;
+		}
+		return ! is_user_logged_in();
+	}
+
+	/** Where public login links go: the chosen page, else the homepage. */
+	private function public_login_url() {
+		$page_id = (int) Helper::get_setting( 'custom_login_public_page', 0 );
+		$url     = $page_id && 'publish' === get_post_status( $page_id ) ? get_permalink( $page_id ) : '';
+		/**
+		 * Filter where public login links point while the login URL is secret.
+		 *
+		 * @param string $url
+		 */
+		return (string) apply_filters( 'gemsecurity/custom_login_public_url', $url ? $url : home_url( '/' ) );
 	}
 
 	private function maybe_rewrite( $url ) {
