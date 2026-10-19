@@ -5,6 +5,7 @@ use GemSecurity\Helper;
 use GemSecurity\Mailer;
 use GemSecurity\Logger;
 use GemSecurity\Security\Totp;
+use GemSecurity\Security\SecretBox;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -22,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * User meta:
  *   _gemsec_2fa_enabled       bool
  *   _gemsec_2fa_method        'totp' | 'email'
- *   _gemsec_2fa_secret        Base32 TOTP secret
+ *   _gemsec_2fa_secret        Base32 TOTP secret, sealed by SecretBox (AES-256-GCM)
  *   _gemsec_2fa_secret_pending pending secret during enrollment
  *   _gemsec_2fa_backup_codes  array of password-hashed backup codes
  */
@@ -39,7 +40,50 @@ class TwoFactor {
 		}
 		$self = new self();
 		add_action( 'wp_login', [ $self, 'maybe_challenge' ], 10, 2 );
+		// Password logins that can never show the challenge (XML-RPC, REST
+		// basic auth, AJAX login popups) are refused outright for 2FA users;
+		// otherwise a stolen password alone would get in through them.
+		add_filter( 'authenticate', [ $self, 'block_unchallengeable_login' ], 99, 3 );
 		add_action( 'login_form_gemsec_2fa', [ $self, 'handle_challenge_response' ] );
+		add_action( 'admin_init', [ __CLASS__, 'seal_legacy_secrets' ] );
+	}
+
+	/**
+	 * One-time migration: encrypt TOTP seeds stored before SecretBox existed.
+	 * Retries on later admin loads until every seed is sealed.
+	 */
+	public static function seal_legacy_secrets() {
+		if ( get_option( 'gemsecurity_2fa_sealed' ) || ! SecretBox::available() ) {
+			return;
+		}
+		$left = 0;
+		foreach ( [ '_gemsec_2fa_secret', '_gemsec_2fa_secret_pending' ] as $key ) {
+			// Only still-plain seeds, 500 per admin load; a full batch means
+			// there may be more, so the flag stays unset and it runs again.
+			$ids = get_users( [
+				'fields'     => 'ID',
+				'number'     => 500,
+				'meta_query' => [ [ 'key' => $key, 'value' => SecretBox::PREFIX, 'compare' => 'NOT LIKE' ] ], // phpcs:ignore WordPress.DB.SlowDBQuery
+			] );
+			if ( count( $ids ) >= 500 ) {
+				$left++;
+			}
+			foreach ( $ids as $uid ) {
+				$val = (string) get_user_meta( $uid, $key, true );
+				if ( '' === $val || SecretBox::is_sealed( $val ) ) {
+					continue;
+				}
+				$sealed = SecretBox::seal( $val );
+				if ( SecretBox::is_sealed( $sealed ) && SecretBox::open( $sealed ) === $val ) {
+					update_user_meta( $uid, $key, $sealed );
+				} else {
+					$left++;
+				}
+			}
+		}
+		if ( ! $left ) {
+			update_option( 'gemsecurity_2fa_sealed', 1, false );
+		}
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -60,8 +104,12 @@ class TwoFactor {
 		if ( ! $user instanceof \WP_User ) {
 			$user = get_user_by( 'login', $user_login );
 		}
-		if ( ! $user instanceof \WP_User || ! $this->is_interactive_login() ) {
+		if ( ! $user instanceof \WP_User ) {
 			return;
+		}
+		$context = $this->login_context();
+		if ( 'login' !== $context && 'form' !== $context ) {
+			return; // 'api' is refused in authenticate; cron/CLI never log in with a password.
 		}
 		if ( ! self::user_needs_2fa( $user ) ) {
 			return;
@@ -73,7 +121,18 @@ class TwoFactor {
 
 		$method   = self::user_method( $user );
 		$remember = ! empty( $_POST['rememberme'] );
-		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : admin_url();
+		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : '';
+		if ( '' === $redirect ) {
+			// A front-end form (shop account page, member login widget) should
+			// land back where it was; wp-login.php keeps going to the dashboard.
+			// wp_get_referer() is false for a form that posts to its own URL
+			// (the common case), so fall back to the URL being requested.
+			$redirect = admin_url();
+			if ( 'form' === $context ) {
+				$here     = isset( $_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI'] ) ? ( is_ssl() ? 'https://' : 'http://' ) . sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) . esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+				$redirect = wp_validate_redirect( wp_get_referer() ? wp_get_referer() : $here, admin_url() );
+			}
+		}
 
 		$token   = wp_generate_password( 32, false );
 		$pending = [ 'user_id' => $user->ID, 'remember' => $remember, 'redirect' => $redirect, 'method' => $method ];
@@ -91,8 +150,117 @@ class TwoFactor {
 
 		Logger::log( '2fa_challenge', sprintf( 'Second factor required for "%s" (%s).', $user->user_login, $method ), Logger::SEVERITY_INFO, [ 'user_id' => $user->ID ] );
 
+		if ( 'form' === $context ) {
+			// Login forms outside wp-login.php cannot render the challenge
+			// themselves (login_header() only exists there), so hand over.
+			wp_safe_redirect( add_query_arg( 'gemsec_2fa_token', rawurlencode( $token ), site_url( 'wp-login.php?action=gemsec_2fa', 'login' ) ) );
+			exit;
+		}
+
 		$this->render_form( $token, $method, '' );
 		exit;
+	}
+
+	/**
+	 * Refuse a password login that has no way to show the second-factor
+	 * prompt. Application passwords stay allowed: they are per-app, revocable
+	 * and are the supported way for API clients to authenticate.
+	 *
+	 * @param \WP_User|\WP_Error|null $user
+	 * @param string                  $username
+	 * @param string                  $password
+	 * @return \WP_User|\WP_Error|null
+	 */
+	public function block_unchallengeable_login( $user, $username = '', $password = '' ) {
+		if ( ! $user instanceof \WP_User || did_action( 'application_password_did_authenticate' ) ) {
+			return $user;
+		}
+		if ( 'api' !== $this->login_context() || ! self::user_needs_2fa( $user ) ) {
+			return $user;
+		}
+		if ( $this->challenged_elsewhere( $user ) ) {
+			return $user;
+		}
+		Logger::log(
+			'2fa_api_login_blocked',
+			sprintf( 'Password login for "%s" refused: it came through %s, which cannot show the two-factor prompt.', $user->user_login, $this->api_channel() ),
+			Logger::SEVERITY_WARNING,
+			[ 'user_id' => $user->ID ]
+		);
+		return new \WP_Error(
+			'gemsec_2fa_required',
+			sprintf(
+				/* translators: %s: login URL. */
+				__( 'This account uses two-factor authentication. Please sign in at %s. Apps and integrations should use an application password.', 'gemsecurity' ),
+				wp_login_url()
+			)
+		);
+	}
+
+	/**
+	 * Whether an integration will run its own second-factor challenge for
+	 * this API login (it hooks wp_login, tears the session down and asks for
+	 * the code), so refusing the password here would lock its users out.
+	 * Academy's REST login does exactly that.
+	 *
+	 * @param \WP_User $user
+	 * @return bool
+	 */
+	private function challenged_elsewhere( $user ) {
+		$route = isset( $GLOBALS['wp']->query_vars['rest_route'] ) ? '/' . trim( (string) $GLOBALS['wp']->query_vars['rest_route'], '/' ) : '';
+		$routes = class_exists( '\Academy\Integration\GemSecurity' ) ? [ '/academy/v1/login' ] : [];
+		/**
+		 * REST routes whose login handler challenges 2FA itself.
+		 *
+		 * @param string[] $routes
+		 */
+		$routes = (array) apply_filters( 'gemsecurity/2fa_challenge_routes', $routes );
+		/**
+		 * Whether this API password login is challenged by an integration.
+		 *
+		 * @param bool     $handled
+		 * @param \WP_User $user
+		 * @param string   $route Current REST route ('' outside REST).
+		 */
+		return (bool) apply_filters( 'gemsecurity/2fa_external_challenge', '' !== $route && in_array( $route, $routes, true ), $user, $route );
+	}
+
+	/**
+	 * Where this password login came from.
+	 *
+	 * login – wp-login.php (the challenge renders in place)
+	 * form  – a browser form elsewhere (redirected to the challenge)
+	 * api   – XML-RPC, REST basic auth, AJAX: no way to prompt, so refused
+	 * other – cron / WP-CLI
+	 *
+	 * @return string
+	 */
+	private function login_context() {
+		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			return 'other';
+		}
+		if ( '' !== $this->api_channel() ) {
+			return 'api';
+		}
+		return isset( $GLOBALS['pagenow'] ) && 'wp-login.php' === $GLOBALS['pagenow'] ? 'login' : 'form';
+	}
+
+	/** @return string Human name of the non-interactive channel, '' if none. */
+	private function api_channel() {
+		if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
+			return 'XML-RPC';
+		}
+		// Basic-auth style plugins authenticate while resolving the current user.
+		if ( doing_filter( 'determine_current_user' ) ) {
+			return 'HTTP authentication';
+		}
+		if ( ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || wp_is_json_request() ) {
+			return 'the REST API';
+		}
+		if ( wp_doing_ajax() ) {
+			return 'an AJAX login form';
+		}
+		return '';
 	}
 
 	/**
@@ -100,6 +268,9 @@ class TwoFactor {
 	 */
 	public function handle_challenge_response() {
 		$token   = isset( $_POST['gemsec_2fa_token'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_token'] ) ) : '';
+		if ( '' === $token && isset( $_GET['gemsec_2fa_token'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$token = sanitize_text_field( wp_unslash( $_GET['gemsec_2fa_token'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		}
 		$pending = $token ? get_transient( self::PENDING_PREFIX . $token ) : false;
 
 		if ( ! $pending && $token ) {
@@ -134,6 +305,12 @@ class TwoFactor {
 
 		$code   = isset( $_POST['gemsec_2fa_code'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_code'] ) ) : '';
 		$method = $pending['method'];
+
+		// Arrived by redirect from a front-end login form: show the prompt.
+		if ( ! isset( $_POST['gemsec_2fa_code'] ) && ! isset( $_POST['gemsec_2fa_resend'] ) ) {
+			$this->render_form( $token, $method, '' );
+			exit;
+		}
 
 		// Allow resending an email code.
 		if ( isset( $_POST['gemsec_2fa_resend'] ) && 'email' === $method ) {
@@ -209,8 +386,8 @@ class TwoFactor {
 		}
 
 		if ( 'totp' === $method ) {
-			$secret = get_user_meta( $user->ID, '_gemsec_2fa_secret', true );
-			return $secret && Totp::verify( $secret, $code, 1 );
+			$secret = SecretBox::open( get_user_meta( $user->ID, '_gemsec_2fa_secret', true ) );
+			return '' !== $secret && Totp::verify( $secret, $code, 1 );
 		}
 
 		if ( 'email' === $method ) {
@@ -425,16 +602,6 @@ class TwoFactor {
 		}
 		// Enforced but not enrolled → email OTP (no lockout).
 		return 'email';
-	}
-
-	private function is_interactive_login() {
-		if ( ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
-			return false;
-		}
-		if ( wp_doing_ajax() || ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
-			return false;
-		}
-		return isset( $GLOBALS['pagenow'] ) && 'wp-login.php' === $GLOBALS['pagenow'];
 	}
 
 	/* ------------------------------------------------------------------ */

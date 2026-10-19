@@ -238,6 +238,7 @@ class PluginGuard {
 				'enabled'   => ! empty( $state['upload_shield'] ),
 				'markup'    => ! empty( $state['shield_markup'] ),
 				'htaccess'  => UploadShield::htaccess_installed(),
+				'dirs'      => UploadShield::htaccess_dirs(),
 				'server'    => false !== strpos( $server, 'nginx' ) ? 'nginx' : ( preg_match( '/apache|litespeed/', $server ) ? 'apache' : ( $server ? $server : 'unknown' ) ),
 				'probe'     => isset( $state['probe'] ) ? $state['probe'] : null,
 				'nginx'     => UploadShield::nginx_snippet(),
