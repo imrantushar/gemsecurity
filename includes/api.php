@@ -341,6 +341,22 @@ class Api {
 			] );
 		}
 
+		// Plugin Guard: .org verification, trust list and enforcement.
+		if ( self::module( 'plugin-guard' ) ) {
+			register_rest_route( $ns, '/plugin-guard', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\PluginGuard::class, 'get' ],
+				'permission_callback' => $perm,
+			] );
+			foreach ( [ 'verify', 'enable', 'trust', 'untrust', 'restore', 'lock', 'unlock', 'shield', 'probe' ] as $action ) {
+				register_rest_route( $ns, '/plugin-guard/' . $action, [
+					'methods'             => 'POST',
+					'callback'            => [ Rest\PluginGuard::class, $action ],
+					'permission_callback' => $perm,
+				] );
+			}
+		}
+
 		// Virtual patching (Pro) — CVEs currently mitigated on this site.
 		if ( self::module( 'virtual-patch' ) ) {
 			register_rest_route( $ns, '/vpatch', [

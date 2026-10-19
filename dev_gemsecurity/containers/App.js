@@ -25,6 +25,7 @@ import AdminGuard from '@Containers/pages/AdminGuard';
 import ApiHardening from '@Containers/pages/ApiHardening';
 import AntiSpam from '@Containers/pages/AntiSpam';
 import Scanner from '@Containers/pages/Scanner';
+import PluginGuard from '@Containers/pages/PluginGuard';
 import PaymentIntegrity from '@Containers/pages/PaymentIntegrity';
 import IncidentResponse from '@Containers/pages/IncidentResponse';
 import Logs from '@Containers/pages/Logs';
@@ -39,6 +40,7 @@ const PAGES = {
 	'gemsecurity-firewall': Firewall,
 	'gemsecurity-threats': ThreatDefense,
 	'gemsecurity-virtual-patch': VirtualPatch,
+	'gemsecurity-plugin-guard': PluginGuard,
 	'gemsecurity-login-security': LoginSecurity,
 	'gemsecurity-captcha': Captcha,
 	'gemsecurity-two-factor': TwoFactor,

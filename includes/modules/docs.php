@@ -220,6 +220,28 @@ class Docs {
 				],
 			],
 
+			'plugin-guard' => [
+				'summary' => __( 'An allowlist for code: only plugins verified against WordPress.org or approved by you can run or be installed.', 'gemsecurity' ),
+				'does'    => [
+					__( 'Checks every installed plugin against the official WordPress.org checksums for its version — a lookalike with a familiar folder name but edited or extra PHP files fails.', 'gemsecurity' ),
+					__( 'Shows which plugins and themes are on WordPress.org and which come from somewhere else.', 'gemsecurity' ),
+					__( 'With enforcement on, an untrusted plugin switched on through the database is stopped before it loads, deactivated, logged and reported by a DANGER email.', 'gemsecurity' ),
+					__( 'Unknown or edited must-use plugins are moved to quarantine before WordPress runs them.', 'gemsecurity' ),
+					__( 'Installing a plugin or theme that is not from WordPress.org is refused until you pre-approve its folder slug.', 'gemsecurity' ),
+				],
+				'setup'   => [
+					__( 'Open Plugin Guard and press Re-check to verify everything.', 'gemsecurity' ),
+					__( 'Turn on enforcement, tick the premium/custom plugins and must-use plugins you recognise, and confirm. Untick anything you do not recognise.', 'gemsecurity' ),
+					__( 'Before uploading a new premium plugin, add its folder slug under Pre-approve.', 'gemsecurity' ),
+				],
+				'notes'   => [
+					__( 'Plugins are trusted by folder slug, so a premium plugin keeps its trust across updates. Must-use plugins are trusted by content hash, so any edit removes their trust.', 'gemsecurity' ),
+					__( 'Themes are matched by name only — WordPress.org publishes no theme checksums.', 'gemsecurity' ),
+					__( 'Emergency off switch: add define( \'GEMSECURITY_PLUGIN_GUARD_OFF\', true ); to wp-config.php.', 'gemsecurity' ),
+					__( 'Plugins activated from WP-CLI are still checked on the next page load.', 'gemsecurity' ),
+				],
+			],
+
 			'virtual-patch' => [
 				'summary' => __( 'Blocks exploitation of known plugin and theme vulnerabilities at the request level, so you are covered in the gap between a disclosure and the vendor’s fix.', 'gemsecurity' ),
 				'does'    => [

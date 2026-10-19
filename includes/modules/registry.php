@@ -229,6 +229,17 @@ class Registry {
 				],
 			],
 
+			'plugin-guard' => [
+				'icon'          => 'shield',
+				'category'      => 'scanning',
+				// Visible by default so the verification report is one click
+				// away; enforcement itself stays off until the admin turns it
+				// on (and picks what to trust) on the page.
+				'recommended'   => true,
+				'page_slug'     => $slug . '-plugin-guard',
+				'classes'       => [ PluginGuard::class ],
+			],
+
 			'payment-integrity' => [
 				'icon'          => 'lock',
 				'category'      => 'scanning',
@@ -395,6 +406,10 @@ class Registry {
 			'api-hardening' => [
 				'title' => __( 'API & Access', 'gemsecurity' ),
 				'desc'  => __( 'REST API rate limiting and application-password governance.', 'gemsecurity' ),
+			],
+			'plugin-guard' => [
+				'title' => __( 'Plugin Guard', 'gemsecurity' ),
+				'desc'  => __( 'See which plugins and themes are verified on WordPress.org, trust your premium ones, and stop anything else — including hidden must-use plugins — from running or being installed.', 'gemsecurity' ),
 			],
 			'scanner' => [
 				'title' => __( 'Scanner', 'gemsecurity' ),

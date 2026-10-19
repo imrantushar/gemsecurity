@@ -8,9 +8,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Code & database finder — a "grep from the dashboard".
  *
- * Searches the site's own files (everything under wp-content: plugins, themes,
- * mu-plugins, drop-ins and uploads) and its database (options, posts, post meta
- * and comments) for a term, returning the file/line or table/row where it
+ * Searches the whole WordPress install (root files such as wp-config.php and
+ * .htaccess, every theme, plugins, mu-plugins, drop-ins, uploads, any stray
+ * top-level folders, then wp-admin and wp-includes) and its database (options,
+ * posts, post/user/term meta, term descriptions and comments) for a term, returning the file/line or table/row where it
  * occurs. Purpose-built for incident response: when a scan (or a browser) shows
  * an injected string, this locates every place it lives so it can be removed —
  * no SSH required.
@@ -21,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Finder {
 
-	const MAX_FILES        = 20000;
+	const MAX_FILES        = 40000;
 	const MAX_FILE_BYTES   = 3145728; // 3 MB — skip larger files.
 	const MAX_MATCHES      = 500;     // overall cap.
 	const MAX_PER_FILE     = 20;      // stop after N hits in one file.
@@ -31,9 +32,9 @@ class Finder {
 	/** Text extensions worth searching. */
 	private static function text_extensions() {
 		return [
-			'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'inc', 'phar',
+			'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'pht', 'inc', 'phar',
 			'js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'json', 'css', 'scss',
-			'html', 'htm', 'xml', 'txt', 'md', 'po', 'pot', 'htaccess', 'sql', 'ini', 'conf',
+			'html', 'htm', 'shtml', 'svg', 'ico', 'xml', 'txt', 'md', 'po', 'pot', 'htaccess', 'sql', 'ini', 'conf',
 		];
 	}
 
@@ -96,25 +97,47 @@ class Finder {
 		$scanned = 0;
 		$trunc   = false;
 
-		// The wp-content drop-ins live directly in wp-content — search them and
-		// any other top-level PHP first (tiny, and a favourite hiding spot).
-		foreach ( (array) glob( WP_CONTENT_DIR . '/*.php' ) as $path ) {
-			self::scan_file( $path, $pattern, $exts, $matches, $scanned );
+		// Loose files at the install root (wp-config.php, index.php, .htaccess,
+		// .user.ini…) and directly in wp-content (drop-ins) — tiny, and a
+		// favourite hiding spot.
+		$abs   = untrailingslashit( ABSPATH );
+		$loose = array_merge(
+			(array) glob( $abs . '/*' ),
+			(array) glob( $abs . '/.[!.]*' ),
+			(array) glob( WP_CONTENT_DIR . '/*' ),
+			(array) glob( WP_CONTENT_DIR . '/.[!.]*' )
+		);
+		foreach ( array_unique( $loose ) as $path ) {
+			if ( is_file( $path ) ) {
+				self::scan_file( $path, $pattern, $exts, $matches, $scanned );
+			}
 		}
 
-		// Search high-signal locations before the big ones, so mu-plugins, the
-		// active theme and drop-ins are always fully covered even when the
-		// plugins/uploads trees are large enough to hit the cap.
-		$roots = array_values( array_unique( array_filter( [
+		// High-signal, bounded locations first — mu-plugins, themes and core
+		// (~3k files) — plus every stray folder at the root or in wp-content,
+		// so they are always fully covered even when plugins and uploads are
+		// big enough to hit the cap. Roots already walked are
+		// pruned from later walks, and the catch-all wp-content/root walks also
+		// skip whatever is still queued, so nothing is scanned twice.
+		$roots = [
 			WP_CONTENT_DIR . '/mu-plugins',
+			WPMU_PLUGIN_DIR,
 			get_stylesheet_directory(),
 			get_template_directory(),
+			get_theme_root(),
+			$abs . '/wp-admin',
+			$abs . '/' . WPINC,
+			WP_CONTENT_DIR,
+			$abs,
 			WP_CONTENT_DIR . '/plugins',
+			WP_PLUGIN_DIR,
 			WP_CONTENT_DIR . '/uploads',
-		], 'is_dir' ) ) );
+		];
+		$roots = array_values( array_unique( array_filter( array_map( 'untrailingslashit', $roots ), 'is_dir' ) ) );
 
-		foreach ( $roots as $root ) {
-			if ( self::walk_root( $root, $pattern, $exts, $matches, $scanned ) ) {
+		foreach ( $roots as $i => $root ) {
+			$prune = array_merge( array_slice( $roots, 0, $i ), array_slice( $roots, $i + 1 ) );
+			if ( self::walk_root( $root, $pattern, $exts, $matches, $scanned, $prune ) ) {
 				$trunc = true;
 			}
 			if ( $scanned >= self::MAX_FILES || count( $matches ) >= self::MAX_MATCHES ) {
@@ -135,14 +158,19 @@ class Finder {
 	 * @param array  $exts
 	 * @param array  $matches  (by reference)
 	 * @param int    $scanned  (by reference)
+	 * @param array  $prune   Absolute directories (already walked, or walked later) to skip.
 	 * @return bool Whether the budget was hit while walking this root.
 	 */
-	private static function walk_root( $root, $pattern, array $exts, array &$matches, &$scanned ) {
+	private static function walk_root( $root, $pattern, array $exts, array &$matches, &$scanned, array $prune = [] ) {
 		$skip = self::skip_dirs();
 		try {
 			$dir    = new \RecursiveDirectoryIterator( $root, \FilesystemIterator::SKIP_DOTS );
-			$filter = new \RecursiveCallbackFilterIterator( $dir, static function ( $current ) use ( $skip ) {
-				return $current->isDir() ? ! in_array( $current->getFilename(), $skip, true ) : true;
+			$filter = new \RecursiveCallbackFilterIterator( $dir, static function ( $current ) use ( $skip, $prune ) {
+				if ( ! $current->isDir() ) {
+					return true;
+				}
+				return ! in_array( $current->getFilename(), $skip, true )
+					&& ! in_array( untrailingslashit( $current->getPathname() ), $prune, true );
 			} );
 			$it = new \RecursiveIteratorIterator( $filter );
 		} catch ( \Exception $e ) {
@@ -239,13 +267,28 @@ class Finder {
 			],
 			[
 				'label'  => 'wp_posts',
-				'sql'    => "SELECT ID AS id, post_title AS ref, post_content AS val FROM {$wpdb->posts} WHERE post_content {$op} %s LIMIT %d",
+				'sql'    => "SELECT ID AS id, post_title AS ref, post_content AS val FROM {$wpdb->posts} WHERE post_content {$op} %s OR post_title {$op} %s OR post_excerpt {$op} %s LIMIT %d",
 				'source' => 'wp_posts',
 			],
 			[
 				'label'  => 'wp_postmeta',
 				'sql'    => "SELECT meta_id AS id, meta_key AS ref, meta_value AS val FROM {$wpdb->postmeta} WHERE meta_value {$op} %s LIMIT %d",
 				'source' => 'wp_postmeta',
+			],
+			[
+				'label'  => 'wp_usermeta',
+				'sql'    => "SELECT umeta_id AS id, meta_key AS ref, meta_value AS val FROM {$wpdb->usermeta} WHERE meta_value {$op} %s LIMIT %d",
+				'source' => 'wp_usermeta',
+			],
+			[
+				'label'  => 'wp_termmeta',
+				'sql'    => "SELECT meta_id AS id, meta_key AS ref, meta_value AS val FROM {$wpdb->termmeta} WHERE meta_value {$op} %s LIMIT %d",
+				'source' => 'wp_termmeta',
+			],
+			[
+				'label'  => 'wp_term_taxonomy',
+				'sql'    => "SELECT term_taxonomy_id AS id, taxonomy AS ref, description AS val FROM {$wpdb->term_taxonomy} WHERE description {$op} %s LIMIT %d",
+				'source' => 'wp_term_taxonomy',
 			],
 			[
 				'label'  => 'wp_comments',
@@ -255,7 +298,9 @@ class Finder {
 		];
 
 		foreach ( $queries as $q ) {
-			$rows = $wpdb->get_results( $wpdb->prepare( $q['sql'], $val, self::MAX_DB_PER_TABLE ), ARRAY_A );
+			$args = array_fill( 0, substr_count( $q['sql'], '%s' ), $val );
+			$args[] = self::MAX_DB_PER_TABLE;
+			$rows = $wpdb->get_results( $wpdb->prepare( $q['sql'], ...$args ), ARRAY_A );
 			if ( count( (array) $rows ) >= self::MAX_DB_PER_TABLE ) {
 				$trunc = true;
 			}
