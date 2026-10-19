@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { useModules, pageUrl, pageFromHref } from '@Utils/nav';
-import { Card, Toggle, Button, Field, TextInput, NumberInput, Select } from '@Components/ui/Controls';
+import { Card, Toggle, Button, Field, TextInput, Select } from '@Components/ui/Controls';
 import TestCredentials from '@Components/ui/TestCredentials';
 import SetupGuide from '@Components/ui/SetupGuide';
 import Icon from '@Components/ui/Icon';
@@ -39,8 +39,6 @@ const KEYS = [
 	'hidden_admin_detection',
 	'app_pw_alert_on_create',
 	'app_pw_disabled',
-	'notify_on_failure',
-	'health_alert_days',
 ];
 
 /**
@@ -83,11 +81,6 @@ const TRIGGERS = [
 		label: __( 'An application password is created', 'gemsecurity' ),
 		needsNot: 'app_pw_disabled',
 		needsNote: __( 'Application passwords are switched off site-wide, so none can be created.', 'gemsecurity' ),
-	},
-	{
-		key: 'notify_on_failure',
-		module: 'backup',
-		label: __( 'A backup fails, or backups go quiet for too long', 'gemsecurity' ),
 	},
 ];
 
@@ -264,19 +257,6 @@ export default function Notifications() {
 							</div>
 						);
 					} )
-				) }
-				{ /* The one trigger that carries a threshold rather than a plain switch. */ }
-				{ rows.some( ( t ) => t.key === 'notify_on_failure' ) && form.notify_on_failure && (
-					<Field
-						label={ __( 'Warn after this long without a successful backup', 'gemsecurity' ) }
-						suffix={ __( 'days', 'gemsecurity' ) }
-					>
-						<NumberInput
-							min="1"
-							value={ form.health_alert_days ?? 7 }
-							onChange={ ( e ) => setField( 'health_alert_days', Number( e.target.value ) ) }
-						/>
-					</Field>
 				) }
 			</Card>
 

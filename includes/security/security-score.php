@@ -162,15 +162,20 @@ class SecurityScore {
 			];
 		}
 
-		// Recent-backup hygiene (not a plain setting).
-		$checks[] = [
-			'key'    => 'recent_backup',
-			'label'  => __( 'Recent backup', 'gemsecurity' ),
-			'weight' => 6,
-			'status' => self::has_recent_backup() ? 'pass' : 'fail',
-			'fix'    => __( 'Take a backup — you cannot recover from a hack without one.', 'gemsecurity' ),
-			'action' => self::action( GEMSECURITY_PLUGIN_SLUG . '-backup' ),
-		];
+		// Recent-backup hygiene — only scored when GemBackup is installed.
+		if ( \GemSecurity\Helper::gembackup_active() ) {
+			$checks[] = [
+				'key'    => 'recent_backup',
+				'label'  => __( 'Recent backup', 'gemsecurity' ),
+				'weight' => 6,
+				'status' => self::has_recent_backup() ? 'pass' : 'fail',
+				'fix'    => __( 'Take a backup in GemBackup — you cannot recover from a hack without one.', 'gemsecurity' ),
+				'action' => [
+					'url'   => admin_url( 'admin.php?page=gembackup' ),
+					'label' => __( 'Open GemBackup', 'gemsecurity' ),
+				],
+			];
+		}
 
 		return $checks;
 	}

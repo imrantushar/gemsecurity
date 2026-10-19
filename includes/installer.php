@@ -203,7 +203,6 @@ class Installer {
 			\GemSecurity\Helper::flush_settings_cache();
 		}
 
-		self::migrate_backup_settings();
 		self::migrate_retired_modules();
 	}
 
@@ -231,66 +230,6 @@ class Installer {
 		wp_clear_scheduled_hook( 'gemsecurity_pro_file_baseline_scan' );
 	}
 
-	/**
-	 * The backup subsystem's own option store: adopt the plugin-wide recipient
-	 * and webhook, rename its log-retention key away from the collision with
-	 * the security log's, and drop the schedule_* keys nothing ever read.
-	 *
-	 * @return void
-	 */
-	private static function migrate_backup_settings() {
-		// Resolved without requiring the constant: it is only defined once the
-		// Backup subsystem boots, and that is gated on the Backup module being
-		// active. Depending on it here would skip the migration entirely on any
-		// site with Backup switched off — and the version bump means it would
-		// never get a second chance.
-		$option = defined( 'GEMBACKUP_SETTINGS_NAME' ) ? GEMBACKUP_SETTINGS_NAME : 'gemsecurity_backup_settings';
-
-		$backup = get_option( $option, [] );
-		if ( ! is_array( $backup ) || ! $backup ) {
-			return;
-		}
-		$before = $backup;
-
-		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
-		$settings = is_array( $settings ) ? $settings : [];
-
-		if ( empty( $settings['alert_to_email'] ) && ! empty( $backup['notify_email'] ) && is_email( $backup['notify_email'] ) ) {
-			$settings['alert_to_email'] = $backup['notify_email'];
-			update_option( GEMSECURITY_SETTINGS_NAME, $settings );
-			\GemSecurity\Helper::flush_settings_cache();
-		}
-		if ( empty( $settings['alert_webhook_url'] ) && ! empty( $backup['webhook_url'] ) ) {
-			$settings['alert_webhook_url'] = $backup['webhook_url'];
-			update_option( GEMSECURITY_SETTINGS_NAME, $settings );
-			\GemSecurity\Helper::flush_settings_cache();
-		}
-
-		// A site that had a recipient set was receiving completion notices; keep
-		// it receiving them now that one toggle governs both events.
-		if ( ! empty( $backup['notify_email'] ) ) {
-			$backup['notify_on_failure'] = true;
-		}
-
-		if ( isset( $backup['logs_retention_days'] ) && ! isset( $backup['backup_logs_retention_days'] ) ) {
-			$backup['backup_logs_retention_days'] = (int) $backup['logs_retention_days'];
-		}
-
-		unset(
-			$backup['notify_email'],
-			$backup['webhook_url'],
-			$backup['logs_retention_days'],
-			$backup['schedule_enabled'],
-			$backup['schedule_frequency'],
-			$backup['schedule_backup_type'],
-			$backup['schedule_storage_driver'],
-			$backup['schedule_time']
-		);
-
-		if ( $backup !== $before ) {
-			update_option( $option, $backup );
-		}
-	}
 
 	private static function create_tables() {
 		global $wpdb;
