@@ -269,6 +269,24 @@ class Settings {
 			$incoming = isset( $incoming['settings'] ) ? $incoming['settings'] : [];
 		}
 
+		return rest_ensure_response( [
+			'success'  => true,
+			'settings' => self::apply( (array) $incoming, (string) $request->get_param( 'source' ) ),
+		] );
+	}
+
+	/**
+	 * Sanitize, guard, store and audit-log a settings change.
+	 *
+	 * The one path every write takes — the settings screen, one-click fixes,
+	 * Pro's import — so the safety guards below cannot be skipped by writing
+	 * the option directly.
+	 *
+	 * @param array  $incoming Raw values, keyed by setting.
+	 * @param string $source   save | instant | quick_fix | undo | import
+	 * @return array The stored settings.
+	 */
+	public static function apply( array $incoming, $source = 'save' ) {
 		$current = get_option( GEMSECURITY_SETTINGS_NAME, [] );
 		if ( ! is_array( $current ) ) {
 			$current = [];
@@ -285,6 +303,16 @@ class Settings {
 		$now_enabled = ! empty( $merged['admin_whitelist_enabled'] );
 		if ( $now_enabled && ! $was_whitelist_enabled && empty( $merged['admin_whitelist'] ) ) {
 			$merged['admin_whitelist'] = AdminGuard::current_admin_emails();
+		}
+
+		// An imported whitelist was written for another site and names none of
+		// this site's administrators — enforcing it as-is would treat every one
+		// of them as rogue. Keep this site's current admins on the list.
+		if ( $now_enabled && 'import' === $source ) {
+			$merged['admin_whitelist'] = array_values( array_unique( array_merge(
+				(array) $merged['admin_whitelist'],
+				AdminGuard::current_admin_emails()
+			) ) );
 		}
 
 		// A custom login URL with no usable slug is not a custom login URL. The
@@ -307,12 +335,9 @@ class Settings {
 
 		update_option( GEMSECURITY_SETTINGS_NAME, $merged );
 
-		self::log_changes( $current, $merged, (string) $request->get_param( 'source' ) );
+		self::log_changes( $current, $merged, $source );
 
-		return rest_ensure_response( [
-			'success'  => true,
-			'settings' => $merged,
-		] );
+		return $merged;
 	}
 
 	/**
@@ -348,6 +373,7 @@ class Settings {
 			'undo'      => __( 'undo of a one-click fix', 'gemsecurity' ),
 			'instant'   => __( 'instant switch', 'gemsecurity' ),
 			'save'      => __( 'settings save', 'gemsecurity' ),
+			'import'    => __( 'settings import', 'gemsecurity' ),
 		];
 		$via = isset( $labels[ $source ] ) ? $labels[ $source ] : $labels['save'];
 

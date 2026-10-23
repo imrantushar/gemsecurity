@@ -59,13 +59,14 @@ export default function Settings() {
 	const [ verifyResult, setVerifyResult ] = useState( null );
 	const [ verifying, setVerifying ] = useState( false );
 	const [ busy, setBusy ] = useState( '' );
+	const [ includeSecrets, setIncludeSecrets ] = useState( false );
 
 	/* ------------------------- Settings portability ------------------------- */
 
 	const exportSettings = async () => {
 		setBusy( 'export' );
 		try {
-			const { data } = await api.get( 'pro/settings/export' );
+			const { data } = await api.get( 'pro/settings/export', { params: includeSecrets ? { include_secrets: 1 } : {} } );
 			const blob = new Blob( [ JSON.stringify( data.exported, null, 2 ) ], { type: 'application/json' } );
 			const url = URL.createObjectURL( blob );
 			const a = document.createElement( 'a' );
@@ -84,7 +85,12 @@ export default function Settings() {
 				document.body.removeChild( a );
 				URL.revokeObjectURL( url );
 			}, 1000 );
-			toast( __( 'Settings exported.', 'gemsecurity' ), 'success' );
+			toast(
+				data.omitted && data.omitted.length
+					? __( 'Settings exported. API keys, tokens and webhook URLs were left out.', 'gemsecurity' )
+					: __( 'Settings exported.', 'gemsecurity' ),
+				'success'
+			);
 		} catch ( e ) {
 			toast( e?.response?.data?.message || __( 'Export failed.', 'gemsecurity' ), 'error' );
 		}
@@ -288,6 +294,13 @@ export default function Settings() {
 				title={ <>{ __( 'Settings import / export', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
 				description={ __( 'Back up or migrate the whole GemSecurity configuration — settings and module activation — as JSON.', 'gemsecurity' ) }
 			>
+				<Toggle
+					label={ __( 'Include API keys and secrets', 'gemsecurity' ) }
+					description={ __( 'CAPTCHA and sign-in secrets, alert tokens and webhook URLs. Leave off for files you share; importing a file without them keeps this site\'s own.', 'gemsecurity' ) }
+					checked={ includeSecrets }
+					onChange={ setIncludeSecrets }
+					disabled={ ! pro }
+				/>
 				<div style={ { display: 'flex', gap: 10 } }>
 					<Button variant="secondary" loading={ busy === 'export' } onClick={ exportSettings } disabled={ ! pro }>
 						{ __( 'Export settings', 'gemsecurity' ) }

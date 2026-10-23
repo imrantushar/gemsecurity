@@ -130,13 +130,23 @@ class Quarantine {
 	 * @return array|\WP_Error The stored entry.
 	 */
 	public static function add_file( $path ) {
-		$abs  = wp_normalize_path( (string) $path );
-		$root = wp_normalize_path( untrailingslashit( ABSPATH ) );
+		// Resolve to the real path first: wp_normalize_path() leaves "../" in
+		// place, so "ABSPATH/../../elsewhere" used to pass the prefix check,
+		// and a symlink could point anywhere.
+		$real = (string) $path !== '' ? realpath( (string) $path ) : false;
+		$abs  = $real ? wp_normalize_path( $real ) : '';
+		$root = wp_normalize_path( (string) realpath( ABSPATH ) );
+		$root = '' === $root ? wp_normalize_path( untrailingslashit( ABSPATH ) ) : $root;
 
 		// Anywhere in the install, not just wp-content: real infections drop
-		// their stubs into wp-admin and wp-includes too. The plugin's own
-		// directory is off limits so a scan can never quarantine the scanner.
-		if ( '' === $abs || 0 !== strpos( $abs, $root ) || false !== strpos( $abs, '/gemsecurity' ) ) {
+		// their stubs into wp-admin and wp-includes too. Compared with a
+		// trailing slash so /var/www/site2 is not "inside" /var/www/site. The
+		// plugin's own directories are off limits so a scan can never
+		// quarantine the scanner.
+		$plugins = wp_normalize_path( (string) realpath( WP_PLUGIN_DIR ) );
+		$own     = '' !== $plugins && preg_match( '#^' . preg_quote( trailingslashit( $plugins ), '#' ) . 'gemsecurity(-pro)?/#', $abs );
+		$own     = $own || 0 === strpos( $abs, trailingslashit( wp_normalize_path( (string) realpath( self::dir() ) ) ) );
+		if ( '' === $abs || 0 !== strpos( $abs, trailingslashit( $root ) ) || $own ) {
 			return new \WP_Error(
 				'gemsecurity_quarantine_denied',
 				__( 'That file is outside the WordPress installation.', 'gemsecurity' ),
