@@ -47,6 +47,9 @@ class Scanner {
 			'5c245f28504f53547c4745547c524551554553547c434f4f4b4945295c732a5c5b5b5e5c5d5d2a5c5d5c732a5c28' => '64796e616d69632063616c6c206f6e20726571756573742064617461',
 			'6d6f76655f75706c6f616465645f66696c655c732a5c28'                         => '6d6f76655f75706c6f616465645f66696c652829',
 			'6372656174655f66756e6374696f6e5c732a5c28'                               => '6372656174655f66756e6374696f6e2829',
+			// include/require of an image, icon or text file — how a tiny stub
+			// loads a backdoor disguised as something that is not PHP.
+			'5c6228696e636c7564657c7265717569726529285f6f6e6365293f5c732a5c283f5c732a5b27225d5b5e27225d2b5c2e2869636f7c706e677c6a70653f677c6769667c626d707c776562707c7478747c6c6f677c6461747c746d707c62616b295b27225d' => '696e636c756465206f66206120646973677569736564206e6f6e2d5048502066696c65',
 		];
 
 		$out = [];
@@ -67,7 +70,7 @@ class Scanner {
 
 		$core_issues = self::scan_core_integrity();
 		$foreign     = self::scan_foreign_files();
-		$suspicious  = array_merge( self::scan_admin_concealment(), self::scan_suspicious_files() );
+		$suspicious  = array_merge( self::scan_admin_concealment(), self::scan_suspicious_files(), self::scan_tampered_stubs() );
 		$htaccess    = \GemSecurity\Security\HtaccessScan::run();
 
 		// File change watcher — baseline diff + injection heuristics over the
@@ -474,6 +477,135 @@ class Scanner {
 			}
 		}
 		return $out;
+	}
+
+	/**
+	 * index.php files in plugins and themes that should be empty but are not.
+	 *
+	 * Nearly every folder carries an index.php holding only "Silence is
+	 * golden", so it is the last file anyone opens — which is why attackers
+	 * append to it. The suspicious-file pass only walks uploads and
+	 * mu-plugins, so a stub edited inside a plugin or theme went unreported.
+	 *
+	 * Only evidence is reported; an index.php that is a real template is not:
+	 *  - the stub comment with code added beyond an ABSPATH guard,
+	 *  - include/require of an image, icon or text file,
+	 *  - a strong malware signature (eval, gzinflate, shell calls, …).
+	 *
+	 * @return array List of { file, reason, severity }.
+	 */
+	private static function scan_tampered_stubs() {
+		$findings = [];
+		$patterns = self::malware_patterns();
+		// base64_decode() and move_uploaded_file() have everyday uses; on their
+		// own they are not evidence. Everything else in the list is.
+		$weak     = [ Helper::sig( '6261736536345f6465636f64652829' ), Helper::sig( '6d6f76655f75706c6f616465645f66696c652829' ) ];
+		$skip_dir = [ 'node_modules', '.git', '.svn' ];
+		$visited  = 0;
+
+		foreach ( [ WP_PLUGIN_DIR, get_theme_root() ] as $root ) {
+			if ( ! is_dir( $root ) ) {
+				continue;
+			}
+			$root = wp_normalize_path( untrailingslashit( $root ) );
+			try {
+				$iterator = new \RecursiveIteratorIterator(
+					new \RecursiveCallbackFilterIterator(
+						new \RecursiveDirectoryIterator( $root, \FilesystemIterator::SKIP_DOTS ),
+						static function ( $f ) use ( $skip_dir ) {
+							return ! ( $f->isDir() && in_array( $f->getFilename(), $skip_dir, true ) );
+						}
+					)
+				);
+			} catch ( \Exception $e ) {
+				continue;
+			}
+
+			foreach ( $iterator as $file ) {
+				if ( 'index.php' !== $file->getFilename() ) {
+					continue;
+				}
+				if ( ++$visited > 20000 ) {
+					break 2;
+				}
+				$path = $file->getPathname();
+				if ( \GemSecurity\Security\SafeFiles::is_safe( $path ) || $file->getSize() > 512 * KB_IN_BYTES ) {
+					continue; // Empty stub, reviewed file, or too big to be a stub.
+				}
+				$contents = @file_get_contents( $path ); // phpcs:ignore
+				if ( false === $contents || self::is_guard_only( $contents ) ) {
+					continue;
+				}
+
+				$reason = '';
+				if ( preg_match( '/silence\s+is\s+golden/i', $contents ) ) {
+					$reason = __( '"Silence is golden" index.php with code added to it.', 'gemsecurity' );
+				} else {
+					foreach ( $patterns as $pattern => $label ) {
+						if ( ! in_array( $label, $weak, true ) && preg_match( '/' . $pattern . '/i', $contents ) ) {
+							/* translators: %s: name of the matched code pattern. */
+							$reason = sprintf( __( 'index.php contains %s.', 'gemsecurity' ), $label );
+							break;
+						}
+					}
+				}
+				if ( '' === $reason ) {
+					continue; // A real template. Code alone is not evidence.
+				}
+
+				$findings[] = [
+					'file'     => str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $path ) ),
+					'reason'   => $reason,
+					'severity' => 'critical',
+				];
+				if ( count( $findings ) >= 200 ) {
+					break 2;
+				}
+			}
+		}
+
+		return $findings;
+	}
+
+	/**
+	 * Whether a PHP file does nothing but stop direct access — the other common
+	 * stub: `<?php defined( 'ABSPATH' ) || exit;` — optionally after a
+	 * declare( strict_types ) or namespace line.
+	 *
+	 * @param string $source
+	 * @return bool
+	 */
+	private static function is_guard_only( $source ) {
+		if ( ! function_exists( 'token_get_all' ) ) {
+			return false;
+		}
+		$tokens = @token_get_all( $source ); // phpcs:ignore
+		if ( ! is_array( $tokens ) ) {
+			return false;
+		}
+		$code = '';
+		foreach ( $tokens as $t ) {
+			if ( is_array( $t ) ) {
+				if ( in_array( $t[0], [ T_OPEN_TAG, T_CLOSE_TAG, T_COMMENT, T_DOC_COMMENT, T_WHITESPACE ], true ) ) {
+					continue;
+				}
+				if ( T_INLINE_HTML === $t[0] ) {
+					if ( '' !== trim( $t[1] ) ) {
+						return false;
+					}
+					continue;
+				}
+				$code .= $t[1];
+			} else {
+				$code .= $t;
+			}
+		}
+		$code  = strtolower( $code );
+		$guard = '(if\(!defined\([\'"](abspath|wpinc)[\'"]\)\)\{?(exit|die)(\([^)]*\))?;?\}?|defined\([\'"](abspath|wpinc)[\'"]\)(\|\||or)(exit|die)(\([^)]*\))?;?)';
+		// Directives that only change how the file is compiled — Akismet's own
+		// stub opens with declare( strict_types = 1 ).
+		$code = (string) preg_replace( '/^(declare\\(strict_types=[01]\\);|namespace[a-z0-9_\\\\]+;)+/', '', $code );
+		return '' === $code || (bool) preg_match( '/^(' . $guard . ')+$/', $code );
 	}
 
 	/**
