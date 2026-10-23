@@ -130,24 +130,27 @@ class SecurityScore {
 	private static function checks() {
 		$slug = GEMSECURITY_PLUGIN_SLUG;
 
-		// [ setting key, weight, label, fix, page slug ]
+		// [ setting key, weight, label, fix, page slug, one-click fixable ]
+		// One-click is off for switches that can lock people out or break the
+		// front end (2FA, admin whitelist, CSP headers) or need setup first
+		// (file watcher baseline) — those still link to their page.
 		$defs = [
-			[ 'firewall_enabled', 12, __( 'Firewall', 'gemsecurity' ), __( 'Turn on the firewall to block common attack traffic.', 'gemsecurity' ), $slug . '-firewall' ],
-			[ 'login_attempts_enabled', 12, __( 'Brute-force protection', 'gemsecurity' ), __( 'Limit login attempts to stop password-guessing.', 'gemsecurity' ), $slug . '-login-security' ],
-			[ 'two_factor_enabled', 10, __( 'Two-factor authentication', 'gemsecurity' ), __( 'Require a second factor so a stolen password is not enough.', 'gemsecurity' ), $slug . '-two-factor' ],
-			[ 'scanner_auto_scan', 8, __( 'Daily malware scan', 'gemsecurity' ), __( 'Enable the daily scan so new infections are caught automatically.', 'gemsecurity' ), $slug . '-scanner' ],
-			[ 'vuln_scan_enabled', 6, __( 'Vulnerability scanning', 'gemsecurity' ), __( 'Check installed plugins and themes against known vulnerabilities.', 'gemsecurity' ), $slug . '-scanner' ],
-			[ 'file_watcher_enabled', 6, __( 'File change watcher', 'gemsecurity' ), __( 'Baseline your theme, mu-plugins and drop-ins to detect tampering.', 'gemsecurity' ), $slug . '-scanner' ],
-			[ 'security_headers_enabled', 6, __( 'Security headers', 'gemsecurity' ), __( 'Send hardening headers (HSTS, X-Frame-Options, CSP, …).', 'gemsecurity' ), $slug . '-firewall' ],
-			[ 'disable_file_editing', 6, __( 'Theme/plugin file editor disabled', 'gemsecurity' ), __( 'Disable the built-in file editor so a stolen login cannot inject code.', 'gemsecurity' ), $slug . '-firewall' ],
-			[ 'password_policy_enabled', 5, __( 'Strong-password policy', 'gemsecurity' ), __( 'Enforce length, complexity and breached-password checks.', 'gemsecurity' ), $slug . '-login-security' ],
-			[ 'admin_whitelist_enabled', 5, __( 'Admin whitelist guard', 'gemsecurity' ), __( 'Auto-revoke administrator accounts you did not authorise.', 'gemsecurity' ), $slug . '-admin-guard' ],
-			[ 'link_scanner_enabled', 4, __( 'Malicious-link detection', 'gemsecurity' ), __( 'Flag spam/malware domains your content links to.', 'gemsecurity' ), $slug . '-scanner' ],
-			[ 'block_author_enumeration', 4, __( 'Author enumeration blocked', 'gemsecurity' ), __( 'Stop attackers from harvesting usernames.', 'gemsecurity' ), $slug . '-firewall' ],
-			[ 'disable_user_rest', 4, __( 'REST user enumeration blocked', 'gemsecurity' ), __( 'Hide the user list from the public REST API.', 'gemsecurity' ), $slug . '-firewall' ],
-			[ 'admin_login_alert_enabled', 3, __( 'Admin login alerts', 'gemsecurity' ), __( 'Get notified whenever an administrator signs in.', 'gemsecurity' ), $slug . '-login-security' ],
-			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ), $slug . '-firewall' ],
-			[ 'hide_wp_version', 2, __( 'WordPress version hidden', 'gemsecurity' ), __( 'Stop advertising your exact WordPress version.', 'gemsecurity' ), $slug . '-firewall' ],
+			[ 'firewall_enabled', 12, __( 'Firewall', 'gemsecurity' ), __( 'Turn on the firewall to block common attack traffic.', 'gemsecurity' ), $slug . '-firewall' , true ],
+			[ 'login_attempts_enabled', 12, __( 'Brute-force protection', 'gemsecurity' ), __( 'Limit login attempts to stop password-guessing.', 'gemsecurity' ), $slug . '-login-security' , true ],
+			[ 'two_factor_enabled', 10, __( 'Two-factor authentication', 'gemsecurity' ), __( 'Require a second factor so a stolen password is not enough.', 'gemsecurity' ), $slug . '-two-factor' , false ],
+			[ 'scanner_auto_scan', 8, __( 'Daily malware scan', 'gemsecurity' ), __( 'Enable the daily scan so new infections are caught automatically.', 'gemsecurity' ), $slug . '-scanner' , true ],
+			[ 'vuln_scan_enabled', 6, __( 'Vulnerability scanning', 'gemsecurity' ), __( 'Check installed plugins and themes against known vulnerabilities.', 'gemsecurity' ), $slug . '-scanner' , true ],
+			[ 'file_watcher_enabled', 6, __( 'File change watcher', 'gemsecurity' ), __( 'Baseline your theme, mu-plugins and drop-ins to detect tampering.', 'gemsecurity' ), $slug . '-scanner' , false ],
+			[ 'security_headers_enabled', 6, __( 'Security headers', 'gemsecurity' ), __( 'Send hardening headers (HSTS, X-Frame-Options, CSP, …).', 'gemsecurity' ), $slug . '-firewall' , false ],
+			[ 'disable_file_editing', 6, __( 'Theme/plugin file editor disabled', 'gemsecurity' ), __( 'Disable the built-in file editor so a stolen login cannot inject code.', 'gemsecurity' ), $slug . '-firewall' , true ],
+			[ 'password_policy_enabled', 5, __( 'Strong-password policy', 'gemsecurity' ), __( 'Enforce length, complexity and breached-password checks.', 'gemsecurity' ), $slug . '-login-security' , true ],
+			[ 'admin_whitelist_enabled', 5, __( 'Admin whitelist guard', 'gemsecurity' ), __( 'Auto-revoke administrator accounts you did not authorise.', 'gemsecurity' ), $slug . '-admin-guard' , false ],
+			[ 'link_scanner_enabled', 4, __( 'Malicious-link detection', 'gemsecurity' ), __( 'Flag spam/malware domains your content links to.', 'gemsecurity' ), $slug . '-scanner' , true ],
+			[ 'block_author_enumeration', 4, __( 'Author enumeration blocked', 'gemsecurity' ), __( 'Stop attackers from harvesting usernames.', 'gemsecurity' ), $slug . '-firewall' , true ],
+			[ 'disable_user_rest', 4, __( 'REST user enumeration blocked', 'gemsecurity' ), __( 'Hide the user list from the public REST API.', 'gemsecurity' ), $slug . '-firewall' , true ],
+			[ 'admin_login_alert_enabled', 3, __( 'Admin login alerts', 'gemsecurity' ), __( 'Get notified whenever an administrator signs in.', 'gemsecurity' ), $slug . '-login-security' , true ],
+			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ), $slug . '-firewall' , true ],
+			[ 'hide_wp_version', 2, __( 'WordPress version hidden', 'gemsecurity' ), __( 'Stop advertising your exact WordPress version.', 'gemsecurity' ), $slug . '-firewall' , true ],
 		];
 
 		$checks = [];
@@ -159,6 +162,7 @@ class SecurityScore {
 				'status' => Helper::get_setting( $d[0], false ) ? 'pass' : 'fail',
 				'fix'    => $d[3],
 				'action' => self::action( $d[4] ),
+				'quick'  => ! empty( $d[5] ),
 			];
 		}
 
