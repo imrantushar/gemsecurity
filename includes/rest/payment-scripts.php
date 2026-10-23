@@ -22,8 +22,11 @@ class PaymentScripts {
 	 *
 	 * Unauthenticated by design (the checkout-page collector script has no
 	 * user session to authenticate with, so a capability check isn't
-	 * possible). Two lighter-weight defenses instead:
+	 * possible). Lighter-weight defenses instead:
 	 *
+	 * - A signed token printed into the payment page by the collector, valid
+	 *   for an hour. Blind POSTs (no page fetched) are dropped; the
+	 *   inventory is still treated as untrusted — see authorize().
 	 * - Same-origin check: a real browser sendBeacon()/fetch() call from the
 	 *   collector always carries an Origin (or at least Referer) header
 	 *   matching this site — that's enforced by the browser, not something
@@ -43,8 +46,9 @@ class PaymentScripts {
 	 * @param \WP_REST_Request $request
 	 */
 	public static function ingest( $request ) {
-		if ( self::is_same_origin( $request ) && ! self::is_rate_limited() ) {
-			$body    = $request->get_json_params();
+		$body = $request->get_json_params();
+		$token = is_array( $body ) && isset( $body['token'] ) ? (string) $body['token'] : '';
+		if ( PaymentIntegrity::valid_token( $token ) && self::is_same_origin( $request ) && ! self::is_rate_limited() ) {
 			$scripts = isset( $body['scripts'] ) && is_array( $body['scripts'] ) ? $body['scripts'] : [];
 			$page    = isset( $body['page'] ) ? (string) $body['page'] : '';
 			if ( ! empty( $scripts ) ) {
@@ -108,15 +112,26 @@ class PaymentScripts {
 			// of trusting the inventory blindly (see PaymentIntegrity.js).
 			'seen_page'    => is_array( $seen ) ? ( $seen['page'] ?? '' ) : '',
 			'inventory'    => $inventory,
+			'seen_hash'    => PaymentIntegrity::inventory_hash( is_array( $seen ) && ! empty( $seen['scripts'] ) ? $seen['scripts'] : [] ),
 			'alerts'       => is_array( $alerts ) ? $alerts : [],
 		] );
 	}
 
 	/**
-	 * POST /payment-scripts/authorize — set the baseline to the current inventory.
+	 * POST /payment-scripts/authorize — set the baseline to the inventory the
+	 * admin reviewed (seen_hash from GET), refusing if it changed since.
+	 *
+	 * @param \WP_REST_Request $request
 	 */
-	public static function authorize() {
-		$scripts = PaymentIntegrity::authorise_current();
+	public static function authorize( $request ) {
+		$scripts = PaymentIntegrity::authorise_current( (string) $request->get_param( 'seen_hash' ) );
+		if ( false === $scripts ) {
+			return new \WP_Error(
+				'gemsecurity_inventory_changed',
+				__( 'The script list changed since you loaded this page. Review the new list, then authorise again.', 'gemsecurity' ),
+				[ 'status' => 409 ]
+			);
+		}
 		return rest_ensure_response( [ 'success' => true, 'count' => count( $scripts ) ] );
 	}
 }

@@ -19,10 +19,20 @@ export default function PaymentIntegrity() {
 	const authorize = async () => {
 		setBusy( true );
 		try {
-			await api.post( 'payment-scripts/authorize' );
+			// Send the fingerprint of the list on screen: the server refuses if a
+			// new report replaced it meanwhile, so nothing unseen gets authorised.
+			await api.post( 'payment-scripts/authorize', { seen_hash: data?.seen_hash || '' } );
 			toast( __( 'Current scripts authorised as the baseline.', 'gemsecurity' ), 'success' );
 			load();
-		} catch ( e ) { toast( __( 'Failed.', 'gemsecurity' ), 'error' ); }
+		} catch ( e ) {
+			const changed = e?.response?.status === 409 || e?.code === 'gemsecurity_inventory_changed' || e?.data?.status === 409;
+			toast( changed
+				? __( 'The script list changed since you opened this page. Review the refreshed list, then authorise again.', 'gemsecurity' )
+				: __( 'Failed.', 'gemsecurity' ), 'error' );
+			if ( changed ) {
+				load();
+			}
+		}
 		setBusy( false );
 	};
 

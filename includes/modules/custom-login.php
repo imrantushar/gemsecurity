@@ -108,7 +108,7 @@ class CustomLogin {
 		if ( $this->serving || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
 			return;
 		}
-		$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : '';
+		$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- compared only.
 		if ( 'postpass' === $action || 'logout' === $action ) {
 			return; // Don't break password-protected posts or logout links.
 		}

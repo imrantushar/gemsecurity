@@ -276,10 +276,16 @@ class SocialLogin {
 			$this->bail( __( 'Sign-in could not be verified: the provider did not return a security token.', 'gemsecurity' ) );
 		}
 
-		$data = get_transient( self::STATE_PREFIX . $state );
-		if ( ! $data ) {
-			// Server-side copy is gone; fall back to the signed cookie.
-			$data = self::state_from_cookie( $state );
+		// The signed cookie is what proves this browser started the flow, so
+		// it is required even when the server-side copy exists. Accepting the
+		// transient alone let an attacker start a sign-in, then hand the
+		// callback URL to a victim and log them into the attacker's account.
+		$cookie = self::state_from_cookie( $state );
+		$data   = $cookie ? get_transient( self::STATE_PREFIX . $state ) : false;
+		if ( $cookie && ! $data ) {
+			// Server-side copy is gone (per-process cache, flush); the signed
+			// cookie carries the same payload.
+			$data = $cookie;
 		}
 
 		if ( ! $data ) {
@@ -529,6 +535,50 @@ class SocialLogin {
 		exit;
 	}
 
+	/**
+	 * Capabilities that make a role unsafe to hand out from a public URL.
+	 * Checked on the role itself, so a filter cannot whitelist its way past it.
+	 */
+	const PRIVILEGED_CAPS = [
+		'manage_options', 'edit_users', 'create_users', 'promote_users', 'delete_users',
+		'activate_plugins', 'install_plugins', 'edit_plugins', 'edit_themes', 'switch_themes',
+		'update_core', 'unfiltered_html', 'unfiltered_upload', 'edit_others_posts', 'manage_network',
+	];
+
+	/**
+	 * Whether a role passed in the sign-in URL may be given to a new account.
+	 *
+	 * Allowlisted (filterable — Academy and stores add their customer roles)
+	 * and never a role holding any PRIVILEGED_CAPS. Without this, anyone
+	 * could open ?gemsec_oauth=google&gemsec_role=administrator and register
+	 * an administrator.
+	 *
+	 * @param string $role
+	 * @return bool
+	 */
+	public static function is_requestable_role( $role ) {
+		if ( ! $role ) {
+			return false;
+		}
+		$allowed = (array) apply_filters(
+			'gemsecurity/social_login/allowed_roles',
+			[ 'subscriber', 'customer', 'academy_student', 'storeengine_customer' ]
+		);
+		if ( ! in_array( $role, $allowed, true ) ) {
+			return false;
+		}
+		$object = get_role( $role );
+		if ( ! $object ) {
+			return false;
+		}
+		foreach ( self::PRIVILEGED_CAPS as $cap ) {
+			if ( ! empty( $object->capabilities[ $cap ] ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private function create_user( $provider, $profile, $meta_key, $role = '' ) {
 		$email = $profile['email'];
 		if ( ! $email || ! is_email( $email ) ) {
@@ -549,13 +599,11 @@ class SocialLogin {
 		}
 
 		// A caller-supplied role (e.g. Academy's student/instructor
-		// registration forms, via buttons_html()'s $role param) only wins
-		// when it names one of the site's actual roles — it travelled here
-		// through a public query string and a redirect round-trip to the
-		// OAuth provider, so it's re-validated rather than trusted as-is.
-		// Falls back to the module's own site-wide default otherwise, same
-		// as before this parameter existed.
-		$requested_role = $role && array_key_exists( $role, wp_roles()->roles ) ? $role : '';
+		// registration forms, via buttons_html()'s $role param) travelled
+		// here through a public query string, so anyone can set it. It only
+		// wins when it is on the low-privilege allowlist — see
+		// is_requestable_role(). Falls back to the site-wide default.
+		$requested_role = self::is_requestable_role( $role ) ? $role : '';
 		$final_role      = apply_filters(
 			'gemsecurity/social_login/registration_role',
 			$requested_role ? $requested_role : Helper::get_setting( 'social_default_role', 'subscriber' ),
@@ -620,8 +668,8 @@ class SocialLogin {
 	 *                     `storeengine/templates/shortcode/after_login`
 	 *                     hooks this method is also registered on, which
 	 *                     always call it with no arguments). Ignored unless
-	 *                     it names one of the site's actual roles — see
-	 *                     create_user().
+	 *                     it is a low-privilege allowlisted role — see
+	 *                     is_requestable_role().
 	 */
 	public function render_frontend( $role = '' ) {
 		echo $this->buttons_html( true, $role ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with escaping below.

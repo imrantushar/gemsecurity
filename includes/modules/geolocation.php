@@ -28,6 +28,11 @@ class Geolocation {
 	const OTP_PREFIX     = 'gemsec_geo_eotp_';
 	const USER_META      = '_gemsec_geo_allowed_countries';
 
+	/** Wrong codes allowed per sign-in attempt, across resends. */
+	const MAX_TRIES   = 5;
+	/** New codes that can be requested per sign-in attempt. */
+	const MAX_RESENDS = 3;
+
 	private static $passed = false;
 
 	public static function init() {
@@ -49,7 +54,22 @@ class Geolocation {
 		if ( Helper::get_setting( 'geo_user_lock_enabled', false ) ) {
 			add_action( 'wp_login', [ $self, 'maybe_verify_new_location' ], 9, 2 );
 			add_action( 'login_form_gemsec_geo', [ $self, 'handle_verify' ] );
+			add_filter( 'wp_login_errors', [ __CLASS__, 'locked_notice' ] );
 		}
+	}
+
+	/**
+	 * Explain on the login screen why a location check sent them back.
+	 *
+	 * @param \WP_Error $errors
+	 * @return \WP_Error
+	 */
+	public static function locked_notice( $errors ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only flag.
+		if ( isset( $_GET['gemsec_geo'] ) && 'locked' === sanitize_key( wp_unslash( $_GET['gemsec_geo'] ) ) ) {
+			$errors->add( 'gemsec_geo_locked', __( 'Too many incorrect verification codes. Please sign in again to get a new code.', 'gemsecurity' ) );
+		}
+		return $errors;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -204,6 +224,13 @@ class Geolocation {
 		}
 
 		if ( isset( $_POST['gemsec_geo_resend'] ) ) {
+			// A fresh code must not reset the guess budget, or resending
+			// would turn 5 guesses into unlimited ones.
+			$pending['resends'] = (int) ( $pending['resends'] ?? 0 ) + 1;
+			if ( $pending['resends'] > self::MAX_RESENDS ) {
+				$this->lock_out( $token, $user );
+			}
+			set_transient( self::PENDING_PREFIX . $token, $pending, 10 * MINUTE_IN_SECONDS );
 			$this->send_otp( $user );
 			$this->render_form( $token, $pending['country'], '', __( 'A new code has been sent to your email.', 'gemsecurity' ) );
 			exit;
@@ -212,7 +239,12 @@ class Geolocation {
 		$code   = isset( $_POST['gemsec_geo_code'] ) ? preg_replace( '/\D/', '', wp_unslash( $_POST['gemsec_geo_code'] ) ) : '';
 		$stored = get_transient( self::OTP_PREFIX . $user->ID );
 
-		if ( ! $stored || ! hash_equals( (string) $stored, $code ) ) {
+		if ( ! $stored || ! hash_equals( (string) $stored, self::hash_code( $code ) ) ) {
+			$pending['tries'] = (int) ( $pending['tries'] ?? 0 ) + 1;
+			if ( $pending['tries'] >= self::MAX_TRIES ) {
+				$this->lock_out( $token, $user );
+			}
+			set_transient( self::PENDING_PREFIX . $token, $pending, 10 * MINUTE_IN_SECONDS );
 			Logger::log( 'geo_verify_failed', sprintf( 'Failed location verification for "%s".', $user->user_login ), Logger::SEVERITY_WARNING, [ 'user_id' => $user->ID ] );
 			$this->render_form( $token, $pending['country'], __( 'Invalid code. Please try again.', 'gemsecurity' ) );
 			exit;
@@ -240,9 +272,27 @@ class Geolocation {
 	/* Helpers                                                             */
 	/* ------------------------------------------------------------------ */
 
+	/**
+	 * @param string $code
+	 * @return string
+	 */
+	private static function hash_code( $code ) {
+		return hash_hmac( 'sha256', (string) $code, wp_salt( 'auth' ) );
+	}
+
+	/** End a pending verification after too many tries and send them back to sign in. */
+	private function lock_out( $token, $user ) {
+		delete_transient( self::PENDING_PREFIX . $token );
+		delete_transient( self::OTP_PREFIX . $user->ID );
+		Logger::log( 'geo_verify_locked', sprintf( 'Location verification for "%s" locked after too many attempts.', $user->user_login ), Logger::SEVERITY_WARNING, [ 'user_id' => $user->ID ] );
+		wp_safe_redirect( add_query_arg( 'gemsec_geo', 'locked', wp_login_url() ) );
+		exit;
+	}
+
 	private function send_otp( $user ) {
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
-		set_transient( self::OTP_PREFIX . $user->ID, $code, 10 * MINUTE_IN_SECONDS );
+		// Stored keyed-hashed, like the 2FA email code, so a DB read leaks nothing usable.
+		set_transient( self::OTP_PREFIX . $user->ID, self::hash_code( $code ), 10 * MINUTE_IN_SECONDS );
 
 		Mailer::send(
 			$user->user_email,
