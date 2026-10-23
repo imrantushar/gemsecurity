@@ -84,11 +84,287 @@ const LEVELS = [
 
 const STEPS = [
 	{ id: 'welcome', label: __( 'Welcome', 'gemsecurity' ) },
-	{ id: 'level', label: __( 'Protection level', 'gemsecurity' ) },
-	{ id: 'features', label: __( 'Features', 'gemsecurity' ) },
+	{ id: 'questions', label: __( 'A few questions', 'gemsecurity' ) },
+	{ id: 'features', label: __( 'Review features', 'gemsecurity' ) },
 	{ id: 'alerts', label: __( 'Alerts', 'gemsecurity' ) },
 	{ id: 'done', label: __( 'All set', 'gemsecurity' ) },
 ];
+
+/* ------------------------------------------------------------------ */
+/* Questionnaire                                                       */
+/* ------------------------------------------------------------------ */
+/*
+ * Five concrete questions, each mapped to a `recommendation` fragment that
+ * the recommender merges. Keeping the mapping declarative here means the
+ * logic for "what does this answer actually DO" lives next to the answer
+ * copy — one place to read and tune.
+ *
+ * `settings` entries flip boolean feature flags on; `modules` entries name
+ * a module to switch on by id. Pro-only modules are still named; the
+ * module list filters Pro ones out automatically when Pro isn't active, so
+ * a free install can't trip the recommender into enabling something it
+ * can't boot.
+ */
+const QUESTIONS = [
+	{
+		id: 'site_kind',
+		label: __( 'What kind of site is this?', 'gemsecurity' ),
+		help: __( 'This tells us what\'s worth protecting the most.', 'gemsecurity' ),
+		options: [
+			{
+				id: 'blog',
+				icon: 'list',
+				title: __( 'Blog or portfolio', 'gemsecurity' ),
+				desc: __( 'Content I publish; readers mostly read.', 'gemsecurity' ),
+				rec: { level: 'essential' },
+			},
+			{
+				id: 'business',
+				icon: 'grid',
+				title: __( 'Business site', 'gemsecurity' ),
+				desc: __( 'Marketing, services, lead forms.', 'gemsecurity' ),
+				rec: { level: 'recommended', settings: { security_headers_enabled: true, hide_wp_version: true } },
+			},
+			{
+				id: 'store',
+				icon: 'zap',
+				title: __( 'Online store', 'gemsecurity' ),
+				desc: __( 'I sell products or subscriptions.', 'gemsecurity' ),
+				rec: {
+					level: 'recommended',
+					modules: [ 'two-factor', 'payment-integrity' ],
+					settings: { rate_limit_enabled: true, security_headers_enabled: true, payment_integrity_enabled: true },
+				},
+			},
+			{
+				id: 'membership',
+				icon: 'users',
+				title: __( 'Membership, courses or community', 'gemsecurity' ),
+				desc: __( 'People sign up and log in to use it.', 'gemsecurity' ),
+				rec: {
+					level: 'recommended',
+					modules: [ 'captcha', 'two-factor' ],
+					settings: { password_policy_enabled: true, rate_limit_enabled: true },
+				},
+			},
+			{
+				id: 'agency',
+				icon: 'layers',
+				title: __( 'Agency or multi-client site', 'gemsecurity' ),
+				desc: __( 'I manage this for someone else.', 'gemsecurity' ),
+				rec: {
+					level: 'maximum',
+					modules: [ 'plugin-guard', 'admin-guard', 'monitoring' ],
+				},
+			},
+		],
+	},
+	{
+		id: 'logins',
+		label: __( 'Who else logs in?', 'gemsecurity' ),
+		help: __( 'Login surface is where most sites get hit.', 'gemsecurity' ),
+		options: [
+			{
+				id: 'only_me',
+				icon: 'crown',
+				title: __( 'Only me', 'gemsecurity' ),
+				desc: __( 'I am the only account.', 'gemsecurity' ),
+				rec: { modules: [ 'two-factor', 'admin-guard' ] },
+			},
+			{
+				id: 'small_team',
+				icon: 'users',
+				title: __( 'A small team', 'gemsecurity' ),
+				desc: __( 'A handful of editors or staff.', 'gemsecurity' ),
+				rec: {
+					modules: [ 'two-factor', 'admin-guard' ],
+					settings: { password_policy_enabled: true, admin_session_timeout_enabled: true },
+				},
+			},
+			{
+				id: 'public',
+				icon: 'globe',
+				title: __( 'Members and customers can register', 'gemsecurity' ),
+				desc: __( 'The public can create accounts.', 'gemsecurity' ),
+				rec: {
+					modules: [ 'captcha', 'two-factor', 'admin-guard' ],
+					settings: {
+						antispam_heuristics: true,
+						rate_limit_enabled: true,
+						password_policy_enabled: true,
+						login_errors_generic: true,
+					},
+				},
+			},
+		],
+	},
+	{
+		id: 'incidents',
+		label: __( 'Has anything suspicious happened lately?', 'gemsecurity' ),
+		help: __( 'If yes, we turn on tighter detection and threat intel.', 'gemsecurity' ),
+		options: [
+			{
+				id: 'calm',
+				icon: 'check',
+				title: __( 'All quiet — nothing I\'ve noticed', 'gemsecurity' ),
+				desc: __( 'Standard protection is a good fit.', 'gemsecurity' ),
+				rec: {},
+			},
+			{
+				id: 'noisy',
+				icon: 'alert',
+				title: __( 'Spam, brute-force or odd traffic', 'gemsecurity' ),
+				desc: __( 'Comment spam, login attempts, bursts.', 'gemsecurity' ),
+				rec: {
+					modules: [ 'threats' ],
+					settings: {
+						waf_enabled: true,
+						rate_limit_enabled: true,
+						block_bad_bots: true,
+						throttle_404_enabled: true,
+						login_errors_generic: true,
+					},
+				},
+			},
+			{
+				id: 'hacked',
+				icon: 'shield',
+				title: __( 'Been hacked before, or files look changed', 'gemsecurity' ),
+				desc: __( 'Lock it down and watch files closely.', 'gemsecurity' ),
+				rec: {
+					level: 'maximum',
+					modules: [ 'threats', 'virtual-patch', 'incident-response', 'plugin-guard', 'payment-integrity' ],
+					settings: {
+						waf_enabled: true,
+						block_bad_bots: true,
+						throttle_404_enabled: true,
+						xmlrpc_disabled: true,
+						disable_file_editing: true,
+						file_watcher_enabled: true,
+						hidden_admin_detection: true,
+					},
+				},
+			},
+		],
+	},
+	{
+		id: 'traffic',
+		label: __( 'Where does your traffic come from?', 'gemsecurity' ),
+		help: __( 'Shapes bot blocking and country rules.', 'gemsecurity' ),
+		options: [
+			{
+				id: 'global',
+				icon: 'globe',
+				title: __( 'Global audience', 'gemsecurity' ),
+				desc: __( 'Visitors from anywhere.', 'gemsecurity' ),
+				rec: {},
+			},
+			{
+				id: 'countries',
+				icon: 'grid',
+				title: __( 'A few specific countries', 'gemsecurity' ),
+				desc: __( 'I can keep others out safely.', 'gemsecurity' ),
+				rec: { modules: [ 'geolocation' ], settings: { geo_enabled: true } },
+			},
+			{
+				id: 'bots',
+				icon: 'bot',
+				title: __( 'Mostly bots and scrapers lately', 'gemsecurity' ),
+				desc: __( 'Hungry crawlers, AI bots, scanners.', 'gemsecurity' ),
+				rec: {
+					settings: {
+						block_bad_bots: true,
+						block_ai_crawlers: true,
+						verify_search_bots: true,
+						throttle_404_enabled: true,
+					},
+				},
+			},
+		],
+	},
+	{
+		id: 'strictness',
+		label: __( 'If a real visitor got blocked once, how bad is that?', 'gemsecurity' ),
+		help: __( 'Tunes how aggressively we enforce rules.', 'gemsecurity' ),
+		options: [
+			{
+				id: 'gentle',
+				icon: 'help',
+				title: __( 'Terrible — be gentle', 'gemsecurity' ),
+				desc: __( 'Protect, but never risk breaking anything.', 'gemsecurity' ),
+				rec: { settings: { throttle_404_enabled: false } },
+			},
+			{
+				id: 'balanced',
+				icon: 'cog',
+				title: __( 'Balanced is fine', 'gemsecurity' ),
+				desc: __( 'The recommended default.', 'gemsecurity' ),
+				rec: {},
+			},
+			{
+				id: 'strict',
+				icon: 'lock',
+				title: __( 'Fine — lock it down', 'gemsecurity' ),
+				desc: __( 'I\'ll handle the odd false positive.', 'gemsecurity' ),
+				rec: {
+					level: 'maximum',
+					settings: {
+						throttle_404_enabled: true,
+						xmlrpc_disabled: true,
+						disable_file_editing: true,
+						block_author_enumeration: true,
+						disable_user_rest: true,
+					},
+				},
+			},
+		],
+	},
+];
+
+/**
+ * Fold the question answers into a single {level, settings, moduleIds}
+ * recommendation. Later answers can override earlier ones (strictness=strict
+ * promotes to maximum even if site_kind=blog said essential).
+ */
+function recommendFromAnswers( answers ) {
+	let levelId  = 'recommended';
+	let settings = {};
+	let moduleIds = new Set();
+
+	// Rank so a "harder" level answer wins over a softer one.
+	const rank = { essential: 0, recommended: 1, maximum: 2 };
+
+	for ( const q of QUESTIONS ) {
+		const picked = q.options.find( ( o ) => o.id === answers[ q.id ] );
+		if ( ! picked ) {
+			continue;
+		}
+		const rec = picked.rec || {};
+		if ( rec.level && rank[ rec.level ] > rank[ levelId ] ) {
+			levelId = rec.level;
+		}
+		if ( rec.settings ) {
+			settings = { ...settings, ...rec.settings };
+		}
+		for ( const id of ( rec.modules || [] ) ) {
+			moduleIds.add( id );
+		}
+	}
+
+	return { levelId, settingsFromQuestions: settings, forcedModules: moduleIds };
+}
+
+/** Build the full module map from a level + the questionnaire's forced-on ids. */
+function modulesForRecommendation( level, forcedModules ) {
+	const map = modulesFor( level );
+	for ( const id of forcedModules ) {
+		const m = allModules().find( ( x ) => x.id === id );
+		if ( m && ( ! m.is_pro || isPro() ) ) {
+			map[ id ] = true;
+		}
+	}
+	return map;
+}
 
 const allModules = () => ( Array.isArray( GS.modules ) ? GS.modules : [] ).filter( ( m ) => ! m.core );
 const groupList = () => ( Array.isArray( GS.groups ) ? GS.groups : [] );
@@ -109,9 +385,17 @@ function modulesFor( level ) {
 export default function SetupWizard() {
 	const { theme, toggle } = useThemeMode();
 	const [ step, setStep ] = useState( 0 );
-	const [ levelId, setLevelId ] = useState( 'recommended' );
+	const [ answers, setAnswers ] = useState( {} );
+
+	// Derived from answers; the Features step may override `modules` after.
+	const { levelId, settingsFromQuestions, forcedModules } = useMemo(
+		() => recommendFromAnswers( answers ),
+		[ answers ]
+	);
 	const level = LEVELS.find( ( l ) => l.id === levelId );
+
 	const [ modules, setModules ] = useState( () => modulesFor( level ) );
+	const [ userTouchedModules, setUserTouchedModules ] = useState( false );
 	const [ alerts, setAlerts ] = useState( {
 		alerts_enabled: true,
 		alert_to_email: GS.admin_email || '',
@@ -121,10 +405,21 @@ export default function SetupWizard() {
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState( '' );
 
-	const pickLevel = ( id ) => {
-		setLevelId( id );
-		setModules( modulesFor( LEVELS.find( ( l ) => l.id === id ) ) );
+	// When answers change, refresh the pre-filled module map — unless the
+	// user has started hand-picking features on the next step.
+	const applyAnswer = ( qid, oid ) => {
+		const nextAnswers = { ...answers, [ qid ]: oid };
+		setAnswers( nextAnswers );
+		if ( ! userTouchedModules ) {
+			const { levelId: nextLevel, forcedModules: nextForced } = recommendFromAnswers( nextAnswers );
+			setModules( modulesForRecommendation( LEVELS.find( ( l ) => l.id === nextLevel ), nextForced ) );
+		}
 	};
+	const changeModules = ( next ) => {
+		setUserTouchedModules( true );
+		setModules( next );
+	};
+	const answeredCount = Object.keys( answers ).length;
 
 	const enabledCount = Object.values( modules ).filter( Boolean ).length;
 	const next = () => setStep( ( s ) => Math.min( s + 1, STEPS.length - 1 ) );
@@ -134,7 +429,7 @@ export default function SetupWizard() {
 		setSaving( true );
 		setError( '' );
 		try {
-			await api.post( 'settings', { settings: { ...level.settings, ...alerts } } );
+			await api.post( 'settings', { settings: { ...level.settings, ...settingsFromQuestions, ...alerts } } );
 			// Only touch modules whose state actually changes.
 			for ( const m of allModules() ) {
 				const want = !! modules[ m.id ];
@@ -206,8 +501,14 @@ export default function SetupWizard() {
 
 				<div className="gs-wizard__body" key={ current }>
 					{ current === 'welcome' && <Welcome /> }
-					{ current === 'level' && <LevelStep value={ levelId } onChange={ pickLevel } /> }
-					{ current === 'features' && <FeaturesStep value={ modules } onChange={ setModules } /> }
+					{ current === 'questions' && (
+						<QuestionsStep
+							answers={ answers }
+							onAnswer={ applyAnswer }
+							recommendedLevel={ level }
+						/>
+					) }
+					{ current === 'features' && <FeaturesStep value={ modules } onChange={ changeModules } level={ level } /> }
 					{ current === 'alerts' && <AlertsStep value={ alerts } onChange={ setAlerts } /> }
 					{ current === 'done' && <DoneStep level={ level } count={ enabledCount } alerts={ alerts } /> }
 					{ error && <div className="gs-wizard__error">{ error }</div> }
@@ -225,8 +526,19 @@ export default function SetupWizard() {
 								{ __( 'Finish setup', 'gemsecurity' ) }
 							</Button>
 						) : (
-							<Button onClick={ next }>
-								{ current === 'welcome' ? __( 'Let’s get started', 'gemsecurity' ) : __( 'Continue', 'gemsecurity' ) }
+							<Button
+								onClick={ next }
+								disabled={ current === 'questions' && answeredCount < QUESTIONS.length }
+							>
+								{ current === 'welcome'
+									? __( 'Let’s get started', 'gemsecurity' )
+									: current === 'questions'
+										? sprintf(
+											/* translators: 1 answered, 2 total */
+											__( 'Continue (%1$d/%2$d)', 'gemsecurity' ),
+											answeredCount, QUESTIONS.length
+										)
+										: __( 'Continue', 'gemsecurity' ) }
 							</Button>
 						) }
 					</div>
@@ -253,7 +565,7 @@ function Welcome() {
 				? sprintf( /* translators: %s: site name */ __( 'Let’s secure %s', 'gemsecurity' ), GS.site_name )
 				: __( 'Let’s secure your site', 'gemsecurity' ) }</h1>
 			<p className="gs-wizard__lead">
-				{ __( 'Answer three quick questions and GemSecurity will switch on the right protection for you. It takes about a minute.', 'gemsecurity' ) }
+				{ __( 'Answer five quick questions and GemSecurity will switch on the right protection for you. It takes about a minute.', 'gemsecurity' ) }
 			</p>
 			<div className="gs-wizard__features">
 				{ items.map( ( i ) => (
@@ -277,51 +589,97 @@ function StepHead( { title, desc } ) {
 	);
 }
 
-function LevelStep( { value, onChange } ) {
+function QuestionsStep( { answers, onAnswer, recommendedLevel } ) {
+	const answered = Object.keys( answers ).length;
+	const total    = QUESTIONS.length;
+
 	return (
 		<>
 			<StepHead
-				title={ __( 'How much protection do you want?', 'gemsecurity' ) }
-				desc={ __( 'Pick a starting point. You can fine-tune each feature on the next step.', 'gemsecurity' ) }
+				title={ __( 'A few questions about your site', 'gemsecurity' ) }
+				desc={ __( 'Your answers switch on the right protection — we show the summary before anything is saved.', 'gemsecurity' ) }
 			/>
-			<div className="gs-wizard__levels" role="radiogroup">
-				{ LEVELS.map( ( l ) => (
-					<button
-						type="button"
-						key={ l.id }
-						role="radio"
-						aria-checked={ value === l.id }
-						className={ `gs-level ${ value === l.id ? 'is-selected' : '' }` }
-						onClick={ () => onChange( l.id ) }
-					>
-						{ l.best && <span className="gs-level__tag">{ __( 'Recommended', 'gemsecurity' ) }</span> }
-						<span className="gs-level__icon"><Icon name={ l.icon } size={ 22 } /></span>
-						<strong className="gs-level__title">{ l.title }</strong>
-						<span className="gs-level__desc">{ l.desc }</span>
-						<ul>
-							{ l.points.map( ( p ) => (
-								<li key={ p }><Icon name="check" size={ 14 } />{ p }</li>
-							) ) }
-						</ul>
-						<span className="gs-level__radio" />
-					</button>
+
+			<div className="gs-wizard__questions">
+				{ QUESTIONS.map( ( q, idx ) => (
+					<section key={ q.id } className="gs-question" aria-labelledby={ `gs-q-${ q.id }` }>
+						<header className="gs-question__head">
+							<span className="gs-question__num">{ idx + 1 }</span>
+							<div>
+								<h3 id={ `gs-q-${ q.id }` }>{ q.label }</h3>
+								{ q.help && <p className="gs-question__help">{ q.help }</p> }
+							</div>
+						</header>
+						<div className="gs-question__options" role="radiogroup" aria-labelledby={ `gs-q-${ q.id }` }>
+							{ q.options.map( ( o ) => {
+								const selected = answers[ q.id ] === o.id;
+								return (
+									<button
+										type="button"
+										key={ o.id }
+										role="radio"
+										aria-checked={ selected }
+										className={ `gs-option ${ selected ? 'is-selected' : '' }` }
+										onClick={ () => onAnswer( q.id, o.id ) }
+									>
+										<span className="gs-option__icon"><Icon name={ o.icon } size={ 18 } /></span>
+										<span className="gs-option__text">
+											<strong>{ o.title }</strong>
+											<span>{ o.desc }</span>
+										</span>
+										<span className="gs-option__radio" aria-hidden="true" />
+									</button>
+								);
+							} ) }
+						</div>
+					</section>
 				) ) }
 			</div>
+
+			<aside className={ `gs-wizard__recommendation ${ answered === total ? 'is-ready' : '' }` } aria-live="polite">
+				{ answered < total ? (
+					<p>{ sprintf(
+						/* translators: 1 answered, 2 total */
+						__( '%1$d of %2$d answered — your recommendation appears here.', 'gemsecurity' ),
+						answered, total
+					) }</p>
+				) : (
+					<>
+						<span className="gs-wizard__rec-tag"><Icon name="shield" size={ 14 } />{ __( 'Recommended for you', 'gemsecurity' ) }</span>
+						<strong>{ recommendedLevel.title }</strong>
+						<p>{ recommendedLevel.desc }</p>
+					</>
+				) }
+			</aside>
 		</>
 	);
 }
 
-function FeaturesStep( { value, onChange } ) {
+function FeaturesStep( { value, onChange, level } ) {
 	const grouped = useMemo( () => groupList()
 		.map( ( g ) => ( { ...g, items: allModules().filter( ( m ) => m.group === g.id ) } ) )
 		.filter( ( g ) => g.items.length ), [] );
 
+	const enabled = Object.values( value ).filter( Boolean ).length;
+
 	return (
 		<>
 			<StepHead
-				title={ __( 'Choose your features', 'gemsecurity' ) }
-				desc={ __( 'We’ve pre-selected features for your protection level. Only switched-on features load, so your site stays fast.', 'gemsecurity' ) }
+				title={ __( 'Review your features', 'gemsecurity' ) }
+				desc={ __( 'We pre-selected features based on your answers. Tweak anything you like — only switched-on features load, so your site stays fast.', 'gemsecurity' ) }
 			/>
+			<div className="gs-wizard__rec-banner" role="status">
+				<Icon name={ level.icon } size={ 18 } />
+				<span>
+					<strong>{ level.title }</strong>
+					{ ' · ' }
+					{ sprintf(
+						/* translators: %d: features enabled */
+						__( '%d features switched on', 'gemsecurity' ),
+						enabled
+					) }
+				</span>
+			</div>
 			<div className="gs-wizard__groups">
 				{ grouped.map( ( g ) => (
 					<section key={ g.id } className="gs-wizard__group">
