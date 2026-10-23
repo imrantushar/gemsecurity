@@ -67,4 +67,24 @@ class Dashboard {
 			'last_scan'      => Scanner::get_last_result(),
 		] );
 	}
+
+	/**
+	 * GET /score — score + full posture breakdown, nothing else.
+	 *
+	 * Backs the "boost your score" banner that appears on every module page:
+	 * the UI filters the checks client-side by the current page's slug, so
+	 * one assessment per page load is enough.
+	 */
+	public static function score() {
+		$assessment = \GemSecurity\Security\SecurityScore::assess();
+		return rest_ensure_response( [
+			'success' => true,
+			'score'   => $assessment['score'],
+			'grade'   => $assessment['grade'],
+			'posture_percent' => $assessment['posture_percent'],
+			'checks'  => $assessment['checks'],
+			'threats' => $assessment['threats'],
+			'summary' => $assessment['summary'],
+		] );
+	}
 }

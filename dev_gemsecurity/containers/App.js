@@ -10,6 +10,7 @@ import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/
 import ErrorBoundary from '@Components/ui/ErrorBoundary';
 import Icon from '@Components/ui/Icon';
 import HelpDrawer from '@Components/ui/HelpDrawer';
+import PageScoreTips, { refreshScoreTips } from '@Components/ui/PageScoreTips';
 import { useThemeMode } from '@Utils/theme';
 
 import Dashboard from '@Containers/pages/Dashboard';
@@ -205,6 +206,7 @@ export default function App() {
 					</nav>
 					) }
 					<div className="gs-content">
+						<PageScoreTips page={ resolvedPage } />
 						<ErrorBoundary key={ resolvedPage }>
 							{ renderPage() }
 						</ErrorBoundary>

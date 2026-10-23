@@ -250,6 +250,15 @@ class Api {
 			'permission_callback' => $perm,
 		] );
 
+		// Score-only read for in-app "boost your score" prompts shown on module
+		// pages. Lighter than /dashboard — just the posture + threats assessment,
+		// no log aggregates — so every page load is cheap.
+		register_rest_route( $ns, '/score', [
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Dashboard::class, 'score' ],
+			'permission_callback' => $perm,
+		] );
+
 		// Logs (core "logs" module).
 		register_rest_route( $ns, '/logs', [
 			[

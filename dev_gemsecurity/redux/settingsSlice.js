@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@Utils/api';
+import { refreshScoreTips } from '@Components/ui/PageScoreTips';
 
 export const fetchSettings = createAsyncThunk( 'settings/fetch', async () => {
 	const { data } = await api.get( 'settings' );
@@ -8,6 +9,9 @@ export const fetchSettings = createAsyncThunk( 'settings/fetch', async () => {
 
 export const saveSettings = createAsyncThunk( 'settings/save', async ( partial ) => {
 	const { data } = await api.post( 'settings', { settings: partial } );
+	// Any toggle change could move the score — invalidate the in-page tips
+	// cache so the next route change pulls a fresh assessment.
+	refreshScoreTips();
 	return data.settings;
 } );
 
