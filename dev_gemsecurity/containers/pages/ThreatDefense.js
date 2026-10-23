@@ -282,9 +282,6 @@ export default function ThreatDefense() {
 				/>
 			</Card>
 
-			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
-				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
-			</div>
 
 			{ form.live_traffic_enabled && <LiveTraffic /> }
 			<BannedIps />

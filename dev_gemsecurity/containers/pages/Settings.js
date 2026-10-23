@@ -8,7 +8,7 @@ import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
 import { useDispatch } from 'react-redux';
 import { fetchSettings } from '@Redux/settingsSlice';
-import { useNavigate } from 'react-router-dom';
+import useNavigate from '@Utils/useGuardedNavigate';
 import { setModules, pageUrl } from '@Utils/nav';
 import { isPro, ProBadge } from '@Components/ui/Pro';
 import Icon from '@Components/ui/Icon';
@@ -303,11 +303,6 @@ export default function Settings() {
 				</div>
 			</Card>
 
-			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
-				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
-					{ __( 'Save changes', 'gemsecurity' ) }
-				</Button>
-			</div>
 		</div>
 	);
 }

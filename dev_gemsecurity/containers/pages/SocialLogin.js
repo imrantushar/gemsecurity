@@ -140,9 +140,6 @@ export default function SocialLogin() {
 				<ProviderCard key={ p.key } provider={ p } form={ form } setField={ setField } />
 			) ) }
 
-			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
-				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save changes', 'gemsecurity' ) }</Button>
-			</div>
 		</div>
 	);
 }

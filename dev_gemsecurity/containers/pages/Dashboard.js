@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
-import { useNavigate } from 'react-router-dom';
+import useNavigate from '@Utils/useGuardedNavigate';
 import api from '@Utils/api';
 import { Card, Loading, Badge } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';

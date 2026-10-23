@@ -93,9 +93,10 @@ export function Collapsible( {
 /* Button                                                              */
 /* ------------------------------------------------------------------ */
 
-export function Button( { variant = 'primary', loading, children, ...props } ) {
+export const Button = React.forwardRef( function Button( { variant = 'primary', loading, children, ...props }, ref ) {
 	return (
 		<button
+			ref={ ref }
 			className={ `gs-btn gs-btn--${ variant } ${ loading ? 'is-loading' : '' }` }
 			disabled={ loading || props.disabled }
 			{ ...props }
@@ -104,7 +105,7 @@ export function Button( { variant = 'primary', loading, children, ...props } ) {
 			{ children }
 		</button>
 	);
-}
+} );
 
 /* ------------------------------------------------------------------ */
 /* Toggle (switch)                                                     */

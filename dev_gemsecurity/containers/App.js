@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import useNavigate from '@Utils/useGuardedNavigate';
 import { fetchSettings } from '@Redux/settingsSlice';
 import { useActivePage, useNavItems, useNavGroups, useModuleBySlug, pageUrl, pageFromHref, syncAdminMenu, getModules } from '@Utils/nav';
 import TopNav from '@Components/Layout/TopNav';
@@ -12,6 +12,8 @@ import Icon from '@Components/ui/Icon';
 import HelpDrawer from '@Components/ui/HelpDrawer';
 import PageScoreTips from '@Components/ui/PageScoreTips';
 import TopbarScore from '@Components/ui/TopbarScore';
+import SaveBar, { LeaveDialog } from '@Components/ui/SaveBar';
+import { guardLeave, leaveTo } from '@Utils/unsavedChanges';
 import { useThemeMode } from '@Utils/theme';
 
 import Dashboard from '@Containers/pages/Dashboard';
@@ -155,7 +157,7 @@ export default function App() {
 									if ( slug && PAGES[ slug ] ) {
 										navigate( pageUrl( slug ) );
 									} else {
-										window.location.href = url;
+										guardLeave( () => leaveTo( url ) );
 									}
 								} }
 							/>
@@ -223,9 +225,11 @@ export default function App() {
 						<ErrorBoundary key={ resolvedPage }>
 							{ renderPage() }
 						</ErrorBoundary>
+						<SaveBar />
 					</div>
 				</div>
 			</main>
+			<LeaveDialog />
 			<HelpDrawer
 				open={ helpOpen }
 				onClose={ () => setHelpOpen( false ) }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { __ } from '@wordpress/i18n';
-import { useNavigate } from 'react-router-dom';
+import useNavigate from '@Utils/useGuardedNavigate';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { useModules, pageUrl, pageFromHref } from '@Utils/nav';
@@ -328,11 +328,6 @@ export default function Notifications() {
 
 			{ /* Always present, disabled when clean — same as the Settings page
 			     this sits next to, so the save button never moves. */ }
-			<div className="gs-savebar" data-label={ __( 'Unsaved changes', 'gemsecurity' ) }>
-				<Button onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
-					{ __( 'Save changes', 'gemsecurity' ) }
-				</Button>
-			</div>
 		</div>
 	);
 }

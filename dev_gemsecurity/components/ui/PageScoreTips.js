@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { __, sprintf, _n } from '@wordpress/i18n';
 import api from '@Utils/api';
 import Icon from '@Components/ui/Icon';
+import useQuickFix from '@Utils/useQuickFix';
 
 /**
  * Lightweight in-page coach: on every module page, read the security score
@@ -59,6 +60,7 @@ export function onScoreInvalidated( fn ) {
 }
 
 export default function PageScoreTips( { page } ) {
+	const { fix, fixing, busy } = useQuickFix();
 	const [ data, setData ] = useState( CACHED );
 	const [ dismissed, setDismissed ] = useState( false );
 
@@ -67,12 +69,14 @@ export default function PageScoreTips( { page } ) {
 			return;
 		}
 		let cancelled = false;
-		loadScore().then( ( d ) => {
+		const refetch = () => loadScore().then( ( d ) => {
 			if ( ! cancelled ) {
 				setData( d );
 			}
 		} );
-		return () => { cancelled = true; };
+		refetch();
+		const unsub = onScoreInvalidated( refetch );
+		return () => { cancelled = true; unsub(); };
 	}, [ page ] );
 
 	if ( SKIP_PAGES.has( page ) || ! data || ! Array.isArray( data.checks ) ) {
@@ -92,6 +96,7 @@ export default function PageScoreTips( { page } ) {
 		return null;
 	}
 
+	const quickKeys = tips.filter( ( c ) => c.quick ).map( ( c ) => c.key );
 	const gain = tips.reduce( ( sum, c ) => sum + ( c.weight || 0 ), 0 );
 	const score = typeof data.score === 'number' ? data.score : null;
 
@@ -126,6 +131,15 @@ export default function PageScoreTips( { page } ) {
 						) }
 					</span>
 				</div>
+				{ quickKeys.length > 1 && (
+					<button type="button" className="gs-score-tips__fixall" onClick={ () => fix( quickKeys ) } disabled={ busy }>
+						{ sprintf(
+							/* translators: %d: number of settings */
+							__( 'Fix all %d', 'gemsecurity' ),
+							quickKeys.length
+						) }
+					</button>
+				) }
 				<button
 					type="button"
 					className="gs-score-tips__close"
@@ -147,6 +161,16 @@ export default function PageScoreTips( { page } ) {
 						<span className="gs-score-tips__weight">
 							{ sprintf( /* translators: %d: weight */ __( '+%d', 'gemsecurity' ), c.weight || 0 ) }
 						</span>
+						{ c.quick && (
+							<button
+								type="button"
+								className="gs-score-tips__fix"
+								onClick={ () => fix( [ c.key ] ) }
+								disabled={ !! fixing[ c.key ] }
+							>
+								{ fixing[ c.key ] ? __( 'Fixing…', 'gemsecurity' ) : __( 'Fix', 'gemsecurity' ) }
+							</button>
+						) }
 					</li>
 				) ) }
 			</ul>

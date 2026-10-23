@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { __, sprintf, _n } from '@wordpress/i18n';
-import { useDispatch } from 'react-redux';
 import Icon from '@Components/ui/Icon';
-import { saveSettings } from '@Redux/settingsSlice';
+import useQuickFix from '@Utils/useQuickFix';
 import { loadScore, onScoreInvalidated } from '@Components/ui/PageScoreTips';
 
 /**
@@ -17,9 +16,7 @@ import { loadScore, onScoreInvalidated } from '@Components/ui/PageScoreTips';
 export default function TopbarScore( { onNavigate } ) {
 	const [ data, setData ]   = useState( null );
 	const [ open, setOpen ]   = useState( false );
-	const [ fixing, setFixing ] = useState( {} );
-	const [ fixError, setFixError ] = useState( null );
-	const dispatch            = useDispatch();
+	const { fix, fixing, busy } = useQuickFix();
 	const btnRef              = useRef( null );
 	const popRef              = useRef( null );
 
@@ -73,34 +70,10 @@ export default function TopbarScore( { onNavigate } ) {
 	const failing = checks.filter( ( c ) => c.status !== 'pass' );
 	const gain    = failing.reduce( ( s, c ) => s + ( c.weight || 0 ), 0 );
 
-	// One-click fix: switch the setting on. saveSettings invalidates the
-	// score cache, which makes this chip (and the in-page tips) refetch.
-	const handleFix = ( key ) => {
-		setFixError( null );
-		setFixing( ( f ) => ( { ...f, [ key ]: true } ) );
-		dispatch( saveSettings( { [ key ]: true } ) )
-			.unwrap()
-			.catch( () => setFixError( __( 'Could not save that setting. Open its page and try again.', 'gemsecurity' ) ) )
-			.finally( () => setFixing( ( f ) => {
-				const next = { ...f };
-				delete next[ key ];
-				return next;
-			} ) );
-	};
+	const handleFix = ( key ) => fix( [ key ] );
 
 	const quickKeys = failing.filter( ( c ) => c.quick ).map( ( c ) => c.key );
-	const handleFixAll = () => {
-		if ( ! quickKeys.length ) {
-			return;
-		}
-		setFixError( null );
-		const all = Object.fromEntries( quickKeys.map( ( k ) => [ k, true ] ) );
-		setFixing( all );
-		dispatch( saveSettings( all ) )
-			.unwrap()
-			.catch( () => setFixError( __( 'Could not save those settings. Try again.', 'gemsecurity' ) ) )
-			.finally( () => setFixing( {} ) );
-	};
+	const handleFixAll = () => quickKeys.length && fix( quickKeys );
 
 	const handleGo = ( url ) => {
 		if ( ! url ) {
@@ -199,7 +172,7 @@ export default function TopbarScore( { onNavigate } ) {
 										type="button"
 										className="gs-score-pop__fixall"
 										onClick={ handleFixAll }
-										disabled={ Object.keys( fixing ).length > 0 }
+										disabled={ busy }
 									>
 										{ sprintf(
 											/* translators: %d: number of settings */
@@ -209,7 +182,6 @@ export default function TopbarScore( { onNavigate } ) {
 									</button>
 								) }
 							</h4>
-							{ fixError && <p className="gs-score-pop__error">{ fixError }</p> }
 							<ul>
 								{ failing.map( ( c ) => (
 									<li key={ c.key }>

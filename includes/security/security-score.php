@@ -133,7 +133,8 @@ class SecurityScore {
 		// [ setting key, weight, label, fix, page slug, one-click fixable ]
 		// One-click is off for switches that can lock people out or break the
 		// front end (2FA, admin whitelist, CSP headers) or need setup first
-		// (file watcher baseline) — those still link to their page.
+		// (file watcher baseline), or break remote clients (XML-RPC) — those still
+		// link to their page. Mirrors dev_gemsecurity/utils/instantSettings.js.
 		$defs = [
 			[ 'firewall_enabled', 12, __( 'Firewall', 'gemsecurity' ), __( 'Turn on the firewall to block common attack traffic.', 'gemsecurity' ), $slug . '-firewall' , true ],
 			[ 'login_attempts_enabled', 12, __( 'Brute-force protection', 'gemsecurity' ), __( 'Limit login attempts to stop password-guessing.', 'gemsecurity' ), $slug . '-login-security' , true ],
@@ -149,7 +150,7 @@ class SecurityScore {
 			[ 'block_author_enumeration', 4, __( 'Author enumeration blocked', 'gemsecurity' ), __( 'Stop attackers from harvesting usernames.', 'gemsecurity' ), $slug . '-firewall' , true ],
 			[ 'disable_user_rest', 4, __( 'REST user enumeration blocked', 'gemsecurity' ), __( 'Hide the user list from the public REST API.', 'gemsecurity' ), $slug . '-firewall' , true ],
 			[ 'admin_login_alert_enabled', 3, __( 'Admin login alerts', 'gemsecurity' ), __( 'Get notified whenever an administrator signs in.', 'gemsecurity' ), $slug . '-login-security' , true ],
-			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ), $slug . '-firewall' , true ],
+			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ), $slug . '-firewall' , false ],
 			[ 'hide_wp_version', 2, __( 'WordPress version hidden', 'gemsecurity' ), __( 'Stop advertising your exact WordPress version.', 'gemsecurity' ), $slug . '-firewall' , true ],
 		];
 
