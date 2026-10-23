@@ -33,13 +33,6 @@ function AuditSettings() {
 		<Card
 			title={ __( 'What gets logged', 'gemsecurity' ) }
 			description={ __( 'Choose which activity is recorded. Security events — logins, firewall blocks, scans, bans — are always logged and are not affected by these.', 'gemsecurity' ) }
-			actions={
-				dirty ? (
-					<Button variant="secondary" onClick={ () => save() } loading={ saving }>
-						{ __( 'Save', 'gemsecurity' ) }
-					</Button>
-				) : null
-			}
 		>
 			<Toggle
 				label={ __( 'Record activity in the audit log', 'gemsecurity' ) }

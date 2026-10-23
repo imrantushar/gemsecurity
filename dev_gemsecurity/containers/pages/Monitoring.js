@@ -52,9 +52,6 @@ export default function Monitoring() {
 						{ __( 'Warnings go to the security email on the Notifications page, along with every other notification the plugin sends.', 'gemsecurity' ) }
 					</p>
 				) }
-				<div className="gs-savebar gs-savebar--inline">
-					<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save', 'gemsecurity' ) }</Button>
-				</div>
 			</Card>
 
 			<Card title={ __( 'Status', 'gemsecurity' ) } description={ data ? `${ __( 'Last checked', 'gemsecurity' ) } ${ d.checked }` : '' }>

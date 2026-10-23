@@ -17,7 +17,7 @@ export default function useQuickFix() {
 		const on = Object.fromEntries( keys.map( ( k ) => [ k, true ] ) );
 		const off = Object.fromEntries( keys.map( ( k ) => [ k, false ] ) );
 		setFixing( ( f ) => ( { ...f, ...on } ) );
-		return dispatch( saveSettings( on ) )
+		return dispatch( saveSettings( { settings: on, source: 'quick_fix' } ) )
 			.unwrap()
 			.then( () => {
 				toast(
@@ -30,7 +30,7 @@ export default function useQuickFix() {
 					{
 						action: {
 							label: __( 'Undo', 'gemsecurity' ),
-							onClick: () => dispatch( saveSettings( off ) ),
+							onClick: () => dispatch( saveSettings( { settings: off, source: 'undo' } ) ),
 						},
 					}
 				);

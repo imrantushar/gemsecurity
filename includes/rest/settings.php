@@ -307,10 +307,61 @@ class Settings {
 
 		update_option( GEMSECURITY_SETTINGS_NAME, $merged );
 
+		self::log_changes( $current, $merged, (string) $request->get_param( 'source' ) );
+
 		return rest_ensure_response( [
 			'success'  => true,
 			'settings' => $merged,
 		] );
+	}
+
+	/**
+	 * Audit-log what a save changed and how (save bar, instant switch,
+	 * one-click score fix, undo). Values are only shown for on/off switches —
+	 * other settings can hold webhook URLs or keys, so only their names go in.
+	 *
+	 * @param array  $before
+	 * @param array  $after
+	 * @param string $source
+	 */
+	private static function log_changes( $before, $after, $source ) {
+		$parts = [];
+		$keys  = [];
+		foreach ( $after as $key => $value ) {
+			$old = array_key_exists( $key, $before ) ? $before[ $key ] : null;
+			if ( $old === $value ) {
+				continue;
+			}
+			$keys[] = $key;
+			if ( is_bool( $value ) ) {
+				$parts[] = $key . ( $value ? ' → on' : ' → off' );
+			} else {
+				$parts[] = $key;
+			}
+		}
+		if ( ! $parts ) {
+			return;
+		}
+
+		$labels = [
+			'quick_fix' => __( 'one-click fix', 'gemsecurity' ),
+			'undo'      => __( 'undo of a one-click fix', 'gemsecurity' ),
+			'instant'   => __( 'instant switch', 'gemsecurity' ),
+			'save'      => __( 'settings save', 'gemsecurity' ),
+		];
+		$via = isset( $labels[ $source ] ) ? $labels[ $source ] : $labels['save'];
+
+		\GemSecurity\Logger::log(
+			'settings_changed',
+			sprintf(
+				/* translators: 1: how it was changed, 2: changed setting keys */
+				__( 'Settings changed via %1$s: %2$s', 'gemsecurity' ),
+				$via,
+				implode( ', ', $parts )
+			),
+			\GemSecurity\Logger::SEVERITY_INFO,
+			[ 'context' => [ 'source' => $source ?: 'save', 'keys' => $keys ] ]
+		);
 	}
 
 	/* --------------------------------------------------------------------- */

@@ -260,11 +260,6 @@ function PasswordRotation() {
 				</div>
 			) }
 
-			<div className="gs-savebar gs-savebar--inline">
-				<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
-					{ __( 'Save rotation settings', 'gemsecurity' ) }
-				</Button>
-			</div>
 		</Card>
 	);
 }

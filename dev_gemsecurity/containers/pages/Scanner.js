@@ -580,13 +580,6 @@ function ScannerSettings( { form, setField, save, saving, dirty } ) {
 					disabled={ ! isPro() }
 				/>
 			</div>
-			{ dirty && (
-				<div className="gs-savebar gs-savebar--inline">
-					<Button variant="secondary" onClick={ () => save() } loading={ saving }>
-						{ __( 'Save', 'gemsecurity' ) }
-					</Button>
-				</div>
-			) }
 		</>
 	);
 }

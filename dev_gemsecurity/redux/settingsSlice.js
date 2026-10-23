@@ -7,8 +7,12 @@ export const fetchSettings = createAsyncThunk( 'settings/fetch', async () => {
 	return data.settings;
 } );
 
-export const saveSettings = createAsyncThunk( 'settings/save', async ( partial ) => {
-	const { data } = await api.post( 'settings', { settings: partial } );
+/**
+ * @param {Object} partial Settings to change.
+ * @param {string} [source] How: 'save' | 'instant' | 'quick_fix' | 'undo' — for the audit log.
+ */
+export const saveSettings = createAsyncThunk( 'settings/save', async ( { settings, source = 'save' } ) => {
+	const { data } = await api.post( 'settings', { settings, source } );
 	// Any toggle change could move the score — invalidate the in-page tips
 	// cache so the next route change pulls a fresh assessment.
 	refreshScoreTips();

@@ -62,9 +62,9 @@ export default function useSettingsForm( keys ) {
 		} );
 	}, [ initial ] );
 
-	const persist = async ( partial, message ) => {
+	const persist = async ( partial, message, source = 'save' ) => {
 		try {
-			await dispatch( saveSettings( partial ) ).unwrap();
+			await dispatch( saveSettings( { settings: partial, source } ) ).unwrap();
 			if ( message ) {
 				toast( message, 'success' );
 			}
@@ -80,7 +80,8 @@ export default function useSettingsForm( keys ) {
 		if ( isInstantSetting( key ) && typeof value === 'boolean' ) {
 			persist(
 				{ [ key ]: value },
-				value ? __( 'Turned on and saved.', 'gemsecurity' ) : __( 'Turned off and saved.', 'gemsecurity' )
+				value ? __( 'Turned on and saved.', 'gemsecurity' ) : __( 'Turned off and saved.', 'gemsecurity' ),
+				'instant'
 			).then( ( ok ) => {
 				if ( ! ok ) {
 					// Roll the switch back so it shows what is really saved.

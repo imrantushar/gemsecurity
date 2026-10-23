@@ -26,11 +26,6 @@ export default function VirtualPatch() {
 					checked={ form.virtual_patch_enabled }
 					onChange={ ( v ) => setField( 'virtual_patch_enabled', v ) }
 				/>
-				<div className="gs-savebar gs-savebar--inline">
-					<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>
-						{ __( 'Save', 'gemsecurity' ) }
-					</Button>
-				</div>
 			</Card>
 
 			<Card

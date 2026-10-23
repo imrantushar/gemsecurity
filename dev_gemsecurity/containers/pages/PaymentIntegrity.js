@@ -46,9 +46,6 @@ export default function PaymentIntegrity() {
 						<ListInput value={ form.payment_page_ids || [] } onChange={ ( v ) => setField( 'payment_page_ids', v ) } placeholder={ '42\n108' } />
 					</Field>
 				) }
-				<div className="gs-savebar gs-savebar--inline">
-					<Button variant="secondary" onClick={ () => save() } loading={ saving } disabled={ ! dirty }>{ __( 'Save', 'gemsecurity' ) }</Button>
-				</div>
 			</Card>
 
 			{ data && data.alerts && data.alerts.length > 0 && (

@@ -14,10 +14,13 @@ const LISTENERS = new Set();
 let pending     = null;      // { proceed } while the leave dialog is open
 let snapshot    = { dirty: false, count: 0, pending: null };
 
+let dirtyHref = null; // URL the unsaved edits belong to (for Back/Forward)
+
 function emit() {
 	let count = 0;
 	FORMS.forEach( ( f ) => { if ( f.dirty ) count++; } );
 	snapshot = { dirty: count > 0, count, pending };
+	dirtyHref = snapshot.dirty ? ( dirtyHref || window.location.href ) : null;
 	LISTENERS.forEach( ( fn ) => fn() );
 }
 
@@ -107,6 +110,34 @@ export function leaveTo( href ) {
 	bypassUnload = true;
 	window.location.href = href;
 }
+
+// Browser Back/Forward. This module loads before the router mounts, so this
+// listener runs first and can hide the event from it: put the URL back, ask,
+// and replay the history step only once the user saves or discards.
+const pageOf = ( href ) => new URL( href ).searchParams.get( 'page' );
+let replaying = false;
+window.addEventListener( 'popstate', ( e ) => {
+	if ( replaying ) {
+		replaying = false;
+		return;
+	}
+	if ( ! snapshot.dirty || ! dirtyHref ) {
+		return;
+	}
+	const target = window.location.href;
+	// Tab/query changes within the same page keep the forms mounted.
+	if ( pageOf( target ) === pageOf( dirtyHref ) ) {
+		dirtyHref = target;
+		return;
+	}
+	e.stopImmediatePropagation();
+	const from = dirtyHref;
+	window.history.pushState( window.history.state, '', from );
+	guardLeave( () => {
+		replaying = true;
+		window.history.back();
+	} );
+} );
 
 // Intercept ordinary links outside the app (WP sidebar, admin bar, in-page
 // anchors to other admin screens) so they get our dialog, not the browser's.
