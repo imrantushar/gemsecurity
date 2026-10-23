@@ -42,6 +42,7 @@ class Installer {
 		\GemSecurity\Security\PluginGuard::uninstall_mu();
 		require_once GEMSECURITY_INCLUDES_DIR_PATH . 'security/upload-shield.php';
 		\GemSecurity\Security\UploadShield::remove_htaccess();
+		\GemSecurity\Security\CoreFileRules::sync( false );
 		wp_clear_scheduled_hook( \GemSecurity\Security\PluginGuard::CRON_HOOK );
 		flush_rewrite_rules();
 	}
@@ -298,6 +299,7 @@ class Installer {
 			'block_author_enumeration'     => true,
 			'disable_user_rest'            => true,
 			'hide_wp_version'              => true,
+			'protect_core_files_enabled'   => false,
 			'comments_disabled'            => false,
 
 			// Login security.

@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { __, sprintf, _n } from '@wordpress/i18n';
 import Icon from '@Components/ui/Icon';
 import useQuickFix from '@Utils/useQuickFix';
+
+// A check fixed by a different setting (e.g. "debug.log is public" → turn on
+// core-file protection) names it in fix_key.
+const settingOf = ( c ) => c.fix_key || c.key;
 import { loadScore, onScoreInvalidated } from '@Components/ui/PageScoreTips';
 
 /**
@@ -72,7 +76,7 @@ export default function TopbarScore( { onNavigate } ) {
 
 	const handleFix = ( key ) => fix( [ key ] );
 
-	const quickKeys = failing.filter( ( c ) => c.quick ).map( ( c ) => c.key );
+	const quickKeys = failing.filter( ( c ) => c.quick ).map( settingOf ).filter( ( k, i, a ) => a.indexOf( k ) === i );
 	const handleFixAll = () => quickKeys.length && fix( quickKeys );
 
 	const handleGo = ( url ) => {
@@ -166,7 +170,7 @@ export default function TopbarScore( { onNavigate } ) {
 					{ failing.length > 0 ? (
 						<section className="gs-score-pop__section">
 							<h4>
-								<Icon name="zap" size={ 14 } />{ __( 'Settings to turn on', 'gemsecurity' ) }
+								<Icon name="zap" size={ 14 } />{ __( 'To fix', 'gemsecurity' ) }
 								{ quickKeys.length > 1 && (
 									<button
 										type="button"
@@ -197,11 +201,11 @@ export default function TopbarScore( { onNavigate } ) {
 											<button
 												type="button"
 												className="gs-score-pop__go is-fix"
-												onClick={ () => handleFix( c.key ) }
-												disabled={ !! fixing[ c.key ] }
+												onClick={ () => handleFix( settingOf( c ) ) }
+												disabled={ !! fixing[ settingOf( c ) ] }
 												title={ __( 'Turn this setting on now', 'gemsecurity' ) }
 											>
-												{ fixing[ c.key ] ? __( 'Fixing…', 'gemsecurity' ) : __( 'Fix', 'gemsecurity' ) }
+												{ fixing[ settingOf( c ) ] ? __( 'Fixing…', 'gemsecurity' ) : __( 'Fix', 'gemsecurity' ) }
 											</button>
 										) : c.action && (
 											<button

@@ -24,6 +24,7 @@ const INSTANT = new Set( [
 	'disable_user_rest',
 	'admin_login_alert_enabled',
 	'hide_wp_version',
+	'protect_core_files_enabled',
 ] );
 
 export function isInstantSetting( key ) {

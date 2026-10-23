@@ -67,36 +67,53 @@ class Firewall {
 	 * GET /file-permissions — audit key paths for over-permissive modes.
 	 */
 	public static function file_permissions() {
-		// path => [ recommended octal, warn-if-group/other-writable ].
+		// path => recommended mode. Matches WordPress's hardening guide: code
+		// (root, wp-admin, wp-includes, plugins) writable only by the owner,
+		// wp-content and uploads writable by the web server too, and
+		// wp-config.php readable by as few as possible (it holds the database
+		// password) — 400/440 where the host allows, 640 at most.
 		$targets = [
-			ABSPATH . 'wp-config.php'    => '0640',
-			ABSPATH . '.htaccess'        => '0644',
-			WP_CONTENT_DIR               => '0755',
-			WP_CONTENT_DIR . '/uploads'  => '0755',
-			ABSPATH                      => '0755',
+			ABSPATH . 'wp-config.php'   => '0440',
+			ABSPATH . '.htaccess'       => '0644',
+			ABSPATH                     => '0755',
+			ABSPATH . 'wp-admin'        => '0755',
+			ABSPATH . WPINC             => '0755',
+			WP_CONTENT_DIR              => '0755',
+			WP_PLUGIN_DIR               => '0755',
+			get_theme_root()            => '0755',
+			WP_CONTENT_DIR . '/uploads' => '0755',
 		];
+		// wp-config.php may live one level above the install.
+		if ( ! file_exists( ABSPATH . 'wp-config.php' ) && file_exists( dirname( ABSPATH ) . '/wp-config.php' ) ) {
+			unset( $targets[ ABSPATH . 'wp-config.php' ] );
+			$targets = [ dirname( ABSPATH ) . '/wp-config.php' => '0440' ] + $targets;
+		}
 
 		$rows = [];
 		foreach ( $targets as $path => $recommended ) {
 			if ( ! file_exists( $path ) ) {
 				continue;
 			}
-			$perms = fileperms( $path ) & 0777;
-			$octal = '0' . decoct( $perms );
-			// Flag world-writable (o+w) as critical, group-writable as warning.
-			$world_writable = (bool) ( $perms & 0002 );
-			$group_writable = (bool) ( $perms & 0020 );
-			$status = 'ok';
-			if ( $world_writable ) {
+			$perms     = fileperms( $path ) & 0777;
+			$is_config = 'wp-config.php' === basename( $path );
+			$status    = 'ok';
+			$note      = '';
+			if ( $perms & 0002 ) {
 				$status = 'critical';
-			} elseif ( $group_writable && false !== strpos( $path, 'wp-config' ) ) {
+				$note   = __( 'Anyone on the server can write to this.', 'gemsecurity' );
+			} elseif ( $is_config && ( $perms & 0004 ) ) {
 				$status = 'warning';
+				$note   = __( 'Every account on the server can read the database password.', 'gemsecurity' );
+			} elseif ( $is_config && ( $perms & 0020 ) ) {
+				$status = 'warning';
+				$note   = __( 'The group can change your configuration.', 'gemsecurity' );
 			}
 			$rows[] = [
-				'path'        => str_replace( ABSPATH, '', $path ) ?: '/',
-				'perms'       => $octal,
+				'path'        => str_replace( wp_normalize_path( dirname( ABSPATH ) ) . '/', '../', str_replace( ABSPATH, '', $path ) ) ?: '/',
+				'perms'       => '0' . decoct( $perms ),
 				'recommended' => $recommended,
 				'status'      => $status,
+				'note'        => $note,
 			];
 		}
 

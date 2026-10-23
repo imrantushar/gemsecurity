@@ -14,6 +14,7 @@ const KEYS = [
 	'xmlrpc_disabled',
 	'disable_file_editing',
 	'hide_wp_version',
+	'protect_core_files_enabled',
 	// Username enumeration.
 	'block_author_enumeration',
 	'disable_user_rest',
@@ -89,7 +90,10 @@ function FilePermissions() {
 					<tbody>
 						{ rows.map( ( r ) => (
 							<tr key={ r.path }>
-								<td><code>{ r.path }</code></td>
+								<td>
+									<code>{ r.path }</code>
+									{ r.note && <div className="gs-muted" style={ { fontSize: 12, marginTop: 2 } }>{ r.note }</div> }
+								</td>
 								<td className="gs-nowrap">{ r.perms }</td>
 								<td className="gs-nowrap">{ r.recommended }</td>
 								<td><Badge tone={ r.status === 'critical' ? 'danger' : r.status === 'warning' ? 'warning' : 'success' }>{ r.status === 'ok' ? __( 'OK', 'gemsecurity' ) : r.status }</Badge></td>
@@ -141,6 +145,7 @@ const HARDENING = [
 	{ key: 'disable_file_editing', label: __( 'Disable theme & plugin file editor', 'gemsecurity' ), desc: __( 'Stops attackers editing PHP from wp-admin (DISALLOW_FILE_EDIT).', 'gemsecurity' ) },
 	{ key: 'xmlrpc_disabled', label: __( 'Disable XML-RPC', 'gemsecurity' ), desc: __( 'Closes a common brute-force and DDoS vector.', 'gemsecurity' ) },
 	{ key: 'hide_wp_version', label: __( 'Hide WordPress version', 'gemsecurity' ), desc: __( 'Removes the generator meta tag and version from feeds.', 'gemsecurity' ) },
+	{ key: 'protect_core_files_enabled', label: __( 'Protect wp-config.php, error logs and wp-admin/includes', 'gemsecurity' ), desc: __( 'Adds server rules to .htaccess so these cannot be opened from the web (Apache / LiteSpeed; on nginx add them to the server config).', 'gemsecurity' ) },
 ];
 
 /*
@@ -435,7 +440,7 @@ export default function Firewall() {
 				/>
 				<Toggle
 					label={ __( 'Block PHP execution in /uploads', 'gemsecurity' ) }
-					description={ __( 'Stops uploaded PHP shells from running.', 'gemsecurity' ) }
+					description={ __( 'Adds a server rule to uploads/.htaccess so uploaded PHP shells cannot run (Apache / LiteSpeed). On nginx, Upload Shield\'s live test shows whether PHP there still executes.', 'gemsecurity' ) }
 					checked={ form.block_php_in_uploads }
 					onChange={ ( v ) => setField( 'block_php_in_uploads', v ) }
 					disabled={ ! pro }

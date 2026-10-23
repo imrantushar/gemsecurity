@@ -4,6 +4,10 @@ import api from '@Utils/api';
 import Icon from '@Components/ui/Icon';
 import useQuickFix from '@Utils/useQuickFix';
 
+// A check fixed by a different setting (e.g. "debug.log is public" → turn on
+// core-file protection) names it in fix_key.
+const settingOf = ( c ) => c.fix_key || c.key;
+
 /**
  * Lightweight in-page coach: on every module page, read the security score
  * assessment and show the failing posture checks whose fix lives on THIS page.
@@ -96,7 +100,7 @@ export default function PageScoreTips( { page } ) {
 		return null;
 	}
 
-	const quickKeys = tips.filter( ( c ) => c.quick ).map( ( c ) => c.key );
+	const quickKeys = tips.filter( ( c ) => c.quick ).map( settingOf ).filter( ( k, i, a ) => a.indexOf( k ) === i );
 	const gain = tips.reduce( ( sum, c ) => sum + ( c.weight || 0 ), 0 );
 	const score = typeof data.score === 'number' ? data.score : null;
 
@@ -165,10 +169,10 @@ export default function PageScoreTips( { page } ) {
 							<button
 								type="button"
 								className="gs-score-tips__fix"
-								onClick={ () => fix( [ c.key ] ) }
-								disabled={ !! fixing[ c.key ] }
+								onClick={ () => fix( [ settingOf( c ) ] ) }
+								disabled={ !! fixing[ settingOf( c ) ] }
 							>
-								{ fixing[ c.key ] ? __( 'Fixing…', 'gemsecurity' ) : __( 'Fix', 'gemsecurity' ) }
+								{ fixing[ settingOf( c ) ] ? __( 'Fixing…', 'gemsecurity' ) : __( 'Fix', 'gemsecurity' ) }
 							</button>
 						) }
 					</li>

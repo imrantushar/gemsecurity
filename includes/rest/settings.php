@@ -32,6 +32,7 @@ class Settings {
 			'block_author_enumeration'      => 'bool',
 			'disable_user_rest'             => 'bool',
 			'hide_wp_version'               => 'bool',
+			'protect_core_files_enabled'    => 'bool',
 			'comments_disabled'             => 'bool',
 
 			// Login security.
@@ -295,6 +296,7 @@ class Settings {
 
 		$was_whitelist_enabled = ! empty( $current['admin_whitelist_enabled'] );
 		$was_mu_enabled        = ! empty( $current['mu_loader_enabled'] );
+		$was_core_rules        = ! empty( $current['protect_core_files_enabled'] );
 
 		$merged = array_merge( $current, self::sanitize_all( $incoming ) );
 
@@ -331,6 +333,13 @@ class Settings {
 				// Couldn't write the file — reflect reality so the UI doesn't lie.
 				$merged['mu_loader_enabled'] = \GemSecurity\Security\MuLoader::is_installed();
 			}
+		}
+
+		// Write/remove the wp-config, error-log and wp-admin/includes rules.
+		$now_core_rules = ! empty( $merged['protect_core_files_enabled'] );
+		if ( $now_core_rules !== $was_core_rules && ! \GemSecurity\Security\CoreFileRules::sync( $now_core_rules ) ) {
+			// .htaccess not writable — keep the switch truthful.
+			$merged['protect_core_files_enabled'] = \GemSecurity\Security\CoreFileRules::installed();
 		}
 
 		update_option( GEMSECURITY_SETTINGS_NAME, $merged );

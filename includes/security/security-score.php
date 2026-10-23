@@ -136,22 +136,23 @@ class SecurityScore {
 		// (file watcher baseline), or break remote clients (XML-RPC) — those still
 		// link to their page. Mirrors dev_gemsecurity/utils/instantSettings.js.
 		$defs = [
-			[ 'firewall_enabled', 12, __( 'Firewall', 'gemsecurity' ), __( 'Turn on the firewall to block common attack traffic.', 'gemsecurity' ), $slug . '-firewall' , true ],
-			[ 'login_attempts_enabled', 12, __( 'Brute-force protection', 'gemsecurity' ), __( 'Limit login attempts to stop password-guessing.', 'gemsecurity' ), $slug . '-login-security' , true ],
-			[ 'two_factor_enabled', 10, __( 'Two-factor authentication', 'gemsecurity' ), __( 'Require a second factor so a stolen password is not enough.', 'gemsecurity' ), $slug . '-two-factor' , false ],
-			[ 'scanner_auto_scan', 8, __( 'Daily malware scan', 'gemsecurity' ), __( 'Enable the daily scan so new infections are caught automatically.', 'gemsecurity' ), $slug . '-scanner' , true ],
-			[ 'vuln_scan_enabled', 6, __( 'Vulnerability scanning', 'gemsecurity' ), __( 'Check installed plugins and themes against known vulnerabilities.', 'gemsecurity' ), $slug . '-scanner' , true ],
-			[ 'file_watcher_enabled', 6, __( 'File change watcher', 'gemsecurity' ), __( 'Baseline your theme, mu-plugins and drop-ins to detect tampering.', 'gemsecurity' ), $slug . '-scanner' , false ],
-			[ 'security_headers_enabled', 6, __( 'Security headers', 'gemsecurity' ), __( 'Send hardening headers (HSTS, X-Frame-Options, CSP, …).', 'gemsecurity' ), $slug . '-firewall' , false ],
-			[ 'disable_file_editing', 6, __( 'Theme/plugin file editor disabled', 'gemsecurity' ), __( 'Disable the built-in file editor so a stolen login cannot inject code.', 'gemsecurity' ), $slug . '-firewall' , true ],
-			[ 'password_policy_enabled', 5, __( 'Strong-password policy', 'gemsecurity' ), __( 'Enforce length, complexity and breached-password checks.', 'gemsecurity' ), $slug . '-login-security' , true ],
-			[ 'admin_whitelist_enabled', 5, __( 'Admin whitelist guard', 'gemsecurity' ), __( 'Auto-revoke administrator accounts you did not authorise.', 'gemsecurity' ), $slug . '-admin-guard' , false ],
-			[ 'link_scanner_enabled', 4, __( 'Malicious-link detection', 'gemsecurity' ), __( 'Flag spam/malware domains your content links to.', 'gemsecurity' ), $slug . '-scanner' , true ],
-			[ 'block_author_enumeration', 4, __( 'Author enumeration blocked', 'gemsecurity' ), __( 'Stop attackers from harvesting usernames.', 'gemsecurity' ), $slug . '-firewall' , true ],
-			[ 'disable_user_rest', 4, __( 'REST user enumeration blocked', 'gemsecurity' ), __( 'Hide the user list from the public REST API.', 'gemsecurity' ), $slug . '-firewall' , true ],
-			[ 'admin_login_alert_enabled', 3, __( 'Admin login alerts', 'gemsecurity' ), __( 'Get notified whenever an administrator signs in.', 'gemsecurity' ), $slug . '-login-security' , true ],
-			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ), $slug . '-firewall' , false ],
-			[ 'hide_wp_version', 2, __( 'WordPress version hidden', 'gemsecurity' ), __( 'Stop advertising your exact WordPress version.', 'gemsecurity' ), $slug . '-firewall' , true ],
+			[ 'firewall_enabled', 12, __( 'Firewall', 'gemsecurity' ), __( 'Turn on the firewall to block common attack traffic.', 'gemsecurity' ), $slug . '-firewall', true ],
+			[ 'login_attempts_enabled', 12, __( 'Brute-force protection', 'gemsecurity' ), __( 'Limit login attempts to stop password-guessing.', 'gemsecurity' ), $slug . '-login-security', true ],
+			[ 'two_factor_enabled', 10, __( 'Two-factor authentication', 'gemsecurity' ), __( 'Require a second factor so a stolen password is not enough.', 'gemsecurity' ), $slug . '-two-factor', false ],
+			[ 'scanner_auto_scan', 8, __( 'Daily malware scan', 'gemsecurity' ), __( 'Enable the daily scan so new infections are caught automatically.', 'gemsecurity' ), $slug . '-scanner', true ],
+			[ 'vuln_scan_enabled', 6, __( 'Vulnerability scanning', 'gemsecurity' ), __( 'Check installed plugins and themes against known vulnerabilities.', 'gemsecurity' ), $slug . '-scanner', true ],
+			[ 'file_watcher_enabled', 6, __( 'File change watcher', 'gemsecurity' ), __( 'Baseline your theme, mu-plugins and drop-ins to detect tampering.', 'gemsecurity' ), $slug . '-scanner', false ],
+			[ 'security_headers_enabled', 6, __( 'Security headers', 'gemsecurity' ), __( 'Send hardening headers (HSTS, X-Frame-Options, CSP, …).', 'gemsecurity' ), $slug . '-firewall', false ],
+			[ 'disable_file_editing', 6, __( 'Theme/plugin file editor disabled', 'gemsecurity' ), __( 'Disable the built-in file editor so a stolen login cannot inject code.', 'gemsecurity' ), $slug . '-firewall', true ],
+			[ 'password_policy_enabled', 5, __( 'Strong-password policy', 'gemsecurity' ), __( 'Enforce length, complexity and breached-password checks.', 'gemsecurity' ), $slug . '-login-security', true ],
+			[ 'admin_whitelist_enabled', 5, __( 'Admin whitelist guard', 'gemsecurity' ), __( 'Auto-revoke administrator accounts you did not authorise.', 'gemsecurity' ), $slug . '-admin-guard', false ],
+			[ 'link_scanner_enabled', 4, __( 'Malicious-link detection', 'gemsecurity' ), __( 'Flag spam/malware domains your content links to.', 'gemsecurity' ), $slug . '-scanner', true ],
+			[ 'block_author_enumeration', 4, __( 'Author enumeration blocked', 'gemsecurity' ), __( 'Stop attackers from harvesting usernames.', 'gemsecurity' ), $slug . '-firewall', true ],
+			[ 'disable_user_rest', 4, __( 'REST user enumeration blocked', 'gemsecurity' ), __( 'Hide the user list from the public REST API.', 'gemsecurity' ), $slug . '-firewall', true ],
+			[ 'admin_login_alert_enabled', 3, __( 'Admin login alerts', 'gemsecurity' ), __( 'Get notified whenever an administrator signs in.', 'gemsecurity' ), $slug . '-login-security', true ],
+			[ 'xmlrpc_disabled', 3, __( 'XML-RPC disabled', 'gemsecurity' ), __( 'Disable XML-RPC if you do not use it — it is a brute-force vector.', 'gemsecurity' ), $slug . '-firewall', false ],
+			[ 'hide_wp_version', 2, __( 'WordPress version hidden', 'gemsecurity' ), __( 'Stop advertising your exact WordPress version.', 'gemsecurity' ), $slug . '-firewall', true ],
+			[ 'protect_core_files_enabled', 4, __( 'wp-config.php and error logs protected', 'gemsecurity' ), __( 'Block web access to wp-config.php, debug.log and wp-admin/includes (Apache / LiteSpeed).', 'gemsecurity' ), $slug . '-firewall', true ],
 		];
 
 		$checks = [];
@@ -167,6 +168,8 @@ class SecurityScore {
 			];
 		}
 
+		$checks = array_merge( $checks, self::environment_checks() );
+
 		// Recent-backup hygiene — only scored when GemBackup is installed.
 		if ( \GemSecurity\Helper::gembackup_active() ) {
 			$checks[] = [
@@ -181,6 +184,144 @@ class SecurityScore {
 				],
 			];
 		}
+
+		return $checks;
+	}
+
+	/**
+	 * Checks from WordPress's hardening guide that are about the site, not a
+	 * GemSecurity switch. `fix_key`, when set, names the setting whose
+	 * one-click fix resolves the check.
+	 *
+	 * @return array<int,array>
+	 */
+	private static function environment_checks() {
+		global $wpdb;
+		$slug   = GEMSECURITY_PLUGIN_SLUG;
+		$checks = [];
+		$add    = static function ( $key, $weight, $pass, $label, $fix, $action, $fix_key = '' ) use ( &$checks ) {
+			$checks[] = [
+				'key'     => $key,
+				'label'   => $label,
+				'weight'  => $weight,
+				'status'  => $pass ? 'pass' : 'fail',
+				'fix'     => $fix,
+				'action'  => $action,
+				'quick'   => '' !== $fix_key,
+				'fix_key' => $fix_key,
+			];
+		};
+
+		// An administrator called "admin" is the first name every brute-force
+		// list tries; with it, an attacker only has to guess the password.
+		$guessable = get_users( [
+			'role'      => 'administrator',
+			'login__in' => [ 'admin', 'administrator', 'webmaster', 'root', 'wpadmin' ],
+			'fields'    => [ 'user_login' ],
+			'number'    => 5,
+		] );
+		$add(
+			'no_guessable_admin_login',
+			3,
+			empty( $guessable ),
+			__( 'No administrator named "admin"', 'gemsecurity' ),
+			$guessable
+				/* translators: %s: the guessable login name(s). */
+				? sprintf( __( 'Create a new administrator with an uncommon username, move content to it, then delete "%s".', 'gemsecurity' ), implode( '", "', wp_list_pluck( $guessable, 'user_login' ) ) )
+				: __( 'Administrator usernames are not the first ones attackers try.', 'gemsecurity' ),
+			[ 'url' => admin_url( 'users.php?role=administrator' ), 'label' => __( 'Open Users', 'gemsecurity' ) ]
+		);
+
+		// Inactive code still sits on the server, can still be reached
+		// directly, and is easy to forget to update.
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		$inactive_plugins = count( array_filter( array_keys( get_plugins() ), static function ( $f ) {
+			return ! is_plugin_active( $f ) && ! is_plugin_active_for_network( $f );
+		} ) );
+		$keep_themes     = array_unique( [ get_stylesheet(), get_template() ] );
+		$inactive_themes = max( 0, count( wp_get_themes() ) - count( $keep_themes ) - 1 ); // One spare default theme is reasonable.
+		$add(
+			'no_unused_code',
+			2,
+			0 === $inactive_plugins && 0 === $inactive_themes,
+			__( 'No unused plugins or themes installed', 'gemsecurity' ),
+			$inactive_plugins || $inactive_themes
+				/* translators: 1: inactive plugins, 2: extra inactive themes. */
+				? sprintf( __( 'Delete what you do not use: %1$d inactive plugin(s), %2$d extra inactive theme(s).', 'gemsecurity' ), $inactive_plugins, $inactive_themes )
+				: __( 'Only code you use is installed.', 'gemsecurity' ),
+			[ 'url' => admin_url( 'plugins.php?plugin_status=inactive' ), 'label' => __( 'Open Plugins', 'gemsecurity' ) ]
+		);
+
+		// Plugins that run PHP stored in the database turn any admin-account
+		// or SQL-injection compromise straight into code execution.
+		$code_exec = (array) apply_filters( 'gemsecurity/code_execution_plugins', [
+			'code-snippets/code-snippets.php',
+			'insert-php/insert_php.php',
+			'insert-php-code-snippet/insert-php-code-snippet.php',
+			'php-everywhere/php-everywhere.php',
+			'php-code-widget/execphp.php',
+			'exec-php/exec-php.php',
+			'woody-ad-snippets/insert-php.php',
+			'advanced-scripts/advanced-scripts.php',
+		] );
+		$running   = array_values( array_filter( $code_exec, 'is_plugin_active' ) );
+		$add(
+			'no_code_execution_plugins',
+			2,
+			empty( $running ),
+			__( 'No plugins that run PHP from the database', 'gemsecurity' ),
+			$running
+				/* translators: %s: plugin folder names. */
+				? sprintf( __( 'Move these snippets into a child theme or a small custom plugin, then remove: %s.', 'gemsecurity' ), implode( ', ', array_map( 'dirname', $running ) ) )
+				: __( 'No plugin stores PHP in the database.', 'gemsecurity' ),
+			[ 'url' => admin_url( 'plugins.php' ), 'label' => __( 'Open Plugins', 'gemsecurity' ) ]
+		);
+
+		// Errors shown on the page leak file paths, queries and plugin names.
+		$shows_errors = defined( 'WP_DEBUG' ) && WP_DEBUG && ( ! defined( 'WP_DEBUG_DISPLAY' ) || WP_DEBUG_DISPLAY );
+		$add(
+			'errors_not_displayed',
+			3,
+			! $shows_errors,
+			__( 'PHP errors are not shown to visitors', 'gemsecurity' ),
+			$shows_errors
+				? __( "Add define( 'WP_DEBUG_DISPLAY', false ); to wp-config.php, or turn WP_DEBUG off on a live site.", 'gemsecurity' )
+				: __( 'Errors are kept out of the page.', 'gemsecurity' ),
+			null
+		);
+
+		// WP_DEBUG_LOG's default target is inside the web root.
+		$log         = defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG
+			? ( is_string( WP_DEBUG_LOG ) ? WP_DEBUG_LOG : WP_CONTENT_DIR . '/debug.log' )
+			: '';
+		$log_in_root = '' !== $log && file_exists( $log ) && 0 === strpos( wp_normalize_path( $log ), wp_normalize_path( ABSPATH ) );
+		$protected   = Helper::get_setting( 'protect_core_files_enabled', false ) && \GemSecurity\Security\CoreFileRules::installed();
+		$add(
+			'debug_log_private',
+			3,
+			! $log_in_root || $protected,
+			__( 'Error log is not publicly readable', 'gemsecurity' ),
+			$log_in_root && ! $protected
+				? __( 'debug.log is inside the web root. Protect it, or point WP_DEBUG_LOG at a path outside the site.', 'gemsecurity' )
+				: __( 'The error log cannot be downloaded from the web.', 'gemsecurity' ),
+			self::action( $slug . '-firewall' ),
+			$log_in_root && ! $protected ? 'protect_core_files_enabled' : ''
+		);
+
+		// Information only: renaming tables on a live site is risky, so this
+		// weighs little and has no fix button.
+		$add(
+			'custom_table_prefix',
+			1,
+			'wp_' !== $wpdb->base_prefix,
+			__( 'Database table prefix is not the default', 'gemsecurity' ),
+			'wp_' === $wpdb->base_prefix
+				? __( 'Tables use the default wp_ prefix. Use a custom prefix on new installs; changing it on a live site needs a full backup first.', 'gemsecurity' )
+				: __( 'Tables use a custom prefix.', 'gemsecurity' ),
+			null
+		);
 
 		return $checks;
 	}
