@@ -30,8 +30,9 @@ const SKIP_PAGES = new Set( [
 
 let CACHED  = null;
 let LOADING = null;
+const SUBS  = new Set();
 
-function loadScore() {
+export function loadScore() {
 	if ( CACHED ) {
 		return Promise.resolve( CACHED );
 	}
@@ -40,14 +41,21 @@ function loadScore() {
 	}
 	LOADING = api.get( 'score' )
 		.then( ( r ) => { CACHED = r.data; return CACHED; } )
-		.catch( () => ( { checks: [], score: null, grade: null } ) )
+		.catch( () => ( { checks: [], threats: [], score: null, grade: null } ) )
 		.finally( () => { LOADING = null; } );
 	return LOADING;
 }
 
-/** Force a refetch after settings on the page change. */
+/** Force a refetch; notifies subscribers so topbar/tips refresh on next render. */
 export function refreshScoreTips() {
 	CACHED = null;
+	SUBS.forEach( ( fn ) => fn() );
+}
+
+/** Subscribe to invalidation events (returns unsubscribe). */
+export function onScoreInvalidated( fn ) {
+	SUBS.add( fn );
+	return () => SUBS.delete( fn );
 }
 
 export default function PageScoreTips( { page } ) {

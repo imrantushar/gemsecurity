@@ -3,14 +3,15 @@ import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchSettings } from '@Redux/settingsSlice';
-import { useActivePage, useNavItems, useNavGroups, useModuleBySlug, pageUrl, syncAdminMenu, getModules } from '@Utils/nav';
+import { useActivePage, useNavItems, useNavGroups, useModuleBySlug, pageUrl, pageFromHref, syncAdminMenu, getModules } from '@Utils/nav';
 import TopNav from '@Components/Layout/TopNav';
 import { Loading, EmptyState, Button } from '@Components/ui/Controls';
 import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/Pro';
 import ErrorBoundary from '@Components/ui/ErrorBoundary';
 import Icon from '@Components/ui/Icon';
 import HelpDrawer from '@Components/ui/HelpDrawer';
-import PageScoreTips, { refreshScoreTips } from '@Components/ui/PageScoreTips';
+import PageScoreTips from '@Components/ui/PageScoreTips';
+import TopbarScore from '@Components/ui/TopbarScore';
 import { useThemeMode } from '@Utils/theme';
 
 import Dashboard from '@Containers/pages/Dashboard';
@@ -146,6 +147,18 @@ export default function App() {
 							<TopNav current={ resolvedPage } onNavigate={ navigate } />
 						</div>
 						<div className="gs-topbar__actions">
+							<TopbarScore
+								onNavigate={ ( url ) => {
+									// Server-rendered URL — route client-side if it is
+									// one of our pages so we don't do a full reload.
+									const slug = pageFromHref( url );
+									if ( slug && PAGES[ slug ] ) {
+										navigate( pageUrl( slug ) );
+									} else {
+										window.location.href = url;
+									}
+								} }
+							/>
 							<a
 								className="gs-topbar__action"
 								href={ pageUrl( 'gemsecurity-setup' ) }
