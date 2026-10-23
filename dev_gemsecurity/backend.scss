@@ -176,6 +176,11 @@ html {
 	.gs-topbar {
 		background: $gs-surface; border-bottom: 1px solid $gs-border;
 		padding: 14px 0;
+		// Pinned under the WP admin bar, like the side nav. On narrow screens
+		// the nav wraps to several rows, so pinning it would eat the screen —
+		// there it scrolls away with the page (WP collapses its sidebar too).
+		position: sticky; top: 32px; z-index: 50;
+		@media screen and (max-width: 782px) { position: static; }
 		&__inner {
 			// Full-width bar: logo hugs the left edge, toggle the right — no
 			// centered max-width cap here (unlike the page content below).
@@ -213,7 +218,8 @@ html {
 
 	.gs-subnav {
 		flex: 0 0 240px; width: 240px;
-		position: sticky; top: 24px;
+		// Clear the sticky topbar; App measures its height into --gs-topbar-h.
+		position: sticky; top: calc(32px + var(--gs-topbar-h, 72px) + 24px);
 		background: $gs-surface; border: 1px solid $gs-border;
 		border-radius: $gs-radius; box-shadow: $gs-shadow; padding: 8px;
 		display: flex; flex-direction: column; gap: 2px;

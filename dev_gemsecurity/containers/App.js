@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelector } from 'react-redux';
 import useNavigate from '@Utils/useGuardedNavigate';
@@ -76,6 +76,21 @@ export default function App() {
 		dispatch( fetchSettings() );
 	}, [ dispatch ] );
 
+	// The topbar is sticky and its height changes when the nav wraps; publish
+	// it so the sticky side nav can sit just below it.
+	const topbarRef = useRef( null );
+	useEffect( () => {
+		const el = topbarRef.current;
+		if ( ! el || typeof ResizeObserver === 'undefined' ) {
+			return;
+		}
+		const ro = new ResizeObserver( () => {
+			document.documentElement.style.setProperty( '--gs-topbar-h', `${ el.offsetHeight }px` );
+		} );
+		ro.observe( el );
+		return () => ro.disconnect();
+	}, [] );
+
 	// Scroll to top on route change for a fresh-page feel.
 	useEffect( () => {
 		const el = document.querySelector( '.gs-content' );
@@ -134,7 +149,7 @@ export default function App() {
 	return (
 		<div className="gs-app">
 			<main className="gs-main">
-				<header className="gs-topbar">
+				<header className="gs-topbar" ref={ topbarRef }>
 					<div className="gs-topbar__inner">
 						<div className="gs-topbar__left">
 							<span className="gs-topbar__logo" aria-hidden="true">
