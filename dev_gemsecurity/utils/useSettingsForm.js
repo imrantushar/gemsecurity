@@ -8,6 +8,38 @@ import { __ } from '@wordpress/i18n';
 
 const same = ( a, b ) => JSON.stringify( a ) === JSON.stringify( b );
 
+/*
+ * Unsaved drafts survive a reload. Browsers only allow their own generic
+ * "Leave site?" prompt on reload, and some (or an automated reload) skip it,
+ * so instead of relying on it the draft is kept per tab in sessionStorage and
+ * offered back when the page loads again. Storage can throw (private mode,
+ * blocked site data) — then this quietly does nothing.
+ */
+const DRAFT_TTL = 60 * 60 * 1000;
+
+function readDraft( key ) {
+	try {
+		const raw = window.sessionStorage.getItem( key );
+		if ( ! raw ) {
+			return null;
+		}
+		const d = JSON.parse( raw );
+		return d && d.at && Date.now() - d.at < DRAFT_TTL ? d.fields : null;
+	} catch ( e ) {
+		return null;
+	}
+}
+
+function writeDraft( key, fields ) {
+	try {
+		if ( fields ) {
+			window.sessionStorage.setItem( key, JSON.stringify( { at: Date.now(), fields } ) );
+		} else {
+			window.sessionStorage.removeItem( key );
+		}
+	} catch ( e ) {}
+}
+
 /**
  * Local draft form bound to a subset of the global settings.
  *
@@ -44,6 +76,11 @@ export default function useSettingsForm( keys ) {
 
 	const [ form, setForm ] = useState( initial );
 	const prevInitial = useRef( initial );
+	const draftKey = useMemo(
+		() => 'gemsecurity-draft:' + ( new URLSearchParams( window.location.search ).get( 'page' ) || '' ) + ':' + signature,
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[ signature ]
+	);
 
 	// Settings changed underneath us (an instant toggle, a one-click fix from
 	// the score popover, another form's save). Take the new value only for
@@ -61,6 +98,34 @@ export default function useSettingsForm( keys ) {
 			return next;
 		} );
 	}, [ initial ] );
+
+	// Once settings have loaded, bring back a draft left by a reload.
+	const restored = useRef( false );
+	useEffect( () => {
+		if ( ! data || restored.current ) {
+			return;
+		}
+		restored.current = true;
+		const draft = readDraft( draftKey );
+		if ( ! draft ) {
+			return;
+		}
+		const fields = {};
+		Object.keys( draft ).forEach( ( k ) => {
+			if ( k in initial && ! isInstantSetting( k ) && ! same( draft[ k ], initial[ k ] ) ) {
+				fields[ k ] = draft[ k ];
+			}
+		} );
+		if ( ! Object.keys( fields ).length ) {
+			writeDraft( draftKey, null );
+			return;
+		}
+		setForm( ( f ) => ( { ...f, ...fields } ) );
+		toast( __( 'Restored your unsaved changes from before the page reloaded.', 'gemsecurity' ), 'warning', {
+			action: { label: __( 'Discard', 'gemsecurity' ), onClick: () => discardRef.current() },
+		} );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ data ] );
 
 	const persist = async ( partial, message, source = 'save' ) => {
 		try {
@@ -99,17 +164,40 @@ export default function useSettingsForm( keys ) {
 
 	// Only send what changed, so saving one page never rewrites a value
 	// another form or the score popover set a moment ago.
-	const save = ( extra = {} ) => {
+	const changedFields = () => {
 		const changed = {};
 		Object.keys( form ).forEach( ( k ) => {
 			if ( ! isInstantSetting( k ) && ! same( form[ k ], initial[ k ] ) ) {
 				changed[ k ] = form[ k ];
 			}
 		} );
-		return persist( { ...changed, ...extra }, __( 'Settings saved.', 'gemsecurity' ) );
+		return changed;
 	};
 
-	const discard = () => setForm( initial );
+	const save = async ( extra = {} ) => {
+		const ok = await persist( { ...changedFields(), ...extra }, __( 'Settings saved.', 'gemsecurity' ) );
+		if ( ok ) {
+			writeDraft( draftKey, null );
+		}
+		return ok;
+	};
+
+	// Clear the stored draft right here, not in an effect: Discard & leave
+	// unmounts the page before an effect would get to run.
+	const discard = () => {
+		writeDraft( draftKey, null );
+		setForm( initial );
+	};
+
+	// Mirror the draft to storage while there is one. Skipped until the
+	// restore above has had its chance, so the empty first render cannot
+	// wipe the draft it is about to restore.
+	useEffect( () => {
+		if ( restored.current ) {
+			writeDraft( draftKey, dirty ? changedFields() : null );
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ form, dirty, draftKey ] );
 
 	// Keep the global registry current. Refs keep the callbacks fresh without
 	// re-registering on every keystroke.
