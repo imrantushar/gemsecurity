@@ -314,7 +314,10 @@ class TwoFactor {
 
 		// Allow resending an email code.
 		if ( isset( $_POST['gemsec_2fa_resend'] ) && 'email' === $method ) {
-			$this->send_email_otp( $user );
+			if ( false === $this->send_email_otp( $user ) ) {
+				$this->render_form( $token, $method, __( 'Too many codes have been sent. Use the last one, or wait 15 minutes and sign in again.', 'gemsecurity' ) );
+				exit;
+			}
 			$this->render_form( $token, $method, '', __( 'A new code has been sent to your email.', 'gemsecurity' ) );
 			exit;
 		}
@@ -330,6 +333,8 @@ class TwoFactor {
 				$message = __( 'That code has expired. Use “Resend code” to get a new one.', 'gemsecurity' );
 			} elseif ( 'locked' === $reason ) {
 				$message = __( 'Too many incorrect codes. Request a new one and try again.', 'gemsecurity' );
+			} elseif ( 'blocked' === $reason ) {
+				$message = __( 'Too many incorrect codes. Wait 15 minutes, then sign in again.', 'gemsecurity' );
 			}
 
 			Logger::log(
@@ -380,21 +385,95 @@ class TwoFactor {
 			return false;
 		}
 
+		// Per user, not per challenge: signing in with the password again
+		// must not buy a fresh set of guesses.
+		if ( self::is_locked( $user ) ) {
+			self::$otp_failure = 'blocked';
+			return false;
+		}
+
+		$ok = false;
 		// Backup code (format xxxx-xxxx) works regardless of method.
 		if ( preg_match( '/[a-z0-9]{4}-?[a-z0-9]{4}/i', $code ) && $this->consume_backup_code( $user, $code ) ) {
-			return true;
-		}
-
-		if ( 'totp' === $method ) {
+			$ok = true;
+		} elseif ( 'totp' === $method ) {
 			$secret = SecretBox::open( get_user_meta( $user->ID, '_gemsec_2fa_secret', true ) );
-			return '' !== $secret && Totp::verify( $secret, $code, 1 );
+			$ok     = '' !== $secret && Totp::verify( $secret, $code, 1 );
+		} elseif ( 'email' === $method ) {
+			$ok = self::verify_email_otp( $user, $code );
 		}
 
-		if ( 'email' === $method ) {
-			return self::verify_email_otp( $user, $code );
+		if ( $ok ) {
+			delete_user_meta( $user->ID, self::ATTEMPTS_META );
+		} else {
+			self::record_failure( $user );
 		}
+		return $ok;
+	}
 
-		return false;
+	/* ------------------------------------------------------------------ */
+	/* Guess and resend limits                                             */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Wrong codes and sent emails per user, over a rolling window. Without
+	 * this an authenticator code could be guessed without limit (three are
+	 * valid at any moment), and each email resend reset the guess count.
+	 */
+	const ATTEMPTS_META = '_gemsec_2fa_attempts';
+	const MAX_FAILS     = 5;
+	/** Emailed codes per window: the first plus three resends. */
+	const MAX_SENDS     = 4;
+	const LIMIT_WINDOW  = 15 * MINUTE_IN_SECONDS;
+
+	/**
+	 * @param \WP_User $user
+	 * @return array{fails:int,sends:int,start:int}
+	 */
+	private static function attempts( $user ) {
+		$a = get_user_meta( $user->ID, self::ATTEMPTS_META, true );
+		if ( ! is_array( $a ) || empty( $a['start'] ) || time() - (int) $a['start'] > self::LIMIT_WINDOW ) {
+			return [ 'fails' => 0, 'sends' => 0, 'start' => time() ];
+		}
+		return [ 'fails' => (int) ( $a['fails'] ?? 0 ), 'sends' => (int) ( $a['sends'] ?? 0 ), 'start' => (int) $a['start'] ];
+	}
+
+	/**
+	 * Whether 2FA is locked for this user after too many wrong codes.
+	 *
+	 * @param \WP_User $user
+	 * @return bool
+	 */
+	public static function is_locked( $user ) {
+		return self::attempts( $user )['fails'] >= self::MAX_FAILS;
+	}
+
+	/** @param \WP_User $user */
+	private static function record_failure( $user ) {
+		$a = self::attempts( $user );
+		$a['fails']++;
+		update_user_meta( $user->ID, self::ATTEMPTS_META, $a );
+		if ( $a['fails'] === self::MAX_FAILS ) {
+			Logger::log( '2fa_locked', sprintf( 'Two-factor locked for "%s" after %d wrong codes.', $user->user_login, self::MAX_FAILS ), Logger::SEVERITY_WARNING, [ 'user_id' => $user->ID ] );
+		}
+		// Count it as a failed sign-in too, so the IP lockout sees 2FA guessing.
+		do_action( 'wp_login_failed', $user->user_login, new \WP_Error( 'gemsec_2fa_failed', __( 'Incorrect verification code.', 'gemsecurity' ) ) );
+	}
+
+	/**
+	 * Reserve one emailed code against the window's budget.
+	 *
+	 * @param \WP_User $user
+	 * @return bool False when the budget is spent.
+	 */
+	private static function take_send( $user ) {
+		$a = self::attempts( $user );
+		if ( $a['sends'] >= self::MAX_SENDS ) {
+			return false;
+		}
+		$a['sends']++;
+		update_user_meta( $user->ID, self::ATTEMPTS_META, $a );
+		return true;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -418,7 +497,7 @@ class TwoFactor {
 	/** Guesses allowed against one emailed code. */
 	const OTP_MAX_TRIES = 5;
 
-	/** Why the last email OTP check failed: expired | locked | mismatch. */
+	/** Why the last check failed: expired | locked | mismatch (email code), blocked (user locked). */
 	private static $otp_failure = '';
 
 	/** @return string */
@@ -495,8 +574,13 @@ class TwoFactor {
 	 * Public for the same reason as verify_factor() above.
 	 *
 	 * @param \WP_User $user
+	 * @return bool False when the user's send budget for the window is spent.
 	 */
 	public function send_email_otp( $user ) {
+		// A spent budget keeps the code already sent valid; nothing new goes out.
+		if ( ! self::take_send( $user ) ) {
+			return false;
+		}
 		$code = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
 		self::store_email_otp( $user, $code );
 
@@ -520,6 +604,7 @@ class TwoFactor {
 				],
 			]
 		);
+		return true;
 	}
 
 	/* ------------------------------------------------------------------ */
