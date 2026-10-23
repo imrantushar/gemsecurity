@@ -217,12 +217,15 @@ class Registry {
 				'category'      => 'scanning',
 				'recommended'   => true,
 				'page_slug'     => $slug . '-scanner',
-				// Scanner, Finder, FileWatcher and LinkScanner are on-demand
-				// engines (driven by REST + cron) with no init() hooks, so there
-				// is nothing to boot here — the module is its page + REST routes.
+				// Scanner, Finder and LinkScanner are on-demand engines (driven
+				// by REST + cron) with no init() hooks. FileWatcher is also
+				// on-demand for scanning, but it DOES register update-lifecycle
+				// hooks so a legitimate WordPress / plugin / theme update
+				// rebuilds the file baseline instead of being reported as
+				// tampering — so its init() runs with this module.
 				// Pro's malware suite, baseline scopes and auto-update enforcement
 				// gate themselves on this module.
-				'classes'       => [],
+				'classes'       => [ FileWatcher::class ],
 				'settings_keys' => [
 					'file_watcher_enabled', 'link_scanner_enabled',
 					'scanner_auto_scan', 'vuln_scan_enabled',

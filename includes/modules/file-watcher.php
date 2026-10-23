@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Logger;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -40,7 +41,152 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class FileWatcher {
 
-	const BASELINE_OPTION = 'gemsecurity_file_baseline';
+	const BASELINE_OPTION    = 'gemsecurity_file_baseline';
+	const REBUILD_CRON_HOOK  = 'gemsecurity_rebuild_baseline';
+	const REBUILD_LOCK       = 'gemsecurity_rebaseline_lock';
+	const CHECKSUMS_TRANSIENT_PREFIX = 'gemsecurity_core_checksums_';
+	const CHECKSUMS_TTL      = DAY_IN_SECONDS;
+
+	/**
+	 * Wire the update-lifecycle hooks so a legitimate WordPress / plugin / theme
+	 * update rebuilds the baseline instead of being reported as tampering.
+	 *
+	 * Core WP upgrader fires `_core_updated_successfully` / `automatic_updates_complete`
+	 * / `upgrader_process_complete`. Updates deployed outside the upgrader
+	 * (WP-CLI, managed hosts, Composer, git) never fire those hooks, so
+	 * `admin_init` watches version drift of core *and* every plugin/theme and
+	 * schedules a rebuild when any version moves.
+	 *
+	 * Every rebuild path funnels through {@see schedule_rebuild()}, which
+	 * debounces concurrent triggers and runs the (expensive) hashing in a
+	 * one-off cron job so no admin page is ever blocked by it.
+	 */
+	public static function init() {
+		add_action( '_core_updated_successfully', [ __CLASS__, 'on_core_updated' ] );
+		add_action( 'automatic_updates_complete', [ __CLASS__, 'on_auto_updates' ] );
+		add_action( 'upgrader_process_complete', [ __CLASS__, 'on_upgrader_complete' ], 10, 2 );
+		add_action( 'admin_init', [ __CLASS__, 'detect_version_drift' ] );
+		add_action( self::REBUILD_CRON_HOOK, [ __CLASS__, 'run_scheduled_rebuild' ] );
+	}
+
+	/** @see init() */
+	public static function on_core_updated() {
+		self::schedule_rebuild( 'core-updated' );
+	}
+
+	/** @see init() */
+	public static function on_auto_updates() {
+		self::schedule_rebuild( 'auto-updates-complete' );
+	}
+
+	/**
+	 * `upgrader_process_complete` fires for core, plugin, theme and translation
+	 * updates. Translations don't change watched files, so ignore them.
+	 *
+	 * @param \WP_Upgrader $upgrader
+	 * @param array        $hook_extra
+	 */
+	public static function on_upgrader_complete( $upgrader, $hook_extra ) {
+		$type = isset( $hook_extra['type'] ) ? (string) $hook_extra['type'] : '';
+		if ( in_array( $type, [ 'core', 'plugin', 'theme' ], true ) ) {
+			self::schedule_rebuild( 'upgrader:' . $type );
+		}
+	}
+
+	/**
+	 * Rebuild the baseline when the installed version of WordPress, or any
+	 * plugin/theme we have hashes for, has moved since the last baseline. This
+	 * is the catch-all for deployments that bypass the WP upgrader entirely
+	 * (git pull, Composer install, SFTP, container redeploy).
+	 */
+	public static function detect_version_drift() {
+		$baseline = self::get_baseline();
+		if ( empty( $baseline ) ) {
+			return;
+		}
+		if ( ! empty( $baseline['wp_version'] ) && $baseline['wp_version'] !== get_bloginfo( 'version' ) ) {
+			self::schedule_rebuild( 'core-version-drift' );
+			return;
+		}
+
+		$old = isset( $baseline['extension_versions'] ) && is_array( $baseline['extension_versions'] ) ? $baseline['extension_versions'] : [];
+		$new = self::extension_versions();
+		if ( $old !== $new ) {
+			// Find the first slug that moved — useful log breadcrumb.
+			$changed = '';
+			foreach ( $new as $slug => $ver ) {
+				if ( ! isset( $old[ $slug ] ) || $old[ $slug ] !== $ver ) {
+					$changed = $slug;
+					break;
+				}
+			}
+			if ( ! $changed ) {
+				foreach ( $old as $slug => $ver ) {
+					if ( ! isset( $new[ $slug ] ) ) {
+						$changed = $slug . ' (removed)';
+						break;
+					}
+				}
+			}
+			self::schedule_rebuild( 'ext-version-drift:' . $changed );
+		}
+	}
+
+	/**
+	 * Debounced scheduler: at most one baseline rebuild in flight at a time.
+	 * The 5-minute lock covers bursts (bulk plugin updates, concurrent admin
+	 * requests both detecting the drift) by collapsing them into one run.
+	 *
+	 * @param string $reason Short tag for the log entry.
+	 */
+	private static function schedule_rebuild( $reason ) {
+		// Transient-based lock. If one is already pending, do nothing.
+		if ( false !== get_transient( self::REBUILD_LOCK ) ) {
+			return;
+		}
+		set_transient( self::REBUILD_LOCK, $reason, 5 * MINUTE_IN_SECONDS );
+
+		// Already in a cron context? Just run it — scheduling nested events
+		// would just defer the work by one tick.
+		if ( wp_doing_cron() ) {
+			self::run_scheduled_rebuild( $reason );
+			return;
+		}
+
+		if ( ! wp_next_scheduled( self::REBUILD_CRON_HOOK, [ $reason ] ) ) {
+			wp_schedule_single_event( time() + 5, self::REBUILD_CRON_HOOK, [ $reason ] );
+		}
+	}
+
+	/**
+	 * Cron callback. Rebuilds the baseline, releases the lock, and logs the
+	 * event. `$reason` is forwarded from {@see schedule_rebuild()} so the
+	 * audit log says *why* a baseline rotated — important for forensics when
+	 * reviewing whether a rebuild was legitimate.
+	 *
+	 * @param string $reason
+	 */
+	public static function run_scheduled_rebuild( $reason = '' ) {
+		// Flush the cached checksum manifest — the installed WP version may
+		// have moved, so the old cached manifest no longer applies.
+		self::flush_checksums_cache();
+
+		$result = self::establish_baseline();
+		delete_transient( self::REBUILD_LOCK );
+
+		if ( class_exists( Logger::class ) ) {
+			Logger::log(
+				'file_baseline_rebuilt',
+				sprintf(
+					/* translators: 1 reason tag, 2 file count */
+					__( 'File baseline rebuilt (reason: %1$s, %2$d file(s) hashed).', 'gemsecurity' ),
+					$reason ?: 'unspecified',
+					(int) ( $result['file_count'] ?? 0 )
+				),
+				Logger::SEVERITY_INFO
+			);
+		}
+	}
 
 	/**
 	 * Bounds so the watcher is always safe to run inside a web request.
@@ -87,6 +233,12 @@ class FileWatcher {
 			$baseline         = self::get_baseline();
 		} else {
 			$changes = self::diff( $baseline['hashes'], $current );
+
+			// Self-heal: any change that lands inside WordPress core and matches
+			// the official checksum for the installed version is a legitimate
+			// core update, not tampering. Drop it from the diff and absorb the
+			// new hashes into the baseline so the next scan is quiet.
+			$changes = self::absorb_legitimate_core_updates( $changes, $current, $baseline['hashes'] );
 		}
 
 		$injections = self::scan_injections( $current );
@@ -137,12 +289,39 @@ class FileWatcher {
 		update_option(
 			self::BASELINE_OPTION,
 			[
-				'created_at' => current_time( 'mysql' ),
-				'wp_version' => get_bloginfo( 'version' ),
-				'hashes'     => $hashes,
+				'created_at'         => current_time( 'mysql' ),
+				'wp_version'         => get_bloginfo( 'version' ),
+				'extension_versions' => self::extension_versions(),
+				'hashes'             => $hashes,
 			],
 			false // never autoload — this can be a large array.
 		);
+	}
+
+	/**
+	 * Current version strings for every installed plugin and theme, keyed by
+	 * their canonical slug (plugin basename or theme stylesheet name). Used by
+	 * {@see detect_version_drift()} to catch upgrades that bypass the WP
+	 * upgrader (git pull, Composer, SFTP, container redeploy).
+	 *
+	 * @return array<string,string>
+	 */
+	private static function extension_versions() {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		$out = [];
+
+		foreach ( (array) get_plugins() as $file => $data ) {
+			$out[ 'plugin:' . $file ] = isset( $data['Version'] ) ? (string) $data['Version'] : '';
+		}
+
+		foreach ( (array) wp_get_themes() as $slug => $theme ) {
+			$out[ 'theme:' . $slug ] = (string) $theme->get( 'Version' );
+		}
+
+		ksort( $out );
+		return $out;
 	}
 
 	/* --------------------------------------------------------------------- */
@@ -247,6 +426,154 @@ class FileWatcher {
 		}
 
 		return $changes;
+	}
+
+	/**
+	 * Drop changes for WordPress core files that are legitimate for the
+	 * installed version — matching the official WP.org manifest, or removed
+	 * from core across versions — and silently refresh the baseline for them
+	 * so the next scan is clean. Files outside core (or ones whose current
+	 * hash does NOT match the official manifest) are left in the diff.
+	 *
+	 * If the manifest is unreachable (network error, unknown version) we skip
+	 * the entire pass and *return the changes untouched* rather than
+	 * absorbing. Blessing files we can't verify would be worse than the
+	 * transient false positive.
+	 *
+	 * @param array $changes  Diff from {@see diff()}.
+	 * @param array $current  rel => md5 (current state).
+	 * @param array $baseline rel => md5 (stored baseline).
+	 * @return array Filtered change list.
+	 */
+	private static function absorb_legitimate_core_updates( array $changes, array $current, array $baseline ) {
+		if ( empty( $changes ) ) {
+			return $changes;
+		}
+		$checksums = self::core_checksums();
+		if ( empty( $checksums ) ) {
+			return $changes;
+		}
+
+		$kept       = [];
+		$absorbed   = false;
+		$new_hashes = $baseline;
+		foreach ( $changes as $change ) {
+			$rel    = isset( $change['file'] ) ? (string) $change['file'] : '';
+			$status = isset( $change['status'] ) ? $change['status'] : '';
+			$in_manifest = isset( $checksums[ $rel ] );
+			$in_core     = self::is_core_path( $rel );
+
+			if ( 'deleted' === $status ) {
+				// Baseline had the file, current state doesn't. If it was a
+				// core file that the new manifest no longer lists, it was
+				// legitimately removed between versions — drop from baseline
+				// silently. Core files still in the manifest, or anything
+				// outside core, keep as a finding.
+				if ( $in_core && ! $in_manifest ) {
+					unset( $new_hashes[ $rel ] );
+					$absorbed = true;
+					continue;
+				}
+				$kept[] = $change;
+				continue;
+			}
+
+			if ( ! $in_manifest ) {
+				$kept[] = $change; // Not a core file — keep the finding.
+				continue;
+			}
+
+			$hash = isset( $current[ $rel ] ) ? $current[ $rel ] : null;
+			if ( $hash && $hash === $checksums[ $rel ] ) {
+				// Legitimate core content for this version — absorb it.
+				$new_hashes[ $rel ] = $hash;
+				$absorbed           = true;
+				continue;
+			}
+
+			// Core file whose hash does NOT match the official manifest — this
+			// is a real tampering finding, keep it.
+			$kept[] = $change;
+		}
+
+		if ( $absorbed ) {
+			self::store_baseline( $new_hashes );
+		}
+
+		return $kept;
+	}
+
+	/**
+	 * Is this ABSPATH-relative path inside WordPress core?
+	 *
+	 * @param string $rel
+	 * @return bool
+	 */
+	private static function is_core_path( $rel ) {
+		return 0 === strpos( $rel, 'wp-admin/' ) || 0 === strpos( $rel, 'wp-includes/' );
+	}
+
+	/**
+	 * The official core file → md5 manifest for the installed version.
+	 *
+	 * Cached locally in a 24h transient so a scan does not depend on
+	 * api.wordpress.org being reachable at that moment, and so repeat calls
+	 * within the request are free. WordPress core also caches internally via
+	 * `wp_update_core_checksums` transient, but that one is only populated
+	 * when the core update system runs — not every scan path visits it, and
+	 * if it is cleared the next scan silently loses the entire self-heal pass.
+	 *
+	 * @return array<string,string> rel => md5. Empty when the manifest is
+	 *                              unavailable (caller must treat as "cannot
+	 *                              verify" and skip the self-heal, not
+	 *                              "nothing to absorb").
+	 */
+	private static function core_checksums() {
+		static $cache = null;
+		if ( null !== $cache ) {
+			return $cache;
+		}
+
+		$version = get_bloginfo( 'version' );
+		$locale  = get_locale();
+		$key     = self::CHECKSUMS_TRANSIENT_PREFIX . md5( $version . '|' . $locale );
+
+		$sums = get_transient( $key );
+		if ( is_array( $sums ) && ! empty( $sums ) ) {
+			return $cache = $sums;
+		}
+
+		if ( ! function_exists( 'get_core_checksums' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/update.php';
+		}
+		if ( ! function_exists( 'get_core_checksums' ) ) {
+			return $cache = [];
+		}
+
+		$sums = get_core_checksums( $version, $locale );
+		if ( empty( $sums ) || ! is_array( $sums ) ) {
+			$sums = get_core_checksums( $version, 'en_US' );
+		}
+		$sums = is_array( $sums ) ? $sums : [];
+
+		if ( ! empty( $sums ) ) {
+			set_transient( $key, $sums, self::CHECKSUMS_TTL );
+		}
+
+		return $cache = $sums;
+	}
+
+	/**
+	 * Clear every cached checksum manifest. Called when the baseline is
+	 * rebuilt because the installed WP version may have changed, which would
+	 * invalidate any manifest cached under the old version/locale key.
+	 */
+	private static function flush_checksums_cache() {
+		global $wpdb;
+		$like = $wpdb->esc_like( '_transient_' . self::CHECKSUMS_TRANSIENT_PREFIX ) . '%';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
+		$like = $wpdb->esc_like( '_transient_timeout_' . self::CHECKSUMS_TRANSIENT_PREFIX ) . '%';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
 	}
 
 	/* --------------------------------------------------------------------- */
