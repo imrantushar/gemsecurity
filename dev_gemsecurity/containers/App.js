@@ -9,7 +9,6 @@ import { Loading, EmptyState, Button } from '@Components/ui/Controls';
 import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/Pro';
 import ErrorBoundary from '@Components/ui/ErrorBoundary';
 import Icon from '@Components/ui/Icon';
-import HelpDrawer from '@Components/ui/HelpDrawer';
 import PageScoreTips from '@Components/ui/PageScoreTips';
 import TopbarScore from '@Components/ui/TopbarScore';
 import SaveBar, { LeaveDialog } from '@Components/ui/SaveBar';
@@ -70,7 +69,6 @@ export default function App() {
 	const { theme, toggle } = useThemeMode();
 	const { data, loading } = useSelector( ( s ) => s.settings );
 	const page = useActivePage();
-	const [ helpOpen, setHelpOpen ] = useState( false );
 
 	useEffect( () => {
 		dispatch( fetchSettings() );
@@ -176,23 +174,6 @@ export default function App() {
 									}
 								} }
 							/>
-							<a
-								className="gs-topbar__action"
-								href={ pageUrl( 'gemsecurity-setup' ) }
-								aria-label={ __( 'Setup wizard', 'gemsecurity' ) }
-								title={ __( 'Setup wizard', 'gemsecurity' ) }
-							>
-								<Icon name="zap" size={ 18 } />
-							</a>
-							<button
-								type="button"
-								className="gs-topbar__action"
-								onClick={ () => setHelpOpen( true ) }
-								aria-label={ __( 'How this page works', 'gemsecurity' ) }
-								title={ __( 'How this page works', 'gemsecurity' ) }
-							>
-								<Icon name="help" size={ 18 } />
-							</button>
 							<button
 								type="button"
 								className="gs-topbar__theme"
@@ -245,12 +226,6 @@ export default function App() {
 				</div>
 			</main>
 			<LeaveDialog />
-			<HelpDrawer
-				open={ helpOpen }
-				onClose={ () => setHelpOpen( false ) }
-				slug={ resolvedPage }
-				title={ navItem ? navItem.label : 'GemSecurity' }
-			/>
 		</div>
 	);
 }
