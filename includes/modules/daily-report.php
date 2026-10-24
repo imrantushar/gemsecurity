@@ -245,7 +245,7 @@ class DailyReport {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT severity, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY severity",
+				"SELECT severity, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY severity", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed-suffix table name.
 				gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS )
 			),
 			ARRAY_A

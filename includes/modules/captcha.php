@@ -36,14 +36,14 @@ class Captcha {
 				'v3'      => true,
 			],
 			'hcaptcha'     => [
-				'script'  => 'https://js.hcaptcha.com/1/api.js',
+				'script'  => 'https://js.hcaptcha.com/1/api.js', // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- provider API script must load from its own host; disclosed in readme.
 				'class'   => 'h-captcha',
 				'field'   => 'h-captcha-response',
 				'verify'  => 'https://api.hcaptcha.com/siteverify',
 				'v3'      => false,
 			],
 			'turnstile'    => [
-				'script'  => 'https://challenges.cloudflare.com/turnstile/v0/api.js',
+				'script'  => 'https://challenges.cloudflare.com/turnstile/v0/api.js', // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- provider API script must load from its own host; disclosed in readme.
 				'class'   => 'cf-turnstile',
 				'field'   => 'cf-turnstile-response',
 				'verify'  => 'https://challenges.cloudflare.com/turnstile/v0/siteverify',

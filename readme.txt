@@ -47,6 +47,14 @@ GemSecurity is an all-in-one security dashboard for WordPress with a fast, singl
 = GemSecurity Pro =
 The optional GemSecurity Pro add-on unlocks active threat protection and remediation: Threat Defense (escalating auto-bans, ban ledger, bot blocklist), Geolocation/country access control, a signature malware scanner with quarantine, database injection scan, plugin/theme integrity vs WordPress.org, a post-hack recovery toolkit, file-change baseline, a hardening pack, auto-update enforcement and settings import/export.
 
+== External services ==
+
+The optional login CAPTCHA connects to the provider you choose in Login & Access → CAPTCHA. Nothing is sent until you enable CAPTCHA and enter that provider's keys. When enabled, the provider's script loads on the login, registration and lost-password forms, and the CAPTCHA response token plus the visitor's IP address are sent to the provider to verify each submission.
+
+* Google reCAPTCHA (www.google.com/recaptcha) — [Terms](https://policies.google.com/terms), [Privacy](https://policies.google.com/privacy)
+* hCaptcha (js.hcaptcha.com, api.hcaptcha.com) — [Terms](https://www.hcaptcha.com/terms), [Privacy](https://www.hcaptcha.com/privacy)
+* Cloudflare Turnstile (challenges.cloudflare.com) — [Terms](https://www.cloudflare.com/website-terms/), [Privacy](https://www.cloudflare.com/privacypolicy/)
+
 == Installation ==
 
 1. Upload the `gemsecurity` folder to `/wp-content/plugins/`, or install through Plugins → Add New.
