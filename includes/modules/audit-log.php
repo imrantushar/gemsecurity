@@ -249,7 +249,9 @@ class AuditLog {
 			'content_meta_changed',
 			sprintf( '%s "%s": "%s" set to "%s".', self::post_type_label( $post ), get_the_title( $post ) ?: '(no title)', $meta_key, self::clip( self::scalar( $meta_value ), 120 ) ),
 			Logger::SEVERITY_NOTICE,
-			[ 'context' => [ 'post_id' => $post_id, 'post_type' => $post->post_type, 'url' => get_permalink( $post ), 'meta_key' => $meta_key, 'new' => self::clip( self::scalar( $meta_value ) ) ] ]
+			// Context field, not a query — meta_key here is the name of the
+			// post meta that changed, recorded alongside the event.
+			[ 'context' => [ 'post_id' => $post_id, 'post_type' => $post->post_type, 'url' => get_permalink( $post ), 'meta_key' => $meta_key, 'new' => self::clip( self::scalar( $meta_value ) ) ] ] // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		);
 	}
 
@@ -265,7 +267,8 @@ class AuditLog {
 			'content_meta_changed',
 			sprintf( '%s "%s": "%s" removed.', self::post_type_label( $post ), get_the_title( $post ) ?: '(no title)', $meta_key ),
 			Logger::SEVERITY_NOTICE,
-			[ 'context' => [ 'post_id' => $post_id, 'post_type' => $post->post_type, 'meta_key' => $meta_key, 'new' => null ] ]
+			// Context field, not a query.
+			[ 'context' => [ 'post_id' => $post_id, 'post_type' => $post->post_type, 'meta_key' => $meta_key, 'new' => null ] ] // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		);
 	}
 

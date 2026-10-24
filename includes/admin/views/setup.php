@@ -9,11 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title><?php echo esc_html__( 'GemSecurity Setup', 'gemsecurity' ); ?></title>
-		<?php do_action( 'admin_print_styles' ); ?>
-		<?php do_action( 'admin_print_scripts' ); ?>
+		<?php do_action( 'admin_print_styles' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound ?>
+		<?php do_action( 'admin_print_scripts' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound ?>
 	</head>
 	<body class="gemsecurity-setup-body">
 		<div id="gemsecuritywrap" class="gemsecuritywrap gs-setup"></div>
-		<?php do_action( 'admin_print_footer_scripts' ); ?>
+		<?php do_action( 'admin_print_footer_scripts' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound ?>
 	</body>
 </html>

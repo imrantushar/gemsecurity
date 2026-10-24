@@ -46,7 +46,9 @@ class Logger {
 		$ip_address = isset( $args['ip_address'] ) ? $args['ip_address'] : Helper::get_ip_address();
 		$context    = isset( $args['context'] ) && ! empty( $args['context'] ) ? wp_json_encode( $args['context'] ) : null;
 
-		$inserted = $wpdb->insert(
+		// Direct writes to our own log table — not cacheable, that is the
+		// whole point of writing audit rows.
+		$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$table,
 			[
 				'event_type' => substr( (string) $event_type, 0, 50 ),
@@ -103,11 +105,8 @@ class Logger {
 		}
 
 		$table = $wpdb->prefix . 'gemsecurity_logs';
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE created_at < %s",
-				gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) )
-			)
-		);
+		// Our own table; its name is built from $wpdb->prefix, not input.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE created_at < %s", gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) ) ) );
 	}
 }

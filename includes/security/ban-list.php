@@ -52,13 +52,10 @@ class BanList {
 		}
 
 		global $wpdb;
-		$row = $wpdb->get_var(
-			$wpdb->prepare(
-				'SELECT id FROM ' . self::table() . ' WHERE ip = %s AND ( expires_at IS NULL OR expires_at > %s ) LIMIT 1',
-				$ip,
-				current_time( 'mysql' )
-			)
-		);
+		// Our own bans table — the name is built from $wpdb->prefix and a
+		// fixed suffix; wp_cache_get/set above makes this a cache miss path.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$row = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . self::table() . ' WHERE ip = %s AND ( expires_at IS NULL OR expires_at > %s ) LIMIT 1', $ip, current_time( 'mysql' ) ) );
 		$banned = (bool) $row;
 		wp_cache_set( $ckey, $banned ? 1 : 0, self::CACHE_GROUP, self::CACHE_TTL );
 		return self::$cache[ $ip ] = $banned;
@@ -79,17 +76,10 @@ class BanList {
 		global $wpdb;
 		$expires = $ttl > 0 ? gmdate( 'Y-m-d H:i:s', time() + $ttl ) : null;
 
-		$wpdb->query(
-			$wpdb->prepare(
-				'INSERT INTO ' . self::table() . ' (ip, reason, strikes, expires_at, created_at) VALUES (%s, %s, %d, %s, %s)
-				 ON DUPLICATE KEY UPDATE reason = VALUES(reason), strikes = strikes + 1, expires_at = VALUES(expires_at)',
-				$ip,
-				substr( (string) $reason, 0, 255 ),
-				1,
-				$expires,
-				current_time( 'mysql' )
-			)
-		);
+		// Our own bans table; the name comes from $wpdb->prefix, cache is
+		// invalidated right after.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->query( $wpdb->prepare( 'INSERT INTO ' . self::table() . ' (ip, reason, strikes, expires_at, created_at) VALUES (%s, %s, %d, %s, %s) ON DUPLICATE KEY UPDATE reason = VALUES(reason), strikes = strikes + 1, expires_at = VALUES(expires_at)', $ip, substr( (string) $reason, 0, 255 ), 1, $expires, current_time( 'mysql' ) ) );
 		unset( self::$cache[ $ip ] );
 		wp_cache_delete( md5( $ip ), self::CACHE_GROUP );
 
@@ -107,7 +97,8 @@ class BanList {
 	 */
 	public static function unban( $ip ) {
 		global $wpdb;
-		$wpdb->delete( self::table(), [ 'ip' => $ip ], [ '%s' ] );
+		// Our own bans table; cache invalidated below.
+		$wpdb->delete( self::table(), [ 'ip' => $ip ], [ '%s' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		unset( self::$cache[ $ip ] );
 		wp_cache_delete( md5( $ip ), self::CACHE_GROUP );
 		delete_transient( self::STRIKE_PREFIX . md5( $ip ) );
@@ -167,25 +158,23 @@ class BanList {
 	 */
 	public static function all( $limit = 200 ) {
 		global $wpdb;
-		$rows = $wpdb->get_results(
-			$wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY created_at DESC LIMIT %d', $limit ),
-			ARRAY_A
-		);
+		// Admin list of our own bans — showing a stale cached snapshot of
+		// the ban table would mislead the person managing it.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' ORDER BY created_at DESC LIMIT %d', $limit ), ARRAY_A );
 		return $rows ? $rows : [];
 	}
 
 	public static function count_active() {
 		global $wpdb;
-		return (int) $wpdb->get_var(
-			$wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE expires_at IS NULL OR expires_at > %s', current_time( 'mysql' ) )
-		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::table() . ' WHERE expires_at IS NULL OR expires_at > %s', current_time( 'mysql' ) ) );
 	}
 
 	/** Cron: drop expired bans. */
 	public static function prune() {
 		global $wpdb;
-		$wpdb->query(
-			$wpdb->prepare( 'DELETE FROM ' . self::table() . ' WHERE expires_at IS NOT NULL AND expires_at < %s', current_time( 'mysql' ) )
-		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::table() . ' WHERE expires_at IS NOT NULL AND expires_at < %s', current_time( 'mysql' ) ) );
 	}
 }

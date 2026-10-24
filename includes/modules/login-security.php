@@ -54,6 +54,9 @@ class LoginSecurity {
 		}
 
 		// Only short-circuit on an actual login attempt (credentials present).
+		// authenticate fires inside WP's own nonce-verified login flow, and
+		// we only check whether $_POST is empty here — no field is read.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( empty( $_POST ) && empty( $_SERVER['PHP_AUTH_USER'] ) ) {
 			return $user;
 		}

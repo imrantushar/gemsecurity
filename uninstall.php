@@ -1,7 +1,12 @@
 <?php
 /**
  * GemSecurity uninstall — remove all plugin data when the plugin is deleted.
+ *
+ * The variables here live in uninstall.php's own file scope, which WP
+ * loads once at delete time. They are not globals in the WPCS sense and
+ * do not leak outside this request.
  */
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;

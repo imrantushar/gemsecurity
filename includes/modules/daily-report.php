@@ -241,7 +241,8 @@ class DailyReport {
 		global $wpdb;
 		$table = $wpdb->prefix . 'gemsecurity_logs';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// Our own logs table — the name is $wpdb->prefix + fixed suffix.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT severity, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY severity",

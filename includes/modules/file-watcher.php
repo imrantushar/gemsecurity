@@ -215,7 +215,8 @@ class FileWatcher {
 	 * @return array
 	 */
 	public static function run() {
-		@set_time_limit( 0 );
+		// Scanner runs can take minutes on large sites.
+		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 
 		$current  = self::hash_watched_files();
 		$baseline = self::get_baseline();
@@ -570,10 +571,12 @@ class FileWatcher {
 	 */
 	private static function flush_checksums_cache() {
 		global $wpdb;
+		// Direct option-row delete — delete_transient() cannot bulk-match
+		// a prefix pattern, so a single LIKE sweep is the right tool.
 		$like = $wpdb->esc_like( '_transient_' . self::CHECKSUMS_TRANSIENT_PREFIX ) . '%';
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$like = $wpdb->esc_like( '_transient_timeout_' . self::CHECKSUMS_TRANSIENT_PREFIX ) . '%';
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/* --------------------------------------------------------------------- */
@@ -834,18 +837,10 @@ class FileWatcher {
 		// tag). Deliberately not restricted by autoload: the value name for
 		// "autoloaded" changed across WordPress versions ('yes' → 'on'/'auto'),
 		// and spam can live in any option. The LIKE filter + LIMIT keep it cheap.
-		$options = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT option_name, option_value FROM {$wpdb->options}
-				 WHERE option_value LIKE %s
-				   AND option_value LIKE %s
-				 LIMIT %d",
-				'%px%',
-				'%<a %',
-				self::MAX_DB_OPTIONS
-			),
-			ARRAY_A
-		);
+		// Scanner path — a cached snapshot of wp_options would miss freshly
+		// injected spam links.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$options = $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_value LIKE %s AND option_value LIKE %s LIMIT %d", '%px%', '%<a %', self::MAX_DB_OPTIONS ), ARRAY_A );
 		foreach ( (array) $options as $row ) {
 			if ( self::has_hidden_external_links( (string) $row['option_value'] ) ) {
 				$findings[] = [
@@ -857,6 +852,7 @@ class FileWatcher {
 		}
 
 		// Recently modified published posts/pages.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT ID, post_title, post_content FROM {$wpdb->posts}

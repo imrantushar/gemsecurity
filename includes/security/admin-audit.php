@@ -51,13 +51,10 @@ class AdminAudit {
 		// Cheap LIKE to pull candidate rows, then confirm by unserialising so we
 		// match count_users() semantics (administrator capability actually truthy,
 		// not merely a substring inside another value).
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value LIKE %s",
-				$key,
-				'%' . $wpdb->esc_like( '"administrator"' ) . '%'
-			)
-		);
+		// Rogue-admin detection needs a direct scan of wp_usermeta; a cached
+		// snapshot would hide an attacker-created admin until the TTL expired.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value LIKE %s", $key, '%' . $wpdb->esc_like( '"administrator"' ) . '%' ) );
 
 		$ids = [];
 		foreach ( (array) $rows as $row ) {

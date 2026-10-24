@@ -44,7 +44,8 @@ class LinkScanner {
 	 * @return array
 	 */
 	public static function run() {
-		@set_time_limit( 0 );
+		// Scanner runs can take minutes on large sites.
+		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 
 		$allow = self::allowlist();
 		$block = self::blocklist();
@@ -294,6 +295,9 @@ class LinkScanner {
 	 */
 	private static function post_contents() {
 		global $wpdb;
+		// Full-content LIKE scan of wp_posts; the scanner intentionally
+		// bypasses caches so a planted link in a published post is seen.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT ID, post_title, post_content FROM {$wpdb->posts}
@@ -321,6 +325,9 @@ class LinkScanner {
 	 */
 	private static function option_contents() {
 		global $wpdb;
+		// Direct LIKE scan of wp_options; cached values would miss a link
+		// written into a serialized option by an attacker.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT option_name, option_value FROM {$wpdb->options}
@@ -343,6 +350,8 @@ class LinkScanner {
 	 */
 	private static function comment_contents() {
 		global $wpdb;
+		// Direct LIKE scan of wp_comments; the scanner needs fresh content.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT comment_ID, comment_content FROM {$wpdb->comments}

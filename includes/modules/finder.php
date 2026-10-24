@@ -60,7 +60,9 @@ class Finder {
 			return new \WP_Error( 'gemsecurity_search_regex', __( 'That regular expression is not valid.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
-		@set_time_limit( 0 );
+		// Scanning several large tables and all plugin/theme/upload files
+		// can take minutes on big sites.
+		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
 
 		$files     = in_array( 'files', $scope, true ) ? self::search_files( $pattern ) : [ 'matches' => [], 'files_scanned' => 0, 'truncated' => false ];
 		$database  = in_array( 'database', $scope, true ) ? self::search_database( $term, $regex ) : [ 'matches' => [], 'truncated' => false ];
@@ -300,6 +302,10 @@ class Finder {
 		foreach ( $queries as $q ) {
 			$args = array_fill( 0, substr_count( $q['sql'], '%s' ), $val );
 			$args[] = self::MAX_DB_PER_TABLE;
+			// $q['sql'] is one of the fixed templates defined above; only its
+			// %s / %d placeholders carry the admin-supplied search value, and
+			// $wpdb->prepare() binds them.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,PluginCheck.Security.DirectDB.UnescapedDBParameter
 			$rows = $wpdb->get_results( $wpdb->prepare( $q['sql'], ...$args ), ARRAY_A );
 			if ( count( (array) $rows ) >= self::MAX_DB_PER_TABLE ) {
 				$trunc = true;

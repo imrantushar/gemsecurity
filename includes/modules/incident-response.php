@@ -51,7 +51,8 @@ class IncidentResponse {
 		global $wpdb;
 		$table = $wpdb->prefix . 'gemsecurity_logs';
 		$since = gmdate( 'Y-m-d H:i:s', time() - max( 1, (int) $days ) * DAY_IN_SECONDS );
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, event_type, severity, message, ip_address, created_at FROM {$table} WHERE created_at >= %s AND severity IN ('warning','critical') ORDER BY created_at DESC LIMIT 200", $since ), ARRAY_A ); // phpcs:ignore WordPress.DB
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, event_type, severity, message, ip_address, created_at FROM {$table} WHERE created_at >= %s AND severity IN ('warning','critical') ORDER BY created_at DESC LIMIT 200", $since ), ARRAY_A );
 
 		return array_map( static function ( $r ) {
 			return [

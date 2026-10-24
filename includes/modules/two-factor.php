@@ -120,8 +120,10 @@ class TwoFactor {
 		wp_destroy_current_session();
 
 		$method   = self::user_method( $user );
-		$remember = ! empty( $_POST['rememberme'] );
-		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : '';
+		// We ride on WP's own login flow, which has already verified its
+		// nonce before authenticate() fires and this filter runs.
+		$remember = ! empty( $_POST['rememberme'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$redirect = isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( '' === $redirect ) {
 			// A front-end form (shop account page, member login widget) should
 			// land back where it was; wp-login.php keeps going to the dashboard.
@@ -267,9 +269,13 @@ class TwoFactor {
 	 * Handle the submitted second factor (action=gemsec_2fa on wp-login.php).
 	 */
 	public function handle_challenge_response() {
+		// The 2FA token is a 32-char single-use value from the server-side
+		// transient (and signed cookie) created in redirect_to_challenge().
+		// It replaces the login nonce for the second step of the flow.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$token   = isset( $_POST['gemsec_2fa_token'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_token'] ) ) : '';
-		if ( '' === $token && isset( $_GET['gemsec_2fa_token'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$token = sanitize_text_field( wp_unslash( $_GET['gemsec_2fa_token'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( '' === $token && isset( $_GET['gemsec_2fa_token'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$token = sanitize_text_field( wp_unslash( $_GET['gemsec_2fa_token'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 		$pending = $token ? get_transient( self::PENDING_PREFIX . $token ) : false;
 
@@ -303,17 +309,19 @@ class TwoFactor {
 			exit;
 		}
 
-		$code   = isset( $_POST['gemsec_2fa_code'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_code'] ) ) : '';
+		// $token above stands in for the login nonce; the code the user types
+		// is verified below against the hashed pending challenge.
+		$code   = isset( $_POST['gemsec_2fa_code'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_code'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$method = $pending['method'];
 
 		// Arrived by redirect from a front-end login form: show the prompt.
-		if ( ! isset( $_POST['gemsec_2fa_code'] ) && ! isset( $_POST['gemsec_2fa_resend'] ) ) {
+		if ( ! isset( $_POST['gemsec_2fa_code'] ) && ! isset( $_POST['gemsec_2fa_resend'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$this->render_form( $token, $method, '' );
 			exit;
 		}
 
 		// Allow resending an email code.
-		if ( isset( $_POST['gemsec_2fa_resend'] ) && 'email' === $method ) {
+		if ( isset( $_POST['gemsec_2fa_resend'] ) && 'email' === $method ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( false === $this->send_email_otp( $user ) ) {
 				$this->render_form( $token, $method, __( 'Too many codes have been sent. Use the last one, or wait 15 minutes and sign in again.', 'gemsecurity' ) );
 				exit;
@@ -359,8 +367,9 @@ class TwoFactor {
 
 		Logger::log( '2fa_success', sprintf( 'Second factor verified for "%s".', $user->user_login ), Logger::SEVERITY_INFO, [ 'user_id' => $user->ID ] );
 
-		// Re-fire wp_login so other modules (login alert, session stamp) run.
-		do_action( 'wp_login', $user->user_login, $user );
+		// Re-fire WP's own wp_login so other modules (login alert, session
+		// stamp) run — this is WP's hook, not one of ours.
+		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 		$redirect = ! empty( $pending['redirect'] ) ? $pending['redirect'] : admin_url();
 		wp_safe_redirect( $redirect );
@@ -456,8 +465,9 @@ class TwoFactor {
 		if ( $a['fails'] === self::MAX_FAILS ) {
 			Logger::log( '2fa_locked', sprintf( 'Two-factor locked for "%s" after %d wrong codes.', $user->user_login, self::MAX_FAILS ), Logger::SEVERITY_WARNING, [ 'user_id' => $user->ID ] );
 		}
-		// Count it as a failed sign-in too, so the IP lockout sees 2FA guessing.
-		do_action( 'wp_login_failed', $user->user_login, new \WP_Error( 'gemsec_2fa_failed', __( 'Incorrect verification code.', 'gemsecurity' ) ) );
+		// Count it as a failed sign-in too, so the IP lockout sees 2FA
+		// guessing — WP's own hook, not one of ours.
+		do_action( 'wp_login_failed', $user->user_login, new \WP_Error( 'gemsec_2fa_failed', __( 'Incorrect verification code.', 'gemsecurity' ) ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 	}
 
 	/**

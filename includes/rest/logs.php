@@ -1,4 +1,10 @@
 <?php
+// Pagination over our own gemsecurity_logs table. Filters are built from
+// a fixed-key allowlist and bound as %s/%d via $wpdb->prepare; only the
+// table identifier is interpolated, from $wpdb->prefix. The activity log
+// page must show live events, so caching the aggregates is incorrect.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+
 namespace GemSecurity\Rest;
 
 use GemSecurity\Modules\AuditLog;

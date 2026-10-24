@@ -57,7 +57,7 @@ class Compliance {
 		$prev  = ! empty( $chain['last'] ) ? $chain['last'] : 'genesis';
 		$hash  = hash_hmac( 'sha256', $prev . '|' . self::payload( $row_id, $event_type, $severity, $message ), wp_salt( 'auth' ) );
 
-		$wpdb->update( $table, [ 'hash' => $hash ], [ 'id' => $row_id ], [ '%s' ], [ '%d' ] ); // phpcs:ignore WordPress.DB
+		$wpdb->update( $table, [ 'hash' => $hash ], [ 'id' => $row_id ], [ '%s' ], [ '%d' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		update_option( self::CHAIN_OPTION, [ 'last' => $hash, 'count' => (int) $chain['count'] + 1 ], false );
 	}
 
@@ -69,7 +69,8 @@ class Compliance {
 	public static function verify() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'gemsecurity_logs';
-		$rows  = $wpdb->get_results( "SELECT id, event_type, severity, message, hash FROM {$table} WHERE hash IS NOT NULL ORDER BY id ASC", ARRAY_A ); // phpcs:ignore WordPress.DB
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows  = $wpdb->get_results( "SELECT id, event_type, severity, message, hash FROM {$table} WHERE hash IS NOT NULL ORDER BY id ASC", ARRAY_A );
 
 		$prev    = null;
 		$checked = 0;
@@ -136,9 +137,13 @@ class Compliance {
 		$table = $wpdb->prefix . 'gemsecurity_logs';
 		$since = gmdate( 'Y-m-d H:i:s', time() - max( 1, (int) $days ) * DAY_IN_SECONDS );
 
-		$by_sev = $wpdb->get_results( $wpdb->prepare( "SELECT severity, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY severity", $since ), ARRAY_A ); // phpcs:ignore WordPress.DB
-		$top    = $wpdb->get_results( $wpdb->prepare( "SELECT event_type, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY event_type ORDER BY c DESC LIMIT 15", $since ), ARRAY_A ); // phpcs:ignore WordPress.DB
-		$total  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE created_at >= %s", $since ) ); // phpcs:ignore WordPress.DB
+		// Our own gemsecurity_logs table; built from $wpdb->prefix.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$by_sev = $wpdb->get_results( $wpdb->prepare( "SELECT severity, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY severity", $since ), ARRAY_A );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$top    = $wpdb->get_results( $wpdb->prepare( "SELECT event_type, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY event_type ORDER BY c DESC LIMIT 15", $since ), ARRAY_A );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$total  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE created_at >= %s", $since ) );
 
 		return [
 			'framework'   => $framework,

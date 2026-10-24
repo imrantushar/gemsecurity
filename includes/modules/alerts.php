@@ -155,10 +155,10 @@ class Alerts {
 		$table = $wpdb->prefix . 'gemsecurity_logs';
 		$since = gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS );
 
-		$rows = $wpdb->get_results(
-			$wpdb->prepare( "SELECT severity, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY severity", $since ),
-			ARRAY_A
-		);
+		// Our own gemsecurity_logs table; the digest reports live counts, so
+		// a cached snapshot would misrepresent the past 7 days.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT severity, COUNT(*) c FROM {$table} WHERE created_at >= %s GROUP BY severity", $since ), ARRAY_A );
 		$by_sev = [];
 		foreach ( (array) $rows as $r ) {
 			$by_sev[ $r['severity'] ] = (int) $r['c'];

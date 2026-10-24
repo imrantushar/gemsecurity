@@ -32,8 +32,10 @@ class Geolocation {
 	public static function users( $request ) {
 		$search = sanitize_text_field( (string) $request->get_param( 'search' ) );
 
+		// Users-with-geolocation list page needs this meta_key, which is
+		// indexed and queried only on the admin page.
 		$args = [
-			'meta_key' => GeoModule::USER_META,
+			'meta_key' => GeoModule::USER_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 			'number'   => 100,
 			'orderby'  => 'display_name',
 		];

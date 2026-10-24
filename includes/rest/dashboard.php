@@ -1,4 +1,10 @@
 <?php
+// Every query here runs against our own gemsecurity_logs table, whose name
+// is built from $wpdb->prefix and a fixed suffix. These are the exact
+// aggregate reads the dashboard page needs; a cached snapshot of them
+// would mislead the person watching real-time events.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+
 namespace GemSecurity\Rest;
 
 use GemSecurity\Helper;

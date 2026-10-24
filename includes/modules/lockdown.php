@@ -60,7 +60,8 @@ class Lockdown {
 
 		if ( has_action( 'gembackup/run_backup' ) ) {
 			Logger::log( 'pre_update_backup', 'Triggered a backup via GemBackup before an update.', Logger::SEVERITY_INFO );
-			do_action( 'gembackup/run_backup' );
+			// Public hook into GemBackup's own API — not one of ours to prefix.
+			do_action( 'gembackup/run_backup' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		}
 		/**
 		 * Always fire a generic seam so any backup solution can hook in.

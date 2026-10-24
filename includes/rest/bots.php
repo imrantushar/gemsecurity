@@ -1,4 +1,9 @@
 <?php
+// Aggregate reads of our own gemsecurity_logs table; the name is built
+// from $wpdb->prefix and a fixed suffix, and a cached snapshot of recent
+// bot activity would misrepresent live traffic.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+
 namespace GemSecurity\Rest;
 
 if ( ! defined( 'ABSPATH' ) ) {

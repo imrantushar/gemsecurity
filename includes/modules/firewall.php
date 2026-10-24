@@ -157,7 +157,9 @@ class Firewall {
 
 		// Block ?author=N enumeration for anonymous visitors.
 		if ( Helper::get_setting( 'block_author_enumeration', true ) && ! is_admin() && ! is_user_logged_in() ) {
-			$author = isset( $_GET['author'] ) ? sanitize_text_field( wp_unslash( $_GET['author'] ) ) : '';
+			// Blocks ?author=N enumeration on anonymous requests; it IS the
+			// request we are deciding to serve, so no nonce could exist.
+			$author = isset( $_GET['author'] ) ? sanitize_text_field( wp_unslash( $_GET['author'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( '' !== $author && preg_match( '/^\d+$/', $author ) ) {
 				Logger::log(
 					'author_enumeration_blocked',

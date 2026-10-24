@@ -335,12 +335,10 @@ class SecurityScore {
 			return false;
 		}
 		$table = $wpdb->gembackup_backups;
-		$count = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE status = 'completed' AND created_at >= %s",
-				gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS )
-			)
-		);
+		// GemBackup registers this prefix-stamped table on $wpdb; we read it
+		// to decide whether the backup chip is green on the dashboard.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status = 'completed' AND created_at >= %s", gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS ) ) );
 		return $count > 0;
 	}
 
