@@ -106,7 +106,9 @@ Only if you accept the opt-in notice, GemSecurity sends usage data to Kodezen at
 
 == Source code and libraries ==
 
-The admin JavaScript in `assets/build/` is compiled. Its human-readable source is included in the `dev_gemsecurity/` folder. To rebuild it, run `npm install` and then `npm run build`.
+The admin JavaScript in `assets/build/` is compiled. Its human-readable source is included in the `dev_gemsecurity/` folder and is also public on GitHub: [github.com/imrantushar/gemsecurity](https://github.com/imrantushar/gemsecurity).
+
+To rebuild it, run `npm install` and then `npm run build`. To build the full release zip, run `npm run dist`. It installs missing packages and then builds the JS, translation template and zip.
 
 GemSecurity bundles these open-source libraries:
 
