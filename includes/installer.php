@@ -14,6 +14,7 @@ class Installer {
 
 	public static function activate() {
 		self::create_tables();
+		self::migrate_options();
 		self::migrate_settings();
 		self::set_default_options();
 		// Seed the module-activation map from current settings so a fresh install
@@ -131,11 +132,16 @@ class Installer {
 	 * Hooked on init so already-active installs self-heal without re-activation.
 	 */
 	public static function maybe_upgrade() {
-		if ( get_option( 'gemsecurity_db_version' ) !== GEMSECURITY_DB_VERSION ) {
+		$stored = get_option( 'gemsecurity_db_version' );
+		if ( false === $stored ) {
+			$stored = \GemSecurity\OptionStore::get_meta( 'db_version' );
+		}
+		if ( $stored !== GEMSECURITY_DB_VERSION ) {
 			self::create_tables();
 			// Fold retired and duplicated settings into the keys that replaced
 			// them *before* defaults are merged, so a site keeps the behaviour
 			// it already had.
+			self::migrate_options();
 			self::migrate_settings();
 			self::set_default_options();
 			// Derive module activation from the existing settings on first
@@ -143,6 +149,47 @@ class Installer {
 			\GemSecurity\Modules\Registry::seed_if_missing();
 			\GemSecurity\Security\Quarantine::migrate_legacy();
 			self::schedule_events();
+		}
+	}
+
+	/**
+	 * Fold legacy standalone options into the grouped {@see OptionStore} rows.
+	 *
+	 * The plugin used to spread install flags, schema version, 2FA seal state
+	 * and runtime snapshots across eight separate `wp_options` entries, some of
+	 * them large and still autoloaded. This moves whatever a site had set onto
+	 * the new `gemsecurity_meta` / `gemsecurity_state` keys and drops the old
+	 * ones, so nothing a site had switched on quietly resets itself.
+	 *
+	 * Idempotent: once the retired keys are gone there is nothing left to do.
+	 *
+	 * @return void
+	 */
+	private static function migrate_options() {
+		$meta_map = [
+			'first_install_time'     => 'gemsecurity_first_install_time',
+			'pro_first_install_time' => 'gemsecurity_pro_first_install_time',
+			'two_factor_sealed'      => 'gemsecurity_2fa_sealed',
+			'db_version'             => 'gemsecurity_db_version',
+		];
+		foreach ( $meta_map as $new_key => $legacy ) {
+			$value = get_option( $legacy, null );
+			if ( null !== $value && false !== $value ) {
+				\GemSecurity\OptionStore::add_meta( $new_key, $value );
+			}
+			delete_option( $legacy );
+		}
+
+		$state_map = [
+			'vuln_scan'  => 'gemsecurity_vuln_scan',
+			'quarantine' => 'gemsecurity_quarantine',
+		];
+		foreach ( $state_map as $new_key => $legacy ) {
+			$value = get_option( $legacy, null );
+			if ( null !== $value && false !== $value ) {
+				\GemSecurity\OptionStore::set_state( $new_key, $value );
+			}
+			delete_option( $legacy );
 		}
 	}
 
@@ -228,6 +275,7 @@ class Installer {
 		// The second baseline's snapshot. Nothing reads it now, and it can be
 		// large — it held a hash per file across core, plugins and themes.
 		delete_option( 'gemsecurity_pro_file_baseline' );
+		\GemSecurity\OptionStore::delete_state( 'file_baseline' );
 		wp_clear_scheduled_hook( 'gemsecurity_pro_file_baseline_scan' );
 	}
 
@@ -270,7 +318,7 @@ class Installer {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
 
-		update_option( 'gemsecurity_db_version', GEMSECURITY_DB_VERSION );
+		\GemSecurity\OptionStore::set_meta( 'db_version', GEMSECURITY_DB_VERSION );
 	}
 
 	/**

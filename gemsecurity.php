@@ -44,7 +44,7 @@ final class GemSecurity {
 
 	public function define_constants() {
 		define( 'GEMSECURITY_VERSION', '1.1.0' );
-		define( 'GEMSECURITY_DB_VERSION', '2.1' );
+		define( 'GEMSECURITY_DB_VERSION', '2.2' );
 		define( 'GEMSECURITY_SETTINGS_NAME', 'gemsecurity_settings' );
 		define( 'GEMSECURITY_PLUGIN_FILE', __FILE__ );
 		define( 'GEMSECURITY_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -121,9 +121,9 @@ final class GemSecurity {
 
 	public function activate() {
 		// Feeds the SDK's insights/opt-in "days since install" timing.
-		// add_option() is a no-op if it already exists, so re-activation
+		// add_meta() is a no-op if the key already exists, so re-activation
 		// never resets it.
-		$first_install = add_option( 'gemsecurity_first_install_time', time(), '', false );
+		$first_install = GemSecurity\OptionStore::add_meta( 'first_install_time', time() );
 
 		// Sites that ran GemSecurity before the setup wizard existed are already
 		// configured — never push them through it on reactivation.

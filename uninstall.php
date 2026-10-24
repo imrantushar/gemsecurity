@@ -12,15 +12,24 @@ global $wpdb;
 // Options.
 $options = [
 	'gemsecurity_settings',
+	'gemsecurity_meta',
+	'gemsecurity_state',
 	'gemsecurity_active_modules',
-	'gemsecurity_db_version',
 	'gemsecurity_last_scan',
-	'gemsecurity_vuln_scan',
 	'gemsecurity_hidden_admin_scan',
 	'gemsecurity_hidden_admin_state',
 	'gemsecurity_daily_report_snapshot',
-	'gemsecurity_watchdog_alert',
 	'gemsecurity_safe_files',
+	// Pre-2.2 standalone keys. Still deleted so an uninstall after an upgrade
+	// from before the OptionStore consolidation leaves nothing behind.
+	'gemsecurity_db_version',
+	'gemsecurity_first_install_time',
+	'gemsecurity_pro_first_install_time',
+	'gemsecurity_2fa_sealed',
+	'gemsecurity_vuln_scan',
+	'gemsecurity_quarantine',
+	'gemsecurity_watchdog_alert',
+	'gemsecurity_pro_file_baseline',
 ];
 foreach ( $options as $option ) {
 	delete_option( $option );

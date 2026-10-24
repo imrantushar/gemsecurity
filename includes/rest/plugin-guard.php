@@ -217,7 +217,7 @@ class PluginGuard {
 		}
 
 		$quarantined = [];
-		foreach ( (array) get_option( 'gemsecurity_quarantine', [] ) as $q ) {
+		foreach ( (array) \GemSecurity\OptionStore::get_state( 'quarantine', [] ) as $q ) {
 			if ( 'plugin-guard' === ( $q['source'] ?? '' ) ) {
 				$quarantined[] = $q;
 			}

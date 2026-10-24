@@ -73,7 +73,7 @@ class Quarantine {
 	 * @return array<string,array>
 	 */
 	public static function all() {
-		$store = get_option( self::OPTION, [] );
+		$store = \GemSecurity\OptionStore::get_state( 'quarantine', [] );
 		return is_array( $store ) ? $store : [];
 	}
 
@@ -104,7 +104,7 @@ class Quarantine {
 	 * @return void
 	 */
 	public static function save( array $store ) {
-		update_option( self::OPTION, $store, false );
+		\GemSecurity\OptionStore::set_state( 'quarantine', $store );
 	}
 
 	/**
@@ -270,8 +270,7 @@ class Quarantine {
 	 * @return void
 	 */
 	public static function migrate_legacy() {
-		$store = get_option( self::OPTION, [] );
-		$store = is_array( $store ) ? $store : [];
+		$store = self::all();
 
 		// Legacy Incident Response entries are the numerically-indexed ones.
 		$merged = [];

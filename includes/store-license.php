@@ -83,7 +83,7 @@ final class StoreLicense {
 			'privacy_policy_url'  => 'https://gemsecurity.net/privacy-policy/',
 			'ticket_recipient'    => 'support@gemsecurity.net',
 			'primary_color'       => '#2A3BEE',
-			'first_install_time'  => get_option( 'gemsecurity_first_install_time' ),
+			'first_install_time'  => \GemSecurity\OptionStore::get_meta( 'first_install_time' ),
 			'optin_notice_delay'  => 3 * DAY_IN_SECONDS,
 		] );
 

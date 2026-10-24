@@ -53,7 +53,7 @@ class TwoFactor {
 	 * Retries on later admin loads until every seed is sealed.
 	 */
 	public static function seal_legacy_secrets() {
-		if ( get_option( 'gemsecurity_2fa_sealed' ) || ! SecretBox::available() ) {
+		if ( \GemSecurity\OptionStore::get_meta( 'two_factor_sealed' ) || ! SecretBox::available() ) {
 			return;
 		}
 		$left = 0;
@@ -82,7 +82,7 @@ class TwoFactor {
 			}
 		}
 		if ( ! $left ) {
-			update_option( 'gemsecurity_2fa_sealed', 1, false );
+			\GemSecurity\OptionStore::set_meta( 'two_factor_sealed', 1 );
 		}
 	}
 

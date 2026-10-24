@@ -527,7 +527,7 @@ class PluginGuard {
 			return null;
 		}
 		$relative = str_replace( wp_normalize_path( ABSPATH ), '', $abs );
-		$store    = get_option( 'gemsecurity_quarantine', [] );
+		$store    = \GemSecurity\OptionStore::get_state( 'quarantine', [] );
 		$store    = is_array( $store ) ? $store : [];
 		$store[ $id ] = [
 			'id'             => $id,
@@ -539,7 +539,7 @@ class PluginGuard {
 			'hash'           => $hash,
 			'quarantined_at' => current_time( 'mysql' ),
 		];
-		update_option( 'gemsecurity_quarantine', $store, false );
+		\GemSecurity\OptionStore::set_state( 'quarantine', $store );
 		return $store[ $id ];
 	}
 
@@ -550,7 +550,7 @@ class PluginGuard {
 	 * @return true|\WP_Error
 	 */
 	public static function restore_and_trust_mu( $id ) {
-		$store = get_option( 'gemsecurity_quarantine', [] );
+		$store = \GemSecurity\OptionStore::get_state( 'quarantine', [] );
 		if ( ! isset( $store[ $id ] ) || 'plugin-guard' !== ( $store[ $id ]['source'] ?? '' ) ) {
 			return new \WP_Error( 'gemsecurity_guard_missing', __( 'Quarantine entry not found.', 'gemsecurity' ), [ 'status' => 404 ] );
 		}
@@ -567,7 +567,7 @@ class PluginGuard {
 			return new \WP_Error( 'gemsecurity_guard_restore', __( 'Could not restore the file.', 'gemsecurity' ), [ 'status' => 500 ] );
 		}
 		unset( $store[ $id ] );
-		update_option( 'gemsecurity_quarantine', $store, false );
+		\GemSecurity\OptionStore::set_state( 'quarantine', $store );
 		self::log( 'plugin_guard_restore', sprintf( 'Restored and trusted must-use plugin %s.', $entry['label'] ), 'notice' );
 		return true;
 	}
