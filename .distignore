@@ -13,12 +13,10 @@ Thumbs.db
 
 # JS toolchain — only the compiled output under assets/build ships
 node_modules
-package.json
 package-lock.json
 yarn.lock
 bun.lock
 bun.lockb
-webpack.config.js
 .babelrc
 .eslintrc*
 .eslintignore
@@ -28,8 +26,7 @@ webpack.config.js
 jsconfig.json
 *.map
 
-# React / SCSS source
-dev_gemsecurity
+# React / SCSS source ships in the zip (wp.org: human-readable source).
 
 # Release build kit (the Node dist builder + its config/cache/output).
 # NOTE: vendor/ is intentionally NOT excluded — it ships wholesale so

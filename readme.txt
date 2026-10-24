@@ -66,11 +66,58 @@ GemSecurity is part of a connected family of WordPress plugins built to run your
 
 == External services ==
 
-The optional login CAPTCHA connects to the provider you choose in Login & Access → CAPTCHA. Nothing is sent until you enable CAPTCHA and enter that provider's keys. When enabled, the provider's script loads on the login, registration and lost-password forms, and the CAPTCHA response token plus the visitor's IP address are sent to the provider to verify each submission.
+GemSecurity connects to the services below only for the feature named, and only after you turn that feature on. Nothing is sent on a default install except the WordPress.org lookups used by the vulnerability and plugin checks.
 
-* Google reCAPTCHA (www.google.com/recaptcha) — [Terms](https://policies.google.com/terms), [Privacy](https://policies.google.com/privacy)
-* hCaptcha (js.hcaptcha.com, api.hcaptcha.com) — [Terms](https://www.hcaptcha.com/terms), [Privacy](https://www.hcaptcha.com/privacy)
-* Cloudflare Turnstile (challenges.cloudflare.com) — [Terms](https://www.cloudflare.com/website-terms/), [Privacy](https://www.cloudflare.com/privacypolicy/)
+= CAPTCHA (Login & Access → CAPTCHA) =
+When CAPTCHA is enabled, the provider's script loads on the login, registration and lost-password forms, and the CAPTCHA response token plus the visitor's IP address are sent to the provider to verify each submission.
+
+* Google reCAPTCHA — [Terms](https://policies.google.com/terms), [Privacy](https://policies.google.com/privacy)
+* hCaptcha — [Terms](https://www.hcaptcha.com/terms), [Privacy](https://www.hcaptcha.com/privacy)
+* Cloudflare Turnstile — [Terms](https://www.cloudflare.com/website-terms/), [Privacy](https://www.cloudflare.com/privacypolicy/)
+
+= Social login (Login & Access → Social Login) =
+When a visitor signs in with a provider, the OAuth authorization code is sent to that provider and the user's name, email and avatar are returned to your site.
+
+* Google — [Terms](https://policies.google.com/terms), [Privacy](https://policies.google.com/privacy)
+* Facebook (Meta) — [Terms](https://www.facebook.com/terms.php), [Privacy](https://www.facebook.com/privacy/policy/)
+* GitHub — [Terms](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service), [Privacy](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)
+* X (Twitter) — [Terms](https://x.com/en/tos), [Privacy](https://x.com/en/privacy)
+
+= Vulnerability scanner =
+The slug and version of each installed plugin and theme, and your WordPress version, are sent to WPVulnerability to look up known vulnerabilities. [Terms and privacy](https://www.wpvulnerability.com/privacy/)
+
+= Plugin and file integrity checks =
+Plugin/theme slugs and versions are sent to WordPress.org to fetch official checksums, package details and original files for comparison. [Terms](https://wordpress.org/about/domains/), [Privacy](https://wordpress.org/about/privacy/)
+
+= Breached-password check (Password Policy) =
+When enabled, the first 5 characters of the SHA-1 hash of a new password are sent to Have I Been Pwned. The password itself never leaves your site. [Terms and privacy](https://haveibeenpwned.com/Privacy)
+
+= Geolocation (Firewall → Geolocation) =
+When country blocking is enabled, the visitor's IP address is sent to ip-api.com, falling back to ipapi.co, to look up the visitor's country. [ip-api.com terms](https://ip-api.com/docs/legal), [ipapi.co terms](https://ipapi.co/terms/), [ipapi.co privacy](https://ipapi.co/privacy/)
+
+= Alerts (Notifications) =
+When you add a Slack webhook or Telegram bot, security alert text (event, user, IP address and time) is sent to that channel.
+
+* Slack — [Terms](https://slack.com/terms-of-service), [Privacy](https://slack.com/trust/privacy/privacy-policy)
+* Telegram — [Terms](https://telegram.org/tos), [Privacy](https://telegram.org/privacy)
+
+= Usage insights (opt-in) =
+Only if you accept the opt-in notice, GemSecurity sends usage data to Kodezen at store.kodezen.com. This includes your site URL and name, the admin's name and email, the server IP, WordPress, PHP, database and server versions, the site language, active theme, and active and inactive plugins. If you choose to give feedback when deactivating, that feedback is sent too. Nothing is sent if you decline. [Terms](https://kodezen.com/terms-and-conditions/), [Privacy](https://kodezen.com/privacy-policy/)
+
+== Source code and libraries ==
+
+The admin JavaScript in `assets/build/` is compiled. Its human-readable source is included in the `dev_gemsecurity/` folder. To rebuild it, run `npm install` and then `npm run build`.
+
+GemSecurity bundles these open-source libraries:
+
+* [Redux Toolkit](https://github.com/reduxjs/redux-toolkit), [Redux](https://github.com/reduxjs/redux) and [React Redux](https://github.com/reduxjs/react-redux) — MIT
+* [React Router](https://github.com/remix-run/react-router) — MIT
+* [React Select](https://github.com/JedWatson/react-select) and [Emotion](https://github.com/emotion-js/emotion) — MIT
+* [Axios](https://github.com/axios/axios) — MIT
+* [qrcode.react](https://github.com/zpao/qrcode.react) — ISC
+* [StoreEngine WordPress SDK](https://store.kodezen.com/) — GPL-3.0-or-later
+
+React and WordPress packages are loaded from WordPress core, not bundled.
 
 == Installation ==
 
