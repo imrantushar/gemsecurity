@@ -25,7 +25,7 @@ msgstr ""
 #. Plugin URI of the plugin
 #. Author URI of the plugin
 #: gemsecurity.php
-msgid "http://gemsecurity.net"
+msgid "https://kodezen.com/"
 msgstr ""
 
 #. Description of the plugin

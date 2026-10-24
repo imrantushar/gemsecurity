@@ -1,13 +1,13 @@
 <?php
 /*
  * Plugin Name:		GemSecurity
- * Plugin URI:		http://gemsecurity.net
+ * Plugin URI:		https://kodezen.com/
  * Description:		All-in-one WordPress security dashboard — firewall, login protection, malware scanner, and activity logs.
  * Version:			1.1.0
  * Requires at least:	6.4
  * Requires PHP:		7.4
- * Author:			GemSecurity
- * Author URI:		http://gemsecurity.net
+ * Author:			Kodezen
+ * Author URI:		https://kodezen.com/
  * License:			GPL-3.0+
  * License URI:		http://www.gnu.org/licenses/gpl-3.0.txt
  * Text Domain:		gemsecurity

@@ -1,5 +1,5 @@
 === GemSecurity ===
-Contributors: gemsecurity
+Contributors: kodezen, tusharimran
 Tags: security, firewall, two factor authentication, malware scanner, backup
 Requires at least: 6.4
 Tested up to: 7.1
@@ -46,6 +46,23 @@ GemSecurity is an all-in-one security dashboard for WordPress with a fast, singl
 
 = GemSecurity Pro =
 The optional GemSecurity Pro add-on unlocks active threat protection and remediation: Threat Defense (escalating auto-bans, ban ledger, bot blocklist), Geolocation/country access control, a signature malware scanner with quarantine, database injection scan, plugin/theme integrity vs WordPress.org, a post-hack recovery toolkit, file-change baseline, a hardening pack, auto-update enforcement and settings import/export.
+
+= The Kodezen Ecosystem — Everything Works Together, Natively =
+
+GemSecurity is part of a connected family of WordPress plugins built to run your whole business from one platform:
+
+* [GemCRM](https://gemcrm.net/) — CRM, email marketing, newsletters and marketing automation
+* [StoreEngine](https://storeengine.pro/) — sell digital & physical products, subscriptions, and memberships
+* [Academy LMS](https://academylms.net/) — the top-rated WordPress LMS to create, sell, and manage courses
+* [aBlocks](https://ablocks.pro/) — design fast, high-performance pages with 100+ Gutenberg blocks, no code
+* [ZenCommunity](https://zencommunity.pro/) — communities, discussions, support tickets, and live chat
+* [QuizPress](https://quizpress.pro/) — advanced quizzes, polls, surveys, and exams, 20+ question types
+* [GameEngine](https://gameengine.pro/) — gamify engagement with points, badges, levels, and rewards
+* [ZenAppBuilder](https://academylms.net/zenappbuilder/) — turn your Academy LMS site into a native mobile app
+* [GemBooking](https://gembooking.net/) — accept and automate bookings for appointments and services
+* [GemBoards](https://gemboards.com/) — manage projects, tasks, and teams with modern Kanban boards
+* [Easy Content Manager (ECM)](https://easycontentmanager.pro/) — build custom post types, fields, and taxonomies, no code
+* [Zaplane](https://zaplane.app/) — automate WordPress workflows across your favorite apps, no code
 
 == External services ==
 

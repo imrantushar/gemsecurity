@@ -30,7 +30,7 @@ export function isLocked( key ) {
 
 /** Upgrade/pricing URL. */
 export function upgradeUrl() {
-	return GS.upgrade_url || 'https://gemsecurity.net/pricing/';
+	return GS.upgrade_url || 'https://kodezen.com/';
 }
 
 /* ------------------------------------------------------------------ */

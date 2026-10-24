@@ -230,7 +230,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function upgrade_url() {
-		return apply_filters( 'gemsecurity/upgrade_url', 'https://gemsecurity.net/pricing/' );
+		return apply_filters( 'gemsecurity/upgrade_url', 'https://kodezen.com/' );
 	}
 
 	/**
