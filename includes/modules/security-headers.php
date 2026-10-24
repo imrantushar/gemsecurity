@@ -69,7 +69,7 @@ class SecurityHeaders {
 	public function maybe_serve_securitytxt() {
 		// Match both the rewrite var and a direct request, so it works even
 		// before rewrite rules are flushed.
-		$req = isset( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+		$req = isset( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH ) : '';
 		if ( '1' !== get_query_var( 'gemsec_securitytxt' ) && '/.well-known/security.txt' !== $req ) {
 			return;
 		}

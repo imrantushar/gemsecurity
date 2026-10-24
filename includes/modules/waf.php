@@ -408,6 +408,11 @@ class Waf {
 	 * @return array|false { type, value }
 	 */
 	private function inspect() {
+		// The WAF runs before anything else and inspects raw request data on
+		// its way to the attack-pattern regexes. Sanitising here would hide
+		// precisely the characters the rules exist to detect, and no nonce
+		// could exist on an attacker's own request.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$rules = $this->rules();
 
 		$candidates = [];
@@ -418,6 +423,7 @@ class Waf {
 		if ( Helper::get_setting( 'waf_inspect_body', false ) ) {
 			$this->collect( $_POST, $candidates );
 		}
+		// phpcs:enable
 
 		foreach ( $candidates as $value ) {
 			$value = is_string( $value ) ? $value : '';
@@ -498,7 +504,7 @@ class Waf {
 		wp_die(
 			esc_html( $message ),
 			esc_html__( 'Blocked', 'gemsecurity' ),
-			[ 'response' => $code ]
+			[ 'response' => (int) $code ]
 		);
 	}
 }

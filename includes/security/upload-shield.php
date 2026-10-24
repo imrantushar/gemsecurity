@@ -118,12 +118,14 @@ class UploadShield {
 		if ( ! $fh ) {
 			return '';
 		}
-		$buf = (string) fread( $fh, self::SNIFF_HEAD );
+		// WP_Filesystem can't do a two-ended partial read of a binary file; this
+		// path runs on every uploaded byte, so the native stream calls stay.
+		$buf = (string) fread( $fh, self::SNIFF_HEAD ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
 		if ( $size > self::SNIFF_HEAD + self::SNIFF_TAIL ) {
 			fseek( $fh, -self::SNIFF_TAIL, SEEK_END );
-			$buf .= (string) fread( $fh, self::SNIFF_TAIL );
+			$buf .= (string) fread( $fh, self::SNIFF_TAIL ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
 		}
-		fclose( $fh );
+		fclose( $fh ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 		// "<?php" (any case) and the phar stub. Not "<?=" or a bare "<?":
 		// three random bytes match too often inside ordinary binary files.
@@ -145,6 +147,12 @@ class UploadShield {
 	/* ------------------------------------------------------------------ */
 
 	private static function scan_request_files() {
+		// Inspection of $_FILES runs on every request — it is itself the
+		// security layer, so there is no nonce for it to verify. File names
+		// land in sanitize_file_name() / log context below; blocked uploads
+		// never reach WP, so sanitising the raw name earlier would obscure
+		// what was actually attempted.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 		if ( empty( $_FILES ) || ! is_array( $_FILES ) ) {
 			return;
 		}
@@ -175,11 +183,12 @@ class UploadShield {
 				}
 				self::poke( $_FILES[ $field ], $keys, UPLOAD_ERR_EXTENSION, 0 );
 				self::$blocked[ strtolower( $name ) ] = $why;
-				$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : ''; // phpcs:ignore
-				$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : ''; // phpcs:ignore
+				$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+				$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 				PluginGuard::queue_event( 'upload_blocked', 'upload:' . $ip, sprintf( '%s — %s (%s)', sanitize_file_name( $name ), $why, strtok( $uri, '?' ) ) );
 			}
 		}
+		// phpcs:enable
 	}
 
 	/** Names blocked in layer 1, so the prefilter can explain why. */
@@ -272,7 +281,7 @@ class UploadShield {
 		return $mimes;
 	}
 
-	/** Nobody may bypass the MIME allowlist (ALLOW_UNFILTERED_UPLOADS included). */
+	/** Nobody may bypass the MIME allowlist, including the core bypass capability. */
 	public static function deny_unfiltered( $caps, $cap ) {
 		return 'unfiltered_upload' === $cap ? [ 'do_not_allow' ] : $caps;
 	}
@@ -350,7 +359,7 @@ class UploadShield {
 				] );
 			}
 			$path = $dir . '/.htaccess';
-			if ( ! file_exists( $path ) && ! is_writable( $dir ) ) {
+			if ( ! file_exists( $path ) && ! is_writable( $dir ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
 				$ok = false;
 				continue;
 			}

@@ -76,7 +76,7 @@ class Monitoring {
 			return [ 'supported' => true, 'valid' => false, 'note' => $errstr ?: __( 'Could not connect over TLS.', 'gemsecurity' ) ];
 		}
 		$params = stream_context_get_params( $client );
-		fclose( $client );
+		fclose( $client ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		if ( empty( $params['options']['ssl']['peer_certificate'] ) ) {
 			return [ 'supported' => true, 'valid' => false, 'note' => __( 'No certificate presented.', 'gemsecurity' ) ];
 		}

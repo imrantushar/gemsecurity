@@ -67,7 +67,7 @@ class SecretBox {
 			return true;
 		}
 		$file = self::key_file();
-		if ( file_exists( $file ) || ! is_writable( dirname( $file ) ) ) {
+		if ( file_exists( $file ) || ! is_writable( dirname( $file ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
 			return false; // Never overwrite an existing (unreadable/garbled) key.
 		}
 		$body = "<?php\n"

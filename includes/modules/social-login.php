@@ -124,12 +124,17 @@ class SocialLogin {
 	/* ------------------------------------------------------------------ */
 
 	public function maybe_dispatch() {
+		// OAuth kick-off and the provider's own redirect-back; there is no WP
+		// nonce either side because the state value in start_flow() travels
+		// through the provider instead. Verified in handle_callback().
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['gemsec_oauth'] ) ) {
 			$this->start_flow( sanitize_key( wp_unslash( $_GET['gemsec_oauth'] ) ) );
 		}
 		if ( isset( $_GET['gemsec_oauth_cb'] ) ) {
 			$this->handle_callback();
 		}
+		// phpcs:enable
 	}
 
 	private function start_flow( $provider ) {
@@ -140,6 +145,7 @@ class SocialLogin {
 		$meta  = $providers[ $provider ];
 		$state = wp_generate_password( 32, false );
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$data = [
 			'provider'    => $provider,
 			'redirect_to' => isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : admin_url(),
@@ -154,6 +160,7 @@ class SocialLogin {
 			// a specific role — see buttons_html()'s default.
 			'role'        => isset( $_GET['gemsec_role'] ) ? sanitize_key( wp_unslash( $_GET['gemsec_role'] ) ) : '',
 		];
+		// phpcs:enable
 
 		$params = [
 			'client_id'     => Helper::get_setting( "social_{$provider}_client_id", '' ),
@@ -179,7 +186,10 @@ class SocialLogin {
 		// verify itself when the server-side copy has vanished.
 		self::set_state_cookie( $state, $data );
 
-		wp_redirect( $meta['authorize'] . '?' . http_build_query( $params ) );
+		// The authorize URL is the provider's own OAuth endpoint (Google,
+		// Facebook, GitHub, Twitter) — not a user-supplied redirect — so
+		// wp_safe_redirect's host allowlist is not applicable here.
+		wp_redirect( $meta['authorize'] . '?' . http_build_query( $params ) ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
 		exit;
 	}
 
@@ -239,6 +249,9 @@ class SocialLogin {
 	}
 
 	private function handle_callback() {
+		// The OAuth state value travels through the provider in place of a
+		// WP nonce and is verified against the transient/cookie pair below.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
 		$code  = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
 
@@ -251,6 +264,7 @@ class SocialLogin {
 			$desc = isset( $_GET['error_description'] )
 				? sanitize_text_field( wp_unslash( $_GET['error_description'] ) )
 				: '';
+			// phpcs:enable
 
 			Logger::log(
 				'social_login_failed',
@@ -496,6 +510,9 @@ class SocialLogin {
 		$meta_key = "_gemsec_oauth_{$provider}_id";
 
 		// 1. Already linked.
+		// Linking an OAuth identity needs a lookup by this exact provider-id
+		// meta pair, which is indexed on the hashed id value we store.
+		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 		$found = get_users( [ 'meta_key' => $meta_key, 'meta_value' => $profile['id'], 'number' => 1, 'fields' => 'ID' ] );
 		$user_id = $found ? (int) $found[0] : 0;
 
@@ -528,8 +545,9 @@ class SocialLogin {
 
 		wp_set_current_user( $user_id );
 		wp_set_auth_cookie( $user_id, true );
-		// Fire wp_login so login alerts / 2FA / session stamping apply.
-		do_action( 'wp_login', $user->user_login, $user );
+		// Fire wp_login so login alerts / 2FA / session stamping apply —
+		// this is WP's own hook, not one of ours.
+		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 		wp_safe_redirect( $redirect_to ? $redirect_to : admin_url() );
 		exit;
@@ -718,6 +736,7 @@ class SocialLogin {
 				'<a class="gemsec-social__btn" href="%s" style="--gemsec-c:%s"><span>%s</span></a>',
 				esc_url( $url ),
 				esc_attr( $meta['color'] ),
+				/* translators: %s: social-login provider name (e.g. Google, Facebook). */
 				esc_html( sprintf( __( 'Continue with %s', 'gemsecurity' ), $meta['label'] ) )
 			);
 		}
@@ -727,8 +746,8 @@ class SocialLogin {
 
 	/** Best-effort absolute URL of the current request. */
 	private static function current_url() {
-		$host = isset( $_SERVER['HTTP_HOST'] ) ? wp_unslash( $_SERVER['HTTP_HOST'] ) : wp_parse_url( home_url(), PHP_URL_HOST );
-		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+		$host = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : wp_parse_url( home_url(), PHP_URL_HOST );
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
 		return esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . $host . $uri );
 	}
 

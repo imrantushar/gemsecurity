@@ -79,7 +79,7 @@ class CustomLogin {
 			return;
 		}
 
-		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$path = trim( (string) wp_parse_url( $uri, PHP_URL_PATH ), '/' );
 		$home = trim( (string) wp_parse_url( home_url(), PHP_URL_PATH ), '/' );
 		$rel  = $home ? trim( preg_replace( '#^' . preg_quote( $home, '#' ) . '#', '', $path ), '/' ) : $path;
@@ -88,6 +88,9 @@ class CustomLogin {
 			return;
 		}
 
+		// Checked after we have confirmed this is the custom-login URL being
+		// visited; WP itself has not yet seen the request.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( is_user_logged_in() && empty( $_REQUEST['action'] ) ) {
 			wp_safe_redirect( admin_url() );
 			exit;
@@ -173,7 +176,7 @@ class CustomLogin {
 			return;
 		}
 
-		$script = basename( (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '', PHP_URL_PATH ) );
+		$script = basename( (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '', PHP_URL_PATH ) );
 		if ( in_array( $script, [ 'admin-ajax.php', 'admin-post.php' ], true ) ) {
 			return;
 		}

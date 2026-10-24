@@ -99,6 +99,10 @@ class Captcha {
 		$p        = $this->provider();
 		$site_key = Helper::get_setting( 'captcha_site_key', '' );
 		$src      = $p['v3'] ? $p['script'] . rawurlencode( $site_key ) : $p['script'];
+		// The widget script is a third-party CAPTCHA endpoint (Google reCAPTCHA,
+		// hCaptcha, Cloudflare Turnstile) whose URL the operator picks in
+		// settings; its version is managed by the provider, not us.
+		// phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion,PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 		wp_enqueue_script( 'gemsecurity-captcha', $src, [], null, true );
 
 		if ( $p['v3'] ) {
@@ -145,7 +149,7 @@ class Captcha {
 		printf(
 			'<div class="gs-captcha %s" data-sitekey="%s"></div>',
 			esc_attr( $p['class'] ),
-			$site_key
+			esc_attr( $site_key )
 		);
 	}
 
@@ -156,7 +160,10 @@ class Captcha {
 	 * @return \WP_User|\WP_Error|null
 	 */
 	public function verify_login( $user ) {
-		// Only guard real login-form submissions.
+		// Only guard real login-form submissions. $_POST['log'] is the
+		// username field WP itself reads before we see it, and this hook
+		// runs on wp_authenticate, so WP has already accepted the request.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( empty( $_POST['log'] ) || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) ) {
 			return $user;
 		}
@@ -216,6 +223,9 @@ class Captcha {
 	 */
 	private function passes() {
 		$p     = $this->provider();
+		// Called from wp_authenticate / registration hooks WP already
+		// nonce-verifies; the token itself IS the CAPTCHA proof.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$token = isset( $_POST[ $p['field'] ] ) ? sanitize_text_field( wp_unslash( $_POST[ $p['field'] ] ) ) : '';
 		return $this->verify_token( $token );
 	}

@@ -647,7 +647,9 @@ class Docs {
 
 			'captcha.turnstile' => [
 				'title' => __( 'How to get Cloudflare Turnstile keys', 'gemsecurity' ),
-				'link'  => [ 'url' => 'https://dash.cloudflare.com/?to=/:account/turnstile', 'label' => __( 'Cloudflare dashboard → Turnstile', 'gemsecurity' ) ],
+				// Href the user clicks to open Cloudflare's own dashboard —
+				// nothing is fetched from this host at render time.
+				'link'  => [ 'url' => 'https://dash.cloudflare.com/?to=/:account/turnstile', 'label' => __( 'Cloudflare dashboard → Turnstile', 'gemsecurity' ) ], // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 				'steps' => [
 					__( 'Open the Cloudflare dashboard → Turnstile → Add site.', 'gemsecurity' ),
 					__( 'Enter your domain and choose the Managed widget unless you have a reason not to.', 'gemsecurity' ),

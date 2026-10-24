@@ -707,6 +707,7 @@ class Scanner {
 				if ( count( $hits ) >= 2 ) {
 					$findings[] = [
 						'file'     => $rel,
+						/* translators: %s: comma-separated list of suspicious code patterns detected. */
 						'reason'   => sprintf( __( 'Suspicious code patterns: %s', 'gemsecurity' ), implode( ', ', array_slice( $hits, 0, 5 ) ) ),
 						'severity' => 'warning',
 					];

@@ -131,6 +131,7 @@ class MuPlugins {
 				'file'       => $dropin,
 				'path'       => self::rel( $path ),
 				'type'       => 'dropin',
+				/* translators: %s: drop-in filename (e.g. advanced-cache.php). */
 				'name'       => sprintf( __( 'Drop-in (%s)', 'gemsecurity' ), $dropin ),
 				'version'    => '',
 				'has_header' => false,

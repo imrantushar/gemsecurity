@@ -393,15 +393,19 @@ class SecurityScore {
 			$links   = (int) ( $scan['link_scan']['flagged_count'] ?? 0 );
 
 			if ( $core ) {
+				/* translators: %d: number of modified or missing core files. */
 				$threats[] = self::threat( 'core_modified', sprintf( _n( '%d modified or missing core file', '%d modified or missing core files', $core, 'gemsecurity' ), $core ), 'critical', $core, __( 'Reinstall WordPress core to restore the official files.', 'gemsecurity' ), $scanner );
 			}
 			if ( $foreign ) {
+				/* translators: %d: number of unexpected / foreign files. */
 				$threats[] = self::threat( 'foreign_files', sprintf( _n( '%d unexpected / foreign file', '%d unexpected / foreign files', $foreign, 'gemsecurity' ), $foreign ), 'critical', $foreign, __( 'Review and remove them in Scanner → Integrity & files.', 'gemsecurity' ), $scanner );
 			}
 			if ( $inj ) {
+				/* translators: %d: number of code / spam-link injections. */
 				$threats[] = self::threat( 'injections', sprintf( _n( '%d code / spam-link injection', '%d code / spam-link injections', $inj, 'gemsecurity' ), $inj ), 'critical', $inj, __( 'Clean the injected files/records shown by the file-change watcher.', 'gemsecurity' ), $scanner );
 			}
 			if ( $mu ) {
+				/* translators: %d: number of suspicious auto-loaded files. */
 				$threats[] = self::threat( 'mu_suspicious', sprintf( _n( '%d suspicious auto-loaded file', '%d suspicious auto-loaded files', $mu, 'gemsecurity' ), $mu ), 'critical', $mu, __( 'Inspect the flagged mu-plugins / drop-ins.', 'gemsecurity' ), $scanner );
 			}
 			$ht = (array) ( $scan['htaccess'] ?? [] );
@@ -425,9 +429,11 @@ class SecurityScore {
 				);
 			}
 			if ( $susp ) {
+				/* translators: %d: number of suspicious files. */
 				$threats[] = self::threat( 'suspicious', sprintf( _n( '%d suspicious file', '%d suspicious files', $susp, 'gemsecurity' ), $susp ), 'warning', $susp, __( 'Review the flagged files in the last scan.', 'gemsecurity' ), $scanner );
 			}
 			if ( $links ) {
+				/* translators: %d: number of flagged outbound-link domains. */
 				$threats[] = self::threat( 'flagged_links', sprintf( _n( '%d flagged outbound-link domain', '%d flagged outbound-link domains', $links, 'gemsecurity' ), $links ), 'warning', $links, __( 'Check the flagged domains in Scanner → Linked sites.', 'gemsecurity' ), $scanner );
 			}
 		}
@@ -435,12 +441,14 @@ class SecurityScore {
 		$vuln = Vulnerability::get_last_result();
 		if ( is_array( $vuln ) && (int) ( $vuln['count'] ?? 0 ) > 0 ) {
 			$n = (int) $vuln['count'];
+			/* translators: %d: number of known vulnerabilities. */
 			$threats[] = self::threat( 'vulnerabilities', sprintf( _n( '%d known vulnerability', '%d known vulnerabilities', $n, 'gemsecurity' ), $n ), 'warning', $n, __( 'Update the affected plugins/themes to a fixed version.', 'gemsecurity' ), $scanner );
 		}
 
 		$ha = HiddenAdmin::get_last_result();
 		if ( is_array( $ha ) && ! empty( $ha['hidden_ids'] ) ) {
 			$n = count( $ha['hidden_ids'] );
+			/* translators: %d: number of hidden administrator accounts. */
 			$threats[] = self::threat( 'hidden_admins', sprintf( _n( '%d hidden administrator account', '%d hidden administrator accounts', $n, 'gemsecurity' ), $n ), 'critical', $n, __( 'A concealed admin is a back-door — investigate and remove it immediately.', 'gemsecurity' ), GEMSECURITY_PLUGIN_SLUG . '-admin-guard' );
 		}
 

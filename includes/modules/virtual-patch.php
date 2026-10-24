@@ -143,7 +143,7 @@ class VirtualPatch {
 			return;
 		}
 
-		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? rawurldecode( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) ? rawurldecode( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) : '';
 		$hay  = $uri . ' ' . wp_json_encode( wp_unslash( $_GET ) ) . ' ' . wp_json_encode( wp_unslash( $_POST ) ); // phpcs:ignore
 		$ip   = Helper::get_ip_address();
 

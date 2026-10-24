@@ -1,14 +1,14 @@
-=== GemSecurity — Firewall, Login Security, 2FA & Malware Scanner ===
+=== GemSecurity ===
 Contributors: gemsecurity
 Tags: security, firewall, two factor authentication, malware scanner, backup
 Requires at least: 6.4
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.1.0
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
-All-in-one WordPress security & backup: firewall, brute-force protection, 2FA, social login, CAPTCHA, hardening, malware scanning, activity logs and backups.
+Firewall, 2FA, malware scanner, login security and backups — one dashboard, one plugin, zero bloat.
 
 == Description ==
 

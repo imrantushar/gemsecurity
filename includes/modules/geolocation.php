@@ -194,8 +194,10 @@ class Geolocation {
 			self::PENDING_PREFIX . $token,
 			[
 				'user_id'  => $user->ID,
-				'remember' => ! empty( $_POST['rememberme'] ),
-				'redirect' => isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : admin_url(),
+				// Called from wp_authenticate — WP has already verified its
+				// own login nonce before our filter runs.
+				'remember' => ! empty( $_POST['rememberme'] ), // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				'redirect' => isset( $_REQUEST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_REQUEST['redirect_to'] ) ) : admin_url(), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'country'  => $country,
 			],
 			10 * MINUTE_IN_SECONDS
@@ -209,6 +211,10 @@ class Geolocation {
 	}
 
 	public function handle_verify() {
+		// Verification is a single-use OTP flow guarded by the transient
+		// bound to $token (itself a 32-char random value, delivered to the
+		// user's inbox). No nonce travels through the email link.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		$token   = isset( $_POST['gemsec_geo_token'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_geo_token'] ) ) : '';
 		$pending = $token ? get_transient( self::PENDING_PREFIX . $token ) : false;
 
@@ -236,7 +242,7 @@ class Geolocation {
 			exit;
 		}
 
-		$code   = isset( $_POST['gemsec_geo_code'] ) ? preg_replace( '/\D/', '', wp_unslash( $_POST['gemsec_geo_code'] ) ) : '';
+		$code   = isset( $_POST['gemsec_geo_code'] ) ? preg_replace( '/\D/', '', sanitize_text_field( wp_unslash( $_POST['gemsec_geo_code'] ) ) ) : '';
 		$stored = get_transient( self::OTP_PREFIX . $user->ID );
 
 		if ( ! $stored || ! hash_equals( (string) $stored, self::hash_code( $code ) ) ) {
@@ -261,11 +267,13 @@ class Geolocation {
 
 		Logger::log( 'geo_verified', sprintf( 'New location (%s) verified for "%s".', $pending['country'], $user->user_login ), Logger::SEVERITY_NOTICE, [ 'user_id' => $user->ID, 'context' => [ 'country' => $pending['country'] ] ] );
 
-		// Re-fire wp_login so other modules (2FA, login alert, session stamp) run.
-		do_action( 'wp_login', $user->user_login, $user );
+		// Re-fire WP's own wp_login so other modules (2FA, login alert,
+		// session stamp) run — this is WP's hook, not one of ours.
+		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 		wp_safe_redirect( ! empty( $pending['redirect'] ) ? $pending['redirect'] : admin_url() );
 		exit;
+		// phpcs:enable
 	}
 
 	/* ------------------------------------------------------------------ */

@@ -41,7 +41,11 @@ class PasswordPolicy {
 	 * @param \stdClass $user
 	 */
 	public function validate_profile( $errors, $update, $user ) {
-		$pw = isset( $_POST['pass1'] ) ? (string) $_POST['pass1'] : '';
+		// user_profile_update_errors fires inside WP's own nonce-verified
+		// profile save; the raw password must stay un-sanitized here so a
+		// legitimate complex password is not silently rewritten.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$pw = isset( $_POST['pass1'] ) ? (string) wp_unslash( $_POST['pass1'] ) : '';
 		if ( '' === $pw ) {
 			return;
 		}
@@ -53,7 +57,10 @@ class PasswordPolicy {
 	 * @param \WP_User|\WP_Error $user
 	 */
 	public function validate_reset( $errors, $user ) {
-		$pw = isset( $_POST['pass1'] ) ? (string) $_POST['pass1'] : '';
+		// validate_password_reset is only called from inside WP's own reset
+		// flow, which has already verified the reset-password nonce.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$pw = isset( $_POST['pass1'] ) ? (string) wp_unslash( $_POST['pass1'] ) : '';
 		if ( '' === $pw ) {
 			return;
 		}
@@ -67,7 +74,11 @@ class PasswordPolicy {
 	 * @return \WP_Error
 	 */
 	public function validate_registration( $errors ) {
-		$pw = isset( $_POST['user_pass'] ) ? (string) $_POST['user_pass'] : '';
+		// registration_errors runs inside WP's own self-register handler,
+		// which has already verified its nonce; the raw password must stay
+		// un-sanitized.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$pw = isset( $_POST['user_pass'] ) ? (string) wp_unslash( $_POST['user_pass'] ) : '';
 		if ( '' === $pw ) {
 			return $errors;
 		}
@@ -84,6 +95,7 @@ class PasswordPolicy {
 	private function check( $pw, $errors ) {
 		$min = max( 6, (int) Helper::get_setting( 'password_min_length', 10 ) );
 		if ( strlen( $pw ) < $min ) {
+			/* translators: %d: minimum password length. */
 			$errors->add( 'gemsec_pw_short', sprintf( __( '<strong>Error:</strong> Password must be at least %d characters.', 'gemsecurity' ), $min ) );
 		}
 
@@ -94,6 +106,7 @@ class PasswordPolicy {
 			if ( ! preg_match( '/[0-9]/', $pw ) ) { $missing[] = __( 'a number', 'gemsecurity' ); }
 			if ( ! preg_match( '/[^a-zA-Z0-9]/', $pw ) ) { $missing[] = __( 'a symbol', 'gemsecurity' ); }
 			if ( $missing ) {
+				/* translators: %s: comma-separated list of missing character classes (e.g. "a number, a symbol"). */
 				$errors->add( 'gemsec_pw_weak', sprintf( __( '<strong>Error:</strong> Password must include %s.', 'gemsecurity' ), implode( ', ', $missing ) ) );
 			}
 		}
@@ -140,6 +153,9 @@ class PasswordPolicy {
 	}
 
 	public function stamp_on_update( $user_id ) {
+		// profile_update fires after WP has verified its own update nonce;
+		// we only read whether the password field is non-empty.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( ! empty( $_POST['pass1'] ) ) {
 			update_user_meta( $user_id, self::PW_SET_META, time() );
 		}

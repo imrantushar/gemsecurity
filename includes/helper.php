@@ -308,7 +308,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_ip_address() {
-		$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? trim( (string) $_SERVER['REMOTE_ADDR'] ) : '';
+		$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? trim( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) ) : '';
 		$remote_addr = filter_var( $remote_addr, FILTER_VALIDATE_IP ) ? $remote_addr : '0.0.0.0';
 
 		if ( ! self::is_trusted_proxy( $remote_addr ) ) {

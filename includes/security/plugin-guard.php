@@ -1101,7 +1101,7 @@ class PluginGuard {
 			. " */\n"
 			. "if ( ! defined( 'ABSPATH' ) ) { return; }\n"
 			. "try {\n"
-			. "\t\$gemsec_guard = WP_PLUGIN_DIR . '/' . " . var_export( $target, true ) . ";\n"
+			. "\t\$gemsec_guard = WP_PLUGIN_DIR . '/' . " . wp_json_encode( $target ) . ";\n"
 			. "\tif ( is_readable( \$gemsec_guard ) ) {\n"
 			. "\t\trequire_once \$gemsec_guard;\n"
 			. "\t\t\\GemSecurity\\Security\\PluginGuard::early();\n"

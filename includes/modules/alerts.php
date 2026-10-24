@@ -166,15 +166,21 @@ class Alerts {
 
 		$site  = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$lines = [
+			/* translators: %s: site name. */
 			sprintf( __( 'GemSecurity weekly report for %s', 'gemsecurity' ), $site ),
 			'',
+			/* translators: %d: number of critical events in the past week. */
 			sprintf( __( 'Critical events: %d', 'gemsecurity' ), $by_sev['critical'] ?? 0 ),
+			/* translators: %d: number of warning events in the past week. */
 			sprintf( __( 'Warnings:        %d', 'gemsecurity' ), $by_sev['warning'] ?? 0 ),
+			/* translators: %d: number of notice events in the past week. */
 			sprintf( __( 'Notices:         %d', 'gemsecurity' ), $by_sev['notice'] ?? 0 ),
+			/* translators: %d: number of currently-active IP bans. */
 			sprintf( __( 'Active IP bans:  %d', 'gemsecurity' ), \GemSecurity\Security\BanList::count_active() ),
 		];
 		$vuln = \GemSecurity\Security\Vulnerability::get_last_result();
 		if ( is_array( $vuln ) ) {
+			/* translators: %d: number of known vulnerabilities across installed plugins and themes. */
 			$lines[] = sprintf( __( 'Known vulnerabilities: %d', 'gemsecurity' ), (int) $vuln['count'] );
 		}
 		$body = implode( "\n", $lines );
