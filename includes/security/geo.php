@@ -76,6 +76,69 @@ class Geo {
 	}
 
 	/**
+	 * Where an IP is, for alerts and the ban list: country plus city/region and
+	 * network when the lookup service knows them. Cached 24h; fail-open.
+	 *
+	 * @param string $ip
+	 * @return array { country_code, country, region, city, isp } — '' when unknown.
+	 */
+	public static function location_for_ip( $ip ) {
+		$out = [ 'country_code' => '', 'country' => '', 'region' => '', 'city' => '', 'isp' => '' ];
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) || self::is_private_ip( $ip ) ) {
+			return $out;
+		}
+		$key    = self::CACHE_PREFIX . 'loc_' . md5( $ip );
+		$cached = get_transient( $key );
+		if ( is_array( $cached ) ) {
+			return array_merge( $out, $cached );
+		}
+		/**
+		 * Filter the location API URL (must return ip-api.com style JSON).
+		 *
+		 * @param string $url
+		 * @param string $ip
+		 */
+		$url  = apply_filters( 'gemsecurity/geo_location_endpoint', 'http://ip-api.com/json/' . rawurlencode( $ip ) . '?fields=status,country,countryCode,regionName,city,isp', $ip );
+		$resp = wp_remote_get( $url, [ 'timeout' => 3, 'headers' => [ 'Accept' => 'application/json' ] ] );
+		$json = is_wp_error( $resp ) ? null : json_decode( wp_remote_retrieve_body( $resp ), true );
+		if ( is_array( $json ) && ( $json['status'] ?? '' ) === 'success' ) {
+			$out = [
+				'country_code' => strtoupper( substr( (string) ( $json['countryCode'] ?? '' ), 0, 2 ) ),
+				'country'      => sanitize_text_field( (string) ( $json['country'] ?? '' ) ),
+				'region'       => sanitize_text_field( (string) ( $json['regionName'] ?? '' ) ),
+				'city'         => sanitize_text_field( (string) ( $json['city'] ?? '' ) ),
+				'isp'          => sanitize_text_field( (string) ( $json['isp'] ?? '' ) ),
+			];
+		} else {
+			// Fall back to the country-only resolver (CDN headers, second API).
+			$code                = self::country_for_ip( $ip );
+			$out['country_code'] = $code;
+			$out['country']      = $code;
+		}
+		set_transient( $key, $out, '' !== $out['country_code'] ? self::CACHE_TTL : 10 * MINUTE_IN_SECONDS );
+		return $out;
+	}
+
+	/**
+	 * One-line "Dhaka, Dhaka Division, Bangladesh (BD) · ISP" label, or ''.
+	 *
+	 * @param string $ip
+	 * @return string
+	 */
+	public static function location_label( $ip ) {
+		$l     = self::location_for_ip( $ip );
+		$parts = array_filter( array_unique( [ $l['city'], $l['region'], $l['country'] ] ) );
+		if ( ! $parts ) {
+			return '';
+		}
+		$label = implode( ', ', $parts );
+		if ( $l['country_code'] && $l['country_code'] !== $l['country'] ) {
+			$label .= ' (' . $l['country_code'] . ')';
+		}
+		return $l['isp'] ? $label . ' · ' . $l['isp'] : $label;
+	}
+
+	/**
 	 * @return string Country from a CDN/proxy header, or ''.
 	 */
 	private static function from_headers() {

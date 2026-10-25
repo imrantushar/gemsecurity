@@ -86,6 +86,10 @@ class PluginGuard {
 			// Also refuse SVG/HTML (script-capable markup). Off by default: many
 			// sites rely on SVG logos.
 			'shield_markup' => false,
+			// Ban the IP behind a refused upload. Admins' own IP is never banned.
+			'shield_autoban' => true,
+			// Ban length in hours; 0 = permanent.
+			'shield_ban_hours' => 0,
 		];
 	}
 
@@ -324,6 +328,40 @@ class PluginGuard {
 	 */
 	public static function queue_event( $type, $key, $label ) {
 		self::$queue[] = [ $type, $key, $label ];
+	}
+
+	/** IPs to ban once GemSecurity's BanList is loadable (init), ip => reason. */
+	private static $ban_queue = [];
+
+	/** Ban outcome per IP this request, for the alert email: ip => bool. */
+	private static $banned = [];
+
+	/**
+	 * @param string $ip
+	 * @param string $reason
+	 */
+	public static function queue_ban( $ip, $reason ) {
+		if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			self::$ban_queue[ $ip ] = $reason;
+		}
+	}
+
+	/** Ban queued IPs (needs the current user, so after init). */
+	private static function flush_bans() {
+		$state = self::state();
+		foreach ( self::$ban_queue as $ip => $reason ) {
+			self::$banned[ $ip ] = false;
+			if ( empty( $state['shield_autoban'] ) || ! class_exists( '\GemSecurity\Security\BanList' ) ) {
+				continue;
+			}
+			// Never lock out an administrator (or anyone the ban_exempt filter spares).
+			$admin = is_user_logged_in() && current_user_can( 'manage_options' );
+			if ( $admin || BanList::is_exempt( $ip ) ) {
+				continue;
+			}
+			self::$banned[ $ip ] = BanList::ban( $ip, $reason, max( 0, (int) $state['shield_ban_hours'] ) * HOUR_IN_SECONDS );
+		}
+		self::$ban_queue = [];
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -900,7 +938,11 @@ class PluginGuard {
 		self::$queue = [];
 		// Mail needs pluggable functions + the current user: hold until init.
 		self::$pending_mail = array_merge_recursive( self::$pending_mail, $batch );
-		if ( ! did_action( 'init' ) || ! self::$pending_mail ) {
+		if ( ! did_action( 'init' ) ) {
+			return;
+		}
+		self::flush_bans();
+		if ( ! self::$pending_mail ) {
 			return;
 		}
 		$batch              = self::$pending_mail;
@@ -956,6 +998,7 @@ class PluginGuard {
 			'time'   => time(),
 			'user'   => $user && $user->exists() ? $user->user_login : '',
 			'ip'     => $ip,
+			'where'  => $ip && class_exists( '\GemSecurity\Security\Geo' ) ? Geo::location_label( $ip ) : '',
 			'mailed' => $mail,
 		] );
 		update_option( self::EVENTS_OPTION, array_slice( $events, 0, 100 ), false );
@@ -1001,8 +1044,24 @@ class PluginGuard {
 			[ _n( 'Item', 'Items', count( $labels ), 'gemsecurity' ), implode( '<br>', array_map( 'esc_html', $labels ) ) ],
 			[ __( 'User', 'gemsecurity' ), esc_html( $user ? $user : __( 'not logged in', 'gemsecurity' ) ) ],
 			[ __( 'IP', 'gemsecurity' ), esc_html( $ip ? $ip : '—' ) ],
-			[ __( 'Time', 'gemsecurity' ), esc_html( current_time( 'mysql' ) ) ],
 		];
+		if ( $ip && class_exists( '\GemSecurity\Security\Geo' ) ) {
+			$where  = Geo::location_label( $ip );
+			$rows[] = [ __( 'Location', 'gemsecurity' ), esc_html( $where ? $where : __( 'unknown (private or unresolvable IP)', 'gemsecurity' ) ) ];
+		}
+		if ( $ip && isset( self::$banned[ $ip ] ) ) {
+			$hours  = (int) self::state()['shield_ban_hours'];
+			$rows[] = [
+				__( 'Action taken', 'gemsecurity' ),
+				esc_html( self::$banned[ $ip ]
+					/* translators: %d: hours. */
+					? ( $hours ? sprintf( __( 'IP blocked for %d hours', 'gemsecurity' ), $hours ) : __( 'IP blocked permanently', 'gemsecurity' ) )
+					: __( 'IP not blocked (administrator, exempt, or auto-block off)', 'gemsecurity' ) ),
+			];
+		}
+		$rows = array_merge( $rows, [
+			[ __( 'Time', 'gemsecurity' ), esc_html( current_time( 'mysql' ) ) ],
+		] );
 		$steps = [
 			__( 'If you did this yourself, open Plugin Guard and mark the item trusted.', 'gemsecurity' ),
 			__( 'If you did not: treat the site as compromised — change every administrator password, end all sessions, and run a full malware scan.', 'gemsecurity' ),

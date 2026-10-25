@@ -305,6 +305,28 @@ export default function PluginGuard() {
 							disabled={ !! busy || ! data.shield.enabled }
 							onChange={ ( v ) => call( 'shield', 'plugin-guard/shield', { shield_markup: v }, __( 'Saved.', 'gemsecurity' ) ) }
 						/>
+						<Toggle
+							label={ __( 'Block the uploader’s IP address', 'gemsecurity' ) }
+							description={ __( 'Bans the IP behind a refused upload and adds its location (country, city, network) to the alert. Administrators are never banned.', 'gemsecurity' ) }
+							checked={ data.shield.autoban }
+							disabled={ !! busy || ! data.shield.enabled }
+							onChange={ ( v ) => call( 'shield', 'plugin-guard/shield', { shield_autoban: v }, __( 'Saved.', 'gemsecurity' ) ) }
+						/>
+						{ data.shield.autoban && (
+							<label className="gs-muted" style={ { display: 'block', marginTop: 8 } }>
+								{ __( 'Ban length', 'gemsecurity' ) }{ ' ' }
+								<select
+									value={ data.shield.ban_hours }
+									disabled={ !! busy || ! data.shield.enabled }
+									onChange={ ( ev ) => call( 'shield', 'plugin-guard/shield', { shield_ban_hours: Number( ev.target.value ) }, __( 'Saved.', 'gemsecurity' ) ) }
+								>
+									<option value={ 24 }>{ __( '24 hours', 'gemsecurity' ) }</option>
+									<option value={ 168 }>{ __( '7 days', 'gemsecurity' ) }</option>
+									<option value={ 720 }>{ __( '30 days', 'gemsecurity' ) }</option>
+									<option value={ 0 }>{ __( 'Permanent', 'gemsecurity' ) }</option>
+								</select>
+							</label>
+						) }
 						<p className="gs-muted" style={ { marginTop: 12 } }>
 							{ __( 'Blocked extensions:', 'gemsecurity' ) } <code>{ data.shield.exec_exts.join( ' ' ) }</code>
 						</p>
@@ -466,7 +488,7 @@ export default function PluginGuard() {
 										<td className="gs-nowrap">{ new Date( e.time * 1000 ).toLocaleString() }</td>
 										<td className="gs-nowrap"><Badge tone={ e.type === 'install_blocked' ? 'warning' : 'danger' }>{ EVENT[ e.type ] || e.type }</Badge></td>
 										<td>{ e.label }</td>
-										<td className="gs-nowrap gs-muted">{ e.user || '—' } · { e.ip || '—' }</td>
+										<td className="gs-nowrap gs-muted">{ e.user || '—' } · { e.ip || '—' }{ e.where ? <><br />{ e.where }</> : null }</td>
 									</tr>
 								) ) }
 							</tbody>

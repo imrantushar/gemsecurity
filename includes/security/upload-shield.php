@@ -186,6 +186,7 @@ class UploadShield {
 				$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 				$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 				PluginGuard::queue_event( 'upload_blocked', 'upload:' . $ip, sprintf( '%s — %s (%s)', sanitize_file_name( $name ), $why, strtok( $uri, '?' ) ) );
+				PluginGuard::queue_ban( $ip, 'Upload Shield: ' . $why );
 			}
 		}
 		// phpcs:enable
@@ -254,6 +255,7 @@ class UploadShield {
 			if ( ! isset( self::$blocked[ strtolower( $name ) ] ) ) {
 				$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : ''; // phpcs:ignore
 				PluginGuard::queue_event( 'upload_blocked', 'upload:' . $ip, sprintf( '%s — %s', sanitize_file_name( $name ), $why ) );
+				PluginGuard::queue_ban( $ip, 'Upload Shield: ' . $why );
 			}
 			/* translators: %s: reason. */
 			$file['error'] = sprintf( __( 'GemSecurity Upload Shield refused this file (%s).', 'gemsecurity' ), $why );

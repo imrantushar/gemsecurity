@@ -79,7 +79,9 @@ class BanList {
 		// Our own bans table; the name comes from $wpdb->prefix, cache is
 		// invalidated right after.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter
-		$wpdb->query( $wpdb->prepare( 'INSERT INTO ' . self::table() . ' (ip, reason, strikes, expires_at, created_at) VALUES (%s, %s, %d, %s, %s) ON DUPLICATE KEY UPDATE reason = VALUES(reason), strikes = strikes + 1, expires_at = VALUES(expires_at)', $ip, substr( (string) $reason, 0, 255 ), 1, $expires, current_time( 'mysql' ) ) );
+		// prepare() turns null into '' (= already expired), so a permanent ban
+		// needs a literal NULL.
+		$wpdb->query( $wpdb->prepare( 'INSERT INTO ' . self::table() . ' (ip, reason, strikes, expires_at, created_at) VALUES (%s, %s, %d, ' . ( $expires ? '%s' : 'NULL' ) . ', %s) ON DUPLICATE KEY UPDATE reason = VALUES(reason), strikes = strikes + 1, expires_at = VALUES(expires_at)', ...array_values( array_filter( [ $ip, substr( (string) $reason, 0, 255 ), 1, $expires, current_time( 'mysql' ) ], static function ( $v ) { return null !== $v; } ) ) ) ); // phpcs:ignore
 		unset( self::$cache[ $ip ] );
 		wp_cache_delete( md5( $ip ), self::CACHE_GROUP );
 

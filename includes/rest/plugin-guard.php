@@ -71,10 +71,13 @@ class PluginGuard {
 	/** POST /plugin-guard/shield { upload_shield, shield_markup } */
 	public static function shield( \WP_REST_Request $request ) {
 		$state = Guard::state();
-		foreach ( [ 'upload_shield', 'shield_markup' ] as $k ) {
+		foreach ( [ 'upload_shield', 'shield_markup', 'shield_autoban' ] as $k ) {
 			if ( null !== $request->get_param( $k ) ) {
 				$state[ $k ] = (bool) $request->get_param( $k );
 			}
+		}
+		if ( null !== $request->get_param( 'shield_ban_hours' ) ) {
+			$state['shield_ban_hours'] = max( 0, min( 87600, (int) $request->get_param( 'shield_ban_hours' ) ) );
 		}
 		Guard::save_state( $state );
 		\GemSecurity\Modules\PluginGuard::maintain();
@@ -237,6 +240,8 @@ class PluginGuard {
 			'shield'       => [
 				'enabled'   => ! empty( $state['upload_shield'] ),
 				'markup'    => ! empty( $state['shield_markup'] ),
+				'autoban'   => ! empty( $state['shield_autoban'] ),
+				'ban_hours' => (int) $state['shield_ban_hours'],
 				'htaccess'  => UploadShield::htaccess_installed(),
 				'dirs'      => UploadShield::htaccess_dirs(),
 				'server'    => false !== strpos( $server, 'nginx' ) ? 'nginx' : ( preg_match( '/apache|litespeed/', $server ) ? 'apache' : ( $server ? $server : 'unknown' ) ),
