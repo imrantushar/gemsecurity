@@ -7,6 +7,19 @@ import { Card, Loading, Badge } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
 import { pageFromHref, pageUrl } from '@Utils/nav';
 
+// Where each dashboard number is explained / acted on.
+const METRIC_PAGE = {
+	logins_24h: 'gemsecurity-logs',
+	failed_logins_24h: 'gemsecurity-login-security',
+	lockouts_7d: 'gemsecurity-login-security',
+	rogue_admins_7d: 'gemsecurity-admin-guard',
+	vulnerabilities: 'gemsecurity-scanner',
+	critical_7d: 'gemsecurity-logs',
+	blocks_7d: 'gemsecurity-threats',
+	bots_blocked_24h: 'gemsecurity-threats',
+	banned_ips: 'gemsecurity-threats',
+};
+
 const SEVERITY_TONE = { info: 'info', notice: 'info', warning: 'warning', critical: 'danger' };
 
 function ScoreRing( { score, grade } ) {
@@ -115,7 +128,8 @@ function DashAction( { action, primary, verb } ) {
 export default function Dashboard() {
 	const [ data, setData ] = useState( null );
 	const [ showAll, setShowAll ] = useState( false );
-	const { fix, fixing } = useQuickFix();
+	const { fix, fixing, busy } = useQuickFix();
+	const navigate = useNavigate();
 
 	const load = () => api.get( 'dashboard' ).then( ( r ) => setData( r.data ) ).catch( () => setData( false ) );
 	useEffect( () => {
@@ -150,6 +164,7 @@ export default function Dashboard() {
 		...posture.threats.map( ( t ) => ( { key: t.key, label: t.label, fix: t.fix, action: t.action, severity: t.severity === 'critical' ? 'high' : 'medium', threat: true } ) ),
 		...failingChecks.map( ( c ) => ( { key: c.key, label: c.label, fix: c.fix, action: c.action, severity: c.severity || 'low', threat: false, quickKey: c.quick ? ( c.fix_key || c.key ) : null } ) ),
 	];
+	const quickKeys = [ ...new Set( attention.filter( ( a ) => a.quickKey ).map( ( a ) => a.quickKey ) ) ];
 	const shown = showAll ? attention : attention.slice( 0, 4 );
 	const total = posture.summary.passed + posture.summary.failed;
 	const n = ( k ) => data.counts[ k ] ?? 0;
@@ -184,10 +199,10 @@ export default function Dashboard() {
 						<div><span>{ __( 'Protections active', 'gemsecurity' ) }</span><strong>{ sprintf( /* translators: 1: active, 2: total */ __( '%1$d of %2$d', 'gemsecurity' ), posture.summary.passed, total ) }</strong></div>
 						<i><b style={ { width: `${ total ? ( posture.summary.passed / total ) * 100 : 0 }%` } } /></i>
 					</div>
-					{ ! allClear && attention[ 0 ] && attention[ 0 ].action && (
-						<a className="gs-dash__fix" href={ attention[ 0 ].action.url }>
-							{ sprintf( /* translators: %d: number of issues */ __( 'Fix %d issues', 'gemsecurity' ), attentionCount ) }
-						</a>
+					{ quickKeys.length > 0 && (
+						<button type="button" className="gs-dash__fix" onClick={ () => fix( quickKeys ).then( load ) } disabled={ busy }>
+							{ busy ? __( 'Fixing…', 'gemsecurity' ) : sprintf( /* translators: %d: number of issues */ __( 'Fix %d issues', 'gemsecurity' ), quickKeys.length ) }
+						</button>
 					) }
 				</div>
 				<div className="gs-dash__attention">
@@ -244,12 +259,25 @@ export default function Dashboard() {
 							</span>
 						</header>
 						<div className="gs-dash__metrics">
-							{ g.items.map( ( [ key, label, period ] ) => (
-								<div key={ key }>
-									<strong>{ n( key ) }</strong>
-									<span>{ label } <small>{ period }</small></span>
-								</div>
-							) ) }
+							{ g.items.map( ( [ key, label, period ] ) => {
+								const href = pageUrl( METRIC_PAGE[ key ] || 'gemsecurity-logs' );
+								return (
+									<a
+										key={ key }
+										href={ href }
+										onClick={ ( e ) => {
+											if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+												return;
+											}
+											e.preventDefault();
+											navigate( href );
+										} }
+									>
+										<strong>{ n( key ) }</strong>
+										<span>{ label } <small>{ period }</small></span>
+									</a>
+								);
+							} ) }
 						</div>
 					</section>
 				) ) }
