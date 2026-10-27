@@ -12,11 +12,11 @@ function ScoreRing( { score, grade } ) {
 	const r = 52;
 	const c = 2 * Math.PI * r;
 	const offset = c - ( score / 100 ) * c;
-	const tone = score >= 75 ? 'var(--gs-success)' : score >= 50 ? 'var(--gs-warning)' : 'var(--gs-danger)';
+	const tone = score >= 75 ? 'var(--gs-success)' : score >= 50 ? '#F97316' : 'var(--gs-danger)';
 	return (
 		<div className="gs-score">
-			<svg width="140" height="140" viewBox="0 0 140 140">
-				<circle cx="70" cy="70" r={ r } fill="none" stroke="#e5e7eb" strokeWidth="12" />
+			<svg width="168" height="168" viewBox="0 0 140 140">
+				<circle cx="70" cy="70" r={ r } fill="none" stroke="var(--gs-line)" strokeWidth="12" />
 				<circle
 					cx="70"
 					cy="70"
@@ -30,9 +30,8 @@ function ScoreRing( { score, grade } ) {
 					transform="rotate(-90 70 70)"
 				/>
 				<text x="70" y="64" textAnchor="middle" className="gs-score__num">{ score }</text>
-				<text x="70" y="88" textAnchor="middle" className="gs-score__grade" fill={ tone }>{ grade }</text>
+				<text x="70" y="88" textAnchor="middle" className="gs-score__grade">{ __( 'of 100', 'gemsecurity' ) }</text>
 			</svg>
-			<span className="gs-score__caption">{ __( 'Security score', 'gemsecurity' ) }</span>
 		</div>
 	);
 }
@@ -87,8 +86,34 @@ function ActionLink( { action } ) {
 	);
 }
 
+function DashAction( { action, primary } ) {
+	const navigate = useNavigate();
+	if ( ! action || ! action.url ) {
+		return null;
+	}
+	return (
+		<a
+			className={ `gs-dash__btn ${ primary ? 'is-primary' : '' }` }
+			href={ action.url }
+			onClick={ ( e ) => {
+				if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+					return;
+				}
+				const slug = pageFromHref( action.url );
+				if ( slug ) {
+					e.preventDefault();
+					navigate( pageUrl( slug ) );
+				}
+			} }
+		>
+			{ action.label }
+		</a>
+	);
+}
+
 export default function Dashboard() {
 	const [ data, setData ] = useState( null );
+	const [ showAll, setShowAll ] = useState( false );
 
 	useEffect( () => {
 		api.get( 'dashboard' ).then( ( r ) => setData( r.data ) ).catch( () => setData( false ) );
@@ -115,110 +140,136 @@ export default function Dashboard() {
 			? { tone: 'warn', label: __( 'Fair', 'gemsecurity' ) }
 			: { tone: 'bad', label: __( 'Needs attention', 'gemsecurity' ) };
 
+	const attention = [
+		...posture.threats.map( ( t ) => ( { key: t.key, label: t.label, fix: t.fix, action: t.action, severity: t.severity === 'critical' ? 'high' : 'medium', threat: true } ) ),
+		...failingChecks.map( ( c ) => ( { key: c.key, label: c.label, fix: c.fix, action: c.action, severity: c.severity || 'low', threat: false } ) ),
+	];
+	const shown = showAll ? attention : attention.slice( 0, 4 );
+	const total = posture.summary.passed + posture.summary.failed;
+	const n = ( k ) => data.counts[ k ] ?? 0;
+	const GROUPS = [
+		{
+			id: 'access', title: __( 'Access', 'gemsecurity' ), icon: 'lock', quiet: n( 'failed_logins_24h' ) + n( 'lockouts_7d' ) === 0,
+			items: [ [ 'logins_24h', __( 'Logins', 'gemsecurity' ), '24h' ], [ 'failed_logins_24h', __( 'Failed logins', 'gemsecurity' ), '24h' ], [ 'lockouts_7d', __( 'Lockouts', 'gemsecurity' ), '7d' ] ],
+		},
+		{
+			id: 'threats', title: __( 'Threats', 'gemsecurity' ), icon: 'bug', quiet: n( 'rogue_admins_7d' ) + n( 'vulnerabilities' ) + n( 'critical_7d' ) === 0,
+			items: [ [ 'rogue_admins_7d', __( 'Rogue admins', 'gemsecurity' ), '7d' ], [ 'vulnerabilities', __( 'Vulnerabilities', 'gemsecurity' ), __( 'Now', 'gemsecurity' ) ], [ 'critical_7d', __( 'Critical events', 'gemsecurity' ), '7d' ] ],
+		},
+		{
+			id: 'firewall', title: __( 'Firewall', 'gemsecurity' ), icon: 'shield', quiet: n( 'blocks_7d' ) + n( 'bots_blocked_24h' ) === 0,
+			items: [ [ 'blocks_7d', __( 'Blocked requests', 'gemsecurity' ), '7d' ], [ 'bots_blocked_24h', __( 'Bots blocked', 'gemsecurity' ), '24h' ], [ 'banned_ips', __( 'Banned IPs', 'gemsecurity' ), __( 'Total', 'gemsecurity' ) ] ],
+		},
+	];
+	const dayLabel = ( t, i ) => ( i === data.trend.length - 1 ? __( 'Today', 'gemsecurity' ) : new Date( t.date + 'T00:00:00' ).toLocaleDateString( undefined, { month: 'short', day: 'numeric' } ) );
+
 	return (
-		<div className="gs-dashboard">
-			<div className="gs-grid gs-grid--hero">
-				<Card className="gs-card--score">
-					<div className="gs-hero">
-						<div className="gs-hero__score">
-							<ScoreRing score={ score } grade={ data.security_score.grade } />
-							<span className={ `gs-hero__status gs-hero__status--${ status.tone }` }>
-								{ status.label }
-							</span>
-							<p className="gs-hero__count">
-								{ sprintf(
-									/* translators: 1: active protections, 2: total protections. */
-									__( '%1$d of %2$d protections active', 'gemsecurity' ),
-									posture.summary.passed,
-									posture.summary.passed + posture.summary.failed
-								) }
-							</p>
-						</div>
-						<div className="gs-hero__protections">
-							<div className="gs-hero__protections-head">
-								<h3>{ __( 'What needs your attention', 'gemsecurity' ) }</h3>
-								{ ! allClear && <Badge tone="danger">{ attentionCount }</Badge> }
-							</div>
-							{ allClear ? (
-								<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No active threats and every recommended protection is on. Nicely done.', 'gemsecurity' ) }</p>
-							) : (
-								<ul className="gs-actionlist">
-									{ posture.threats.map( ( t ) => (
-										<li key={ t.key } className="gs-actionlist__item is-threat">
-											<Badge tone={ t.severity === 'critical' ? 'danger' : 'warning' }>{ t.severity }</Badge>
-											<div>
-												<strong>{ t.label }</strong>
-												<span className="gs-actionlist__fix">{ t.fix }</span>
-											</div>
-											<ActionLink action={ t.action } />
-										</li>
-									) ) }
-									{ failingChecks.map( ( c ) => (
-										<li key={ c.key } className="gs-actionlist__item is-todo">
-											<Icon name="alert" size={ 15 } />
-											<div>
-												<strong>{ c.label }</strong>
-												<span className="gs-actionlist__fix">{ c.fix }</span>
-											</div>
-											<ActionLink action={ c.action } />
-										</li>
-									) ) }
-								</ul>
-							) }
-						</div>
+		<div className="gs-dashboard gs-dash">
+			<section className="gs-dash__hero">
+				<div className="gs-dash__score">
+					<ScoreRing score={ score } grade={ data.security_score.grade } />
+					<div className="gs-dash__score-title">
+						<strong>{ __( 'Security score', 'gemsecurity' ) }</strong>
+						<span className={ `gs-dash__grade gs-dash__grade--${ status.tone }` }>
+							{ sprintf( /* translators: 1: grade letter, 2: status */ __( 'Grade %1$s · %2$s', 'gemsecurity' ), data.security_score.grade, status.label ) }
+						</span>
 					</div>
-				</Card>
-			</div>
-
-			<div className="gs-grid gs-grid--stats">
-				{ STAT_META.map( ( s ) => (
-					<div key={ s.key } className="gs-stat">
-						<span className="gs-stat__icon"><Icon name={ s.icon } size={ 18 } /></span>
-						<span className="gs-stat__value">{ data.counts[ s.key ] ?? 0 }</span>
-						<span className="gs-stat__label">{ s.label }</span>
+					<div className="gs-dash__protect">
+						<div><span>{ __( 'Protections active', 'gemsecurity' ) }</span><strong>{ sprintf( /* translators: 1: active, 2: total */ __( '%1$d of %2$d', 'gemsecurity' ), posture.summary.passed, total ) }</strong></div>
+						<i><b style={ { width: `${ total ? ( posture.summary.passed / total ) * 100 : 0 }%` } } /></i>
 					</div>
-				) ) }
-			</div>
-
-			<div className="gs-grid gs-grid--2">
-				<Card title={ __( 'Activity (last 7 days)', 'gemsecurity' ) }>
-					<div className="gs-bars">
-						{ data.trend.map( ( t ) => (
-							<div key={ t.date } className="gs-bars__col" title={ `${ t.date }: ${ t.count }` }>
-								<div className="gs-bars__bar" style={ { height: `${ ( t.count / maxTrend ) * 100 }%` } } />
-								<span className="gs-bars__label">{ t.date.slice( 5 ) }</span>
-							</div>
-						) ) }
-					</div>
-				</Card>
-
-				<Card title={ __( 'Recent events', 'gemsecurity' ) }>
-					{ data.recent.length === 0 ? (
-						<p className="gs-muted">{ __( 'No events yet.', 'gemsecurity' ) }</p>
+					{ ! allClear && attention[ 0 ] && attention[ 0 ].action && (
+						<a className="gs-dash__fix" href={ attention[ 0 ].action.url }>
+							{ sprintf( /* translators: %d: number of issues */ __( 'Fix %d issues', 'gemsecurity' ), attentionCount ) }
+						</a>
+					) }
+				</div>
+				<div className="gs-dash__attention">
+					<header>
+						<h3>{ __( 'What needs your attention', 'gemsecurity' ) }</h3>
+						{ ! allClear && <span className="gs-dash__open">{ sprintf( /* translators: %d: count */ __( '%d open', 'gemsecurity' ), attentionCount ) }</span> }
+						{ ! allClear && <span className="gs-dash__sorted">{ __( 'Sorted by risk', 'gemsecurity' ) }</span> }
+						{ attention.length > 4 && (
+							<button type="button" className="gs-dash__viewall" onClick={ () => setShowAll( ! showAll ) }>
+								{ showAll ? __( 'Show less', 'gemsecurity' ) : sprintf( /* translators: %d: count */ __( 'View all %d', 'gemsecurity' ), attention.length ) }
+								<Icon name="arrow-right" size={ 14 } />
+							</button>
+						) }
+					</header>
+					{ allClear ? (
+						<p className="gs-ok"><Icon name="check" size={ 16 } /> { __( 'No active threats and every recommended protection is on. Nicely done.', 'gemsecurity' ) }</p>
 					) : (
-						<ul className="gs-events">
-							{ data.recent.map( ( e ) => (
-								<li key={ e.id }>
-									<Badge tone={ SEVERITY_TONE[ e.severity ] || 'info' }>{ e.severity }</Badge>
-									<span className="gs-events__msg">{ e.message }</span>
-									<span className="gs-events__time">{ e.created_at }</span>
+						<ul>
+							{ shown.map( ( a, i ) => (
+								<li key={ a.key } className={ `gs-dash__item gs-dash__item--${ a.severity } ${ i === 0 && a.severity === 'high' ? 'is-top' : '' }` }>
+									<span className="gs-dash__item-icon"><Icon name={ a.threat ? 'shield' : 'lock' } size={ 18 } /></span>
+									<div>
+										<strong>{ a.label }<em>{ a.severity === 'high' ? __( 'High', 'gemsecurity' ) : a.severity === 'medium' ? __( 'Medium', 'gemsecurity' ) : __( 'Low', 'gemsecurity' ) }</em></strong>
+										<span>{ a.fix }</span>
+									</div>
+									<DashAction action={ a.action } primary={ i === 0 && a.severity === 'high' } />
 								</li>
 							) ) }
 						</ul>
 					) }
-				</Card>
+				</div>
+			</section>
+
+			<div className="gs-dash__groups">
+				{ GROUPS.map( ( g ) => (
+					<section key={ g.id } className="gs-dash__group">
+						<header>
+							<span className="gs-dash__group-icon"><Icon name={ g.icon } size={ 18 } /></span>
+							<h3>{ g.title }</h3>
+							<span className={ `gs-dash__quiet ${ g.quiet ? '' : 'is-active' }` }>
+								{ g.quiet && <Icon name="check" size={ 12 } /> }
+								{ g.quiet ? __( 'All quiet', 'gemsecurity' ) : __( 'Activity', 'gemsecurity' ) }
+							</span>
+						</header>
+						<div className="gs-dash__metrics">
+							{ g.items.map( ( [ key, label, period ] ) => (
+								<div key={ key }>
+									<strong>{ n( key ) }</strong>
+									<span>{ label } <small>{ period }</small></span>
+								</div>
+							) ) }
+						</div>
+					</section>
+				) ) }
 			</div>
 
-			{ data.last_scan && (
-				<Card title={ __( 'Last scan', 'gemsecurity' ) }>
-					<p>
-						<Badge tone={ data.last_scan.status === 'clean' ? 'success' : 'warning' }>
-							{ data.last_scan.status === 'clean' ? __( 'Clean', 'gemsecurity' ) : __( 'Issues found', 'gemsecurity' ) }
-						</Badge>{ ' ' }
-						{ data.last_scan.issue_count } { __( 'issue(s)', 'gemsecurity' ) } · { data.last_scan.scanned_at }
-					</p>
-				</Card>
-			) }
+			<div className="gs-dash__lower">
+				<section className="gs-dash__panel">
+					<header>
+						<div><h3>{ __( 'Activity', 'gemsecurity' ) }</h3><p>{ __( 'Security events, last 7 days', 'gemsecurity' ) }</p></div>
+						<span className="gs-dash__legend"><i />{ __( 'Events', 'gemsecurity' ) }</span>
+					</header>
+					<div className="gs-dash__bars">
+						{ data.trend.map( ( t, i ) => (
+							<div key={ t.date } className={ `gs-dash__bar ${ i === data.trend.length - 1 ? 'is-today' : '' }` } title={ `${ t.date }: ${ t.count }` }>
+								<div className="gs-dash__bar-track"><b style={ { height: `${ Math.max( 3, ( t.count / maxTrend ) * 100 ) }%` } } /></div>
+								<span>{ dayLabel( t, i ) }</span>
+							</div>
+						) ) }
+					</div>
+				</section>
+
+				<section className="gs-dash__panel">
+					<header>
+						<div><h3>{ __( 'Recent events', 'gemsecurity' ) }</h3><p>{ __( 'What changed on your site', 'gemsecurity' ) }</p></div>
+					</header>
+					<ul className="gs-dash__events">
+						{ data.recent.slice( 0, 5 ).map( ( e ) => (
+							<li key={ e.id }>
+								<Badge tone={ SEVERITY_TONE[ e.severity ] || 'info' }>{ e.severity }</Badge>
+								<span className="gs-events__msg">{ e.message }</span>
+								<span className="gs-events__time">{ e.created_at }</span>
+							</li>
+						) ) }
+						<li className="gs-dash__events-end"><Icon name="check" size={ 14 } />{ __( 'That’s everything from the last 7 days.', 'gemsecurity' ) }</li>
+					</ul>
+				</section>
+			</div>
 		</div>
 	);
 }

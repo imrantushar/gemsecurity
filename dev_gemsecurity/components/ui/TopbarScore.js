@@ -106,8 +106,9 @@ export default function TopbarScore( { onNavigate } ) {
 					score, grade
 				) }
 			>
-				<span className="gs-topbar__score-num">{ score }</span>
-				<span className="gs-topbar__score-grade">{ grade }</span>
+				<i className="gs-topbar__score-dot" />
+				<span className="gs-topbar__score-num">{ sprintf( /* translators: %d: score */ __( 'Score %d', 'gemsecurity' ), score ) }</span>
+				<span className="gs-topbar__score-grade">· { scoreLabel( score ) }</span>
 			</button>
 			{ open && (
 				<div ref={ popRef } className="gs-score-pop" role="dialog" aria-label={ __( 'Security score', 'gemsecurity' ) }>
@@ -238,6 +239,12 @@ function scoreToGrade( p ) {
 	if ( p >= 60 ) return 'C';
 	if ( p >= 40 ) return 'D';
 	return 'F';
+}
+
+function scoreLabel( p ) {
+	if ( p >= 75 ) return __( 'Good', 'gemsecurity' );
+	if ( p >= 50 ) return __( 'Fair', 'gemsecurity' );
+	return __( 'At risk', 'gemsecurity' );
 }
 
 function scoreTone( p ) {

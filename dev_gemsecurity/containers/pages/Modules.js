@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '@Utils/api';
-import { useModules, setModules, getModules } from '@Utils/nav';
+import { pageUrl, useModules, setModules, getModules } from '@Utils/nav';
 import Icon from '@Components/ui/Icon';
-import { Card, Badge, Toggle, Loading } from '@Components/ui/Controls';
+import { Toggle, Loading } from '@Components/ui/Controls';
+import useNavigate from '@Utils/useGuardedNavigate';
 import { useToast } from '@Components/ui/Toast';
 import { ProBadge, isPro, upgradeUrl } from '@Components/ui/Pro';
 
@@ -23,6 +24,7 @@ export default function Modules() {
 	const modules = useModules();
 	const [ loading, setLoading ] = useState( ! modules.length );
 	const [ savingId, setSavingId ] = useState( null );
+	const [ query, setQuery ] = useState( '' );
 	const toast = useToast();
 
 	// Refresh authoritative state from the server on mount.
@@ -98,36 +100,60 @@ export default function Modules() {
 		return <Loading label={ __( 'Loading modules…', 'gemsecurity' ) } />;
 	}
 
+	const q = query.trim().toLowerCase();
+	const matches = ( m ) => ! q || ( m.title + ' ' + ( m.desc || '' ) ).toLowerCase().includes( q );
+	const pct = modules.length ? ( activeCount / modules.length ) * 100 : 0;
+
 	return (
 		<div className="gs-page gs-modules">
-			{ /* Toggling reports through a toast, like the rest of the admin, so
-			     this card carries no body. */ }
-			<Card
-				title={ __( 'Security modules', 'gemsecurity' ) }
-				description={ __(
-					'Turn features on or off. Only active modules load their admin pages, settings and background code — activate just what this site needs.',
-					'gemsecurity'
-				) }
-				actions={
-					<Badge tone="info">
-						{ /* translators: %1$d active, %2$d total. */ }
-						{ activeCount +
-							' / ' +
-							modules.length +
-							' ' +
-							__( 'active', 'gemsecurity' ) }
-					</Badge>
-				}
-			/>
+			<section className="gs-modules__head">
+				<div className="gs-modules__head-text">
+					<h2>{ __( 'Security modules', 'gemsecurity' ) }</h2>
+					<p>
+						{ __(
+							'Turn features on or off. Inactive modules don’t load their pages, settings or background code — keep only what this site needs.',
+							'gemsecurity'
+						) }
+					</p>
+				</div>
+				<div className="gs-modules__progress">
+					<div>
+						<span>{ __( 'Active', 'gemsecurity' ) }</span>
+						<strong>{ sprintf( /* translators: 1: active, 2: total */ __( '%1$d of %2$d', 'gemsecurity' ), activeCount, modules.length ) }</strong>
+					</div>
+					<i><b style={ { width: `${ pct }%` } } /></i>
+				</div>
+				<label className="gs-modules__search">
+					<Icon name="radar" size={ 16 } />
+					<input
+						type="search"
+						value={ query }
+						placeholder={ __( 'Search modules', 'gemsecurity' ) }
+						onChange={ ( e ) => setQuery( e.target.value ) }
+					/>
+				</label>
+			</section>
 
 			{ CATEGORIES.map( ( cat ) => {
-				const items = grouped[ cat.key ];
-				if ( ! items || ! items.length ) {
+				const all = grouped[ cat.key ];
+				if ( ! all || ! all.length ) {
 					return null;
 				}
+				const items = all.filter( matches );
+				if ( ! items.length ) {
+					return null;
+				}
+				const on = all.filter( ( m ) => m.active ).length;
 				return (
 					<div key={ cat.key } className="gs-modules__group">
-						<h3 className="gs-modules__group-title">{ cat.label }</h3>
+						<h3 className="gs-modules__group-title">
+							{ cat.label }
+							<span>
+								{ cat.key === 'core'
+									? __( 'Always on', 'gemsecurity' )
+									: sprintf( /* translators: 1: active, 2: total */ __( '%1$d of %2$d on', 'gemsecurity' ), on, all.length ) }
+							</span>
+						</h3>
 						<div className="gs-modules__grid">
 							{ items.map( ( mod ) => (
 								<ModuleCard
@@ -146,11 +172,14 @@ export default function Modules() {
 }
 
 function ModuleCard( { mod, saving, onToggle } ) {
+	const navigate = useNavigate();
 	const proLockedOff = mod.is_pro && ! isPro();
 
 	let control;
 	if ( mod.core ) {
-		control = <Badge tone="success">{ __( 'Always on', 'gemsecurity' ) }</Badge>;
+		control = (
+			<span className="gs-module-card__always"><Icon name="lock" size={ 12 } />{ __( 'Always on', 'gemsecurity' ) }</span>
+		);
 	} else if ( proLockedOff ) {
 		control = (
 			<a className="gs-modules__upsell" href={ upgradeUrl() } target="_blank" rel="noreferrer">
@@ -167,14 +196,22 @@ function ModuleCard( { mod, saving, onToggle } ) {
 		);
 	}
 
+	const href = mod.page_slug ? pageUrl( mod.page_slug ) : null;
+	const status = mod.core
+		? __( 'Active · Core', 'gemsecurity' )
+		: mod.active ? __( 'Active', 'gemsecurity' ) : __( 'Off', 'gemsecurity' );
+
 	return (
 		<div
 			className={ `gs-module-card ${ mod.active ? 'is-active' : '' } ${
 				proLockedOff ? 'is-locked' : ''
 			}` }
 		>
-			<div className="gs-module-card__icon">
-				<Icon name={ mod.icon } size={ 20 } />
+			<div className="gs-module-card__top">
+				<div className="gs-module-card__icon">
+					<Icon name={ mod.icon } size={ 20 } />
+				</div>
+				<div className="gs-module-card__control">{ control }</div>
 			</div>
 			<div className="gs-module-card__body">
 				<div className="gs-module-card__head">
@@ -183,7 +220,25 @@ function ModuleCard( { mod, saving, onToggle } ) {
 				</div>
 				<p className="gs-module-card__desc">{ mod.desc }</p>
 			</div>
-			<div className="gs-module-card__control">{ control }</div>
+			<div className="gs-module-card__foot">
+				<span className={ `gs-module-card__status ${ mod.active ? 'is-on' : '' }` }>{ status }</span>
+				{ mod.active && href && (
+					<a
+						href={ href }
+						className="gs-module-card__cfg"
+						onClick={ ( e ) => {
+							if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+								return;
+							}
+							e.preventDefault();
+							navigate( href );
+						} }
+					>
+						{ __( 'Configure', 'gemsecurity' ) }
+						<Icon name="arrow-right" size={ 14 } />
+					</a>
+				) }
+			</div>
 		</div>
 	);
 }

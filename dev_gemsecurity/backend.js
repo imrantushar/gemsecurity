@@ -7,6 +7,7 @@ import App from '@Containers/App';
 import { ToastProvider } from '@Components/ui/Toast';
 import { applyTheme, getInitialTheme } from '@Utils/theme';
 import './backend.scss';
+import './dashboard.scss';
 
 document.addEventListener( 'DOMContentLoaded', () => {
 	const container = document.getElementById( 'gemsecuritywrap' );
