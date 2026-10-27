@@ -154,9 +154,20 @@ export default function App() {
 				<header className="gs-topbar" ref={ topbarRef }>
 					<div className="gs-topbar__inner">
 						<div className="gs-topbar__left">
-							<span className="gs-topbar__logo" aria-hidden="true">
+							<a
+								className="gs-topbar__logo"
+								href={ pageUrl( 'gemsecurity' ) }
+								aria-label={ __( 'GemSecurity dashboard', 'gemsecurity' ) }
+								onClick={ ( e ) => {
+									if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+										return;
+									}
+									e.preventDefault();
+									navigate( pageUrl( 'gemsecurity' ) );
+								} }
+							>
 								<Logo size={ 20 } />
-							</span>
+							</a>
 							<Icon name="chevron" size={ 16 } className="gs-topbar__crumb" />
 							<h1 className="gs-topbar__title">
 								{ navItem ? navItem.label : 'GemSecurity' }
