@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 import useNavigate from '@Utils/useGuardedNavigate';
 import api from '@Utils/api';
+import useQuickFix from '@Utils/useQuickFix';
 import { Card, Loading, Badge } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
 import { pageFromHref, pageUrl } from '@Utils/nav';
@@ -114,10 +115,15 @@ function DashAction( { action, primary, verb } ) {
 export default function Dashboard() {
 	const [ data, setData ] = useState( null );
 	const [ showAll, setShowAll ] = useState( false );
+	const { fix, fixing } = useQuickFix();
 
+	const load = () => api.get( 'dashboard' ).then( ( r ) => setData( r.data ) ).catch( () => setData( false ) );
 	useEffect( () => {
-		api.get( 'dashboard' ).then( ( r ) => setData( r.data ) ).catch( () => setData( false ) );
+		load();
 	}, [] );
+
+	// One-click fix straight from the list, then refresh so the row disappears.
+	const quickFix = ( key ) => fix( [ key ] ).then( load );
 
 	if ( data === null ) {
 		return <Loading />;
@@ -142,7 +148,7 @@ export default function Dashboard() {
 
 	const attention = [
 		...posture.threats.map( ( t ) => ( { key: t.key, label: t.label, fix: t.fix, action: t.action, severity: t.severity === 'critical' ? 'high' : 'medium', threat: true } ) ),
-		...failingChecks.map( ( c ) => ( { key: c.key, label: c.label, fix: c.fix, action: c.action, severity: c.severity || 'low', threat: false } ) ),
+		...failingChecks.map( ( c ) => ( { key: c.key, label: c.label, fix: c.fix, action: c.action, severity: c.severity || 'low', threat: false, quickKey: c.quick ? ( c.fix_key || c.key ) : null } ) ),
 	];
 	const shown = showAll ? attention : attention.slice( 0, 4 );
 	const total = posture.summary.passed + posture.summary.failed;
@@ -207,7 +213,18 @@ export default function Dashboard() {
 										<strong>{ a.label }<em>{ a.severity === 'high' ? __( 'High', 'gemsecurity' ) : a.severity === 'medium' ? __( 'Medium', 'gemsecurity' ) : __( 'Low', 'gemsecurity' ) }</em></strong>
 										<span>{ a.fix }</span>
 									</div>
-									<DashAction action={ a.action } primary={ i === 0 && a.severity === 'high' } verb={ /scanner/.test( a.action?.url || '' ) && a.threat ? __( 'Run scan', 'gemsecurity' ) : a.threat ? __( 'Review', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) } />
+									{ a.quickKey ? (
+										<button
+											type="button"
+											className="gs-dash__btn"
+											onClick={ () => quickFix( a.quickKey ) }
+											disabled={ !! fixing[ a.quickKey ] }
+										>
+											{ fixing[ a.quickKey ] ? __( 'Enabling…', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) }
+										</button>
+									) : (
+										<DashAction action={ a.action } primary={ i === 0 && a.severity === 'high' } verb={ /scanner/.test( a.action?.url || '' ) && a.threat ? __( 'Run scan', 'gemsecurity' ) : a.threat ? __( 'Review', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) } />
+									) }
 								</li>
 							) ) }
 						</ul>
