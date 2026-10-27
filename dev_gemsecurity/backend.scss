@@ -649,7 +649,7 @@ html {
 		width: 100%; max-width: 420px; padding: 9px 12px;
 		border: 1px solid $gs-border; border-radius: 4px; background: $gs-input-bg;
 		font-size: 14px; color: $gs-text; transition: border-color .15s, box-shadow .15s;
-		&:focus { outline: none; border-color: $gs-primary; box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-primary) 15%, transparent); }
+		&:focus { outline: none; border-color: $gs-primary; box-shadow: none; }
 		&--number { max-width: 130px; }
 	}
 	.gs-textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; max-width: 520px; }
@@ -998,7 +998,7 @@ html {
 		border-color: $gs-border !important; border-radius: 6px !important;
 		min-height: 38px !important; box-shadow: none !important;
 	}
-	.gs-rs__control--is-focused { border-color: $gs-primary !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-primary) 15%, transparent) !important; }
+	.gs-rs__control--is-focused { border-color: $gs-primary !important; box-shadow: none !important; }
 	.gs-rs__control--is-disabled { background: var(--gs-fill) !important; opacity: .7; }
 	.gs-rs__multi-value { background: var(--gs-accent-soft) !important; border-radius: 6px !important; }
 	.gs-rs__multi-value__label { color: $gs-primary !important; font-weight: 600; }

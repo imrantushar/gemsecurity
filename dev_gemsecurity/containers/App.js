@@ -64,6 +64,9 @@ const PAGES = {
 	'gemsecurity-settings': Settings,
 };
 
+// Pages that render their own Figma header card.
+const OWN_HEADER = [ 'gemsecurity', 'gemsecurity-modules', 'gemsecurity-captcha' ];
+
 export default function App() {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
@@ -219,6 +222,20 @@ export default function App() {
 					</nav>
 					) }
 					<div className="gs-content">
+						{ module && ! inactive && ! locked && ! OWN_HEADER.includes( resolvedPage ) && (
+							<section className="gs-pagehead">
+								<span className="gs-pagehead__icon"><Icon name={ module.icon } size={ 22 } /></span>
+								<div className="gs-pagehead__text">
+									<h2>
+										{ module.title }
+										<span className={ `gs-pagehead__state ${ module.active ? 'is-on' : '' }` }>
+											<i />{ module.core ? __( 'Core', 'gemsecurity' ) : module.active ? __( 'Active', 'gemsecurity' ) : __( 'Off', 'gemsecurity' ) }
+										</span>
+									</h2>
+									{ module.desc && <p>{ module.desc }</p> }
+								</div>
+							</section>
+						) }
 						<PageScoreTips page={ resolvedPage } />
 						<ErrorBoundary key={ resolvedPage }>
 							{ renderPage() }

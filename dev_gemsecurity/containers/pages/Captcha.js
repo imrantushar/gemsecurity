@@ -36,6 +36,7 @@ export default function Captcha() {
 	const { form, setField } = useSettingsForm( KEYS );
 	const [ showSecret, setShowSecret ] = useState( false );
 	const [ tab, setTab ] = useState( 'login' );
+	const [ verified, setVerified ] = useState( null );
 	const provider = form.captcha_provider || 'recaptcha_v2';
 	const prov = PROVIDERS.find( ( p ) => p.id === provider ) || PROVIDERS[ 0 ];
 	const enabled = !! form.captcha_enabled;
@@ -58,7 +59,7 @@ export default function Captcha() {
 			title: __( 'Keys look valid', 'gemsecurity' ),
 			sub: emailKey ? __( 'Site key is an email address', 'gemsecurity' ) : keysFilled ? __( 'Both keys entered', 'gemsecurity' ) : __( 'Enter both keys', 'gemsecurity' ),
 		},
-		{ ok: false, idle: true, title: __( 'Keys verified', 'gemsecurity' ), sub: __( 'Run “Verify keys” after fixing', 'gemsecurity' ) },
+		{ ok: verified === true, bad: verified === false, idle: verified === null, title: __( 'Keys verified', 'gemsecurity' ), sub: verified === true ? __( 'The test token passed', 'gemsecurity' ) : verified === false ? __( 'The last test failed', 'gemsecurity' ) : __( 'Run “Verify keys” after fixing', 'gemsecurity' ) },
 	];
 	const done = checklist.filter( ( c ) => c.ok ).length;
 	const protecting = enabled && keysValid && onForms.length > 0;
@@ -151,7 +152,7 @@ export default function Captcha() {
 								</div>
 							</div>
 							<div className="gs-cap__verify">
-								<TestCaptcha provider={ provider } siteKey={ siteKey } secretKey={ secretKey } />
+								<TestCaptcha provider={ provider } siteKey={ siteKey } secretKey={ secretKey } onResult={ setVerified } />
 							</div>
 							{ 'recaptcha_v3' === provider && (
 								<Field label={ __( 'v3 score threshold', 'gemsecurity' ) } description={ __( '0.0–1.0; requests scoring below this are blocked (0.5 recommended).', 'gemsecurity' ) }>

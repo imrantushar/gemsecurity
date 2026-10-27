@@ -86,7 +86,7 @@ function ActionLink( { action } ) {
 	);
 }
 
-function DashAction( { action, primary } ) {
+function DashAction( { action, primary, verb } ) {
 	const navigate = useNavigate();
 	if ( ! action || ! action.url ) {
 		return null;
@@ -106,7 +106,7 @@ function DashAction( { action, primary } ) {
 				}
 			} }
 		>
-			{ action.label }
+			{ verb || action.label }
 		</a>
 	);
 }
@@ -207,7 +207,7 @@ export default function Dashboard() {
 										<strong>{ a.label }<em>{ a.severity === 'high' ? __( 'High', 'gemsecurity' ) : a.severity === 'medium' ? __( 'Medium', 'gemsecurity' ) : __( 'Low', 'gemsecurity' ) }</em></strong>
 										<span>{ a.fix }</span>
 									</div>
-									<DashAction action={ a.action } primary={ i === 0 && a.severity === 'high' } />
+									<DashAction action={ a.action } primary={ i === 0 && a.severity === 'high' } verb={ /scanner/.test( a.action?.url || '' ) && a.threat ? __( 'Run scan', 'gemsecurity' ) : a.threat ? __( 'Review', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) } />
 								</li>
 							) ) }
 						</ul>

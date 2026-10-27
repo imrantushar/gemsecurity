@@ -95,10 +95,17 @@ function waitForGlobal( provider, method, tries = 60 ) {
 	} );
 }
 
-export default function TestCaptcha( { provider, siteKey, secretKey } ) {
+export default function TestCaptcha( { provider, siteKey, secretKey, onResult } ) {
 	const [ state, setState ] = useState( 'idle' ); // idle | loading | waiting | done
 	const [ result, setResult ] = useState( null );
 	const box = useRef( null );
+
+	// Let a parent (the CAPTCHA checklist) know whether the last test passed.
+	React.useEffect( () => {
+		if ( onResult ) {
+			onResult( result ? !! result.ok : null );
+		}
+	}, [ result ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const verify = useCallback(
 		async ( token ) => {
@@ -207,15 +214,18 @@ export default function TestCaptcha( { provider, siteKey, secretKey } ) {
 
 	return (
 		<div className="gs-credtest">
-			<Button
-				variant="secondary"
-				onClick={ run }
-				loading={ state === 'loading' }
-				disabled={ state === 'waiting' }
-			>
-				<Icon name="check" size={ 15 } />
-				{ __( 'Test CAPTCHA keys', 'gemsecurity' ) }
-			</Button>
+			<div className="gs-credtest__row">
+				<Button
+					variant="secondary"
+					onClick={ run }
+					loading={ state === 'loading' }
+					disabled={ state === 'waiting' }
+				>
+					<Icon name="shield" size={ 16 } />
+					{ __( 'Verify keys', 'gemsecurity' ) }
+				</Button>
+				<span className="gs-credtest__note">{ __( 'Checks both keys with a real test token.', 'gemsecurity' ) }</span>
+			</div>
 
 			{ state === 'waiting' && (
 				<p className="gs-credtest__hint">

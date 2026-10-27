@@ -323,7 +323,7 @@
 		display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; background: var(--gs-input-bg); border: 1px solid var(--gs-border); border-radius: 6px;
 		input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important; outline: none; color: var(--gs-text); font-size: 14px; }
 		button { border: 0; background: none; padding: 0; cursor: pointer; color: var(--gs-muted); display: grid; place-items: center; }
-		&:focus-within { border-color: var(--gs-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-primary) 16%, transparent); }
+		&:focus-within { border-color: var(--gs-primary); box-shadow: none; }
 		&.is-bad { border-color: var(--gs-danger); background: color-mix(in srgb, var(--gs-danger) 5%, var(--gs-input-bg)); .gs-icon { color: var(--gs-danger); } }
 	}
 	&__verify { margin-top: 20px; }
@@ -483,4 +483,84 @@
 	#gemsecuritywrap.gemsecuritywrap .gs-modules__head { flex-wrap: wrap; gap: 20px 32px; }
 	#gemsecuritywrap.gemsecuritywrap .gs-modules__head-text { flex: 1 1 100%; }
 	#gemsecuritywrap.gemsecuritywrap .gs-modules__search { flex: 1 1 240px; width: auto; }
+}
+
+/* Page header card used by every module page (Figma CAPTCHA pattern). */
+#gemsecuritywrap.gemsecuritywrap .gs-pagehead {
+	display: flex; align-items: center; gap: 16px; padding: 24px; margin-bottom: 18px;
+	background: var(--gs-surface); border: 1px solid var(--gs-border); border-radius: 8px;
+	&__icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; background: var(--gs-accent-soft); color: var(--gs-primary); }
+	&__text { min-width: 0; }
+	h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 0; font-size: 22px; font-weight: 600; color: var(--gs-text); }
+	p { margin: 6px 0 0; font-size: 14px; color: var(--gs-muted); }
+	&__state {
+		display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 400;
+		background: var(--gs-fill); color: var(--gs-muted);
+		i { width: 6px; height: 6px; border-radius: 50%; background: var(--gs-placeholder); }
+		&.is-on { background: color-mix(in srgb, var(--gs-success) 12%, transparent); color: var(--gs-success); i { background: var(--gs-success); } }
+	}
+}
+
+#gemsecuritywrap.gemsecuritywrap select.gs-input, #gemsecuritywrap.gemsecuritywrap .gs-select { height: 42px; min-height: 42px; padding-top: 0; padding-bottom: 0; line-height: 40px; }
+
+/* No focus glow on any field: the border colour is the only focus cue. */
+#gemsecuritywrap.gemsecuritywrap,
+.gs-setup {
+	input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="number"], input[type="url"],
+	textarea, select, .gs-input, .gs-select, .gs-textarea {
+		&:focus, &:focus-visible { outline: none !important; box-shadow: none !important; border-color: var(--gs-primary) !important; }
+	}
+}
+
+/* Topbar logo: solid brand blue + white mark, same as the wizard headers. */
+#gemsecuritywrap.gemsecuritywrap .gs-topbar__logo { background: var(--gs-primary-d, #0057D1); border-color: transparent; color: #fff; }
+#gemsecuritywrap.gemsecuritywrap[data-theme="dark"] .gs-topbar__logo { background: var(--gs-primary); border-color: transparent; color: #fff; }
+
+/* Small-screen overflow fixes */
+#gemsecuritywrap.gemsecuritywrap {
+	.gs-content, .gs-page, .gs-dash, .gs-cap { min-width: 0; max-width: 100%; }
+	.gs-dash__hero > *, .gs-dash__lower > *, .gs-dash__groups > *, .gs-cap__cols > * { min-width: 0; }
+}
+@media (max-width: 1100px) {
+	#gemsecuritywrap.gemsecuritywrap {
+		.gs-table { display: block; max-width: 100%; overflow-x: auto; }
+	}
+}
+@media (max-width: 782px) {
+	#gemsecuritywrap.gemsecuritywrap {
+		.gs-card__body { overflow-x: auto; padding: 16px; }
+		.gs-card__head { padding: 16px; flex-wrap: wrap; }
+		.gs-input, .gs-select { max-width: 100%; }
+		.gs-pagehead { padding: 16px; }
+		.gs-dash__hero { padding: 20px 16px; }
+		.gs-dash__score { padding-right: 0; }
+		.gs-dash__item { flex-wrap: wrap; }
+		.gs-dash__btn { margin-left: 56px; }
+		.gs-dash__metrics { grid-template-columns: 1fr; gap: 12px; > div { padding: 0; border-left: 0; } }
+		.gs-dash__panel { padding: 16px; }
+		.gs-dash__bars { gap: 10px; }
+		.gs-cap__step { padding: 20px 16px; }
+		.gs-cap__preview { padding: 20px 12px; }
+		.gs-recovery { grid-template-columns: 1fr; }
+	}
+}
+
+/* CAPTCHA "Verify keys" row (Figma). */
+#gemsecuritywrap.gemsecuritywrap .gs-cap .gs-credtest {
+	&__row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+	&__row .gs-btn { height: 44px; padding: 0 18px; background: color-mix(in srgb, var(--gs-primary) 8%, var(--gs-surface)); border-color: color-mix(in srgb, var(--gs-primary) 22%, var(--gs-border)); color: var(--gs-primary); }
+	&__note { font-size: 13px; color: var(--gs-muted); }
+}
+
+/* Tighter card rhythm: rows (toggles, fields) already carry their own vertical padding. */
+#gemsecuritywrap.gemsecuritywrap {
+	.gs-card__head { padding: 18px 24px; }
+	.gs-card__body { padding: 8px 24px 12px; }
+	.gs-toggle { padding: 12px 0; }
+	.gs-field { padding: 8px 0; }
+	.gs-card__body > .gs-toggle:first-child, .gs-card__body > .gs-field:first-child { padding-top: 10px; }
+	.gs-card__body > .gs-card__desc:first-child { margin-top: 8px; }
+}
+@media (max-width: 782px) {
+	#gemsecuritywrap.gemsecuritywrap .gs-card__body { padding: 8px 16px 12px; }
 }
