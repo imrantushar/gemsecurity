@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import { Button, Toggle, Field, TextInput, Select } from '@Components/ui/Controls';
 import Icon from '@Components/ui/Icon';
+import Logo from '@Components/ui/Logo';
 import { isPro, ProBadge } from '@Components/ui/Pro';
 import { useThemeMode } from '@Utils/theme';
 
@@ -456,11 +457,26 @@ export default function SetupWizard() {
 
 	const current = STEPS[ step ].id;
 
+	if ( current === 'done' ) {
+		return (
+			<div className="gs-wizard gs-wizard--done">
+				<header className="gs-done__bar">
+					<span className="gs-done__brand"><span className="gs-done__logo"><Logo size={ 22 } /></span>GemSecurity</span>
+					<span className="gs-done__step">
+						{ sprintf( /* translators: 1: step, 2: total */ __( 'Step %1$d of %2$d', 'gemsecurity' ), STEPS.length, STEPS.length ) }
+						<em><i />{ __( 'Setup complete', 'gemsecurity' ) }</em>
+					</span>
+				</header>
+				<DoneStep level={ level } count={ enabledCount } total={ allModules().length } alerts={ alerts } digest={ alerts.digest_enabled } onEdit={ setStep } />
+			</div>
+		);
+	}
+
 	return (
 		<div className="gs-wizard">
 			<aside className="gs-wizard__rail">
 				<div className="gs-wizard__brand">
-					<span className="gs-wizard__logo"><Icon name="shield" size={ 22 } /></span>
+					<span className="gs-wizard__logo"><Logo size={ 24 } /></span>
 					<span>GemSecurity</span>
 				</div>
 				<ol className="gs-wizard__steps">
@@ -472,12 +488,14 @@ export default function SetupWizard() {
 							<span className="gs-wizard__dot">
 								{ i < step ? <Icon name="check" size={ 14 } /> : i + 1 }
 							</span>
-							<span>{ s.label }</span>
+							<span className="gs-wizard__step-label">{ s.label }</span>
+							{ i === step && <span className="gs-wizard__now">{ __( 'Now', 'gemsecurity' ) }</span> }
 						</li>
 					) ) }
 				</ol>
 				<p className="gs-wizard__rail-foot">
-					{ __( 'You can change every choice later from the GemSecurity settings.', 'gemsecurity' ) }
+					<Icon name="refresh" size={ 18 } />
+					<span>{ __( 'You can change every choice later from the GemSecurity settings.', 'gemsecurity' ) }</span>
 				</p>
 			</aside>
 
@@ -485,6 +503,8 @@ export default function SetupWizard() {
 				<div className="gs-wizard__top">
 					<span className="gs-wizard__count">
 						{ sprintf( /* translators: 1: step, 2: total */ __( 'Step %1$d of %2$d', 'gemsecurity' ), step + 1, STEPS.length ) }
+						<span className="gs-wizard__count-sep">·</span>
+						<span className="gs-wizard__count-name">{ STEPS[ step ].label }</span>
 					</span>
 					<div className="gs-wizard__top-actions">
 						<button type="button" className="gs-topbar__theme" onClick={ toggle } aria-label={ __( 'Toggle dark mode', 'gemsecurity' ) }>
@@ -497,7 +517,7 @@ export default function SetupWizard() {
 						) }
 					</div>
 				</div>
-				<div className="gs-wizard__progress"><span style={ { width: `${ ( step / ( STEPS.length - 1 ) ) * 100 }%` } } /></div>
+				<div className="gs-wizard__progress"><span style={ { width: `${ ( ( step + 1 ) / STEPS.length ) * 100 }%` } } /></div>
 
 				<div className="gs-wizard__body" key={ current }>
 					{ current === 'welcome' && <Welcome /> }
@@ -520,7 +540,16 @@ export default function SetupWizard() {
 							<Button variant="secondary" onClick={ back } disabled={ saving }>
 								{ __( 'Back', 'gemsecurity' ) }
 							</Button>
-						) : <span /> }
+						) : (
+							<span className="gs-wizard__hint">
+								<Icon name="clock" size={ 18 } />
+								<span>
+									{ __( 'About', 'gemsecurity' ) } <strong>{ __( '1 minute', 'gemsecurity' ) }</strong>
+									<span className="gs-wizard__count-sep">·</span>
+									{ __( 'Nothing is applied until you confirm', 'gemsecurity' ) }
+								</span>
+							</span>
+						) }
 						{ current === 'alerts' ? (
 							<Button onClick={ finish } loading={ saving }>
 								{ __( 'Finish setup', 'gemsecurity' ) }
@@ -531,7 +560,7 @@ export default function SetupWizard() {
 								disabled={ current === 'questions' && answeredCount < QUESTIONS.length }
 							>
 								{ current === 'welcome'
-									? __( 'Let’s get started', 'gemsecurity' )
+									? <>{ __( 'Let’s get started', 'gemsecurity' ) }<Icon name="arrow-right" size={ 18 } /></>
 									: current === 'questions'
 										? sprintf(
 											/* translators: 1 answered, 2 total */
@@ -556,16 +585,19 @@ function Welcome() {
 	const items = [
 		{ icon: 'shield', title: __( 'Block attacks', 'gemsecurity' ), desc: __( 'Firewall, brute-force and bot protection.', 'gemsecurity' ) },
 		{ icon: 'radar', title: __( 'Find problems', 'gemsecurity' ), desc: __( 'Malware, vulnerability and file-change scans.', 'gemsecurity' ) },
-		{ icon: 'mail', title: __( 'Stay informed', 'gemsecurity' ), desc: __( 'Alerts the moment something needs you.', 'gemsecurity' ) },
+		{ icon: 'bell', title: __( 'Stay informed', 'gemsecurity' ), desc: __( 'Alerts the moment something needs you.', 'gemsecurity' ) },
 	];
 	return (
 		<div className="gs-wizard__welcome">
 			<div className="gs-wizard__hero-icon"><Icon name="shield" size={ 40 } /></div>
-			<h1>{ GS.site_name
-				? sprintf( /* translators: %s: site name */ __( 'Let’s secure %s', 'gemsecurity' ), GS.site_name )
-				: __( 'Let’s secure your site', 'gemsecurity' ) }</h1>
+			<h1>{ __( 'Let’s secure your website', 'gemsecurity' ) }</h1>
+			<span className="gs-wizard__site-chip">
+				<i className="gs-wizard__live-dot" />
+				{ ( GS.site_url || '' ).replace( /^https?:\/\//, '' ).replace( /\/$/, '' ) }
+			</span>
 			<p className="gs-wizard__lead">
-				{ __( 'Answer five quick questions and GemSecurity will switch on the right protection for you. It takes about a minute.', 'gemsecurity' ) }
+				{ __( 'Answer a few quick questions and GemSecurity will switch on the right protection for you.', 'gemsecurity' ) }{ ' ' }
+				<strong>{ __( 'It takes about a minute.', 'gemsecurity' ) }</strong>
 			</p>
 			<div className="gs-wizard__features">
 				{ items.map( ( i ) => (
@@ -762,28 +794,61 @@ function AlertsStep( { value, onChange } ) {
 	);
 }
 
-function DoneStep( { level, count, alerts } ) {
+function DoneStep( { level, count, total, alerts, digest, onEdit } ) {
 	const url = ( slug ) => `${ GS.admin_url }admin.php?page=${ slug }`;
+	const host = ( GS.site_url || '' ).replace( /^https?:\/\//, '' ).replace( /\/$/, '' );
+	const rows = [
+		{ icon: 'shield', label: __( 'Protection level', 'gemsecurity' ), value: level.title, action: __( 'Change', 'gemsecurity' ), go: () => onEdit( 1 ) },
+		{ icon: 'grid', label: __( 'Features switched on', 'gemsecurity' ), value: sprintf( /* translators: 1: on, 2: total */ __( '%1$d of %2$d', 'gemsecurity' ), count, total ), action: __( 'View', 'gemsecurity' ), go: () => ( window.location.href = url( 'gemsecurity-modules' ) ) },
+		{ icon: 'bell', label: __( 'Alerts sent to', 'gemsecurity' ), value: alerts.alerts_enabled && alerts.alert_to_email ? alerts.alert_to_email : __( 'Email alerts are off', 'gemsecurity' ), action: __( 'Edit', 'gemsecurity' ), go: () => onEdit( 3 ) },
+	];
+	const next = [
+		{ tone: 'on', title: __( 'Firewall & login protection', 'gemsecurity' ), sub: __( 'Active now', 'gemsecurity' ) },
+		{ tone: 'warn', title: __( 'First full scan', 'gemsecurity' ), sub: __( 'Not run yet · about 4 min', 'gemsecurity' ) },
+		{ tone: digest ? 'on' : 'off', title: __( 'Weekly security digest', 'gemsecurity' ), sub: digest ? __( 'Every Monday, by email', 'gemsecurity' ) : __( 'Off', 'gemsecurity' ) },
+	];
 	return (
-		<div className="gs-wizard__welcome gs-wizard__done">
-			<div className="gs-wizard__hero-icon is-success"><Icon name="check" size={ 40 } /></div>
-			<h1>{ __( 'Your site is protected', 'gemsecurity' ) }</h1>
-			<p className="gs-wizard__lead">{ __( 'GemSecurity is now watching over your site. Here’s what we set up:', 'gemsecurity' ) }</p>
-			<ul className="gs-wizard__summary">
-				<li><Icon name="shield" size={ 16 } />{ sprintf( /* translators: %s: level name */ __( '%s protection level', 'gemsecurity' ), level.title ) }</li>
-				<li><Icon name="layers" size={ 16 } />{ sprintf( /* translators: %d: count */ __( '%d features switched on', 'gemsecurity' ), count ) }</li>
-				<li><Icon name="mail" size={ 16 } />{ alerts.alerts_enabled && alerts.alert_to_email
-					? sprintf( /* translators: %s: email */ __( 'Alerts go to %s', 'gemsecurity' ), alerts.alert_to_email )
-					: __( 'Email alerts are off', 'gemsecurity' ) }</li>
-			</ul>
-			<div className="gs-wizard__done-actions">
-				<Button onClick={ () => ( window.location.href = GS.dashboard ) }>
-					{ __( 'Go to dashboard', 'gemsecurity' ) }
+		<div className="gs-done">
+			<div className="gs-done__hero">
+				<svg width="56" height="56" viewBox="0 0 24 24" aria-hidden="true">
+					<path fill="currentColor" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+					<path fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
+				</svg>
+			</div>
+			<h1>{ __( 'Your site is protected', 'gemsecurity' ) } <span aria-hidden="true">🎉</span></h1>
+			<p className="gs-done__lead">{ __( 'GemSecurity is now watching', 'gemsecurity' ) }</p>
+			<span className="gs-wizard__site-chip"><i className="gs-wizard__live-dot" />{ host }</span>
+
+			<section className="gs-done__card">
+				<h3>{ __( 'What we set up', 'gemsecurity' ) }</h3>
+				{ rows.map( ( r ) => (
+					<div key={ r.label } className="gs-done__row">
+						<span className="gs-done__row-icon"><Icon name={ r.icon } size={ 18 } /></span>
+						<div><small>{ r.label }</small><strong>{ r.value }</strong></div>
+						<button type="button" onClick={ r.go }>{ r.action }</button>
+					</div>
+				) ) }
+			</section>
+
+			<section className="gs-done__card">
+				<h3>{ __( 'What happens next', 'gemsecurity' ) }</h3>
+				{ next.map( ( n ) => (
+					<div key={ n.title } className="gs-done__row gs-done__row--next">
+						<i className={ `gs-done__dot is-${ n.tone }` } />
+						<div><strong>{ n.title }</strong><small>{ n.sub }</small></div>
+					</div>
+				) ) }
+			</section>
+
+			<div className="gs-done__actions">
+				<Button onClick={ () => ( window.location.href = url( 'gemsecurity-scanner' ) ) }>
+					<Icon name="refresh" size={ 18 } />{ __( 'Run first scan', 'gemsecurity' ) }
 				</Button>
-				<Button variant="secondary" onClick={ () => ( window.location.href = url( 'gemsecurity-scanner' ) ) }>
-					{ __( 'Run my first scan', 'gemsecurity' ) }
+				<Button variant="secondary" onClick={ () => ( window.location.href = GS.dashboard ) }>
+					{ __( 'Go to dashboard', 'gemsecurity' ) }<Icon name="arrow-right" size={ 18 } />
 				</Button>
 			</div>
+			<p className="gs-done__note">{ __( 'You can change any of this later in Settings.', 'gemsecurity' ) }</p>
 		</div>
 	);
 }

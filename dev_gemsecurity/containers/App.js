@@ -10,6 +10,7 @@ import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/
 import ErrorBoundary from '@Components/ui/ErrorBoundary';
 import Icon from '@Components/ui/Icon';
 import PageScoreTips from '@Components/ui/PageScoreTips';
+import Logo from '@Components/ui/Logo';
 import TopbarScore from '@Components/ui/TopbarScore';
 import SaveBar, { LeaveDialog } from '@Components/ui/SaveBar';
 import { guardLeave, leaveTo } from '@Utils/unsavedChanges';
@@ -62,6 +63,9 @@ const PAGES = {
 	'gemsecurity-notifications': Notifications,
 	'gemsecurity-settings': Settings,
 };
+
+// Pages that render their own Figma header card.
+const OWN_HEADER = [ 'gemsecurity', 'gemsecurity-modules', 'gemsecurity-captcha' ];
 
 export default function App() {
 	const dispatch = useDispatch();
@@ -151,8 +155,9 @@ export default function App() {
 					<div className="gs-topbar__inner">
 						<div className="gs-topbar__left">
 							<span className="gs-topbar__logo" aria-hidden="true">
-								<Icon name="shield" size={ 20 } />
+								<Logo size={ 20 } />
 							</span>
+							<Icon name="chevron" size={ 16 } className="gs-topbar__crumb" />
 							<h1 className="gs-topbar__title">
 								{ navItem ? navItem.label : 'GemSecurity' }
 								{ locked && <ProBadge /> }
@@ -181,7 +186,7 @@ export default function App() {
 								aria-label={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
 								title={ theme === 'dark' ? __( 'Switch to light mode', 'gemsecurity' ) : __( 'Switch to dark mode', 'gemsecurity' ) }
 							>
-								<Icon name={ theme === 'dark' ? 'sun' : 'moon' } size={ 18 } />
+								<Icon name={ theme === 'dark' ? 'sun' : 'moon' } size={ 16 } />
 							</button>
 						</div>
 					</div>
@@ -217,6 +222,20 @@ export default function App() {
 					</nav>
 					) }
 					<div className="gs-content">
+						{ module && ! inactive && ! locked && ! OWN_HEADER.includes( resolvedPage ) && (
+							<section className="gs-pagehead">
+								<span className="gs-pagehead__icon"><Icon name={ module.icon } size={ 22 } /></span>
+								<div className="gs-pagehead__text">
+									<h2>
+										{ module.title }
+										<span className={ `gs-pagehead__state ${ module.active ? 'is-on' : '' }` }>
+											<i />{ module.core ? __( 'Core', 'gemsecurity' ) : module.active ? __( 'Active', 'gemsecurity' ) : __( 'Off', 'gemsecurity' ) }
+										</span>
+									</h2>
+									{ module.desc && <p>{ module.desc }</p> }
+								</div>
+							</section>
+						) }
 						<PageScoreTips page={ resolvedPage } />
 						<ErrorBoundary key={ resolvedPage }>
 							{ renderPage() }
