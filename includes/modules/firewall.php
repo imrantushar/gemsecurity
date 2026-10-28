@@ -88,6 +88,11 @@ class Firewall {
 			return;
 		}
 
+		// Safelisted addresses are never blocked, even when logged out.
+		if ( \GemSecurity\Security\SiteGuard::ip_safelisted( $ip ) ) {
+			return;
+		}
+
 		foreach ( $blocklist as $entry ) {
 			if ( self::ip_matches( $ip, trim( (string) $entry ) ) ) {
 				Logger::log(

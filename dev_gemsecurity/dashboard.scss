@@ -580,3 +580,130 @@
 	}
 	.gs-topbar__logo { text-decoration: none; cursor: pointer; transition: opacity .15s; &:hover { opacity: .88; } }
 }
+
+/* ---------------------------------------------------------------- */
+/* Modal + core-file diff                                            */
+/* ---------------------------------------------------------------- */
+.gs-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100001;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	background: rgba(15, 23, 42, 0.55);
+
+	&__box {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		max-width: 960px;
+		max-height: 90vh;
+		background: var(--gs-surface, #fff);
+		color: var(--gs-text, #1e2533);
+		border: 1px solid var(--gs-border, #dfe4ec);
+		border-radius: 12px;
+		box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+	}
+
+	&__head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 14px 18px;
+		border-bottom: 1px solid var(--gs-border, #dfe4ec);
+		word-break: break-all;
+	}
+
+	&__x {
+		border: 0;
+		background: none;
+		color: var(--gs-muted, #78808f);
+		font-size: 24px;
+		line-height: 1;
+		cursor: pointer;
+	}
+
+	&__body {
+		flex: 1;
+		min-height: 0;
+		padding: 16px 18px;
+		overflow: auto;
+	}
+
+	&__foot {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 10px;
+		padding: 12px 18px;
+		border-top: 1px solid var(--gs-border, #dfe4ec);
+	}
+
+	&__editor {
+		width: 100%;
+		min-height: 50vh;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+		font-size: 12px;
+		white-space: pre;
+	}
+}
+
+.gs-diff {
+	margin: 10px 0 0;
+	padding: 0;
+	overflow: auto;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 12px;
+	line-height: 1.55;
+	border: 1px solid var(--gs-border, #dfe4ec);
+	border-radius: 8px;
+
+	&__row {
+		padding: 0 10px;
+		white-space: pre-wrap;
+		word-break: break-all;
+
+		&--add { background: rgba(220, 38, 38, 0.12); }
+		&--del { background: rgba(22, 163, 74, 0.14); }
+		&--gap { color: var(--gs-muted, #78808f); background: var(--gs-fill, #f4f6fa); text-align: center; }
+	}
+
+	&__mark {
+		display: inline-block;
+		width: 1.5em;
+		color: var(--gs-muted, #78808f);
+		user-select: none;
+	}
+}
+
+/* ---------------------------------------------------------------- */
+/* Plugin lock panel + small stacked field helpers                   */
+/* ---------------------------------------------------------------- */
+.gs-lock,
+.gs-stack {
+	display: block;
+	width: 100%;
+
+	p { margin: 8px 0; }
+
+	.gs-geo-search {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin: 8px 0;
+
+		input { max-width: 340px; }
+		button { white-space: nowrap; }
+	}
+}
+
+.gs-stack__hint {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}

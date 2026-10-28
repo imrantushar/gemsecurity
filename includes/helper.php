@@ -345,6 +345,18 @@ class Helper {
 	}
 
 	/**
+	 * Did this request arrive through a proxy/CDN the site trusts? Headers a
+	 * CDN adds (visitor IP, visitor country) are only believable then; from
+	 * anyone else they are just text the visitor typed.
+	 *
+	 * @return bool
+	 */
+	public static function request_via_trusted_proxy() {
+		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? trim( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) ) : '';
+		return filter_var( $remote, FILTER_VALIDATE_IP ) && self::is_trusted_proxy( $remote );
+	}
+
+	/**
 	 * Whether $ip is a proxy/CDN edge this site has explicitly chosen to
 	 * trust for forwarded-IP headers.
 	 *

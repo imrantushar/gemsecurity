@@ -51,10 +51,15 @@ class Geo {
 	 * @return string
 	 */
 	public static function country_for_ip( $ip ) {
-		// Headers can be present even for otherwise un-geolocatable setups.
-		$header = self::from_headers();
-		if ( '' !== $header ) {
-			return $header;
+		// A CDN's country header describes the visitor of THIS request, and is
+		// only believable when the request really came through that CDN. Sent
+		// by anyone else ("CF-IPCountry: US") it would let a visitor choose
+		// their own country and walk past every country rule.
+		if ( $ip === Helper::get_ip_address() && Helper::request_via_trusted_proxy() ) {
+			$header = self::from_headers();
+			if ( '' !== $header ) {
+				return $header;
+			}
 		}
 
 		if ( ! $ip || '0.0.0.0' === $ip || self::is_private_ip( $ip ) ) {

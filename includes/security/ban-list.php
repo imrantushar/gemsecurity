@@ -39,6 +39,10 @@ class BanList {
 		if ( isset( self::$cache[ $ip ] ) ) {
 			return self::$cache[ $ip ];
 		}
+		// A safelisted address is never treated as banned.
+		if ( SiteGuard::ip_safelisted( $ip ) ) {
+			return self::$cache[ $ip ] = false;
+		}
 
 		// Cross-request cache — a real win with a persistent object cache
 		// (Redis/Memcached), where it avoids the per-request bans query
@@ -136,6 +140,9 @@ class BanList {
 	 */
 	public static function is_exempt( $ip ) {
 		if ( is_user_logged_in() && current_user_can( 'manage_options' ) && $ip === Helper::get_ip_address() ) {
+			return true;
+		}
+		if ( SiteGuard::ip_safelisted( $ip ) ) {
 			return true;
 		}
 		return (bool) apply_filters( 'gemsecurity/ban_exempt', false, $ip );

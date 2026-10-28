@@ -9,6 +9,7 @@ import { useToast } from '@Components/ui/Toast';
 import { ProGate, ProBadge, isLocked, isPro, proFeatures } from '@Components/ui/Pro';
 import MalwareScan from '@Containers/pages/MalwareScan';
 import SearchPanel from '@Containers/pages/SearchPanel';
+import CoreFileModal from '@Components/ui/CoreFileModal';
 
 /* Stable reference: an inline array here would be a new value on every render. */
 const SCANNER_KEYS = [
@@ -591,6 +592,7 @@ export default function Scanner() {
 	const toast = useToast();
 	const [ rawTab, setTab ] = useState( initialTab );
 	const [ result, setResult ] = useState( null );
+	const [ coreFile, setCoreFile ] = useState( '' );
 	const [ vuln, setVuln ] = useState( null );
 	const [ mu, setMu ] = useState( null );
 	// Supply chain and reviewed-files both used to fetch from inside their own
@@ -704,12 +706,14 @@ export default function Scanner() {
 						<tr>
 							<th>{ __( 'File', 'gemsecurity' ) }</th>
 							<th>{ __( 'Issue', 'gemsecurity' ) }</th>
+							<th />
 						</tr>
 					}
 					renderRow={ ( c, i ) => (
 						<tr key={ i }>
 							<td><code>{ c.file }</code></td>
 							<td><Badge tone={ c.issue === 'missing' ? 'warning' : 'danger' }>{ c.issue }</Badge></td>
+							<td><Button variant="secondary" onClick={ () => setCoreFile( c.file ) }>{ __( 'View & fix', 'gemsecurity' ) }</Button></td>
 						</tr>
 					) }
 				/>
@@ -1126,6 +1130,7 @@ export default function Scanner() {
 
 	return (
 		<div className="gs-page">
+			{ coreFile && <CoreFileModal file={ coreFile } onClose={ () => setCoreFile( '' ) } onFixed={ setResult } /> }
 			<div className="gs-tabs" role="tablist">
 				<button
 					type="button"

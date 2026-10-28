@@ -3,6 +3,7 @@ namespace GemSecurity\Rest;
 
 use GemSecurity\Installer;
 use GemSecurity\Modules\AdminGuard;
+use GemSecurity\Security\SiteGuard;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -13,6 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Settings {
 
+	/** Messages for the person saving (what was changed on their behalf). */
+	private static $notices = [];
+
 	/**
 	 * Field type map used for sanitisation. Anything not listed is ignored.
 	 */
@@ -21,6 +25,9 @@ class Settings {
 			// Firewall / hardening.
 			'firewall_enabled'              => 'bool',
 			'ip_blocklist'                  => 'ip_list',
+			'ip_safelist'                   => 'ip_list',
+			'plugin_lock_enabled'           => 'bool',
+			'uploads_disabled'              => 'bool',
 			// Real-IP resolution: which upstream proxies/CDNs, if any, are
 			// trusted to supply the visitor's IP via forwarding headers.
 			// Everyone else always resolves to the raw REMOTE_ADDR — see
@@ -228,6 +235,10 @@ class Settings {
 			'geo_block_unknown'             => 'bool',
 			'geo_whitelist_block_admins'    => 'bool',
 			'geo_allowed_countries'         => 'country_list',
+			'geo_mode'                      => 'enum:allow,block',
+			'geo_blocked_countries'         => 'country_list',
+			'geo_admin_restrict_enabled'    => 'bool',
+			'geo_admin_countries'           => 'country_list',
 			'geo_user_lock_enabled'         => 'bool',
 			'geo_user_lock_action'          => 'enum:verify,block',
 		];
@@ -270,9 +281,12 @@ class Settings {
 			$incoming = isset( $incoming['settings'] ) ? $incoming['settings'] : [];
 		}
 
+		$settings = self::apply( (array) $incoming, (string) $request->get_param( 'source' ) );
+
 		return rest_ensure_response( [
 			'success'  => true,
-			'settings' => self::apply( (array) $incoming, (string) $request->get_param( 'source' ) ),
+			'settings' => $settings,
+			'notices'  => self::$notices,
 		] );
 	}
 
@@ -288,6 +302,7 @@ class Settings {
 	 * @return array The stored settings.
 	 */
 	public static function apply( array $incoming, $source = 'save' ) {
+		self::$notices = [];
 		$current = get_option( GEMSECURITY_SETTINGS_NAME, [] );
 		if ( ! is_array( $current ) ) {
 			$current = [];
@@ -299,6 +314,29 @@ class Settings {
 		$was_core_rules        = ! empty( $current['protect_core_files_enabled'] );
 
 		$merged = array_merge( $current, self::sanitize_all( $incoming ) );
+
+		// An administrator must not be able to block their own address: the
+		// next request they make (or the login page) would be refused.
+		if ( ! ( defined( 'WP_CLI' ) && WP_CLI ) && ! wp_doing_cron() && ! empty( $merged['ip_blocklist'] ) ) {
+			$mine = \GemSecurity\Helper::get_ip_address();
+			if ( ! SiteGuard::ip_safelisted( $mine ) && ! in_array( $mine, (array) $merged['ip_safelist'], true ) ) {
+				list( $merged['ip_blocklist'], $removed ) = SiteGuard::without_ip( (array) $merged['ip_blocklist'], $mine );
+				if ( $removed ) {
+					self::$notices[] = sprintf(
+						/* translators: %s: the administrator's IP address. */
+						__( '%s is your own IP address, so it was not added to the blocklist. Blocking it would lock you out.', 'gemsecurity' ),
+						$mine
+					);
+				}
+			}
+		}
+
+		$merged = SiteGuard::guard_lock_settings( $current, $merged );
+
+		list( $merged, $held ) = SiteGuard::guard_protected( $current, $merged );
+		if ( $held ) {
+			self::$notices[] = __( 'GemSecurity is locked, so some security settings were not changed. Unlock it on the Firewall page (password and emailed code) first.', 'gemsecurity' );
+		}
 
 		// When the whitelist guard is switched on and the list is empty, seed it
 		// with every current administrator so no legitimate admin is removed.

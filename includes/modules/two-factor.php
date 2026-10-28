@@ -677,6 +677,10 @@ class TwoFactor {
 		if ( empty( $roles ) ) {
 			return false;
 		}
+		// "all" means every role, including ones created later.
+		if ( in_array( 'all', $roles, true ) ) {
+			return true;
+		}
 		return (bool) array_intersect( (array) $user->roles, $roles );
 	}
 

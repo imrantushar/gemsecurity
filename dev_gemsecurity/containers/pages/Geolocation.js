@@ -16,6 +16,10 @@ const KEYS = [
 	'geo_block_unknown',
 	'geo_whitelist_block_admins',
 	'geo_allowed_countries',
+	'geo_mode',
+	'geo_blocked_countries',
+	'geo_admin_restrict_enabled',
+	'geo_admin_countries',
 	'geo_user_lock_enabled',
 	'geo_user_lock_action',
 ];
@@ -142,15 +146,29 @@ export default function Geolocation() {
 				</div>
 			</Card>
 
-			<Card title={ __( 'Country whitelist', 'gemsecurity' ) } description={ __( 'Only the selected countries are allowed. Leave empty to allow all.', 'gemsecurity' ) }>
-				<Field label={ __( 'Allowed countries', 'gemsecurity' ) }>
+			<Card title={ __( 'Visitor countries', 'gemsecurity' ) } description={ __( 'Choose which countries may reach your site. Include only the countries you list, or exclude the ones you list.', 'gemsecurity' ) }>
+				<Field label={ __( 'Mode', 'gemsecurity' ) }>
+					<Select
+						value={ form.geo_mode || 'allow' }
+						onChange={ ( e ) => setField( 'geo_mode', e.target.value ) }
+						disabled={ ! form.geo_enabled }
+						options={ [
+							{ value: 'allow', label: __( 'Include — only the selected countries are allowed', 'gemsecurity' ) },
+							{ value: 'block', label: __( 'Exclude — the selected countries are blocked', 'gemsecurity' ) },
+						] }
+					/>
+				</Field>
+				<Field
+					label={ 'block' === form.geo_mode ? __( 'Blocked countries', 'gemsecurity' ) : __( 'Allowed countries', 'gemsecurity' ) }
+					description={ 'block' === form.geo_mode ? __( 'Visitors from these countries get a 403. Leave empty to block nobody.', 'gemsecurity' ) : __( 'Leave empty to allow all.', 'gemsecurity' ) }
+				>
 					<ReactSelect
 						isMulti
 						className="gs-rs"
 						classNamePrefix="gs-rs"
 						options={ COUNTRY_OPTIONS }
-						value={ toOptions( form.geo_allowed_countries ) }
-						onChange={ ( opts ) => setField( 'geo_allowed_countries', ( opts || [] ).map( ( o ) => o.value ) ) }
+						value={ toOptions( 'block' === form.geo_mode ? form.geo_blocked_countries : form.geo_allowed_countries ) }
+						onChange={ ( opts ) => setField( 'block' === form.geo_mode ? 'geo_blocked_countries' : 'geo_allowed_countries', ( opts || [] ).map( ( o ) => o.value ) ) }
 						placeholder={ __( 'Select countries…', 'gemsecurity' ) }
 						isDisabled={ ! form.geo_enabled }
 						menuPortalTarget={ typeof document !== 'undefined' ? document.body : null }
@@ -163,6 +181,39 @@ export default function Geolocation() {
 					<Toggle label={ __( 'Block when the country is unknown', 'gemsecurity' ) } description={ __( 'By default unknown/local IPs are allowed so you are never locked out. Turn on only if you are sure.', 'gemsecurity' ) } checked={ form.geo_block_unknown } onChange={ ( v ) => setField( 'geo_block_unknown', v ) } disabled={ ! form.geo_enabled } />
 					<Toggle label={ __( 'Also apply the login block to administrators', 'gemsecurity' ) } description={ __( 'Off by default so an admin can always recover. Enabling this can lock out admins who travel.', 'gemsecurity' ) } checked={ form.geo_whitelist_block_admins } onChange={ ( v ) => setField( 'geo_whitelist_block_admins', v ) } disabled={ ! form.geo_enabled } />
 				</div>
+			</Card>
+
+			<Card title={ __( 'Administrator sign-in location', 'gemsecurity' ) } description={ __( 'Administrators can only sign in from the countries you choose. Outside them, or when the country cannot be worked out, the login is refused.', 'gemsecurity' ) }>
+				<Toggle
+					label={ __( 'Restrict administrator sign-in to selected countries', 'gemsecurity' ) }
+					description={ __( 'Include your own country and any you travel to, or you will lock yourself out. Recovery: add define( \'GEMSEC_GEO_DISABLE\', true ); to wp-config.php.', 'gemsecurity' ) }
+					checked={ form.geo_admin_restrict_enabled }
+					onChange={ ( v ) => setField( 'geo_admin_restrict_enabled', v ) }
+					disabled={ ! form.geo_enabled }
+				/>
+				{ form.geo_admin_restrict_enabled && (
+					<Field label={ __( 'Countries administrators can sign in from', 'gemsecurity' ) }>
+						<ReactSelect
+							isMulti
+							className="gs-rs"
+							classNamePrefix="gs-rs"
+							options={ COUNTRY_OPTIONS }
+							value={ toOptions( form.geo_admin_countries ) }
+							onChange={ ( opts ) => setField( 'geo_admin_countries', ( opts || [] ).map( ( o ) => o.value ) ) }
+							placeholder={ __( 'Select countries…', 'gemsecurity' ) }
+							menuPortalTarget={ typeof document !== 'undefined' ? document.body : null }
+							styles={ { menuPortal: ( base ) => ( { ...base, zIndex: 100000 } ) } }
+						/>
+						{ detected && detected.country && ! ( form.geo_admin_countries || [] ).includes( detected.country ) && (
+							<p className="gs-muted">
+								{ __( 'Your current country is not in this list.', 'gemsecurity' ) }{ ' ' }
+								<Button variant="secondary" onClick={ () => setField( 'geo_admin_countries', [ ...( form.geo_admin_countries || [] ), detected.country ] ) }>
+									{ __( 'Add', 'gemsecurity' ) } { countryName( detected.country ) }
+								</Button>
+							</p>
+						) }
+					</Field>
+				) }
 			</Card>
 
 			<Card title={ __( 'Per-user location lock', 'gemsecurity' ) } description={ __( 'Restrict individual users to their own approved countries.', 'gemsecurity' ) }>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { saveSettings } from '@Redux/settingsSlice';
+import { saveSettings, takeNotices } from '@Redux/settingsSlice';
 import { useToast } from '@Components/ui/Toast';
 import { registerForm, unregisterForm } from '@Utils/unsavedChanges';
 import { isInstantSetting } from '@Utils/instantSettings';
@@ -130,6 +130,7 @@ export default function useSettingsForm( keys ) {
 	const persist = async ( partial, message, source = 'save' ) => {
 		try {
 			await dispatch( saveSettings( { settings: partial, source } ) ).unwrap();
+			takeNotices().forEach( ( n ) => toast( n, 'warning' ) );
 			if ( message ) {
 				toast( message, 'success' );
 			}
