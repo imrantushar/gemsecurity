@@ -5,6 +5,7 @@ use GemSecurity\Helper;
 use GemSecurity\Logger;
 use GemSecurity\Mailer;
 use GemSecurity\Rest\Settings;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
