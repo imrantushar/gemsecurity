@@ -4,6 +4,7 @@ namespace GemSecurity\Modules;
 use GemSecurity\Helper;
 use GemSecurity\Mailer;
 use GemSecurity\Logger;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -173,7 +174,7 @@ class ApiHardening {
 		$max    = max( 1, (int) Helper::get_setting( 'rest_rate_limit_max', 120 ) );
 		$window = max( 1, (int) Helper::get_setting( 'rest_rate_limit_window', 1 ) ); // minutes.
 		$key    = self::RL_PREFIX . md5( $ip );
-		$count  = (int) get_transient( $key );
+		$count  = (int) Store::get( $key );
 
 		if ( $count >= $max ) {
 			return new \WP_Error(
@@ -183,7 +184,7 @@ class ApiHardening {
 			);
 		}
 
-		set_transient( $key, $count + 1, $window * MINUTE_IN_SECONDS );
+		Store::set( $key, $count + 1, $window * MINUTE_IN_SECONDS );
 		return $result;
 	}
 }

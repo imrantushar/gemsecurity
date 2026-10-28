@@ -4,6 +4,7 @@ namespace GemSecurity\Modules;
 use GemSecurity\Helper;
 use GemSecurity\Mailer;
 use GemSecurity\Logger;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -94,12 +95,12 @@ class LoginSecurity {
 			return;
 		}
 
-		$attempts = (int) get_transient( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ) );
+		$attempts = (int) Store::get( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ) );
 		$attempts++;
 
 		// Track the attempt window for the same duration as a lockout.
 		$window = max( 1, (int) Helper::get_setting( 'login_lockout_duration', 30 ) ) * MINUTE_IN_SECONDS;
-		set_transient( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ), $attempts, $window );
+		Store::set( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ), $attempts, $window );
 
 		Logger::log(
 			'login_failed',
@@ -109,8 +110,8 @@ class LoginSecurity {
 		);
 
 		if ( $attempts >= $limit ) {
-			set_transient( self::LOCK_TRANSIENT_PREFIX . md5( $ip ), time(), $window );
-			delete_transient( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ) );
+			Store::set( self::LOCK_TRANSIENT_PREFIX . md5( $ip ), time(), $window );
+			Store::delete( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ) );
 			Logger::log(
 				'login_lockout',
 				sprintf( 'IP %s locked out after %d failed login attempts.', $ip, $limit ),
@@ -130,7 +131,7 @@ class LoginSecurity {
 	 * @return bool
 	 */
 	public static function is_locked_out( $ip ) {
-		return (bool) get_transient( self::LOCK_TRANSIENT_PREFIX . md5( $ip ) );
+		return (bool) Store::get( self::LOCK_TRANSIENT_PREFIX . md5( $ip ) );
 	}
 
 	/* --------------------------------------------------------------------- */
@@ -150,8 +151,8 @@ class LoginSecurity {
 		}
 
 		$ip = Helper::get_ip_address();
-		delete_transient( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ) );
-		delete_transient( self::LOCK_TRANSIENT_PREFIX . md5( $ip ) );
+		Store::delete( self::ATTEMPT_TRANSIENT_PREFIX . md5( $ip ) );
+		Store::delete( self::LOCK_TRANSIENT_PREFIX . md5( $ip ) );
 
 		$is_admin = self::user_is_administrator( $user );
 

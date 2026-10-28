@@ -4,6 +4,7 @@ namespace GemSecurity\Modules;
 use GemSecurity\Helper;
 use GemSecurity\Logger;
 use GemSecurity\Security\BanList;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -72,8 +73,8 @@ class Waf {
 		$suspicious = $this->is_suspicious_bot();
 		if ( $suspicious ) {
 			$throttle_key = 'gemsec_sbot_' . md5( $ip . $suspicious['ua'] );
-			if ( ! get_transient( $throttle_key ) ) {
-				set_transient( $throttle_key, 1, HOUR_IN_SECONDS );
+			if ( ! Store::get( $throttle_key ) ) {
+				Store::set( $throttle_key, 1, HOUR_IN_SECONDS );
 				Logger::log(
 					'seems_bot',
 					sprintf( 'Suspicious user-agent from %s.', $ip ),
@@ -141,11 +142,11 @@ class Waf {
 		$window = max( 1, (int) Helper::get_setting( 'throttle_404_window', 5 ) ) * MINUTE_IN_SECONDS;
 		$key    = 'gemsec_404_' . md5( $ip );
 
-		$count = (int) get_transient( $key ) + 1;
-		set_transient( $key, $count, $window );
+		$count = (int) Store::get( $key ) + 1;
+		Store::set( $key, $count, $window );
 
 		if ( $count >= $max ) {
-			delete_transient( $key );
+			Store::delete( $key );
 			Logger::log( 'waf_404_flood', sprintf( '404 flood from %s (%d in window).', $ip, $count ), Logger::SEVERITY_WARNING, [ 'user_id' => 0, 'ip_address' => $ip ] );
 			BanList::record_strike( $ip, '404 flood' );
 		}
@@ -267,7 +268,7 @@ class Waf {
 	 */
 	private function is_verified_bot( $ip, $claim ) {
 		$key    = 'gemsec_vbot_' . md5( $ip . '|' . $claim['token'] );
-		$cached = get_transient( $key );
+		$cached = Store::get( $key );
 		if ( false !== $cached ) {
 			return '1' === $cached;
 		}
@@ -290,7 +291,7 @@ class Waf {
 			}
 		}
 
-		set_transient( $key, $verified ? '1' : '0', $verified ? DAY_IN_SECONDS : HOUR_IN_SECONDS );
+		Store::set( $key, $verified ? '1' : '0', $verified ? DAY_IN_SECONDS : HOUR_IN_SECONDS );
 		return $verified;
 	}
 
@@ -303,8 +304,8 @@ class Waf {
 		$window = max( 1, (int) Helper::get_setting( 'rate_limit_window', 1 ) ) * MINUTE_IN_SECONDS;
 		$key    = 'gemsec_rl_' . md5( $ip );
 
-		$count = (int) get_transient( $key ) + 1;
-		set_transient( $key, $count, $window );
+		$count = (int) Store::get( $key ) + 1;
+		Store::set( $key, $count, $window );
 		return $count > $max;
 	}
 

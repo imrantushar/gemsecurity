@@ -209,7 +209,7 @@ class SiteGuard {
 
 	/** @return bool Has this session entered the unlock password recently? */
 	public static function is_unlocked() {
-		return (bool) get_transient( self::unlock_key() );
+		return (bool) Store::get( self::unlock_key() );
 	}
 
 	/** @return string Transient key tied to the user and this login session. */
@@ -385,7 +385,7 @@ class SiteGuard {
 		self::$writing = false;
 		self::store_flag( true );
 		// The person who just set it stays unlocked for this session.
-		set_transient( self::unlock_key(), 1, self::UNLOCK_TTL );
+		Store::set( self::unlock_key(), 1, self::UNLOCK_TTL );
 		Logger::log( 'plugin_lock_enabled', __( 'GemSecurity plugin lock turned on.', 'gemsecurity' ), Logger::SEVERITY_NOTICE );
 		return self::lock_status();
 	}
@@ -408,21 +408,21 @@ class SiteGuard {
 
 		$uid       = get_current_user_id();
 		$tries_key = 'gemsec_lock_tries_' . $uid;
-		$tries     = (int) get_transient( $tries_key );
+		$tries     = (int) Store::get( $tries_key );
 		if ( $tries >= self::MAX_TRIES ) {
 			return new \WP_Error( 'gemsecurity_lock', __( 'Too many wrong passwords. Try again in 15 minutes.', 'gemsecurity' ), [ 'status' => 429 ] );
 		}
 
 		if ( ! wp_check_password( (string) $req->get_param( 'password' ), $hash ) ) {
-			set_transient( $tries_key, $tries + 1, 15 * MINUTE_IN_SECONDS );
+			Store::set( $tries_key, $tries + 1, 15 * MINUTE_IN_SECONDS );
 			Logger::log( 'plugin_lock_failed', __( 'Wrong GemSecurity unlock password entered.', 'gemsecurity' ), Logger::SEVERITY_WARNING );
 			return new \WP_Error( 'gemsecurity_lock', __( 'Wrong password.', 'gemsecurity' ), [ 'status' => 403 ] );
 		}
-		delete_transient( $tries_key );
+		Store::delete( $tries_key );
 
 		// Cap how many codes can be requested, so this cannot be used to flood the inbox.
 		$sends_key = 'gemsec_lock_sends_' . $uid;
-		$sends     = (int) get_transient( $sends_key );
+		$sends     = (int) Store::get( $sends_key );
 		if ( $sends >= self::MAX_SENDS ) {
 			return new \WP_Error( 'gemsecurity_lock', __( 'Too many codes requested. Try again in 15 minutes.', 'gemsecurity' ), [ 'status' => 429 ] );
 		}
@@ -442,8 +442,8 @@ class SiteGuard {
 			return new \WP_Error( 'gemsecurity_lock', __( 'The email with the code could not be sent. Check that your site can send email.', 'gemsecurity' ), [ 'status' => 500 ] );
 		}
 
-		set_transient( $sends_key, $sends + 1, 15 * MINUTE_IN_SECONDS );
-		set_transient( self::code_key(), [ 'c' => wp_hash( $code ), 'tries' => 0 ], self::CODE_TTL );
+		Store::set( $sends_key, $sends + 1, 15 * MINUTE_IN_SECONDS );
+		Store::set( self::code_key(), [ 'c' => wp_hash( $code ), 'tries' => 0 ], self::CODE_TTL );
 		Logger::log( 'plugin_lock_code_sent', __( 'GemSecurity unlock code emailed.', 'gemsecurity' ), Logger::SEVERITY_NOTICE );
 
 		return rest_ensure_response( [ 'success' => true, 'step' => 'code', 'email' => self::mask_email( $email ) ] );
@@ -451,25 +451,25 @@ class SiteGuard {
 
 	/** POST /lock/verify { code } — step 2 of 2: the emailed code opens the lock. */
 	public static function lock_verify( $req ) {
-		$pending = get_transient( self::code_key() );
+		$pending = Store::get( self::code_key() );
 		if ( ! is_array( $pending ) ) {
 			return new \WP_Error( 'gemsecurity_lock', __( 'No code is waiting, or it expired. Enter the password again to get a new one.', 'gemsecurity' ), [ 'status' => 409 ] );
 		}
 		if ( (int) $pending['tries'] >= self::MAX_CODE_TRIES ) {
-			delete_transient( self::code_key() );
+			Store::delete( self::code_key() );
 			return new \WP_Error( 'gemsecurity_lock', __( 'Too many wrong codes. Enter the password again to get a new one.', 'gemsecurity' ), [ 'status' => 429 ] );
 		}
 
 		$code = preg_replace( '/\D/', '', (string) $req->get_param( 'code' ) );
 		if ( '' === $code || ! hash_equals( (string) $pending['c'], wp_hash( $code ) ) ) {
 			$pending['tries'] = (int) $pending['tries'] + 1;
-			set_transient( self::code_key(), $pending, self::CODE_TTL );
+			Store::set( self::code_key(), $pending, self::CODE_TTL );
 			Logger::log( 'plugin_lock_failed', __( 'Wrong GemSecurity unlock code entered.', 'gemsecurity' ), Logger::SEVERITY_WARNING );
 			return new \WP_Error( 'gemsecurity_lock', __( 'Wrong code.', 'gemsecurity' ), [ 'status' => 403 ] );
 		}
 
-		delete_transient( self::code_key() );
-		set_transient( self::unlock_key(), 1, self::UNLOCK_TTL );
+		Store::delete( self::code_key() );
+		Store::set( self::unlock_key(), 1, self::UNLOCK_TTL );
 		Logger::log( 'plugin_lock_opened', __( 'GemSecurity plugin lock opened for 10 minutes.', 'gemsecurity' ), Logger::SEVERITY_NOTICE );
 		return self::lock_status();
 	}
@@ -487,7 +487,7 @@ class SiteGuard {
 
 	/** POST /lock/relock — close it again right away. */
 	public static function lock_relock() {
-		delete_transient( self::unlock_key() );
+		Store::delete( self::unlock_key() );
 		return self::lock_status();
 	}
 
