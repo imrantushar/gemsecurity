@@ -1,6 +1,6 @@
 === GemSecurity ===
 Contributors: kodezen, tusharimran
-Tags: security, firewall, two factor authentication, malware scanner, backup
+Tags: security, firewall, two factor authentication, malware scanner, login security
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
@@ -8,7 +8,7 @@ Stable tag: 1.1.0
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
-Firewall, 2FA, malware scanner, login security and backups — one dashboard, one plugin, zero bloat.
+Firewall, 2FA, malware scanner and login security — one dashboard, one plugin, zero bloat.
 
 == Description ==
 
@@ -36,37 +36,15 @@ GemSecurity is an all-in-one security dashboard for WordPress with a fast, singl
 * Full activity log with retention and CSV export
 * Security dashboard — score, stats and trends
 
-= Backup & restore =
-* Manual database, files and full-site backups
-* Restore and download backups
-* A daily scheduled backup to local storage
-* Retention, exclude paths/tables and a backup activity log
-* Pre-update automatic backup (fires before plugin/theme/core updates)
-* (Pro) cloud storage — Amazon S3, Backblaze B2, Cloudflare R2, Dropbox, Google Drive, OneDrive, FTP — plus encryption, migration (search-replace), multiple/weekly/monthly schedules and restore-from-cloud
+= Works with GemBackup (optional) =
+GemSecurity does not create backups itself. If the separate GemBackup plugin is active, GemSecurity can ask it for a backup before plugin/theme/core updates and can start a restore of its latest backup from the Incident Response page.
 
 = GemSecurity Pro =
-The optional GemSecurity Pro add-on unlocks active threat protection and remediation: Threat Defense (escalating auto-bans, ban ledger, bot blocklist), Geolocation/country access control, a signature malware scanner with quarantine, database injection scan, plugin/theme integrity vs WordPress.org, a post-hack recovery toolkit, file-change baseline, a hardening pack, auto-update enforcement and settings import/export.
-
-= The Kodezen Ecosystem — Everything Works Together, Natively =
-
-GemSecurity is part of a connected family of WordPress plugins built to run your whole business from one platform:
-
-* [GemCRM](https://gemcrm.net/) — CRM, email marketing, newsletters and marketing automation
-* [StoreEngine](https://storeengine.pro/) — sell digital & physical products, subscriptions, and memberships
-* [Academy LMS](https://academylms.net/) — the top-rated WordPress LMS to create, sell, and manage courses
-* [aBlocks](https://ablocks.pro/) — design fast, high-performance pages with 100+ Gutenberg blocks, no code
-* [ZenCommunity](https://zencommunity.pro/) — communities, discussions, support tickets, and live chat
-* [QuizPress](https://quizpress.pro/) — advanced quizzes, polls, surveys, and exams, 20+ question types
-* [GameEngine](https://gameengine.pro/) — gamify engagement with points, badges, levels, and rewards
-* [ZenAppBuilder](https://academylms.net/zenappbuilder/) — turn your Academy LMS site into a native mobile app
-* [GemBooking](https://gembooking.net/) — accept and automate bookings for appointments and services
-* [GemBoards](https://gemboards.com/) — manage projects, tasks, and teams with modern Kanban boards
-* [Easy Content Manager (ECM)](https://easycontentmanager.pro/) — build custom post types, fields, and taxonomies, no code
-* [Zaplane](https://zaplane.app/) — automate WordPress workflows across your favorite apps, no code
+The optional GemSecurity Pro add-on is a separate plugin that adds these features (none of this code is in the free plugin): Threat Defense (escalating auto-bans, ban ledger, bot blocklist), Geolocation/country access control, a signature malware scanner with quarantine, database injection scan, plugin/theme integrity vs WordPress.org, a post-hack recovery toolkit, file-change baseline, a hardening pack, auto-update enforcement and settings import/export.
 
 == External services ==
 
-GemSecurity connects to the services below only for the feature named, and only after you turn that feature on. Nothing is sent on a default install except the WordPress.org lookups used by the vulnerability and plugin checks.
+GemSecurity connects to the services below only for the feature named, and only after you turn that feature on. On a default install the only requests made are to WordPress.org (official checksums and plugin information, used to verify core, plugin and theme files). Every other service below is contacted only after you switch that feature on, including the vulnerability scan, which is off by default.
 
 = CAPTCHA (Login & Access → CAPTCHA) =
 When CAPTCHA is enabled, the provider's script loads on the login, registration and lost-password forms, and the CAPTCHA response token plus the visitor's IP address are sent to the provider to verify each submission.
@@ -84,22 +62,28 @@ When a visitor signs in with a provider, the OAuth authorization code is sent to
 * X (Twitter) — [Terms](https://x.com/en/tos), [Privacy](https://x.com/en/privacy)
 
 = Vulnerability scanner =
-The slug and version of each installed plugin and theme, and your WordPress version, are sent to WPVulnerability to look up known vulnerabilities. [Terms and privacy](https://www.wpvulnerability.com/privacy/)
+The slug and version of each installed plugin and theme, and your WordPress version, are sent to the WPVulnerability API (www.wpvulnerability.net) to look up known vulnerabilities. [License](https://www.wpvulnerability.com/license/), [Privacy](https://www.wpvulnerability.com/privacy/)
 
 = Plugin and file integrity checks =
 Plugin/theme slugs and versions are sent to WordPress.org to fetch official checksums, package details and original files for comparison. [Terms](https://wordpress.org/about/domains/), [Privacy](https://wordpress.org/about/privacy/)
 
 = Breached-password check (Password Policy) =
-When enabled, the first 5 characters of the SHA-1 hash of a new password are sent to Have I Been Pwned. The password itself never leaves your site. [Terms and privacy](https://haveibeenpwned.com/Privacy)
+When enabled, the first 5 characters of the SHA-1 hash of a new password are sent to Have I Been Pwned (api.pwnedpasswords.com), also when you press "Test connection". The password itself never leaves your site. [Terms and privacy](https://haveibeenpwned.com/Privacy)
 
-= Geolocation (Firewall → Geolocation) =
-When country blocking is enabled, the visitor's IP address is sent to ip-api.com, falling back to ipapi.co, to look up the visitor's country. [ip-api.com terms](https://ip-api.com/docs/legal), [ipapi.co terms](https://ipapi.co/terms/), [ipapi.co privacy](https://ipapi.co/privacy/)
+= IP location lookup (Plugin Guard alerts) =
+When Plugin Guard blocks an executable upload or an untrusted plugin, the IP address of the visitor involved is sent to ip-api.com, falling back to ipapi.co, to add a country and city to the security alert. The GemSecurity Pro add-on uses the same lookup for its country access control. [ip-api.com terms](https://ip-api.com/docs/legal), [ipapi.co terms](https://ipapi.co/terms/), [ipapi.co privacy](https://ipapi.co/privacy/)
 
 = Alerts (Notifications) =
 When you add a Slack webhook or Telegram bot, security alert text (event, user, IP address and time) is sent to that channel.
 
 * Slack — [Terms](https://slack.com/terms-of-service), [Privacy](https://slack.com/trust/privacy/privacy-policy)
 * Telegram — [Terms](https://telegram.org/tos), [Privacy](https://telegram.org/privacy)
+
+= Generic webhook and SIEM collector (Notifications, Settings → Compliance & SIEM) =
+Only if you enter your own webhook or collector URL, security events (event name, severity, message, user, IP address and time) are sent to that URL. The destination is chosen and operated by you, so its terms and privacy policy are your own.
+
+= Site monitoring (Monitoring module) =
+Uptime, TLS-certificate, DNS, SPF and DMARC checks are made against your own site and domain. DNS lookups use your server's resolver; no data about your site is sent to GemSecurity or Kodezen.
 
 = Usage insights (opt-in) =
 Only if you accept the opt-in notice, GemSecurity sends usage data to Kodezen at store.kodezen.com. This includes your site URL and name, the admin's name and email, the server IP, WordPress, PHP, database and server versions, the site language, active theme, and active and inactive plugins. If you choose to give feedback when deactivating, that feedback is sent too. Nothing is sent if you decline. [Terms](https://kodezen.com/terms-and-conditions/), [Privacy](https://kodezen.com/privacy-policy/)
@@ -221,7 +205,7 @@ First public beta. GemSecurity is an all-in-one, registry-driven security suite 
 * Added - Anti-Spam: frictionless bot checks on comments and registration with heuristic filtering.
 * Added - Scanner: WordPress core file-integrity checks against official checksums, uploads malware/PHP-pattern scan, file-change detection, link scanning, and known-vulnerability scanning for core/plugins/themes.
 * Added - Activity Logs & real-time Alerts with retention and CSV export.
-* Added - Backups: manual database / files / full-site backups, restore, download, daily local schedule, retention, exclude paths/tables and pre-update automatic backups.
+* Added - Backups (these moved to the standalone GemBackup plugin in 1.1.0 and are no longer part of GemSecurity).
 * Added - Module manager with a live security score and one-page dashboard.
 
 Active threat defense, virtual patching, geolocation access control, payment-integrity monitoring, incident response, uptime/TLS monitoring, signature malware remediation & quarantine, database-injection scan, file integrity vs WordPress.org, recovery toolkit, and cloud backup storage with encryption & migration are available in GemSecurity Pro.

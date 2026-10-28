@@ -36,9 +36,8 @@ build.config.json
 .build-cache
 /dist
 
-# Composer manifests (the built vendor/ autoloader needs neither at runtime)
-composer.json
-composer.lock
+# composer.json / composer.lock ship on purpose (wp.org asks for them so the
+# dependencies can be reviewed and rebuilt).
 
 # Dev docs & build artifacts
 docs

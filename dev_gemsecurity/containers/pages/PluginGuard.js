@@ -123,7 +123,7 @@ export default function PluginGuard() {
 					<div className="gs-alert gs-alert--warning"><Icon name="alert" size={ 16 } />{ __( 'GEMSECURITY_PLUGIN_GUARD_OFF is defined in wp-config.php, so enforcement is disabled.', 'gemsecurity' ) }</div>
 				) }
 				{ data.enabled && ! data.mu_installed && (
-					<div className="gs-alert gs-alert--warning"><Icon name="alert" size={ 16 } />{ __( 'The early loader could not be written to wp-content/mu-plugins (not writable). Untrusted plugins are still blocked from activating, but one switched on directly in the database runs once before it is deactivated.', 'gemsecurity' ) }</div>
+					<div className="gs-alert gs-alert--warning"><Icon name="alert" size={ 16 } />{ __( 'The optional early loader (provided by GemSecurity Pro) is not active. Untrusted plugins are still blocked from activating, but one switched on directly in the database can run once before it is deactivated.', 'gemsecurity' ) }</div>
 				) }
 
 				<table className="gs-table">

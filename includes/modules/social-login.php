@@ -158,7 +158,10 @@ class SocialLogin {
 			// through a public query string. Empty when the caller didn't
 			// specify one, or when it came from a form that isn't asking for
 			// a specific role — see buttons_html()'s default.
-			'role'        => isset( $_GET['gemsec_role'] ) ? sanitize_key( wp_unslash( $_GET['gemsec_role'] ) ) : '',
+			'role'        => self::signed_role(
+				isset( $_GET['gemsec_role'] ) ? sanitize_key( wp_unslash( $_GET['gemsec_role'] ) ) : '',
+				isset( $_GET['gemsec_rsig'] ) ? sanitize_text_field( wp_unslash( $_GET['gemsec_rsig'] ) ) : ''
+			),
 		];
 		// phpcs:enable
 
@@ -234,7 +237,7 @@ class SocialLogin {
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$data = Helper::verify_signed_payload( wp_unslash( $_COOKIE[ self::cookie_name() ] ), 10 * MINUTE_IN_SECONDS );
+		$data = Helper::verify_signed_payload( sanitize_text_field( wp_unslash( $_COOKIE[ self::cookie_name() ] ) ), 10 * MINUTE_IN_SECONDS );
 		if ( ! is_array( $data ) || empty( $data['state'] ) || ! hash_equals( (string) $data['state'], (string) $state ) ) {
 			return false;
 		}
@@ -564,6 +567,32 @@ class SocialLogin {
 	];
 
 	/**
+	 * Signature that ties a requested role to a button this site rendered.
+	 *
+	 * @param string $role
+	 * @return string
+	 */
+	public static function role_signature( $role ) {
+		return hash_hmac( 'sha256', 'gemsec_role|' . $role, wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * The requested role, only when the sign-in URL carries the signature this
+	 * site put on its own buttons. A hand-written ?gemsec_role=… link has none,
+	 * so it can never ask for a role.
+	 *
+	 * @param string $role
+	 * @param string $sig
+	 * @return string
+	 */
+	private static function signed_role( $role, $sig ) {
+		if ( '' === $role || '' === $sig ) {
+			return '';
+		}
+		return hash_equals( self::role_signature( $role ), $sig ) ? $role : '';
+	}
+
+	/**
 	 * Whether a role passed in the sign-in URL may be given to a new account.
 	 *
 	 * Allowlisted (filterable — Academy and stores add their customer roles)
@@ -723,13 +752,15 @@ class SocialLogin {
 		$out = '';
 		if ( $frontend && ! self::$style_printed ) {
 			self::$style_printed = true;
-			$out .= '<style>' . self::css() . '</style>';
+			wp_register_style( 'gemsecurity-social-front', false, [], GEMSECURITY_VERSION );
+			wp_enqueue_style( 'gemsecurity-social-front' );
+			wp_add_inline_style( 'gemsecurity-social-front', self::css() );
 		}
 
 		$out .= '<div class="gemsec-social"><div class="gemsec-social__sep"><span>' . esc_html__( 'or sign in with', 'gemsecurity' ) . '</span></div>';
 		foreach ( $providers as $key => $meta ) {
 			$url  = add_query_arg(
-				array_filter( [ 'gemsec_oauth' => $key, 'redirect_to' => $redirect, 'gemsec_role' => $role ] ),
+				array_filter( [ 'gemsec_oauth' => $key, 'redirect_to' => $redirect, 'gemsec_role' => $role, 'gemsec_rsig' => $role ? self::role_signature( $role ) : '' ] ),
 				site_url( 'wp-login.php' )
 			);
 			$out .= sprintf(

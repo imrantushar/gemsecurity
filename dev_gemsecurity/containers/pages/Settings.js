@@ -290,31 +290,33 @@ export default function Settings() {
 				) }
 			</Card>
 
-			<Card
-				title={ <>{ __( 'Settings import / export', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
-				description={ __( 'Back up or migrate the whole GemSecurity configuration — settings and module activation — as JSON.', 'gemsecurity' ) }
-			>
-				<Toggle
-					label={ __( 'Include API keys and secrets', 'gemsecurity' ) }
-					description={ __( 'CAPTCHA and sign-in secrets, alert tokens and webhook URLs. Leave off for files you share; importing a file without them keeps this site\'s own.', 'gemsecurity' ) }
-					checked={ includeSecrets }
-					onChange={ setIncludeSecrets }
-					disabled={ ! pro }
-				/>
-				<div style={ { display: 'flex', gap: 10 } }>
-					<Button variant="secondary" loading={ busy === 'export' } onClick={ exportSettings } disabled={ ! pro }>
-						{ __( 'Export settings', 'gemsecurity' ) }
-					</Button>
-					{ pro ? (
-						<label className="gs-btn gs-btn--secondary" style={ { cursor: 'pointer' } }>
-							{ busy === 'import' ? __( 'Importing…', 'gemsecurity' ) : __( 'Import settings', 'gemsecurity' ) }
-							<input type="file" accept="application/json,.json" onChange={ importSettings } style={ { display: 'none' } } />
-						</label>
-					) : (
-						<Button variant="secondary" disabled>{ __( 'Import settings', 'gemsecurity' ) }</Button>
-					) }
-				</div>
-			</Card>
+			{ pro && (
+				<Card
+					title={ <>{ __( 'Settings import / export', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
+					description={ __( 'Back up or migrate the whole GemSecurity configuration — settings and module activation — as JSON.', 'gemsecurity' ) }
+				>
+					<Toggle
+						label={ __( 'Include API keys and secrets', 'gemsecurity' ) }
+						description={ __( 'CAPTCHA and sign-in secrets, alert tokens and webhook URLs. Leave off for files you share; importing a file without them keeps this site\'s own.', 'gemsecurity' ) }
+						checked={ includeSecrets }
+						onChange={ setIncludeSecrets }
+						disabled={ ! pro }
+					/>
+					<div style={ { display: 'flex', gap: 10 } }>
+						<Button variant="secondary" loading={ busy === 'export' } onClick={ exportSettings } disabled={ ! pro }>
+							{ __( 'Export settings', 'gemsecurity' ) }
+						</Button>
+						{ pro ? (
+							<label className="gs-btn gs-btn--secondary" style={ { cursor: 'pointer' } }>
+								{ busy === 'import' ? __( 'Importing…', 'gemsecurity' ) : __( 'Import settings', 'gemsecurity' ) }
+								<input type="file" accept="application/json,.json" onChange={ importSettings } style={ { display: 'none' } } />
+							</label>
+						) : (
+							<Button variant="secondary" disabled>{ __( 'Import settings', 'gemsecurity' ) }</Button>
+						) }
+					</div>
+				</Card>
+			) }
 
 		</div>
 	);

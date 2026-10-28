@@ -115,20 +115,6 @@ class Registry {
 				'classes'       => [ AntiSpam::class, Comments::class ],
 				'settings_keys' => [ 'antispam_enabled', 'antispam_heuristics', 'comments_disabled' ],
 			],
-			'threats' => [
-				'icon'          => 'zap',
-				'category'      => 'firewall',
-				'is_pro'        => true,
-				'page_slug'     => $slug . '-threats',
-				'classes'       => [ ThreatIntel::class ], // Auto-ban enforcement lives in Waf; this adds detection.
-			],
-			'virtual-patch' => [
-				'icon'          => 'shield',
-				'category'      => 'firewall',
-				'is_pro'        => true,
-				'page_slug'     => $slug . '-virtual-patch',
-				'classes'       => [ VirtualPatch::class ],
-			],
 
 			// ---- Login & access ------------------------------------------
 			'login-security' => [
@@ -180,14 +166,6 @@ class Registry {
 				'page_slug'     => $slug . '-social-login',
 				'classes'       => [ SocialLogin::class ],
 				'settings_keys' => [ 'social_login_enabled' ],
-			],
-			'geolocation' => [
-				'icon'          => 'globe',
-				'category'      => 'access',
-				'is_pro'        => true,
-				'page_slug'     => $slug . '-geolocation',
-				'classes'       => [ Geolocation::class ],
-				'settings_keys' => [ 'geo_enabled' ],
 			],
 			'admin-guard' => [
 				'icon'          => 'crown',
@@ -243,22 +221,7 @@ class Registry {
 				'classes'       => [ PluginGuard::class ],
 			],
 
-			'payment-integrity' => [
-				'icon'          => 'lock',
-				'category'      => 'scanning',
-				'is_pro'        => true,
-				'page_slug'     => $slug . '-payment-integrity',
-				'classes'       => [ PaymentIntegrity::class ],
-				'settings_keys' => [ 'payment_integrity_enabled' ],
-			],
 
-			'incident-response' => [
-				'icon'          => 'alert',
-				'category'      => 'scanning',
-				'is_pro'        => true,
-				'page_slug'     => $slug . '-incident-response',
-				'classes'       => [], // On-demand; all work via REST.
-			],
 
 			// ---- Logging -------------------------------------------------
 			'logs' => [
@@ -272,14 +235,6 @@ class Registry {
 			// ---- Maintenance ---------------------------------------------
 			// Backups live in the separate GemBackup plugin; GemSecurity only
 			// talks to it (pre-update backup, roll back, score) when it is active.
-			'monitoring' => [
-				'icon'          => 'globe',
-				'category'      => 'maintenance',
-				'is_pro'        => true,
-				'page_slug'     => $slug . '-monitoring',
-				'classes'       => [ Monitoring::class ],
-				'settings_keys' => [ 'monitoring_enabled' ],
-			],
 
 			// ---- Notifications (core) ------------------------------------
 			// Alert delivery and the scheduled sends. Every module raises events;

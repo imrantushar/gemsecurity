@@ -173,8 +173,9 @@ class Scanner {
 			return $cache;
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/update.php';
-		require_once ABSPATH . 'wp-admin/includes/file.php';
+		if ( ! function_exists( 'get_core_checksums' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/update.php';
+		}
 
 		$version   = get_bloginfo( 'version' );
 		$checksums = function_exists( 'get_core_checksums' ) ? get_core_checksums( $version, get_locale() ) : false;
@@ -312,7 +313,9 @@ class Scanner {
 	 * @return array
 	 */
 	private static function scan_hidden_plugins() {
-		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
 
 		$findings = [];
 		$listed   = array_flip( array_keys( get_plugins() ) );

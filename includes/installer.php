@@ -39,8 +39,8 @@ class Installer {
 		self::clear_events();
 		// Remove the extended-protection mu-plugin so a deactivated plugin
 		// never leaves an orphaned early firewall behind.
-		\GemSecurity\Security\MuLoader::uninstall();
 		\GemSecurity\Security\PluginGuard::uninstall_mu();
+		\GemSecurity\Security\PluginGuard::remove_extended_file();
 		require_once GEMSECURITY_INCLUDES_DIR_PATH . 'security/upload-shield.php';
 		\GemSecurity\Security\UploadShield::remove_htaccess();
 		\GemSecurity\Security\CoreFileRules::sync( false );
@@ -472,7 +472,7 @@ class Installer {
 			'monitoring_enabled'           => false,
 
 			// Vulnerability scanner.
-			'vuln_scan_enabled'            => true,
+			'vuln_scan_enabled'            => false,
 
 			// WAF / threat defense (aggressive — default off; bans always enforced).
 			'waf_enabled'                  => false,

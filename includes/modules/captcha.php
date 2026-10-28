@@ -107,8 +107,8 @@ class Captcha {
 
 		if ( $p['v3'] ) {
 			$inline = sprintf(
-				'document.addEventListener("submit",function(e){var f=e.target;if(!f||f.querySelector(".gs-captcha-token"))return;},true);' .
-				'window.gemsecRecaptchaV3=function(form){return new Promise(function(res){grecaptcha.ready(function(){grecaptcha.execute("%s",{action:"login"}).then(function(t){res(t);});});});};',
+				'window.gemsecRecaptchaV3=function(form){return new Promise(function(res){grecaptcha.ready(function(){grecaptcha.execute("%s",{action:"login"}).then(function(t){res(t);});});});};' .
+				'document.addEventListener("submit",function(e){var f=e.target;if(!f||!f.querySelector)return;var fld=f.querySelector(".gs-captcha-token");if(!fld||fld.value)return;e.preventDefault();window.gemsecRecaptchaV3(f).then(function(t){fld.value=t;f.submit();});},true);',
 				esc_js( $site_key )
 			);
 			wp_add_inline_script( 'gemsecurity-captcha', $inline );
@@ -141,8 +141,6 @@ class Captcha {
 				'<input type="hidden" name="%s" class="gs-captcha-token" value="" />',
 				esc_attr( $p['field'] )
 			);
-			$field = esc_js( $p['field'] );
-			echo '<script>(function(){var fld=document.querySelector(".gs-captcha-token");if(!fld)return;var form=fld.form;if(!form)return;form.addEventListener("submit",function(e){if(fld.value)return;e.preventDefault();window.gemsecRecaptchaV3&&window.gemsecRecaptchaV3(form).then(function(t){fld.value=t;form.submit();});});})();</script>';
 			return;
 		}
 

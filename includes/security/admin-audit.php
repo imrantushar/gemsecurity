@@ -291,10 +291,14 @@ class AdminAudit {
 	 * @return void
 	 */
 	public static function delete_user( $user_id ) {
-		require_once ABSPATH . 'wp-admin/includes/user.php';
+		if ( ! function_exists( 'wp_delete_user' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+		}
 
 		if ( is_multisite() ) {
-			require_once ABSPATH . 'wp-admin/includes/ms.php';
+			if ( ! function_exists( 'wpmu_delete_user' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/ms.php';
+			}
 			wpmu_delete_user( (int) $user_id );
 			return;
 		}

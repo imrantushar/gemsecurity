@@ -87,5 +87,5 @@ foreach ( $hooks as $hook ) {
 // Extended-protection mu-plugin.
 $mu = ( defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins' ) . '/gemsecurity-extended-protection.php';
 if ( file_exists( $mu ) ) {
-	unlink( $mu ); // phpcs:ignore
+	wp_delete_file( $mu );
 }
