@@ -3,6 +3,7 @@ namespace GemSecurity\Security;
 
 use GemSecurity\Helper;
 use GemSecurity\Logger;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -107,7 +108,7 @@ class BanList {
 		$wpdb->delete( self::table(), [ 'ip' => $ip ], [ '%s' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		unset( self::$cache[ $ip ] );
 		wp_cache_delete( md5( $ip ), self::CACHE_GROUP );
-		delete_transient( self::STRIKE_PREFIX . md5( $ip ) );
+		Store::delete( self::STRIKE_PREFIX . md5( $ip ) );
 	}
 
 	/**
