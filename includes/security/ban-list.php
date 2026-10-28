@@ -107,38 +107,25 @@ class BanList {
 	}
 
 	/**
-	 * Record a strike; auto-ban once the threshold is reached in the window.
+	 * Record a strike against an IP.
+	 *
+	 * Escalating auto-bans are provided by the GemSecurity Pro add-on (Threat
+	 * Defense); on its own this plugin only records the offence in the log.
+	 * The add-on answers through the filter below.
 	 *
 	 * @param string $ip
 	 * @param string $reason
 	 * @return bool True if this strike resulted in a ban.
 	 */
 	public static function record_strike( $ip, $reason = '' ) {
-		// Escalating auto-bans (Threat Defense) are a Pro feature.
-		if ( ! Helper::is_pro_active() ) {
-			return false;
-		}
-		if ( ! Helper::get_setting( 'autoban_enabled', true ) || ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			return false;
-		}
-		if ( self::is_exempt( $ip ) ) {
-			return false;
-		}
-
-		$threshold = max( 2, (int) Helper::get_setting( 'autoban_threshold', 10 ) );
-		$window    = max( 1, (int) Helper::get_setting( 'autoban_window', 60 ) ) * MINUTE_IN_SECONDS;
-		$key       = self::STRIKE_PREFIX . md5( $ip );
-
-		$strikes = (int) get_transient( $key ) + 1;
-		set_transient( $key, $strikes, $window );
-
-		if ( $strikes >= $threshold ) {
-			delete_transient( $key );
-			$ttl = (int) Helper::get_setting( 'autoban_duration', 1440 ) * MINUTE_IN_SECONDS; // minutes → seconds
-			self::ban( $ip, $reason ?: 'auto-ban: repeated offenses', $ttl );
-			return true;
-		}
-		return false;
+		/**
+		 * Count a strike against an IP and ban it when a threshold is reached.
+		 *
+		 * @param bool   $banned Whether this strike resulted in a ban.
+		 * @param string $ip     Offending IP address.
+		 * @param string $reason Short reason, shown in the ban ledger.
+		 */
+		return (bool) apply_filters( 'gemsecurity/record_strike', false, $ip, $reason );
 	}
 
 	/**

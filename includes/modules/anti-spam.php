@@ -33,8 +33,8 @@ class AntiSpam {
 			add_filter( 'registration_errors', [ $self, 'check_registration' ], 10, 1 );
 		}
 
-		// Heuristic comment scoring (Pro).
-		if ( Helper::is_pro_active() && Helper::get_setting( 'antispam_heuristics', false ) ) {
+		// Heuristic comment scoring.
+		if ( Helper::get_setting( 'antispam_heuristics', false ) ) {
 			add_filter( 'pre_comment_approved', [ $self, 'score_comment' ], 10, 2 );
 		}
 	}

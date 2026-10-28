@@ -17,7 +17,7 @@ const BASE = {
 	login_honeypot_enabled: true,
 	antispam_enabled: true,
 	audit_log_enabled: true,
-	vuln_scan_enabled: true,
+	vuln_scan_enabled: false,
 };
 
 const STANDARD = {

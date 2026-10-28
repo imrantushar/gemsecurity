@@ -328,10 +328,16 @@ class Settings {
 		// Install/remove the extended-protection mu-plugin when toggled.
 		$now_mu = ! empty( $merged['mu_loader_enabled'] );
 		if ( $now_mu !== $was_mu_enabled ) {
-			$ok = \GemSecurity\Security\MuLoader::sync( $now_mu );
+			/**
+			 * Install or remove the extended-protection mu-plugin (GemSecurity Pro).
+			 *
+			 * @param bool $ok      Whether the file now matches the request.
+			 * @param bool $enabled Requested state.
+			 */
+			$ok = (bool) apply_filters( 'gemsecurity/extended_protection_sync', false, $now_mu );
 			if ( ! $ok ) {
 				// Couldn't write the file — reflect reality so the UI doesn't lie.
-				$merged['mu_loader_enabled'] = \GemSecurity\Security\MuLoader::is_installed();
+				$merged['mu_loader_enabled'] = is_file( trailingslashit( \GemSecurity\Security\PluginGuard::mu_dir() ) . \GemSecurity\Security\PluginGuard::EXTENDED_FILE );
 			}
 		}
 

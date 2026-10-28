@@ -63,71 +63,27 @@ export function UpgradeButton( { children } ) {
 }
 
 /* ------------------------------------------------------------------ */
-/* ProGate — renders children when Pro is active; otherwise shows the  */
-/* feature behind a frosted upgrade overlay.                           */
+/* ProGate — renders children only when the Pro add-on is active.     */
+/* Nothing is rendered for features this plugin does not contain.      */
 /* ------------------------------------------------------------------ */
 
 export function ProGate( { title, description, children } ) {
-	if ( isPro() ) {
-		return children;
+	if ( ! isPro() ) {
+		return null;
 	}
-
-	return (
-		<div className="gs-pro-gate">
-			<div className="gs-pro-gate__preview" aria-hidden="true" inert="">
-				{ children }
-			</div>
-			<div className="gs-pro-gate__overlay">
-				<div className="gs-pro-gate__card">
-					<span className="gs-pro-gate__mark">
-						<Icon name="lock" size={ 24 } />
-					</span>
-					<ProBadge />
-					<h3 className="gs-pro-gate__title">
-						{ title || __( 'This is a Pro feature', 'gemsecurity' ) }
-					</h3>
-					{ description && (
-						<p className="gs-pro-gate__desc">{ description }</p>
-					) }
-					<UpgradeButton />
-				</div>
-			</div>
-		</div>
-	);
+	return children;
 }
 
 /**
- * ProSection — convenience wrapper to lock an individual settings block on
- * an otherwise-free page. Renders a header with a PRO badge, then gates the
- * body. Sprinkle around any block you want to reserve for Pro.
+ * ProSection — wrapper for a settings block that exists only in the Pro
+ * add-on: rendered when Pro is active, absent otherwise.
  */
 export function ProSection( { title, description, children } ) {
 	if ( isPro() ) {
 		return children;
 	}
 
-	return (
-		<div className="gs-pro-gate gs-pro-gate--compact">
-			<div className="gs-pro-gate__preview" aria-hidden="true" inert="">
-				{ children }
-			</div>
-			<div className="gs-pro-gate__overlay">
-				<div className="gs-pro-gate__card">
-					<span className="gs-pro-gate__mark">
-						<Icon name="lock" size={ 20 } />
-					</span>
-					<div className="gs-pro-gate__body">
-						<h3 className="gs-pro-gate__title">
-							{ title || __( 'This is a Pro feature', 'gemsecurity' ) }
-							<ProBadge />
-						</h3>
-						{ description && (
-							<p className="gs-pro-gate__desc">{ description }</p>
-						) }
-					</div>
-					<UpgradeButton />
-				</div>
-			</div>
-		</div>
-	);
+	// Nothing is shown for features this plugin does not contain.
+	return null;
 }
+

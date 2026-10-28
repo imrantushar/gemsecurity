@@ -13,7 +13,7 @@ class Menu {
 	public static function init() {
 		$self = new self();
 		add_action( 'admin_menu', [ $self, 'admin_menu' ] );
-		add_action( 'admin_head', [ $self, 'menu_badge_styles' ] );
+		add_action( 'admin_enqueue_scripts', [ $self, 'menu_badge_styles' ] );
 		add_filter( 'submenu_file', [ $self, 'highlight_group' ], 10, 2 );
 	}
 
@@ -111,7 +111,9 @@ class Menu {
 	 * every admin page because the submenu is always present in the DOM.
 	 */
 	public function menu_badge_styles() {
-		echo '<style>#adminmenu .gemsec-pro-pill{display:inline-block;margin-left:6px;padding:0 6px;font-size:9px;font-weight:700;line-height:16px;letter-spacing:.4px;border-radius:9px;background:#f59e0b;color:#1f2937;vertical-align:middle;}#adminmenu .gemsec-hidden{display:none !important;}</style>';
+		wp_register_style( 'gemsecurity-menu', false, [], GEMSECURITY_VERSION );
+		wp_enqueue_style( 'gemsecurity-menu' );
+		wp_add_inline_style( 'gemsecurity-menu', '#adminmenu .gemsec-pro-pill{display:inline-block;margin-left:6px;padding:0 6px;font-size:9px;font-weight:700;line-height:16px;letter-spacing:.4px;border-radius:9px;background:#f59e0b;color:#1f2937;vertical-align:middle;}#adminmenu .gemsec-hidden{display:none !important;}' );
 	}
 
 	public function load_main_template() {

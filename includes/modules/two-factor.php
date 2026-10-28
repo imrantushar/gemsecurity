@@ -736,7 +736,7 @@ class TwoFactor {
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		$data = Helper::verify_signed_payload( wp_unslash( $_COOKIE[ self::cookie_name() ] ), 5 * MINUTE_IN_SECONDS );
+		$data = Helper::verify_signed_payload( sanitize_text_field( wp_unslash( $_COOKIE[ self::cookie_name() ] ) ), 5 * MINUTE_IN_SECONDS );
 		if ( ! is_array( $data ) || empty( $data['token'] ) || ! hash_equals( (string) $data['token'], (string) $token ) ) {
 			return false;
 		}

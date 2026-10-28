@@ -70,30 +70,26 @@ class Api {
 
 		// Settings.
 		register_rest_route( $ns, '/settings', [
-			[
-				'methods'             => 'GET',
-				'callback'            => [ Rest\Settings::class, 'get' ],
-				'permission_callback' => $perm,
-			],
-			[
-				'methods'             => 'POST',
-				'callback'            => [ Rest\Settings::class, 'save' ],
-				'permission_callback' => $perm,
-			],
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Settings::class, 'get' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/settings', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Settings::class, 'save' ],
+			'permission_callback' => $perm,
 		] );
 
 		// Module activation manager.
 		register_rest_route( $ns, '/modules', [
-			[
-				'methods'             => 'GET',
-				'callback'            => [ Rest\Modules::class, 'get' ],
-				'permission_callback' => $perm,
-			],
-			[
-				'methods'             => 'POST',
-				'callback'            => [ Rest\Modules::class, 'save' ],
-				'permission_callback' => $perm,
-			],
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Modules::class, 'get' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/modules', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Modules::class, 'save' ],
+			'permission_callback' => $perm,
 		] );
 
 		// First-run setup wizard: mark it finished or skipped.
@@ -105,120 +101,114 @@ class Api {
 
 		// Daily report: preview the morning letter or send it on demand.
 		register_rest_route( $ns, '/reports/daily', [
-			[
-				'methods'             => 'GET',
-				'callback'            => static function () {
-					$data = Modules\DailyReport::collect();
-					return rest_ensure_response( [
-						'success'      => true,
-						'admins'       => count( $data['admins'] ),
-						'plugins'      => count( $data['plugins'] ),
-						'new_plugins'  => count( $data['new_plugins'] ),
-						'new_admins'   => count( $data['new_admins'] ),
-						'first_run'    => $data['first_run'],
-						'next_run'     => wp_next_scheduled( Modules\DailyReport::CRON_HOOK ),
-					] );
-				},
-				'permission_callback' => $perm,
-			],
-			[
-				'methods'             => 'POST',
-				'callback'            => static function () {
-					// force: send even while the schedule is off, and leave the
-					// "since yesterday" baseline untouched.
-					$sent = Modules\DailyReport::send( true );
-					return rest_ensure_response( [
-						'success' => (bool) $sent,
-						'message' => $sent
-							? __( 'Report sent.', 'gemsecurity' )
-							: __( 'WordPress could not send the email — check the site’s mail setup.', 'gemsecurity' ),
-					] );
-				},
-				'permission_callback' => $perm,
-			],
+			'methods'             => 'GET',
+			'callback'            => static function () {
+				$data = Modules\DailyReport::collect();
+				return rest_ensure_response( [
+					'success'      => true,
+					'admins'       => count( $data['admins'] ),
+					'plugins'      => count( $data['plugins'] ),
+					'new_plugins'  => count( $data['new_plugins'] ),
+					'new_admins'   => count( $data['new_admins'] ),
+					'first_run'    => $data['first_run'],
+					'next_run'     => wp_next_scheduled( Modules\DailyReport::CRON_HOOK ),
+				] );
+			},
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/reports/daily', [
+			'methods'             => 'POST',
+			'callback'            => static function () {
+				// force: send even while the schedule is off, and leave the
+				// "since yesterday" baseline untouched.
+				$sent = Modules\DailyReport::send( true );
+				return rest_ensure_response( [
+					'success' => (bool) $sent,
+					'message' => $sent
+						? __( 'Report sent.', 'gemsecurity' )
+						: __( 'WordPress could not send the email — check the site’s mail setup.', 'gemsecurity' ),
+				] );
+			},
+			'permission_callback' => $perm,
 		] );
 
 		// Forced password resets: preview the scope, force it, or clear it.
 		register_rest_route( $ns, '/passwords/rotate', [
-			[
-				'methods'             => 'GET',
-				'callback'            => static function ( $req ) {
-					$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
-					return rest_ensure_response( [
-						'success' => true,
-						'targets' => count( Modules\PasswordRotation::targets( [
-							'roles'            => $roles,
-							'exclude_user_ids' => $req->get_param( 'include_self' ) ? [] : [ get_current_user_id() ],
-						] ) ),
-						'pending' => Modules\PasswordRotation::pending_count(),
-					] );
-				},
-				'permission_callback' => $perm,
-			],
-			[
-				'methods'             => 'POST',
-				'callback'            => static function ( $req ) {
-					if ( 'clear' === $req->get_param( 'action' ) ) {
-						return rest_ensure_response( [
-							'success' => true,
-							'cleared' => Modules\PasswordRotation::clear_all(),
-							'pending' => Modules\PasswordRotation::pending_count(),
-						] );
-					}
-
-					$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
-					// The administrator running this is excluded unless they opt
-					// in, so a site-wide reset cannot lock its operator out
-					// mid-incident.
-					$result = Modules\PasswordRotation::force_reset( [
+			'methods'             => 'GET',
+			'callback'            => static function ( $req ) {
+				$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
+				return rest_ensure_response( [
+					'success' => true,
+					'targets' => count( Modules\PasswordRotation::targets( [
 						'roles'            => $roles,
 						'exclude_user_ids' => $req->get_param( 'include_self' ) ? [] : [ get_current_user_id() ],
-						'notify'           => (bool) $req->get_param( 'notify' ),
-						'reason'           => 'manual',
+					] ) ),
+					'pending' => Modules\PasswordRotation::pending_count(),
+				] );
+			},
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/passwords/rotate', [
+			'methods'             => 'POST',
+			'callback'            => static function ( $req ) {
+				if ( 'clear' === $req->get_param( 'action' ) ) {
+					return rest_ensure_response( [
+						'success' => true,
+						'cleared' => Modules\PasswordRotation::clear_all(),
+						'pending' => Modules\PasswordRotation::pending_count(),
 					] );
+				}
 
-					return rest_ensure_response( [ 'success' => true, 'pending' => Modules\PasswordRotation::pending_count() ] + $result );
-				},
-				'permission_callback' => $perm,
-			],
+				$roles = array_filter( array_map( 'sanitize_key', (array) $req->get_param( 'roles' ) ) );
+				// The administrator running this is excluded unless they opt
+				// in, so a site-wide reset cannot lock its operator out
+				// mid-incident.
+				$result = Modules\PasswordRotation::force_reset( [
+					'roles'            => $roles,
+					'exclude_user_ids' => $req->get_param( 'include_self' ) ? [] : [ get_current_user_id() ],
+					'notify'           => (bool) $req->get_param( 'notify' ),
+					'reason'           => 'manual',
+				] );
+
+				return rest_ensure_response( [ 'success' => true, 'pending' => Modules\PasswordRotation::pending_count() ] + $result );
+			},
+			'permission_callback' => $perm,
 		] );
 
 		// Files a person has reviewed and marked safe, so the scanners stop
 		// reporting them.
 		register_rest_route( $ns, '/safe-files', [
-			[
-				'methods'             => 'GET',
-				'callback'            => static function () {
-					return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
-				},
-				'permission_callback' => $perm,
-			],
-			[
-				'methods'             => 'POST',
-				'callback'            => static function ( $req ) {
-					$path = (string) $req->get_param( 'path' );
-					// Accept either an absolute path or one relative to the
-					// install, since findings carry both.
-					$abs = ( 0 === strpos( wp_normalize_path( $path ), wp_normalize_path( ABSPATH ) ) )
-						? $path
-						: ABSPATH . ltrim( $path, '/' );
+			'methods'             => 'GET',
+			'callback'            => static function () {
+				return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
+			},
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/safe-files', [
+			'methods'             => 'POST',
+			'callback'            => static function ( $req ) {
+				$path = (string) $req->get_param( 'path' );
+				// Accept either an absolute path or one relative to the
+				// install, since findings carry both.
+				$abs = ( 0 === strpos( wp_normalize_path( $path ), wp_normalize_path( ABSPATH ) ) )
+					? $path
+					: ABSPATH . ltrim( $path, '/' );
 
-					$res = Security\SafeFiles::mark( $abs );
-					if ( is_wp_error( $res ) ) {
-						return $res;
-					}
-					return rest_ensure_response( [ 'success' => true, 'entry' => $res, 'files' => Security\SafeFiles::for_js() ] );
-				},
-				'permission_callback' => $perm,
-			],
-			[
-				'methods'             => 'DELETE',
-				'callback'            => static function ( $req ) {
-					Security\SafeFiles::unmark( (string) $req->get_param( 'path' ) );
-					return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
-				},
-				'permission_callback' => $perm,
-			],
+				$res = Security\SafeFiles::mark( $abs );
+				if ( is_wp_error( $res ) ) {
+					return $res;
+				}
+				return rest_ensure_response( [ 'success' => true, 'entry' => $res, 'files' => Security\SafeFiles::for_js() ] );
+			},
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/safe-files', [
+			'methods'             => 'DELETE',
+			'callback'            => static function ( $req ) {
+				Security\SafeFiles::unmark( (string) $req->get_param( 'path' ) );
+				return rest_ensure_response( [ 'success' => true, 'files' => Security\SafeFiles::for_js() ] );
+			},
+			'permission_callback' => $perm,
 		] );
 
 		// Credential tester — check third-party keys against the real provider
@@ -261,16 +251,14 @@ class Api {
 
 		// Logs (core "logs" module).
 		register_rest_route( $ns, '/logs', [
-			[
-				'methods'             => 'GET',
-				'callback'            => [ Rest\Logs::class, 'get' ],
-				'permission_callback' => $perm,
-			],
-			[
-				'methods'             => 'DELETE',
-				'callback'            => [ Rest\Logs::class, 'clear' ],
-				'permission_callback' => $perm,
-			],
+			'methods'             => 'GET',
+			'callback'            => [ Rest\Logs::class, 'get' ],
+			'permission_callback' => $perm,
+		] );
+		register_rest_route( $ns, '/logs', [
+			'methods'             => 'DELETE',
+			'callback'            => [ Rest\Logs::class, 'clear' ],
+			'permission_callback' => $perm,
 		] );
 		register_rest_route( $ns, '/logs/export', [
 			'methods'             => 'GET',
@@ -321,42 +309,6 @@ class Api {
 		/* Module-owned groups — registered only when their module is on. */
 		/* -------------------------------------------------------------- */
 
-		// Threat Defense (Pro): bans ledger + bot stats/blocklist.
-		if ( self::module( 'threats' ) ) {
-			register_rest_route( $ns, '/bans', [
-				[
-					'methods'             => 'GET',
-					'callback'            => [ Rest\Bans::class, 'get' ],
-					'permission_callback' => $perm,
-				],
-				[
-					'methods'             => 'POST',
-					'callback'            => [ Rest\Bans::class, 'add' ],
-					'permission_callback' => $pro_perm,
-				],
-				[
-					'methods'             => 'DELETE',
-					'callback'            => [ Rest\Bans::class, 'remove' ],
-					'permission_callback' => $pro_perm,
-				],
-			] );
-			register_rest_route( $ns, '/bots/stats', [
-				'methods'             => 'GET',
-				'callback'            => [ Rest\Bots::class, 'stats' ],
-				'permission_callback' => $pro_perm,
-			] );
-			register_rest_route( $ns, '/bots/blocklist', [
-				'methods'             => 'POST',
-				'callback'            => [ Rest\Bots::class, 'add_to_blocklist' ],
-				'permission_callback' => $pro_perm,
-			] );
-			register_rest_route( $ns, '/live-traffic', [
-				'methods'             => 'GET',
-				'callback'            => [ Modules\ThreatIntel::class, 'rest_traffic' ],
-				'permission_callback' => $pro_perm,
-			] );
-		}
-
 		// Plugin Guard: .org verification, trust list and enforcement.
 		if ( self::module( 'plugin-guard' ) ) {
 			register_rest_route( $ns, '/plugin-guard', [
@@ -371,15 +323,6 @@ class Api {
 					'permission_callback' => $perm,
 				] );
 			}
-		}
-
-		// Virtual patching (Pro) — CVEs currently mitigated on this site.
-		if ( self::module( 'virtual-patch' ) ) {
-			register_rest_route( $ns, '/vpatch', [
-				'methods'             => 'GET',
-				'callback'            => [ Rest\Vpatch::class, 'get' ],
-				'permission_callback' => $pro_perm,
-			] );
 		}
 
 		// Admin Guard: administrator whitelist + hidden-admin detection.
@@ -397,32 +340,28 @@ class Api {
 			// Sweep every existing administrator against the whitelist. GET
 			// previews (dry run), POST carries it out.
 			register_rest_route( $ns, '/admins/sweep', [
-				[
-					'methods'             => 'GET',
-					'callback'            => [ Rest\Admins::class, 'preview_sweep' ],
-					'permission_callback' => $perm,
-				],
-				[
-					'methods'             => 'POST',
-					'callback'            => [ Rest\Admins::class, 'sweep' ],
-					'permission_callback' => $perm,
-				],
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Admins::class, 'preview_sweep' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/admins/sweep', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Admins::class, 'sweep' ],
+				'permission_callback' => $perm,
 			] );
 		}
 
 		// Scanner: integrity/malware scan, baseline, MU-plugin inventory.
 		if ( self::module( 'scanner' ) ) {
 			register_rest_route( $ns, '/scan', [
-				[
-					'methods'             => 'GET',
-					'callback'            => [ Rest\Scanner::class, 'last' ],
-					'permission_callback' => $perm,
-				],
-				[
-					'methods'             => 'POST',
-					'callback'            => [ Rest\Scanner::class, 'run' ],
-					'permission_callback' => $perm,
-				],
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Scanner::class, 'last' ],
+				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/scan', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Scanner::class, 'run' ],
+				'permission_callback' => $perm,
 			] );
 			register_rest_route( $ns, '/scan/quarantine', [
 				'methods'             => 'POST',
@@ -443,59 +382,6 @@ class Api {
 				'methods'             => 'GET',
 				'callback'            => [ Modules\SupplyChain::class, 'rest' ],
 				'permission_callback' => $perm,
-			] );
-		}
-
-		// Payment-page script integrity (Pro). The collector is public (browsers
-		// on the checkout page post here); reads/authorise are admin-gated.
-		register_rest_route( $ns, '/payment-scripts', [
-			[
-				'methods'             => 'POST',
-				'callback'            => [ Rest\PaymentScripts::class, 'ingest' ],
-				'permission_callback' => '__return_true',
-			],
-			[
-				'methods'             => 'GET',
-				'callback'            => [ Rest\PaymentScripts::class, 'get' ],
-				'permission_callback' => $pro_perm,
-			],
-		] );
-		if ( self::module( 'payment-integrity' ) ) {
-			register_rest_route( $ns, '/payment-scripts/authorize', [
-				'methods'             => 'POST',
-				'callback'            => [ Rest\PaymentScripts::class, 'authorize' ],
-				'permission_callback' => $pro_perm,
-			] );
-		}
-
-		// Incident response (Pro): timeline, quarantine, recovery.
-		if ( self::module( 'incident-response' ) ) {
-			register_rest_route( $ns, '/incident/timeline', [
-				'methods'             => 'GET',
-				'callback'            => [ Modules\IncidentResponse::class, 'rest_timeline' ],
-				'permission_callback' => $pro_perm,
-			] );
-			register_rest_route( $ns, '/incident/quarantine', [
-				[
-					'methods'             => 'GET',
-					'callback'            => [ Modules\IncidentResponse::class, 'rest_quarantine_list' ],
-					'permission_callback' => $pro_perm,
-				],
-				[
-					'methods'             => 'POST',
-					'callback'            => [ Modules\IncidentResponse::class, 'rest_quarantine' ],
-					'permission_callback' => $pro_perm,
-				],
-			] );
-			register_rest_route( $ns, '/incident/restore', [
-				'methods'             => 'POST',
-				'callback'            => [ Modules\IncidentResponse::class, 'rest_restore' ],
-				'permission_callback' => $pro_perm,
-			] );
-			register_rest_route( $ns, '/incident/recover', [
-				'methods'             => 'POST',
-				'callback'            => [ Modules\IncidentResponse::class, 'rest_recover' ],
-				'permission_callback' => $pro_perm,
 			] );
 		}
 
@@ -572,40 +458,6 @@ class Api {
 				'methods'             => 'POST',
 				'callback'            => [ Rest\Sessions::class, 'force_logout' ],
 				'permission_callback' => $perm,
-			] );
-			// Magic-link recovery (Pro) — issue a one-time login link for a user.
-			register_rest_route( $ns, '/magic-link', [
-				'methods'             => 'POST',
-				'callback'            => [ Rest\MagicLink::class, 'issue' ],
-				'permission_callback' => $pro_perm,
-			] );
-		}
-
-		// Monitoring (Pro).
-		if ( self::module( 'monitoring' ) ) {
-			register_rest_route( $ns, '/monitoring', [
-				'methods'             => 'GET',
-				'callback'            => [ Modules\Monitoring::class, 'rest' ],
-				'permission_callback' => $pro_perm,
-			] );
-		}
-
-		// Geolocation (Pro).
-		if ( self::module( 'geolocation' ) ) {
-			register_rest_route( $ns, '/geo/test', [
-				'methods'             => 'GET',
-				'callback'            => [ Rest\Geolocation::class, 'test' ],
-				'permission_callback' => $pro_perm,
-			] );
-			register_rest_route( $ns, '/geo/users', [
-				'methods'             => 'GET',
-				'callback'            => [ Rest\Geolocation::class, 'users' ],
-				'permission_callback' => $pro_perm,
-			] );
-			register_rest_route( $ns, '/geo/user', [
-				'methods'             => 'POST',
-				'callback'            => [ Rest\Geolocation::class, 'set_user' ],
-				'permission_callback' => $pro_perm,
 			] );
 		}
 

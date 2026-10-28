@@ -156,7 +156,7 @@ class UploadShield {
 		if ( empty( $_FILES ) || ! is_array( $_FILES ) ) {
 			return;
 		}
-		foreach ( $_FILES as $field => $info ) {
+		foreach ( $_FILES as $field => &$info ) {
 			if ( ! is_array( $info ) || ! isset( $info['name'] ) ) {
 				continue;
 			}
@@ -175,13 +175,13 @@ class UploadShield {
 				 * @param string $name
 				 * @param string $why
 				 */
-				if ( '' === $why || apply_filters( 'gemsecurity/upload_shield_allow', false, $name, $why ) ) {
+				if ( '' === $why || apply_filters( 'gemsecurity/upload_shield_allow', false, sanitize_text_field( wp_unslash( $name ) ), $why ) ) {
 					continue;
 				}
 				if ( is_string( $tmp ) && '' !== $tmp && is_file( $tmp ) ) {
-					@unlink( $tmp ); // phpcs:ignore
+					wp_delete_file( $tmp );
 				}
-				self::poke( $_FILES[ $field ], $keys, UPLOAD_ERR_EXTENSION, 0 );
+				self::poke( $info, $keys, UPLOAD_ERR_EXTENSION, 0 );
 				self::$blocked[ strtolower( $name ) ] = $why;
 				$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 				$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
@@ -189,6 +189,7 @@ class UploadShield {
 				PluginGuard::queue_ban( $ip, 'Upload Shield: ' . $why );
 			}
 		}
+		unset( $info );
 		// phpcs:enable
 	}
 
@@ -251,9 +252,9 @@ class UploadShield {
 	public static function prefilter( $file ) {
 		$name = isset( $file['name'] ) ? (string) $file['name'] : '';
 		$why  = isset( self::$blocked[ strtolower( $name ) ] ) ? self::$blocked[ strtolower( $name ) ] : self::verdict( $name, isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '' );
-		if ( '' !== $why && ! apply_filters( 'gemsecurity/upload_shield_allow', false, $name, $why ) ) {
+		if ( '' !== $why && ! apply_filters( 'gemsecurity/upload_shield_allow', false, sanitize_text_field( wp_unslash( $name ) ), $why ) ) {
 			if ( ! isset( self::$blocked[ strtolower( $name ) ] ) ) {
-				$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : ''; // phpcs:ignore
+				$ip = \GemSecurity\Helper::get_ip_address();
 				PluginGuard::queue_event( 'upload_blocked', 'upload:' . $ip, sprintf( '%s — %s', sanitize_file_name( $name ), $why ) );
 				PluginGuard::queue_ban( $ip, 'Upload Shield: ' . $why );
 			}
@@ -301,21 +302,32 @@ class UploadShield {
 	}
 
 	/**
-	 * Directories that must never run code, with the few files core itself
-	 * needs reachable there. wp-content as a whole is NOT included: a rule
-	 * there applies to every plugin below it, and re-allowing plugins/ would
-	 * also override any password protection on the site.
+	 * Directories an older release also wrote to (WordPress core and
+	 * wp-content folders). Nothing is written there any more; the list only
+	 * lets "turn off" clean up what an earlier version left behind.
+	 *
+	 * @return string[]
+	 */
+	private static function legacy_dirs() {
+		return [
+			untrailingslashit( ABSPATH ) . '/' . WPINC,
+			WP_LANG_DIR,
+			WP_CONTENT_DIR . '/upgrade',
+			WP_CONTENT_DIR . '/upgrade-temp-backup',
+		];
+	}
+
+	/**
+	 * Directories that must never run code. Only the uploads folder: it is the
+	 * one place a plugin may write to, and the place an attacker's upload ends
+	 * up. Core and wp-content folders are left alone.
 	 *
 	 * @return array<string,string[]> dir => allowed file names
 	 */
 	public static function htaccess_targets() {
 		$up      = wp_get_upload_dir();
 		$targets = [
-			untrailingslashit( $up['basedir'] )      => [],
-			untrailingslashit( ABSPATH ) . '/' . WPINC => [ 'wp-tinymce.php', 'ms-files.php' ],
-			WP_LANG_DIR                              => [],
-			WP_CONTENT_DIR . '/upgrade'              => [],
-			WP_CONTENT_DIR . '/upgrade-temp-backup'  => [],
+			untrailingslashit( $up['basedir'] ) => [],
 		];
 		/**
 		 * Filter the directories Upload Shield locks against script execution.
@@ -375,7 +387,8 @@ class UploadShield {
 			require_once ABSPATH . 'wp-admin/includes/misc.php';
 		}
 		$ok = true;
-		foreach ( array_keys( self::htaccess_targets() ) as $dir ) {
+		$dirs = array_unique( array_merge( array_keys( self::htaccess_targets() ), self::legacy_dirs() ) );
+		foreach ( $dirs as $dir ) {
 			$path = $dir . '/.htaccess';
 			if ( ! is_file( $path ) ) {
 				continue;
@@ -385,7 +398,7 @@ class UploadShield {
 			$body = (string) @file_get_contents( $path ); // phpcs:ignore
 			$rest = preg_replace( '/\n?# BEGIN ' . preg_quote( self::MARKER, '/' ) . '.*?# END ' . preg_quote( self::MARKER, '/' ) . '\n?/s', '', $body );
 			if ( '' === trim( (string) $rest ) ) {
-				@unlink( $path ); // phpcs:ignore
+				wp_delete_file( $path );
 			} elseif ( $rest !== $body ) {
 				$ok = false !== @file_put_contents( $path, $rest, LOCK_EX ) && $ok; // phpcs:ignore
 			}
@@ -412,36 +425,26 @@ class UploadShield {
 	}
 
 	/**
-	 * Live test: does a PHP file inside uploads run when requested?
+	 * Check whether PHP can run inside uploads, without writing any code there.
+	 *
+	 * A live test would mean dropping an executable file into uploads, so this
+	 * reads the setup instead: on Apache/LiteSpeed it confirms our deny rules are
+	 * installed; on any other server it cannot know, and says so.
 	 *
 	 * @return array { result: executes|blocked|unknown, detail, at }
 	 */
 	public static function probe() {
-		$up   = wp_get_upload_dir();
-		$name = 'gemsecurity-probe-' . wp_generate_password( 12, false ) . '.php';
-		$file = trailingslashit( $up['basedir'] ) . $name;
-		$mark = 'GSPROBE' . wp_generate_password( 8, false );
-		$out  = [ 'result' => 'unknown', 'detail' => '', 'at' => current_time( 'mysql' ) ];
+		$out      = [ 'result' => 'unknown', 'detail' => '', 'at' => current_time( 'mysql' ) ];
+		$software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ) : '';
+		$uses_htaccess = false !== strpos( $software, 'apache' ) || false !== strpos( $software, 'litespeed' );
 
-		if ( false === @file_put_contents( $file, "<?php echo '" . substr( $mark, 0, 4 ) . "' . '" . substr( $mark, 4 ) . "';" ) ) { // phpcs:ignore
-			$out['detail'] = __( 'Could not write a test file to the uploads folder.', 'gemsecurity' );
-			return $out;
-		}
-		$resp = wp_remote_get( trailingslashit( $up['baseurl'] ) . $name, [ 'timeout' => 8, 'sslverify' => false, 'redirection' => 0 ] );
-		@unlink( $file ); // phpcs:ignore
-
-		if ( is_wp_error( $resp ) ) {
-			$out['detail'] = $resp->get_error_message();
-			return $out;
-		}
-		$code = (int) wp_remote_retrieve_response_code( $resp );
-		if ( false !== strpos( wp_remote_retrieve_body( $resp ), $mark ) ) {
-			$out['result'] = 'executes';
-			$out['detail'] = __( 'A PHP file placed in uploads ran when requested. A backdoor dropped there by any route would run too.', 'gemsecurity' );
-		} else {
+		if ( $uses_htaccess && self::htaccess_installed() ) {
 			$out['result'] = 'blocked';
-			/* translators: %d: HTTP status. */
-			$out['detail'] = sprintf( __( 'The test file did not run (HTTP %d).', 'gemsecurity' ), $code );
+			$out['detail'] = __( 'Deny rules are installed in .htaccess and this server reads .htaccess, so PHP files in uploads will not run.', 'gemsecurity' );
+		} elseif ( $uses_htaccess ) {
+			$out['detail'] = __( 'This server reads .htaccess but the deny rules are not installed yet. Turn on Upload Shield to install them.', 'gemsecurity' );
+		} else {
+			$out['detail'] = __( 'This server does not read .htaccess, so it cannot be verified from here. Ask your host to add the rule shown below.', 'gemsecurity' );
 		}
 		return $out;
 	}
@@ -453,8 +456,6 @@ class UploadShield {
 			$paths[] = preg_quote( '/' . ltrim( $rel, '/' ), '#' );
 		}
 		return "location ~* ^(" . implode( '|', $paths ) . ")/.*\\.(php[0-9]?|phtml|phar|pht|phps|cgi|pl|py|sh)(\\.|$) {\n"
-			. "    # wp-includes/js/tinymce/wp-tinymce.php and wp-includes/ms-files.php must stay reachable:\n"
-			. "    # put an exact-match location for them above this block if you use the classic editor or multisite.\n"
 			. "    deny all;\n}";
 	}
 }

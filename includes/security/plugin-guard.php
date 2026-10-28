@@ -46,6 +46,9 @@ class PluginGuard {
 	/** The early-load must-use file. "0-" so it sorts (and runs) before other mu-plugins. */
 	const MU_FILE = '0-gemsecurity-plugin-guard.php';
 
+	/** Extended-protection file name (written by the Pro add-on). */
+	const EXTENDED_FILE = 'gemsecurity-extended-protection.php';
+
 	const CRON_HOOK = 'gemsecurity_plugin_guard_verify';
 
 	/** Emails held until init (events recorded during mu-plugin load). */
@@ -190,7 +193,6 @@ class PluginGuard {
 		try {
 			if ( did_action( 'muplugins_loaded' ) === 0 ) {
 				self::sweep_mu_plugins();
-				add_action( 'muplugins_loaded', [ __CLASS__, 'remove_stubs' ], 0 );
 			}
 		} catch ( \Throwable $e ) {
 			// Fail open — never take the site down.
@@ -437,10 +439,12 @@ class PluginGuard {
 		}
 		$list = [];
 		if ( isset( $_REQUEST['plugin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$list[] = wp_unslash( $_REQUEST['plugin'] ); // phpcs:ignore
+			$list[] = sanitize_text_field( wp_unslash( $_REQUEST['plugin'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 		if ( isset( $_REQUEST['checked'] ) && is_array( $_REQUEST['checked'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			$list = array_merge( $list, wp_unslash( $_REQUEST['checked'] ) ); // phpcs:ignore
+			foreach ( wp_unslash( $_REQUEST['checked'] ) as $checked ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every item is sanitised on the next line.
+				$list[] = sanitize_text_field( (string) $checked );
+			}
 		}
 		$denied = [];
 		foreach ( $list as $p ) {
@@ -511,13 +515,14 @@ class PluginGuard {
 	/* ------------------------------------------------------------------ */
 
 	/**
-	 * Quarantine every untrusted top-level mu-plugin before core includes it.
-	 * A harmless stub is left at the original path so core's include of the
-	 * (already listed) file does not warn; the stub is removed once the
-	 * mu-plugin loop has finished.
+	 * Report every untrusted top-level mu-plugin.
+	 *
+	 * Files in wp-content/mu-plugins belong to the site, not to this plugin, so
+	 * nothing is moved or edited there: the file is listed and the admin is
+	 * alerted (the Scanner also inventories it).
 	 */
 	private static function sweep_mu_plugins() {
-		$dir = defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
+		$dir   = defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
 		$files = glob( trailingslashit( $dir ) . '*.php' );
 		if ( ! is_array( $files ) || ! $files ) {
 			return;
@@ -527,18 +532,17 @@ class PluginGuard {
 			if ( self::is_mu_allowed( $path, $state ) ) {
 				continue;
 			}
-			$entry = self::quarantine_file( $path );
-			if ( $entry ) {
-				@file_put_contents( $path, "<?php\n// Quarantined by GemSecurity Plugin Guard. Removed automatically.\n" ); // phpcs:ignore
-				self::$stubs[]       = $path;
-				self::$quarantined[] = $entry;
-			}
+			$abs                 = wp_normalize_path( $path );
+			self::$quarantined[] = [
+				'original' => $abs,
+				'relative' => str_replace( wp_normalize_path( ABSPATH ), '', $abs ),
+			];
 		}
 	}
 
 	public static function remove_stubs() {
 		foreach ( self::$stubs as $path ) {
-			@unlink( $path ); // phpcs:ignore
+			wp_delete_file( $path );
 		}
 		self::$stubs = [];
 	}
@@ -1016,7 +1020,7 @@ class PluginGuard {
 		return [
 			'plugin_deactivated' => __( 'Untrusted plugin was active — force-deactivated', 'gemsecurity' ),
 			'activation_blocked' => __( 'Untrusted plugin activation blocked', 'gemsecurity' ),
-			'mu_quarantined'     => __( 'Unknown must-use plugin quarantined', 'gemsecurity' ),
+			'mu_quarantined'     => __( 'Unknown must-use plugin detected', 'gemsecurity' ),
 			'install_blocked'    => __( 'Untrusted plugin/theme install blocked', 'gemsecurity' ),
 			'upload_blocked'     => __( 'Executable file upload blocked', 'gemsecurity' ),
 			'install_unlocked'   => __( 'Install Lock was temporarily lifted', 'gemsecurity' ),
@@ -1137,44 +1141,42 @@ class PluginGuard {
 	/* Early must-use loader                                              */
 	/* ------------------------------------------------------------------ */
 
+	public static function mu_dir() {
+		return defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
+	}
+
 	public static function mu_path() {
-		$dir = defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
-		return trailingslashit( $dir ) . self::MU_FILE;
+		return trailingslashit( self::mu_dir() ) . self::MU_FILE;
 	}
 
 	public static function mu_installed() {
 		return is_file( self::mu_path() );
 	}
 
+	/**
+	 * Ask for the early loader. Writing into wp-content/mu-plugins is done by the
+	 * GemSecurity Pro add-on, which answers this action; on its own the free
+	 * plugin still guards activations once it has loaded.
+	 *
+	 * @return bool Whether the loader file now exists.
+	 */
 	public static function install_mu() {
-		$dir = dirname( self::mu_path() );
-		if ( ! is_dir( $dir ) && ! wp_mkdir_p( $dir ) ) {
-			return false;
-		}
-		// Relative to WP_PLUGIN_DIR so the loader survives a site move.
-		$folder = defined( 'GEMSECURITY_PLUGIN_BASENAME' ) ? dirname( GEMSECURITY_PLUGIN_BASENAME ) : 'gemsecurity';
-		$target = $folder . '/includes/security/plugin-guard.php';
-		$src    = "<?php\n"
-			. "/**\n * Plugin Name: GemSecurity Plugin Guard\n"
-			. " * Description: Stops untrusted plugins and must-use plugins from running. Managed by GemSecurity — do not edit. Emergency off: define( 'GEMSECURITY_PLUGIN_GUARD_OFF', true ) in wp-config.php.\n"
-			. " */\n"
-			. "if ( ! defined( 'ABSPATH' ) ) { return; }\n"
-			. "try {\n"
-			. "\t\$gemsec_guard = WP_PLUGIN_DIR . '/' . " . wp_json_encode( $target ) . ";\n"
-			. "\tif ( is_readable( \$gemsec_guard ) ) {\n"
-			. "\t\trequire_once \$gemsec_guard;\n"
-			. "\t\t\\GemSecurity\\Security\\PluginGuard::early();\n"
-			. "\t}\n"
-			. "} catch ( \\Throwable \$e ) {\n"
-			. "\t// Fail open — never take the site down.\n"
-			. "}\n";
-		return false !== @file_put_contents( self::mu_path(), $src ); // phpcs:ignore
+		/**
+		 * Install or remove the Plugin Guard early loader.
+		 *
+		 * @param bool $enabled
+		 */
+		do_action( 'gemsecurity/plugin_guard_loader', true );
+		return self::mu_installed();
 	}
 
 	public static function uninstall_mu() {
-		if ( self::mu_installed() ) {
-			return @unlink( self::mu_path() ); // phpcs:ignore
-		}
-		return true;
+		wp_delete_file( self::mu_path() );
+		return ! self::mu_installed();
+	}
+
+	/** Remove the extended-protection mu-plugin (written by the Pro add-on). */
+	public static function remove_extended_file() {
+		wp_delete_file( trailingslashit( self::mu_dir() ) . self::EXTENDED_FILE );
 	}
 }

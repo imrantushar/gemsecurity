@@ -34,7 +34,14 @@ class SecretBox {
 	private static $keys = [];
 
 	public static function key_file() {
-		return WP_CONTENT_DIR . '/' . self::KEY_FILE;
+		// A key an earlier release put in wp-content stays where it is, so the
+		// secrets it sealed keep opening. New keys go to the uploads folder.
+		$legacy = WP_CONTENT_DIR . '/' . self::KEY_FILE;
+		if ( is_file( $legacy ) ) {
+			return $legacy;
+		}
+		$up = wp_get_upload_dir();
+		return trailingslashit( $up['basedir'] ) . 'gemsecurity/' . self::KEY_FILE;
 	}
 
 	/**
@@ -67,7 +74,12 @@ class SecretBox {
 			return true;
 		}
 		$file = self::key_file();
-		if ( file_exists( $file ) || ! is_writable( dirname( $file ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
+		$dir  = dirname( $file );
+		if ( ! is_dir( $dir ) && wp_mkdir_p( $dir ) ) {
+			file_put_contents( $dir . '/index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- own uploads subfolder.
+			file_put_contents( $dir . '/.htaccess', "Require all denied\nDeny from all\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- own uploads subfolder.
+		}
+		if ( file_exists( $file ) || ! is_writable( $dir ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
 			return false; // Never overwrite an existing (unreadable/garbled) key.
 		}
 		$body = "<?php\n"

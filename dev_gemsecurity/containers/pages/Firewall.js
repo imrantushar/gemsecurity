@@ -408,51 +408,53 @@ export default function Firewall() {
 				/>
 			</Card>
 
-			<Card
-				title={ <>{ __( 'Hardening pack', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
-				description={ __( 'Extra request-level protections: restrict wp-admin by IP, deny sensitive files, stop PHP running in uploads and force HTTPS.', 'gemsecurity' ) }
-			>
-				<Toggle
-					label={ __( 'Restrict wp-admin by IP', 'gemsecurity' ) }
-					description={ __( 'Only the IPs below may reach wp-admin. An empty list never locks anyone out.', 'gemsecurity' ) }
-					checked={ form.admin_ip_allowlist_enabled }
-					onChange={ ( v ) => setField( 'admin_ip_allowlist_enabled', v ) }
-					disabled={ ! pro }
-				/>
-				{ pro && form.admin_ip_allowlist_enabled && (
-					<Field
-						label={ __( 'Allowed IPs', 'gemsecurity' ) }
-						description={ __( 'One IP or CIDR range per line. This is a network allowlist for wp-admin — the approved-administrator list on the Admin Guard page is about accounts, not addresses.', 'gemsecurity' ) }
-					>
-						<ListInput
-							value={ form.admin_ip_allowlist }
-							onChange={ ( v ) => setField( 'admin_ip_allowlist', v ) }
-							placeholder={ '203.0.113.10\n198.51.100.0/24' }
-						/>
-					</Field>
-				) }
-				<Toggle
-					label={ __( 'Block sensitive files', 'gemsecurity' ) }
-					description={ __( 'Denies readme.html, license.txt, *.sql, *.bak, debug.log, dotfiles and similar.', 'gemsecurity' ) }
-					checked={ form.block_sensitive_files_enabled }
-					onChange={ ( v ) => setField( 'block_sensitive_files_enabled', v ) }
-					disabled={ ! pro }
-				/>
-				<Toggle
-					label={ __( 'Block PHP execution in /uploads', 'gemsecurity' ) }
-					description={ __( 'Adds a server rule to uploads/.htaccess so uploaded PHP shells cannot run (Apache / LiteSpeed). On nginx, Upload Shield\'s live test shows whether PHP there still executes.', 'gemsecurity' ) }
-					checked={ form.block_php_in_uploads }
-					onChange={ ( v ) => setField( 'block_php_in_uploads', v ) }
-					disabled={ ! pro }
-				/>
-				<Toggle
-					label={ __( 'Force HTTPS', 'gemsecurity' ) }
-					description={ __( 'Redirect HTTP to HTTPS and upgrade insecure requests.', 'gemsecurity' ) }
-					checked={ form.force_https_enabled }
-					onChange={ ( v ) => setField( 'force_https_enabled', v ) }
-					disabled={ ! pro }
-				/>
-			</Card>
+			{ pro && (
+				<Card
+					title={ <>{ __( 'Hardening pack', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
+					description={ __( 'Extra request-level protections: restrict wp-admin by IP, deny sensitive files, stop PHP running in uploads and force HTTPS.', 'gemsecurity' ) }
+				>
+					<Toggle
+						label={ __( 'Restrict wp-admin by IP', 'gemsecurity' ) }
+						description={ __( 'Only the IPs below may reach wp-admin. An empty list never locks anyone out.', 'gemsecurity' ) }
+						checked={ form.admin_ip_allowlist_enabled }
+						onChange={ ( v ) => setField( 'admin_ip_allowlist_enabled', v ) }
+						disabled={ ! pro }
+					/>
+					{ pro && form.admin_ip_allowlist_enabled && (
+						<Field
+							label={ __( 'Allowed IPs', 'gemsecurity' ) }
+							description={ __( 'One IP or CIDR range per line. This is a network allowlist for wp-admin — the approved-administrator list on the Admin Guard page is about accounts, not addresses.', 'gemsecurity' ) }
+						>
+							<ListInput
+								value={ form.admin_ip_allowlist }
+								onChange={ ( v ) => setField( 'admin_ip_allowlist', v ) }
+								placeholder={ '203.0.113.10\n198.51.100.0/24' }
+							/>
+						</Field>
+					) }
+					<Toggle
+						label={ __( 'Block sensitive files', 'gemsecurity' ) }
+						description={ __( 'Denies readme.html, license.txt, *.sql, *.bak, debug.log, dotfiles and similar.', 'gemsecurity' ) }
+						checked={ form.block_sensitive_files_enabled }
+						onChange={ ( v ) => setField( 'block_sensitive_files_enabled', v ) }
+						disabled={ ! pro }
+					/>
+					<Toggle
+						label={ __( 'Block PHP execution in /uploads', 'gemsecurity' ) }
+						description={ __( 'Adds a server rule to uploads/.htaccess so uploaded PHP shells cannot run (Apache / LiteSpeed). On nginx, Upload Shield\'s live test shows whether PHP there still executes.', 'gemsecurity' ) }
+						checked={ form.block_php_in_uploads }
+						onChange={ ( v ) => setField( 'block_php_in_uploads', v ) }
+						disabled={ ! pro }
+					/>
+					<Toggle
+						label={ __( 'Force HTTPS', 'gemsecurity' ) }
+						description={ __( 'Redirect HTTP to HTTPS and upgrade insecure requests.', 'gemsecurity' ) }
+						checked={ form.force_https_enabled }
+						onChange={ ( v ) => setField( 'force_https_enabled', v ) }
+						disabled={ ! pro }
+					/>
+				</Card>
+			) }
 
 			<Card
 				title={ __( 'security.txt', 'gemsecurity' ) }

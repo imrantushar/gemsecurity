@@ -82,7 +82,7 @@ class Database {
 		if ( Helper::get_setting( 'scanner_auto_scan', false ) ) {
 			Modules\Scanner::run_and_store();
 		}
-		if ( Helper::get_setting( 'vuln_scan_enabled', true ) ) {
+		if ( Helper::get_setting( 'vuln_scan_enabled', false ) ) {
 			\GemSecurity\Security\Vulnerability::run_and_store();
 		}
 		if ( Modules\HiddenAdmin::enabled() ) {

@@ -477,7 +477,7 @@ function ScannerSettings( { form, setField, save, saving, dirty } ) {
 			/>
 			<Toggle
 				label={ __( 'Check core, plugins & themes for known vulnerabilities', 'gemsecurity' ) }
-				description={ __( 'Compares installed versions against a public vulnerability database during the daily scan.', 'gemsecurity' ) }
+				description={ __( 'Compares installed versions against the public WPVulnerability database (wpvulnerability.net) during the daily scan. Sends the slug and version of each installed plugin and theme, and your WordPress version, to that service. Off by default.', 'gemsecurity' ) }
 				checked={ form.vuln_scan_enabled }
 				onChange={ ( v ) => setField( 'vuln_scan_enabled', v ) }
 			/>
@@ -499,7 +499,7 @@ function ScannerSettings( { form, setField, save, saving, dirty } ) {
 				checked={ form.file_watcher_enabled }
 				onChange={ ( v ) => setField( 'file_watcher_enabled', v ) }
 			/>
-			{ form.file_watcher_enabled && (
+			{ isPro() && form.file_watcher_enabled && (
 				<Field
 					label={ <>{ __( 'Also baseline', 'gemsecurity' ) } { ! isPro() && <ProBadge /> }</> }
 					description={ __( 'Widen the same baseline to more of the install. Bigger trees make each scan slower, so add only what this site needs watched.', 'gemsecurity' ) }
@@ -557,29 +557,31 @@ function ScannerSettings( { form, setField, save, saving, dirty } ) {
 					</Field>
 				</>
 			) }
-			<div className="gs-subcard">
-				<strong>{ __( 'Auto-update enforcement', 'gemsecurity' ) } { ! isPro() && <ProBadge /> }</strong>
-				<p className="gs-card__desc">{ __( 'Close the gap between a vulnerability being disclosed and this site being patched.', 'gemsecurity' ) }</p>
-				<Toggle
-					label={ __( 'Auto-update vulnerable plugins & themes', 'gemsecurity' ) }
-					description={ __( 'Automatically update anything the vulnerability scan above has flagged.', 'gemsecurity' ) }
-					checked={ form.auto_update_vulnerable_enabled }
-					onChange={ ( v ) => setField( 'auto_update_vulnerable_enabled', v ) }
-					disabled={ ! isPro() }
-				/>
-				<Toggle
-					label={ __( 'Auto-update all plugins', 'gemsecurity' ) }
-					checked={ form.auto_update_all_plugins }
-					onChange={ ( v ) => setField( 'auto_update_all_plugins', v ) }
-					disabled={ ! isPro() }
-				/>
-				<Toggle
-					label={ __( 'Auto-update all themes', 'gemsecurity' ) }
-					checked={ form.auto_update_all_themes }
-					onChange={ ( v ) => setField( 'auto_update_all_themes', v ) }
-					disabled={ ! isPro() }
-				/>
-			</div>
+			{ isPro() && (
+				<div className="gs-subcard">
+					<strong>{ __( 'Auto-update enforcement', 'gemsecurity' ) } { ! isPro() && <ProBadge /> }</strong>
+					<p className="gs-card__desc">{ __( 'Close the gap between a vulnerability being disclosed and this site being patched.', 'gemsecurity' ) }</p>
+					<Toggle
+						label={ __( 'Auto-update vulnerable plugins & themes', 'gemsecurity' ) }
+						description={ __( 'Automatically update anything the vulnerability scan above has flagged.', 'gemsecurity' ) }
+						checked={ form.auto_update_vulnerable_enabled }
+						onChange={ ( v ) => setField( 'auto_update_vulnerable_enabled', v ) }
+						disabled={ ! isPro() }
+					/>
+					<Toggle
+						label={ __( 'Auto-update all plugins', 'gemsecurity' ) }
+						checked={ form.auto_update_all_plugins }
+						onChange={ ( v ) => setField( 'auto_update_all_plugins', v ) }
+						disabled={ ! isPro() }
+					/>
+					<Toggle
+						label={ __( 'Auto-update all themes', 'gemsecurity' ) }
+						checked={ form.auto_update_all_themes }
+						onChange={ ( v ) => setField( 'auto_update_all_themes', v ) }
+						disabled={ ! isPro() }
+					/>
+				</div>
+			) }
 		</>
 	);
 }
@@ -587,7 +589,7 @@ function ScannerSettings( { form, setField, save, saving, dirty } ) {
 export default function Scanner() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( SCANNER_KEYS );
 	const toast = useToast();
-	const [ tab, setTab ] = useState( initialTab );
+	const [ rawTab, setTab ] = useState( initialTab );
 	const [ result, setResult ] = useState( null );
 	const [ vuln, setVuln ] = useState( null );
 	const [ mu, setMu ] = useState( null );
@@ -606,6 +608,7 @@ export default function Scanner() {
 	const [ sync, setSync ] = useState( 0 );
 
 	const malwareLocked = isLocked( 'gemsecurity-malware' );
+	const tab = malwareLocked && 'malware' === rawTab ? 'integrity' : rawTab;
 	const malwareFeature = proFeatures()[ 'gemsecurity-malware' ] || {};
 
 	const loadMu = () => api.get( 'mu-plugins' ).then( ( r ) => setMu( r.data ) ).catch( () => {} );
@@ -1133,16 +1136,18 @@ export default function Scanner() {
 				>
 					<Icon name="radar" size={ 15 } /> { __( 'Integrity & files', 'gemsecurity' ) }
 				</button>
-				<button
-					type="button"
-					role="tab"
-					aria-selected={ tab === 'malware' }
-					className={ `gs-tab ${ tab === 'malware' ? 'is-active' : '' }` }
-					onClick={ () => setTab( 'malware' ) }
-				>
-					<Icon name="bug" size={ 15 } /> { __( 'Malware & recovery', 'gemsecurity' ) }
-					{ malwareLocked && <ProBadge /> }
-				</button>
+				{ ! malwareLocked && (
+					<button
+						type="button"
+						role="tab"
+						aria-selected={ tab === 'malware' }
+						className={ `gs-tab ${ tab === 'malware' ? 'is-active' : '' }` }
+						onClick={ () => setTab( 'malware' ) }
+					>
+						<Icon name="bug" size={ 15 } /> { __( 'Malware & recovery', 'gemsecurity' ) }
+						{ malwareLocked && <ProBadge /> }
+					</button>
+				) }
 				<button
 					type="button"
 					role="tab"

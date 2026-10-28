@@ -240,7 +240,7 @@ export default function Notifications() {
 				{ rows.length === 0 ? (
 					<p className="gs-muted">{ __( 'No module that raises alerts is active yet.', 'gemsecurity' ) }</p>
 				) : (
-					rows.map( ( t ) => {
+					rows.filter( ( t ) => ! t.pro || isPro() ).map( ( t ) => {
 						const proLocked = t.pro && ! isPro();
 						const blocked = proLocked || ( t.needs && ! form[ t.needs ] ) || ( t.needsNot && form[ t.needsNot ] );
 						return (
@@ -318,7 +318,7 @@ export default function Notifications() {
 						/>
 						<Toggle
 							label={ __( 'Check core, plugins & themes for known vulnerabilities', 'gemsecurity' ) }
-							description={ __( 'Compares installed versions against a public vulnerability database during the daily scan.', 'gemsecurity' ) }
+							description={ __( 'Compares installed versions against the public WPVulnerability database (wpvulnerability.net) during the daily scan. Sends the slug and version of each installed plugin and theme, and your WordPress version, to that service. Off by default.', 'gemsecurity' ) }
 							checked={ form.vuln_scan_enabled }
 							onChange={ ( v ) => setField( 'vuln_scan_enabled', v ) }
 						/>
