@@ -149,6 +149,12 @@ class Waf {
 			Store::delete( $key );
 			Logger::log( 'waf_404_flood', sprintf( '404 flood from %s (%d in window).', $ip, $count ), Logger::SEVERITY_WARNING, [ 'user_id' => 0, 'ip_address' => $ip ] );
 			BanList::record_strike( $ip, '404 flood' );
+			// Without this, "throttle" only ever logged the flood and left every
+			// request — including this one — returning a normal 404. The strike
+			// above feeds GemSecurity Pro's auto-ban escalation, which is not
+			// active on every site; the free plugin needs to slow the flood down
+			// on its own too.
+			$this->deny( __( 'Too many requests. Please slow down.', 'gemsecurity' ), 429 );
 		}
 	}
 
