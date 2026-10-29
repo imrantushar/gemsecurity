@@ -32,14 +32,21 @@ class TwoFactor {
 	const PENDING_PREFIX = 'gemsec_2fa_pending_';
 	const EMAIL_OTP_PREFIX = 'gemsec_2fa_eotp_';
 
-	private static $passed = false;
-
 	public static function init() {
 		if ( ! Helper::get_setting( 'two_factor_enabled', false ) ) {
 			return;
 		}
 		$self = new self();
-		add_action( 'wp_login', [ $self, 'maybe_challenge' ], 10, 2 );
+		// Intercept on 'authenticate', before WordPress ever sets the login
+		// cookie for this attempt (wp_signon() only calls wp_set_auth_cookie()
+		// once every 'authenticate' filter has returned a non-error user). An
+		// earlier version of this challenge hooked 'wp_login' instead and tore
+		// the just-set cookie back down with wp_clear_auth_cookie() -- but that
+		// cookie is shared by every open tab on the site, not scoped to this
+		// one login attempt, so clearing it could silently sign out an
+		// unrelated, already-logged-in session in the same browser. Stepping
+		// in before the cookie is set avoids that entirely.
+		add_filter( 'authenticate', [ $self, 'maybe_challenge' ], 99, 3 );
 		// Password logins that can never show the challenge (XML-RPC, REST
 		// basic auth, AJAX login popups) are refused outright for 2FA users;
 		// otherwise a stolen password alone would get in through them.
@@ -91,33 +98,25 @@ class TwoFactor {
 	/* ------------------------------------------------------------------ */
 
 	/**
-	 * After a successful password login, interrupt and require the second
-	 * factor for interactive browser logins.
+	 * Intercept a successful password check and require the second factor for
+	 * interactive browser logins, before WordPress sets the login cookie.
 	 *
-	 * @param string   $user_login
-	 * @param \WP_User $user
+	 * @param \WP_User|\WP_Error|null $user
+	 * @param string                  $username
+	 * @param string                  $password
+	 * @return \WP_User|\WP_Error|null
 	 */
-	public function maybe_challenge( $user_login, $user = null ) {
-		if ( self::$passed ) {
-			return; // We just completed 2FA and re-fired wp_login.
-		}
+	public function maybe_challenge( $user, $username = '', $password = '' ) {
 		if ( ! $user instanceof \WP_User ) {
-			$user = get_user_by( 'login', $user_login );
-		}
-		if ( ! $user instanceof \WP_User ) {
-			return;
+			return $user;
 		}
 		$context = $this->login_context();
 		if ( 'login' !== $context && 'form' !== $context ) {
-			return; // 'api' is refused in authenticate; cron/CLI never log in with a password.
+			return $user; // 'api' is refused in block_unchallengeable_login(); cron/CLI never log in with a password.
 		}
 		if ( ! self::user_needs_2fa( $user ) ) {
-			return;
+			return $user;
 		}
-
-		// Tear down the session WordPress just established.
-		wp_clear_auth_cookie();
-		wp_destroy_current_session();
 
 		$method   = self::user_method( $user );
 		// We ride on WP's own login flow, which has already verified its
@@ -361,14 +360,17 @@ class TwoFactor {
 		delete_transient( self::EMAIL_OTP_PREFIX . $user->ID );
 		delete_user_meta( $user->ID, self::OTP_META );
 
-		self::$passed = true;
 		wp_set_current_user( $user->ID );
 		wp_set_auth_cookie( $user->ID, ! empty( $pending['remember'] ) );
 
 		Logger::log( '2fa_success', sprintf( 'Second factor verified for "%s".', $user->user_login ), Logger::SEVERITY_INFO, [ 'user_id' => $user->ID ] );
 
-		// Re-fire WP's own wp_login so other modules (login alert, session
-		// stamp) run — this is WP's hook, not one of ours.
+		// Fire WP's own wp_login now that both factors are verified, so other
+		// modules (login alert, session stamp, device tracking, geolocation)
+		// run against a login that actually completed — this is WP's hook, not
+		// one of ours. Earlier, this challenge ran on 'wp_login' itself, so a
+		// correct password alone made those modules fire before the second
+		// factor was ever checked.
 		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 		$redirect = ! empty( $pending['redirect'] ) ? $pending['redirect'] : admin_url();
