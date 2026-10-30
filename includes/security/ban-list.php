@@ -3,6 +3,7 @@ namespace GemSecurity\Security;
 
 use GemSecurity\Helper;
 use GemSecurity\Logger;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -38,6 +39,10 @@ class BanList {
 		}
 		if ( isset( self::$cache[ $ip ] ) ) {
 			return self::$cache[ $ip ];
+		}
+		// A safelisted address is never treated as banned.
+		if ( SiteGuard::ip_safelisted( $ip ) ) {
+			return self::$cache[ $ip ] = false;
 		}
 
 		// Cross-request cache — a real win with a persistent object cache
@@ -103,7 +108,7 @@ class BanList {
 		$wpdb->delete( self::table(), [ 'ip' => $ip ], [ '%s' ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		unset( self::$cache[ $ip ] );
 		wp_cache_delete( md5( $ip ), self::CACHE_GROUP );
-		delete_transient( self::STRIKE_PREFIX . md5( $ip ) );
+		Store::delete( self::STRIKE_PREFIX . md5( $ip ) );
 	}
 
 	/**
@@ -136,6 +141,9 @@ class BanList {
 	 */
 	public static function is_exempt( $ip ) {
 		if ( is_user_logged_in() && current_user_can( 'manage_options' ) && $ip === Helper::get_ip_address() ) {
+			return true;
+		}
+		if ( SiteGuard::ip_safelisted( $ip ) ) {
 			return true;
 		}
 		return (bool) apply_filters( 'gemsecurity/ban_exempt', false, $ip );

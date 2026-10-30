@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, ListInput, Select, TextInput, NumberInput, Button, Badge, EmptyState } from '@Components/ui/Controls';
 import { isPro, ProBadge } from '@Components/ui/Pro';
+import { useToast } from '@Components/ui/Toast';
+
+const GS = window.GemSecurityGlobal || {};
 
 const KEYS = [
 	'firewall_enabled',
 	'ip_blocklist',
+	'ip_safelist',
+	'uploads_disabled',
 	// Real visitor IP detection.
 	'trust_cloudflare_ip',
 	'trusted_proxies',
@@ -159,6 +164,100 @@ const ENUMERATION = [
 	{ key: 'login_errors_generic', label: __( 'Generic login error messages', 'gemsecurity' ), desc: __( 'Replaces “unknown username” / “incorrect password” with one message, so a failed login never confirms an account exists.', 'gemsecurity' ) },
 ];
 
+/**
+ * Plugin lock. Deactivating, deleting or unlocking GemSecurity needs a
+ * separate password that belongs to no user account, so an attacker who is
+ * logged in as an administrator still cannot switch the plugin off.
+ */
+function PluginLock() {
+	const toast = useToast();
+	const [ st, setSt ] = useState( null );
+	const [ pw, setPw ] = useState( '' );
+	const [ code, setCode ] = useState( '' );
+	// Set once the password was accepted and a code has been emailed.
+	const [ sentTo, setSentTo ] = useState( '' );
+	const [ busy, setBusy ] = useState( false );
+
+	useEffect( () => {
+		api.get( 'lock' ).then( ( r ) => setSt( r.data ) ).catch( () => setSt( false ) );
+	}, [] );
+
+	const call = async ( path, body, done ) => {
+		setBusy( true );
+		try {
+			const { data } = await api.post( path, body || {} );
+			if ( data.step === 'code' ) {
+				setSentTo( data.email );
+				setCode( '' );
+				toast( __( 'We emailed you a code.', 'gemsecurity' ), 'success' );
+				setBusy( false );
+				return;
+			}
+			setSt( data );
+			setPw( '' );
+			setCode( '' );
+			setSentTo( '' );
+			if ( done ) {
+				toast( done, 'success' );
+			}
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Something went wrong.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( false );
+	};
+
+	if ( st === null || st === false ) {
+		return null;
+	}
+
+	return (
+		<Field
+			label={ __( 'Lock GemSecurity (prevent deactivation)', 'gemsecurity' ) }
+			description={ __( 'Nobody can deactivate or delete GemSecurity, or turn this lock off, without the unlock password — not even the administrator who set it. To open it you need the password and a code emailed to the address on your account today. Keep the password safe: it is not stored anywhere you can read it.', 'gemsecurity' ) }
+		>
+			<div className="gs-lock">
+			{ ! st.enabled && (
+				<div className="gs-geo-search">
+					<TextInput type="password" autoComplete="new-password" placeholder={ __( 'Choose an unlock password (8+ characters)', 'gemsecurity' ) } value={ pw } onChange={ ( e ) => setPw( e.target.value ) } />
+					<Button onClick={ () => call( 'lock/enable', { password: pw }, __( 'Lock is on.', 'gemsecurity' ) ) } loading={ busy } disabled={ pw.length < 8 }>{ __( 'Turn lock on', 'gemsecurity' ) }</Button>
+				</div>
+			) }
+			{ st.enabled && ! st.unlocked && ! sentTo && (
+				<>
+					<p><Badge tone="success">{ __( 'Locked', 'gemsecurity' ) }</Badge></p>
+					<p className="gs-muted">{ __( 'Step 1 of 2: enter the unlock password. We will email you a code.', 'gemsecurity' ) }</p>
+					<div className="gs-geo-search">
+						<TextInput type="password" autoComplete="current-password" placeholder={ __( 'Unlock password', 'gemsecurity' ) } value={ pw } onChange={ ( e ) => setPw( e.target.value ) } />
+						<Button variant="secondary" onClick={ () => call( 'lock/unlock', { password: pw } ) } loading={ busy } disabled={ ! pw }>{ __( 'Send me a code', 'gemsecurity' ) }</Button>
+					</div>
+				</>
+			) }
+			{ st.enabled && ! st.unlocked && sentTo && (
+				<>
+					<p><Badge tone="success">{ __( 'Locked', 'gemsecurity' ) }</Badge></p>
+					<p className="gs-muted">{ sprintf( /* translators: %s: masked email address. */ __( 'Step 2 of 2: enter the 6-digit code we sent to %s. It works for 10 minutes.', 'gemsecurity' ), sentTo ) }</p>
+					<div className="gs-geo-search">
+						<TextInput inputMode="numeric" autoComplete="one-time-code" maxLength={ 6 } placeholder={ __( '6-digit code', 'gemsecurity' ) } value={ code } onChange={ ( e ) => setCode( e.target.value.replace( /\D/g, '' ) ) } />
+						<Button variant="secondary" onClick={ () => call( 'lock/verify', { code }, __( 'Unlocked for 10 minutes.', 'gemsecurity' ) ) } loading={ busy } disabled={ code.length !== 6 }>{ __( 'Unlock for 10 minutes', 'gemsecurity' ) }</Button>
+						<Button variant="secondary" onClick={ () => { setSentTo( '' ); setCode( '' ); } }>{ __( 'Start over', 'gemsecurity' ) }</Button>
+					</div>
+				</>
+			) }
+			{ st.enabled && st.unlocked && (
+				<>
+					<p><Badge tone="warning">{ __( 'Unlocked for 10 minutes', 'gemsecurity' ) }</Badge> { __( 'You can deactivate the plugin now.', 'gemsecurity' ) }</p>
+					<div className="gs-geo-search">
+						<Button onClick={ () => call( 'lock/relock', {}, __( 'Locked again.', 'gemsecurity' ) ) } loading={ busy }>{ __( 'Lock again now', 'gemsecurity' ) }</Button>
+						<Button variant="secondary" onClick={ () => call( 'lock/disable', {}, __( 'Lock removed.', 'gemsecurity' ) ) } loading={ busy }>{ __( 'Remove the lock', 'gemsecurity' ) }</Button>
+					</div>
+				</>
+			) }
+			<p className="gs-muted">{ __( 'Locked out? Add define( \'GEMSEC_PLUGIN_LOCK_DISABLE\', true ); to wp-config.php. That needs access to the server, not just to wp-admin.', 'gemsecurity' ) }</p>
+			</div>
+		</Field>
+	);
+}
+
 export default function Firewall() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
 	const pro = isPro();
@@ -176,7 +275,7 @@ export default function Firewall() {
 				/>
 				<Field
 					label={ __( 'IP blocklist', 'gemsecurity' ) }
-					description={ __( 'One IP address or CIDR range per line. Logged-in administrators are never blocked.', 'gemsecurity' ) }
+					description={ __( 'One IP address or CIDR range per line. Your own IP address cannot be added, and safelisted addresses are never blocked.', 'gemsecurity' ) }
 				>
 					<ListInput
 						value={ form.ip_blocklist }
@@ -184,6 +283,39 @@ export default function Firewall() {
 						placeholder={ '203.0.113.10\n198.51.100.0/24' }
 					/>
 				</Field>
+				<Field
+					label={ __( 'IP safelist', 'gemsecurity' ) }
+					description={ __( 'Addresses that are never blocked, banned or rate-limited, even when logged out. Add your office or home IP so you can always reach the login page.', 'gemsecurity' ) }
+				>
+					<div className="gs-stack">
+						<ListInput
+							value={ form.ip_safelist }
+							onChange={ ( v ) => setField( 'ip_safelist', v ) }
+							placeholder={ '203.0.113.50' }
+						/>
+						{ GS.current_ip && ! ( form.ip_safelist || [] ).includes( GS.current_ip ) && (
+							<p className="gs-muted gs-stack__hint">
+								{ __( 'Your current IP:', 'gemsecurity' ) } <strong>{ GS.current_ip }</strong>{ ' ' }
+								<Button variant="secondary" onClick={ () => setField( 'ip_safelist', [ ...( form.ip_safelist || [] ), GS.current_ip ] ) }>
+									{ __( 'Add to safelist', 'gemsecurity' ) }
+								</Button>
+							</p>
+						) }
+					</div>
+				</Field>
+			</Card>
+
+			<Card
+				title={ __( 'Site protection', 'gemsecurity' ) }
+				description={ __( 'Stop a compromised or careless admin account from switching protection off or uploading files.', 'gemsecurity' ) }
+			>
+				<PluginLock />
+				<Toggle
+					label={ __( 'Turn off all file uploads', 'gemsecurity' ) }
+					description={ __( 'Blocks uploads everywhere: Media Library, REST API, XML-RPC and plugin/theme zip uploads. Also available from the GemSecurity menu in the admin bar.', 'gemsecurity' ) }
+					checked={ form.uploads_disabled }
+					onChange={ ( v ) => setField( 'uploads_disabled', v ) }
+				/>
 			</Card>
 
 			<Card

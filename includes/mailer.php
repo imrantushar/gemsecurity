@@ -129,6 +129,11 @@ class Mailer {
 			$to = self::recipient();
 		}
 
+		$origin = self::origin_block( $args );
+		if ( $origin ) {
+			$blocks[] = $origin;
+		}
+
 		$subject = self::subject( $emoji, $title );
 		$html    = self::render_html( $emoji, $title, $blocks, $args );
 		$text    = self::render_text( $title, $blocks, $args );
@@ -150,6 +155,44 @@ class Mailer {
 		remove_filter( 'wp_mail_content_type', $html_type );
 
 		return (bool) $sent;
+	}
+
+	/**
+	 * "Where did this come from" table for the request that triggered the
+	 * email: its IP address, plus whatever the filter adds (GemSecurity Pro
+	 * adds the country). Left out for cron and command-line sends, where the
+	 * address would be the server's own, and when a caller passes
+	 * 'origin' => false.
+	 *
+	 * @param array $args Arguments given to send().
+	 * @return array|null Table block, or null.
+	 */
+	private static function origin_block( array $args ) {
+		if ( isset( $args['origin'] ) && false === $args['origin'] ) {
+			return null;
+		}
+		if ( wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			return null;
+		}
+		$ip = Helper::get_ip_address();
+		if ( ! $ip || '0.0.0.0' === $ip ) {
+			return null;
+		}
+		$rows = [ [ esc_html__( 'IP address', 'gemsecurity' ), esc_html( $ip ) ] ];
+
+		/**
+		 * Filter the rows of the "Request origin" table in alert emails.
+		 *
+		 * @param array  $rows Each row is [ label, value ] (already escaped).
+		 * @param string $ip   Requester's IP address.
+		 */
+		$rows = (array) apply_filters( 'gemsecurity/email_origin', $rows, $ip );
+
+		return [
+			'type'    => 'table',
+			'heading' => __( 'Request origin', 'gemsecurity' ),
+			'rows'    => $rows,
+		];
 	}
 
 	/* ------------------------------------------------------------------ */

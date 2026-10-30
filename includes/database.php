@@ -14,6 +14,7 @@ class Database {
 
 		// Cron callbacks.
 		add_action( Installer::CRON_PRUNE_LOGS, [ Logger::class, 'prune' ] );
+		add_action( Installer::CRON_PRUNE_LOGS, [ Store::class, 'prune' ] );
 		add_action( Installer::CRON_PRUNE_LOGS, [ Security\BanList::class, 'prune' ] );
 		add_action( Installer::CRON_DAILY_SCAN, [ $self, 'maybe_run_daily_scan' ] );
 

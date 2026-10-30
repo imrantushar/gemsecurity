@@ -65,7 +65,7 @@ When a visitor signs in with a provider, the OAuth authorization code is sent to
 The slug and version of each installed plugin and theme, and your WordPress version, are sent to the WPVulnerability API (www.wpvulnerability.net) to look up known vulnerabilities. [License](https://www.wpvulnerability.com/license/), [Privacy](https://www.wpvulnerability.com/privacy/)
 
 = Plugin and file integrity checks =
-Plugin/theme slugs and versions are sent to WordPress.org to fetch official checksums, package details and original files for comparison. [Terms](https://wordpress.org/about/domains/), [Privacy](https://wordpress.org/about/privacy/)
+Plugin/theme slugs and versions are sent to WordPress.org to fetch official checksums, package details and original files for comparison. When you open a flagged core file in the Scanner, that file is downloaded from core.svn.wordpress.org (your WordPress version and the file path are sent) and accepted only if it matches the official checksum. [Terms](https://wordpress.org/about/domains/), [Privacy](https://wordpress.org/about/privacy/)
 
 = Breached-password check (Password Policy) =
 When enabled, the first 5 characters of the SHA-1 hash of a new password are sent to Have I Been Pwned (api.pwnedpasswords.com), also when you press "Test connection". The password itself never leaves your site. [Terms and privacy](https://haveibeenpwned.com/Privacy)

@@ -169,6 +169,18 @@ class SecurityScore {
 			];
 		}
 
+		// The plugin lock needs a password and an email, so it cannot be a
+		// one-click fix: the action opens the Firewall page where it is set up.
+		$checks[] = [
+			'key'    => 'plugin_lock',
+			'label'  => __( 'Plugin lock', 'gemsecurity' ),
+			'weight' => 4,
+			'status' => SiteGuard::lock_on() ? 'pass' : 'fail',
+			'fix'    => __( 'Lock GemSecurity with an unlock password so a stolen administrator login cannot switch it off.', 'gemsecurity' ),
+			'action' => self::action( $slug . '-firewall' ),
+			'quick'  => false,
+		];
+
 		$checks = array_merge( $checks, self::environment_checks() );
 
 		// Recent-backup hygiene — only scored when GemBackup is installed.

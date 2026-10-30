@@ -238,7 +238,7 @@ export default function Dashboard() {
 											{ fixing[ a.quickKey ] ? __( 'Enabling…', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) }
 										</button>
 									) : (
-										<DashAction action={ a.action } primary={ i === 0 && a.severity === 'high' } verb={ /scanner/.test( a.action?.url || '' ) && a.threat ? __( 'Run scan', 'gemsecurity' ) : a.threat ? __( 'Review', 'gemsecurity' ) : __( 'Enable', 'gemsecurity' ) } />
+										<DashAction action={ a.action } primary={ i === 0 && a.severity === 'high' } verb={ /scanner/.test( a.action?.url || '' ) && a.threat ? __( 'Run scan', 'gemsecurity' ) : a.threat ? __( 'Review', 'gemsecurity' ) : undefined } />
 									) }
 								</li>
 							) ) }

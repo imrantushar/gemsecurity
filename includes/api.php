@@ -351,6 +351,22 @@ class Api {
 			] );
 		}
 
+		// Plugin lock (unlock password) — always available, not a module.
+		foreach ( [
+			[ 'GET', '/lock', 'lock_status' ],
+			[ 'POST', '/lock/enable', 'lock_enable' ],
+			[ 'POST', '/lock/unlock', 'lock_unlock' ],
+			[ 'POST', '/lock/verify', 'lock_verify' ],
+			[ 'POST', '/lock/relock', 'lock_relock' ],
+			[ 'POST', '/lock/disable', 'lock_disable' ],
+		] as $r ) {
+			register_rest_route( $ns, $r[1], [
+				'methods'             => $r[0],
+				'callback'            => [ \GemSecurity\Security\SiteGuard::class, $r[2] ],
+				'permission_callback' => $perm,
+			] );
+		}
+
 		// Scanner: integrity/malware scan, baseline, MU-plugin inventory.
 		if ( self::module( 'scanner' ) ) {
 			register_rest_route( $ns, '/scan', [
@@ -367,6 +383,18 @@ class Api {
 				'methods'             => 'POST',
 				'callback'            => [ Rest\Scanner::class, 'quarantine' ],
 				'permission_callback' => $perm,
+			] );
+			register_rest_route( $ns, '/scan/core-file', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Rest\Scanner::class, 'core_file' ],
+					'permission_callback' => $perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Rest\Scanner::class, 'core_file_fix' ],
+					'permission_callback' => $perm,
+				],
 			] );
 			register_rest_route( $ns, '/scan/baseline', [
 				'methods'             => 'POST',

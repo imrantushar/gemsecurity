@@ -488,6 +488,18 @@ class AdminGuard {
 			$login = $user->user_login;
 			$id    = $user->ID;
 
+			// Core's own "new user registration" admin email is still queued to
+			// fire after this hook returns (on 'register_new_user' or
+			// 'edit_user_created_user', depending on how the account was
+			// created) and looks the user back up by ID. Since we are about to
+			// delete that exact user, that lookup would fail and core would
+			// dereference properties on `false` (a harmless-looking PHP
+			// warning, not a fatal, but still worth not leaving behind) --
+			// and an admin email announcing an account GemSecurity already
+			// removed as unauthorised is not useful anyway, given the
+			// dedicated DANGER alert below covers it.
+			add_filter( 'wp_send_new_user_notification_to_admin', '__return_false', 999 );
+
 			AdminAudit::delete_user( $id );
 
 			$this->log_removal( 'rogue_admin_deleted', $login, $email, $id, 'delete', $origin );

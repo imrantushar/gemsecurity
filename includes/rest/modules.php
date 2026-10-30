@@ -43,6 +43,15 @@ class Modules {
 			);
 		}
 
+		// Turning a module off is another way of switching protection off.
+		if ( ! $active && \GemSecurity\Security\SiteGuard::locked_for_current_user() ) {
+			return new \WP_Error(
+				'gemsecurity_locked',
+				__( 'GemSecurity is locked. Unlock it on the Firewall page (password and emailed code) to turn a module off.', 'gemsecurity' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		$result = Registry::set_active( $id, $active );
 		if ( is_wp_error( $result ) ) {
 			$result->add_data( [ 'status' => 400 ] );

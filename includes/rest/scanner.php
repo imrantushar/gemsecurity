@@ -3,6 +3,7 @@ namespace GemSecurity\Rest;
 
 use GemSecurity\Modules\Scanner as ScannerModule;
 use GemSecurity\Modules\FileWatcher;
+use GemSecurity\Security\CoreFile;
 use GemSecurity\Security\Quarantine;
 use GemSecurity\Security\Vulnerability;
 
@@ -70,6 +71,28 @@ class Scanner {
 			'entry'   => $res,
 			'result'  => ScannerModule::run_and_store(),
 		] );
+	}
+
+	/**
+	 * GET /scan/core-file — the flagged file as it is now and as WordPress.org ships it.
+	 */
+	public static function core_file( $req ) {
+		$res = CoreFile::inspect( (string) $req->get_param( 'file' ) );
+		return is_wp_error( $res ) ? $res : rest_ensure_response( $res );
+	}
+
+	/**
+	 * POST /scan/core-file — restore the original, or save an edited copy.
+	 */
+	public static function core_file_fix( $req ) {
+		$file = (string) $req->get_param( 'file' );
+		$res  = 'save' === $req->get_param( 'action' )
+			? CoreFile::save( $file, (string) $req->get_param( 'content' ) )
+			: CoreFile::restore( $file );
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		return rest_ensure_response( [ 'success' => true, 'result' => ScannerModule::run_and_store() ] );
 	}
 
 	/**

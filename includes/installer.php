@@ -337,6 +337,9 @@ class Installer {
 			// General / firewall.
 			'firewall_enabled'             => true,
 			'ip_blocklist'                 => [],
+			'ip_safelist'                  => [],
+			'plugin_lock_enabled'          => false,
+			'uploads_disabled'             => false,
 			// Off by default: a site not actually behind a proxy/CDN must
 			// keep resolving REMOTE_ADDR directly, or every visitor would
 			// appear to share the trusted proxy's IP.
@@ -555,6 +558,10 @@ class Installer {
 			'geo_block_unknown'            => false,
 			'geo_whitelist_block_admins'   => false,
 			'geo_allowed_countries'        => [],
+			'geo_mode'                     => 'allow',
+			'geo_blocked_countries'        => [],
+			'geo_admin_restrict_enabled'   => false,
+			'geo_admin_countries'          => [],
 			'geo_user_lock_enabled'        => false,
 			'geo_user_lock_action'         => 'verify',
 		];

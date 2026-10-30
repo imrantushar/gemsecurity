@@ -85,6 +85,7 @@ final class GemSecurity {
 		GemSecurity\Database::init();
 		GemSecurity\Assets::init();
 		GemSecurity\Api::init();
+		GemSecurity\Security\SiteGuard::init();
 
 		// Boot only the modules that are active. An inactive module never loads
 		// its classes, so it costs nothing (no menu, no REST, no hooks). Each

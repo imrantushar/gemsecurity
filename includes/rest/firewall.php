@@ -3,6 +3,7 @@ namespace GemSecurity\Rest;
 
 use GemSecurity\Helper;
 use GemSecurity\Modules\SecurityHeaders;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -46,8 +47,8 @@ class Firewall {
 			'gemsec_csp_rl_' . md5( Helper::get_ip_address() ) => 20,  // per IP
 			'gemsec_csp_rl_all'                                  => 300, // site-wide
 		] as $key => $max ) {
-			$count = (int) get_transient( $key ) + 1;
-			set_transient( $key, $count, 5 * MINUTE_IN_SECONDS );
+			$count = (int) Store::get( $key ) + 1;
+			Store::set( $key, $count, 5 * MINUTE_IN_SECONDS );
 			if ( $count > $max ) {
 				return true;
 			}

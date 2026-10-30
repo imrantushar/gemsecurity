@@ -16,8 +16,17 @@ export const saveSettings = createAsyncThunk( 'settings/save', async ( { setting
 	// Any toggle change could move the score — invalidate the in-page tips
 	// cache so the next route change pulls a fresh assessment.
 	refreshScoreTips();
+	// What the server changed on the person's behalf (e.g. their own IP kept
+	// off the blocklist) — shown once by whoever triggered the save.
+	( data.notices || [] ).forEach( ( n ) => pendingNotices.push( n ) );
 	return data.settings;
 } );
+
+const pendingNotices = [];
+
+export function takeNotices() {
+	return pendingNotices.splice( 0 );
+}
 
 const settingsSlice = createSlice( {
 	name: 'settings',

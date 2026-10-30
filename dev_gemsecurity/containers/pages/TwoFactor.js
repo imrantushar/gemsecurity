@@ -212,9 +212,17 @@ function Enforcement() {
 					description={ __( 'Leave empty to require it of nobody — users can still enroll themselves.', 'gemsecurity' ) }
 				>
 					<MultiSelect
-						options={ toOptions( roles ) }
+						options={ [ { value: 'all', label: __( 'All roles', 'gemsecurity' ) }, ...toOptions( roles ) ] }
 						value={ enforced }
-						onChange={ ( next ) => setField( 'two_factor_enforced_roles', next ) }
+						onChange={ ( next ) => {
+							// "All roles" stands alone: picking it clears the rest,
+							// picking any single role afterwards drops it.
+							if ( next.includes( 'all' ) && ! enforced.includes( 'all' ) ) {
+								setField( 'two_factor_enforced_roles', [ 'all' ] );
+							} else {
+								setField( 'two_factor_enforced_roles', next.filter( ( r ) => r !== 'all' ) );
+							}
+						} }
 						placeholder={ __( 'No role is required to use it', 'gemsecurity' ) }
 						disabled={ ! form.two_factor_enabled }
 					/>

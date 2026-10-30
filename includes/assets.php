@@ -80,6 +80,7 @@ class Assets {
 				return [ 'value' => (string) $p->ID, 'label' => $p->post_title ? $p->post_title : sprintf( '#%d', $p->ID ) ];
 			}, get_pages( [ 'post_status' => 'publish', 'number' => 300, 'sort_column' => 'post_title' ] ) ),
 			'current_user_id'  => get_current_user_id(),
+			'current_ip'       => Helper::get_ip_address(),
 			'is_rtl'           => is_rtl(),
 			'is_admin'         => is_admin(),
 			'version'          => GEMSECURITY_VERSION,

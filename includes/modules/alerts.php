@@ -2,6 +2,7 @@
 namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -44,11 +45,11 @@ class Alerts {
 		}
 
 		// Debounce: at most one alert per event type per 5 minutes.
-		$key = 'gemsec_alert_' . md5( $event_type );
-		if ( get_transient( $key ) ) {
+		$key = 'alert_' . md5( $event_type );
+		if ( Store::get( $key ) ) {
 			return;
 		}
-		set_transient( $key, 1, 5 * MINUTE_IN_SECONDS );
+		Store::set( $key, 1, 5 * MINUTE_IN_SECONDS );
 
 		$site = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 		$text = sprintf( '[%s] %s: %s', $site, strtoupper( $severity ), $message );

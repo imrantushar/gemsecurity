@@ -3,6 +3,7 @@ namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
 use GemSecurity\Logger;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -140,11 +141,14 @@ class FileWatcher {
 	 * @param string $reason Short tag for the log entry.
 	 */
 	private static function schedule_rebuild( $reason ) {
-		// Transient-based lock. If one is already pending, do nothing.
-		if ( false !== get_transient( self::REBUILD_LOCK ) ) {
+		// Debounce lock. If one is already pending, do nothing. A plain
+		// transient would silently never engage on a host whose object cache
+		// is present but unreachable, letting a burst of triggers schedule a
+		// rebuild each instead of collapsing into one.
+		if ( false !== Store::get( self::REBUILD_LOCK ) ) {
 			return;
 		}
-		set_transient( self::REBUILD_LOCK, $reason, 5 * MINUTE_IN_SECONDS );
+		Store::set( self::REBUILD_LOCK, $reason, 5 * MINUTE_IN_SECONDS );
 
 		// Already in a cron context? Just run it — scheduling nested events
 		// would just defer the work by one tick.
@@ -172,7 +176,7 @@ class FileWatcher {
 		self::flush_checksums_cache();
 
 		$result = self::establish_baseline();
-		delete_transient( self::REBUILD_LOCK );
+		Store::delete( self::REBUILD_LOCK );
 
 		if ( class_exists( Logger::class ) ) {
 			Logger::log(
