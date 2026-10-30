@@ -22,14 +22,14 @@ class Captcha {
 	public static function providers() {
 		return [
 			'recaptcha_v2' => [
-				'script'  => 'https://www.google.com/recaptcha/api.js',
+				'script'  => 'https://www.google.com/recaptcha/api.js', // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- provider API script must load from its own host; disclosed in readme.
 				'class'   => 'g-recaptcha',
 				'field'   => 'g-recaptcha-response',
 				'verify'  => 'https://www.google.com/recaptcha/api/siteverify',
 				'v3'      => false,
 			],
 			'recaptcha_v3' => [
-				'script'  => 'https://www.google.com/recaptcha/api.js?render=',
+				'script'  => 'https://www.google.com/recaptcha/api.js?render=', // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- provider API script must load from its own host; disclosed in readme.
 				'class'   => 'g-recaptcha-v3',
 				'field'   => 'g-recaptcha-response',
 				'verify'  => 'https://www.google.com/recaptcha/api/siteverify',
@@ -46,7 +46,7 @@ class Captcha {
 				'script'  => 'https://challenges.cloudflare.com/turnstile/v0/api.js', // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- provider API script must load from its own host; disclosed in readme.
 				'class'   => 'cf-turnstile',
 				'field'   => 'cf-turnstile-response',
-				'verify'  => 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+				'verify'  => 'https://challenges.cloudflare.com/turnstile/v0/siteverify', // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- provider verification API called server-side; disclosed in readme.
 				'v3'      => false,
 			],
 		];

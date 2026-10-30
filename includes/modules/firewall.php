@@ -157,7 +157,7 @@ class Firewall {
 	public function apply_hardening() {
 		// Disable the theme / plugin file editors.
 		if ( Helper::get_setting( 'disable_file_editing', true ) && ! defined( 'DISALLOW_FILE_EDIT' ) ) {
-			define( 'DISALLOW_FILE_EDIT', true );
+			define( 'DISALLOW_FILE_EDIT', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress core constant.
 		}
 
 		// Block ?author=N enumeration for anonymous visitors.
