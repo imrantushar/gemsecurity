@@ -522,7 +522,7 @@ class PluginGuard {
 	 * alerted (the Scanner also inventories it).
 	 */
 	private static function sweep_mu_plugins() {
-		$dir   = defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
+		$dir   = \GemSecurity\Paths::mu();
 		$files = glob( trailingslashit( $dir ) . '*.php' );
 		if ( ! is_array( $files ) || ! $files ) {
 			return;
@@ -535,7 +535,7 @@ class PluginGuard {
 			$abs                 = wp_normalize_path( $path );
 			self::$quarantined[] = [
 				'original' => $abs,
-				'relative' => str_replace( wp_normalize_path( ABSPATH ), '', $abs ),
+				'relative' => \GemSecurity\Paths::relative( $abs ),
 			];
 		}
 	}
@@ -545,44 +545,6 @@ class PluginGuard {
 			wp_delete_file( $path );
 		}
 		self::$stubs = [];
-	}
-
-	/**
-	 * Move a file into the shared quarantine store (same directory + index
-	 * shape as {@see Quarantine}, which cannot be autoloaded this early).
-	 *
-	 * @param string $path
-	 * @return array|null Entry.
-	 */
-	private static function quarantine_file( $path ) {
-		$up  = wp_get_upload_dir();
-		$dir = trailingslashit( $up['basedir'] ) . 'gemsecurity-quarantine';
-		if ( ! is_dir( $dir ) ) {
-			wp_mkdir_p( $dir );
-			@file_put_contents( $dir . '/.htaccess', "Require all denied\nDeny from all\n" ); // phpcs:ignore
-			@file_put_contents( $dir . '/index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore
-		}
-		$abs  = wp_normalize_path( $path );
-		$id   = md5( $abs . microtime() );
-		$hash = @hash_file( 'sha256', $abs ); // phpcs:ignore
-		if ( ! @rename( $abs, $dir . '/' . $id . '.quar' ) ) { // phpcs:ignore
-			return null;
-		}
-		$relative = str_replace( wp_normalize_path( ABSPATH ), '', $abs );
-		$store    = \GemSecurity\OptionStore::get_state( 'quarantine', [] );
-		$store    = is_array( $store ) ? $store : [];
-		$store[ $id ] = [
-			'id'             => $id,
-			'type'           => 'file',
-			'original'       => $abs,
-			'relative'       => $relative,
-			'label'          => $relative,
-			'source'         => 'plugin-guard',
-			'hash'           => $hash,
-			'quarantined_at' => current_time( 'mysql' ),
-		];
-		\GemSecurity\OptionStore::set_state( 'quarantine', $store );
-		return $store[ $id ];
 	}
 
 	/**
@@ -597,17 +559,16 @@ class PluginGuard {
 			return new \WP_Error( 'gemsecurity_guard_missing', __( 'Quarantine entry not found.', 'gemsecurity' ), [ 'status' => 404 ] );
 		}
 		$entry = $store[ $id ];
-		$up    = wp_get_upload_dir();
-		$src   = trailingslashit( $up['basedir'] ) . 'gemsecurity-quarantine/' . $id . '.quar';
-		$hash  = @hash_file( 'sha256', $src ); // phpcs:ignore
-		if ( ! $hash ) {
+		$body  = Quarantine::payload( $id );
+		if ( null === $body ) {
 			return new \WP_Error( 'gemsecurity_guard_missing', __( 'The quarantined file is missing.', 'gemsecurity' ), [ 'status' => 404 ] );
 		}
 		// Trust first, so the restored file is not swept again on the next request.
-		self::trust( 'mu:' . basename( $entry['original'] ), basename( $entry['original'] ), $hash );
-		if ( ! @rename( $src, $entry['original'] ) ) { // phpcs:ignore
+		self::trust( 'mu:' . basename( $entry['original'] ), basename( $entry['original'] ), hash( 'sha256', $body ) );
+		if ( ! Quarantine::write_back( $entry['original'], $body ) ) {
 			return new \WP_Error( 'gemsecurity_guard_restore', __( 'Could not restore the file.', 'gemsecurity' ), [ 'status' => 500 ] );
 		}
+		Quarantine::delete_payload( $id );
 		unset( $store[ $id ] );
 		\GemSecurity\OptionStore::set_state( 'quarantine', $store );
 		self::log( 'plugin_guard_restore', sprintf( 'Restored and trusted must-use plugin %s.', $entry['label'] ), 'notice' );
@@ -688,7 +649,7 @@ class PluginGuard {
 	 */
 	public static function verify_plugin( $basename ) {
 		$basename = (string) $basename;
-		$file     = WP_PLUGIN_DIR . '/' . $basename;
+		$file     = \GemSecurity\Paths::plugins() . '/' . $basename;
 		if ( '' === $basename || validate_file( $basename ) || ! is_file( $file ) ) {
 			return [ 'status' => 'missing', 'version' => '', 'note' => __( 'Plugin file not found.', 'gemsecurity' ), 'checked_at' => '' ];
 		}
@@ -699,7 +660,7 @@ class PluginGuard {
 		if ( false === strpos( $basename, '/' ) ) {
 			$res = [ 'status' => 'not_org', 'note' => __( 'Single-file plugin — cannot be checksum-verified.', 'gemsecurity' ) ];
 		} else {
-			$res = self::checksum_dir( $slug, WP_PLUGIN_DIR . '/' . $slug, $ver );
+			$res = self::checksum_dir( $slug, \GemSecurity\Paths::plugins() . '/' . $slug, $ver );
 		}
 		$res['version']    = $ver;
 		$res['checked_at'] = current_time( 'mysql' );
@@ -961,7 +922,7 @@ class PluginGuard {
 	}
 
 	private static function plugin_name( $basename ) {
-		$file = WP_PLUGIN_DIR . '/' . $basename;
+		$file = \GemSecurity\Paths::plugins() . '/' . $basename;
 		if ( is_file( $file ) ) {
 			$d = get_file_data( $file, [ 'Name' => 'Plugin Name' ] );
 			if ( '' !== $d['Name'] ) {
@@ -1142,7 +1103,7 @@ class PluginGuard {
 	/* ------------------------------------------------------------------ */
 
 	public static function mu_dir() {
-		return defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
+		return \GemSecurity\Paths::mu();
 	}
 
 	public static function mu_path() {

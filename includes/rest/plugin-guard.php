@@ -174,7 +174,7 @@ class PluginGuard {
 		}
 
 		$mu  = [];
-		$dir = defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
+		$dir = \GemSecurity\Paths::mu();
 		foreach ( (array) glob( trailingslashit( $dir ) . '*.php' ) as $path ) {
 			$f    = basename( $path );
 			$key  = 'mu:' . $f;

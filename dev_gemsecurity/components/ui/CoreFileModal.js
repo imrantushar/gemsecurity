@@ -75,7 +75,7 @@ function collapse( rows ) {
 
 /**
  * Popup for one flagged core file: what differs from the official release,
- * with a one-click restore and, where the site allows file editing, an editor.
+ * with a one-click restore of the official copy.
  *
  * @param {Object}   props
  * @param {string}   props.file    Root-relative path.
@@ -86,16 +86,11 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 	const toast = useToast();
 	const [ info, setInfo ] = useState( null );
 	const [ error, setError ] = useState( '' );
-	const [ editing, setEditing ] = useState( false );
-	const [ draft, setDraft ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 
 	useEffect( () => {
 		api.get( 'scan/core-file', { params: { file } } )
-			.then( ( r ) => {
-				setInfo( r.data );
-				setDraft( r.data.current );
-			} )
+			.then( ( r ) => setInfo( r.data ) )
 			.catch( ( e ) => setError( e?.response?.data?.message || __( 'Could not load this file.', 'gemsecurity' ) ) );
 	}, [ file ] );
 
@@ -127,7 +122,7 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 
 	const restore = () => {
 		// eslint-disable-next-line no-alert
-		if ( window.confirm( __( 'Replace this file with the official WordPress copy? The current file is backed up first.', 'gemsecurity' ) ) ) {
+		if ( window.confirm( __( 'Replace this file with the official WordPress copy? The current file is kept in quarantine first.', 'gemsecurity' ) ) ) {
 			run( { action: 'restore' }, __( 'Original file restored.', 'gemsecurity' ) );
 		}
 	};
@@ -149,7 +144,7 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 					{ error && <p className="gs-alert gs-alert--danger">{ error }</p> }
 					{ ! info && ! error && <Loading /> }
 
-					{ info && ! editing && (
+					{ info && (
 						<>
 							{ ! info.exists && <p><Badge tone="warning">{ __( 'Missing', 'gemsecurity' ) }</Badge> { __( 'This core file is not on your site.', 'gemsecurity' ) }</p> }
 							{ info.original_error && <p className="gs-alert gs-alert--warning">{ info.original_error }</p> }
@@ -170,35 +165,11 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 							) }
 						</>
 					) }
-
-					{ info && editing && (
-						<>
-							<p className="gs-muted">{ __( 'Edit the file directly. A backup of the current version is kept first. A syntax error here can take your whole site down.', 'gemsecurity' ) }</p>
-							<textarea
-								className="gs-input gs-textarea gs-modal__editor"
-								value={ draft }
-								onChange={ ( e ) => setDraft( e.target.value ) }
-								spellCheck={ false }
-							/>
-						</>
-					) }
 				</div>
 
 				{ info && (
 					<div className="gs-modal__foot">
-						{ ! editing ? (
-							<>
-								{ info.original && <Button onClick={ restore } loading={ busy }>{ __( 'Restore original', 'gemsecurity' ) }</Button> }
-								{ info.can_edit
-									? <Button variant="secondary" onClick={ () => setEditing( true ) }>{ __( 'Edit file', 'gemsecurity' ) }</Button>
-									: <span className="gs-muted">{ __( 'Editing is off (file editor disabled in Firewall settings).', 'gemsecurity' ) }</span> }
-							</>
-						) : (
-							<>
-								<Button onClick={ () => run( { action: 'save', content: draft }, __( 'File saved.', 'gemsecurity' ) ) } loading={ busy }>{ __( 'Save file', 'gemsecurity' ) }</Button>
-								<Button variant="secondary" onClick={ () => { setEditing( false ); setDraft( info.current ); } }>{ __( 'Cancel', 'gemsecurity' ) }</Button>
-							</>
-						) }
+						{ info.original && <Button onClick={ restore } loading={ busy }>{ __( 'Restore original', 'gemsecurity' ) }</Button> }
 						<Button variant="secondary" onClick={ onClose }>{ __( 'Close', 'gemsecurity' ) }</Button>
 					</div>
 				) }

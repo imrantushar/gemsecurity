@@ -12,6 +12,10 @@ class Database {
 		add_action( 'init', [ $self, 'register_tables' ], 5 );
 		add_action( 'init', [ Installer::class, 'maybe_upgrade' ], 6 );
 
+		// Temporary-access expiry is enforced even when its module is switched
+		// off, so disabling the module can never extend anyone's access.
+		Modules\TempAccess::enforce();
+
 		// Cron callbacks.
 		add_action( Installer::CRON_PRUNE_LOGS, [ Logger::class, 'prune' ] );
 		add_action( Installer::CRON_PRUNE_LOGS, [ Store::class, 'prune' ] );
@@ -88,6 +92,14 @@ class Database {
 		}
 		if ( Modules\HiddenAdmin::enabled() ) {
 			Modules\HiddenAdmin::scan_and_store();
+		}
+		// Catch a revoked or rotated social-login secret before a visitor does.
+		if ( Modules\Registry::is_active( 'social-login' ) && Helper::get_setting( 'social_login_enabled', false ) ) {
+			Modules\SocialLogin::health_check();
+		}
+		// Drop magic-login links that expired unused.
+		if ( Modules\Registry::is_active( 'magic-login' ) ) {
+			Modules\MagicLogin::cleanup();
 		}
 	}
 }

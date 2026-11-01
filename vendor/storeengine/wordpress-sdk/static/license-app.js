@@ -22,7 +22,13 @@
 
 	function api( config, path, opts ) {
 		opts = opts || {};
-		const url = config.restUrl + path.replace( /^\//, '' );
+		// On plain permalinks restUrl is `…/index.php?rest_route=/…/`, so a
+		// path's own query string must be joined with `&`, not a second `?`.
+		const parts = path.replace( /^\//, '' ).split( '?' );
+		let url = config.restUrl + parts[ 0 ];
+		if ( parts[ 1 ] ) {
+			url += ( config.restUrl.indexOf( '?' ) === -1 ? '?' : '&' ) + parts[ 1 ];
+		}
 
 		return fetch( url, {
 			method: opts.method || 'GET',
@@ -685,10 +691,11 @@
 			return api( config, 'updates/status' ).then( setState );
 		}, [ config ] );
 
-		const refreshVersions = useCallback( () => {
+		// `force` bypasses the server-side cache (Refresh button, after an install).
+		const refreshVersions = useCallback( ( force ) => {
 			setVersionsLoading( true );
 			setVersionsError( null );
-			return api( config, 'updates/versions' )
+			return api( config, true === force ? 'updates/versions?force=true' : 'updates/versions' )
 				.then( ( res ) => setVersions( res && res.versions ? res.versions : [] ) )
 				.catch( ( err ) => {
 					setVersions( [] );
@@ -857,7 +864,7 @@
 				installing,
 				onInstall: handleInstall,
 				current: state.current_version,
-				onRefresh: refreshVersions,
+				onRefresh: () => refreshVersions( true ),
 				refreshing: versionsLoading,
 				error: versionsError,
 			} ),

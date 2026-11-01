@@ -347,6 +347,47 @@ class Docs {
 				],
 			],
 
+			'magic-login' => [
+				'summary' => __( 'Lets people sign in without a password by opening a one-time link sent to their email address.', 'gemsecurity' ),
+				'does'    => [
+					__( 'Adds an "Email me a sign-in link" option to the login form.', 'gemsecurity' ),
+					__( 'Emails a single-use link that expires after the time you set; only a hash of it is stored.', 'gemsecurity' ),
+					__( 'Asks for confirmation before signing in, so email scanners that open links cannot use them up.', 'gemsecurity' ),
+					__( 'Always answers the same way, so it cannot be used to find out which accounts exist, and limits requests per account and per address.', 'gemsecurity' ),
+				],
+				'setup'   => [
+					__( 'Turn magic login on and choose how long a link stays valid.', 'gemsecurity' ),
+					__( 'Optionally limit it to certain roles. Administrator-level accounts are excluded unless you allow them.', 'gemsecurity' ),
+					__( 'Leave "Require two-factor" on so users with two-factor still get the second prompt.', 'gemsecurity' ),
+					__( 'Check that your site sends email reliably before relying on it.', 'gemsecurity' ),
+				],
+				'notes'   => [
+					__( 'Anyone who can read a user’s mailbox can sign in as them — keep administrators off unless their email is protected by two-factor.', 'gemsecurity' ),
+					__( 'The two-factor requirement only applies while the Two-Factor system is switched on.', 'gemsecurity' ),
+				],
+			],
+
+			'temp-access' => [
+				'summary' => __( 'Gives a developer or support person a real account that stops working by itself, so nobody has to share a password.', 'gemsecurity' ),
+				'does'    => [
+					__( 'Creates a new user with the role you choose and emails a single-use sign-in link; only a hash of the link is stored.', 'gemsecurity' ),
+					__( 'Ends access at the expiry time on every request, not just on a schedule, and ends all sessions when access expires or is revoked.', 'gemsecurity' ),
+					__( 'Never touches an existing user: an email address that already has an account is refused.', 'gemsecurity' ),
+					__( 'Records creation, sign-ins, failed link attempts, extensions, expiry and revocation in each account’s history and in the Logs.', 'gemsecurity' ),
+				],
+				'setup'   => [
+					__( 'Open Temporary Access, choose Create temporary access, then enter the email, role and duration.', 'gemsecurity' ),
+					__( 'Pick the least-privileged role that gets the job done; roles that can change the site need an explicit confirmation.', 'gemsecurity' ),
+					__( 'Copy the link or let it be emailed. It works once — use Regenerate link if it is lost.', 'gemsecurity' ),
+					__( 'Choose which events email the security notification address.', 'gemsecurity' ),
+				],
+				'notes'   => [
+					__( 'Links are shown only when created or regenerated and cannot be recovered later.', 'gemsecurity' ),
+					__( 'Serve your site over HTTPS so the link is not sent in the clear.', 'gemsecurity' ),
+					__( 'Revoked and expired accounts are kept for the audit trail; they cannot sign in.', 'gemsecurity' ),
+				],
+			],
+
 			'geolocation' => [
 				'summary' => __( 'Country-level access control: allow logins only from countries you expect, optionally block the whole site, and pin individual users to their own countries.', 'gemsecurity' ),
 				'does'    => [

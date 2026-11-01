@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api, { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
 import { Card, Toggle, Field, TextInput, Select, Button, Loading, Badge } from '@Components/ui/Controls';
@@ -22,9 +22,20 @@ const KEYS = [
 	...[ 'google', 'facebook', 'github', 'twitter' ].flatMap( PROVIDER_KEYS ),
 ];
 
-function ProviderCard( { provider, form, setField } ) {
+function ProviderCard( { provider, form, setField, saved, loginEnabled, onVerified } ) {
 	const { key, label, color } = provider;
 	const enabled = form[ `social_${ key }_enabled` ];
+
+	// A provider's button only reaches the login form once its credentials have
+	// passed a check. The server fingerprints the exact ID + secret, so editing
+	// either one makes it unverified again until it is re-checked.
+	const sigOf = ( v ) => `${ v[ `social_${ key }_client_id` ] || '' }|${ v[ `social_${ key }_client_secret` ] || '' }`;
+	const formSig = sigOf( form );
+	const savedSig = sigOf( saved || {} );
+	const [ okSig, setOkSig ] = useState( null );
+	const verified = okSig === formSig || ( provider.verified && formSig === savedSig );
+	const unsaved = formSig !== savedSig;
+	const canSignInTest = enabled && loginEnabled && ! unsaved && formSig !== '|';
 	return (
 		<Card>
 			<div className="gs-provider">
@@ -32,11 +43,35 @@ function ProviderCard( { provider, form, setField } ) {
 				<div className="gs-provider__head">
 					<strong>{ label }</strong>
 					{ enabled
-						? <Badge tone="success">{ __( 'Enabled', 'gemsecurity' ) }</Badge>
-						: <Badge tone="info">{ __( 'Off', 'gemsecurity' ) }</Badge> }
+						? ( verified
+							? <Badge tone="success">{ __( 'Verified', 'gemsecurity' ) }</Badge>
+							: <Badge tone="warning">{ __( 'Not verified', 'gemsecurity' ) }</Badge> )
+						: ( provider.broken
+							? <Badge tone="danger">{ __( 'Switched off', 'gemsecurity' ) }</Badge>
+							: <Badge tone="info">{ __( 'Off', 'gemsecurity' ) }</Badge> ) }
 				</div>
 				<Toggle checked={ enabled } onChange={ ( v ) => setField( `social_${ key }_enabled`, v ) } />
 			</div>
+			{ provider.broken && (
+				<div className="gs-credtest__result is-fail" role="alert">
+					<Icon name="alert" size={ 15 } />
+					<div>
+						<strong>
+							{ sprintf(
+								/* translators: %s: provider name. */
+								__( '%s was switched off automatically.', 'gemsecurity' ),
+								label
+							) }
+						</strong>
+						<span className="gs-credtest__detail">
+							{ __( 'The provider stopped accepting these credentials, so its button was removed from the login form.', 'gemsecurity' ) }
+							{ provider.broken.reason ? ` (${ provider.broken.reason })` : '' }
+							{ ' ' }
+							{ __( 'Enter new credentials, turn it back on and verify them again.', 'gemsecurity' ) }
+						</span>
+					</div>
+				</div>
+			) }
 			{ enabled && (
 				<>
 					{ /* Expanded on first setup: with no credentials saved yet,
@@ -60,7 +95,36 @@ function ProviderCard( { provider, form, setField } ) {
 							client_id: form[ `social_${ key }_client_id` ] || '',
 							client_secret: form[ `social_${ key }_client_secret` ] || '',
 						} ) }
+						onResult={ ( data ) => {
+							if ( data?.ok ) {
+								setOkSig( formSig );
+								onVerified?.();
+							}
+						} }
 					/>
+					<div className="gs-credtest">
+						<Button
+							variant="secondary"
+							disabled={ ! canSignInTest }
+							onClick={ () => { window.location.href = provider.test_url; } }
+						>
+							<Icon name="link" size={ 15 } />
+							{ __( 'Verify with a sign-in', 'gemsecurity' ) }
+						</Button>
+						<span className="gs-muted">
+							{ canSignInTest
+								? __( 'Runs a real sign-in against the saved keys and also checks the redirect URI.', 'gemsecurity' )
+								: __( 'Turn on social login and save your keys first.', 'gemsecurity' ) }
+						</span>
+					</div>
+					{ ! verified && (
+						<p className="gs-muted">
+							{ __( 'This provider’s button stays hidden from the login form until its credentials are verified.', 'gemsecurity' ) }
+						</p>
+					) }
+					{ verified && unsaved && (
+						<p className="gs-muted">{ __( 'Verified — save your changes to show the button on the login form.', 'gemsecurity' ) }</p>
+					) }
 				</>
 			) }
 			{ enabled && key === 'twitter' && (
@@ -72,11 +136,26 @@ function ProviderCard( { provider, form, setField } ) {
 
 export default function SocialLogin() {
 	const toast = useToast();
-	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
+	const { form, setField, save, saving, dirty, settings } = useSettingsForm( KEYS );
 	const [ config, setConfig ] = useState( null );
 
-	useEffect( () => {
+	const loadConfig = () => {
 		api.get( 'social' ).then( ( r ) => setConfig( r.data ) ).catch( () => setConfig( false ) );
+	};
+
+	// Reload on mount and whenever saved settings change, so each provider's
+	// verified flag reflects the credentials now stored.
+	useEffect( loadConfig, [ settings ] );
+
+	// Coming back from a "Verify with a sign-in" round trip.
+	useEffect( () => {
+		const url = new URL( window.location.href );
+		if ( url.searchParams.get( 'gemsec_social_verified' ) ) {
+			toast( __( 'Sign-in worked — credentials verified.', 'gemsecurity' ), 'success' );
+			url.searchParams.delete( 'gemsec_social_verified' );
+			window.history.replaceState( null, '', url.toString() );
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [] );
 
 	const copyRedirect = () => {
@@ -97,7 +176,7 @@ export default function SocialLogin() {
 			<Card title={ __( 'Social login', 'gemsecurity' ) } description={ __( 'Let users sign in with their existing accounts.', 'gemsecurity' ) }>
 				<Toggle
 					label={ __( 'Enable social login', 'gemsecurity' ) }
-					description={ __( 'Shows the configured provider buttons on the WordPress login form.', 'gemsecurity' ) }
+					description={ __( 'Shows the buttons of providers whose credentials are verified on the WordPress login form.', 'gemsecurity' ) }
 					checked={ form.social_login_enabled }
 					onChange={ ( v ) => setField( 'social_login_enabled', v ) }
 				/>
@@ -137,7 +216,15 @@ export default function SocialLogin() {
 			</Card>
 
 			{ ( config.providers || [] ).map( ( p ) => (
-				<ProviderCard key={ p.key } provider={ p } form={ form } setField={ setField } />
+				<ProviderCard
+					key={ p.key }
+					provider={ p }
+					form={ form }
+					setField={ setField }
+					saved={ settings }
+					loginEnabled={ !! settings?.social_login_enabled }
+					onVerified={ loadConfig }
+				/>
 			) ) }
 
 		</div>

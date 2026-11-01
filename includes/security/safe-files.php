@@ -52,7 +52,7 @@ class SafeFiles {
 
 	/** ABSPATH-relative, forward-slashed path for an absolute one. */
 	public static function relative( $abs ) {
-		return str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $abs ) );
+		return \GemSecurity\Paths::relative( wp_normalize_path( $abs ) );
 	}
 
 	/**
@@ -155,7 +155,7 @@ class SafeFiles {
 	public static function mark( $abs ) {
 		$abs = wp_normalize_path( $abs );
 
-		if ( 0 !== strpos( $abs, wp_normalize_path( ABSPATH ) ) ) {
+		if ( 0 !== strpos( $abs, \GemSecurity\Paths::root() ) ) {
 			return new \WP_Error( 'gemsecurity_outside_site', __( 'That file is outside this WordPress installation.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 		if ( ! is_file( $abs ) ) {
@@ -212,7 +212,7 @@ class SafeFiles {
 	public static function for_js() {
 		$out = [];
 		foreach ( self::all() as $rel => $entry ) {
-			$abs     = ABSPATH . $rel;
+			$abs     = \GemSecurity\Paths::root() . $rel;
 			$exists  = is_file( $abs );
 			$current = $exists ? md5_file( $abs ) : '';
 

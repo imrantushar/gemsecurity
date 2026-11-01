@@ -310,10 +310,10 @@ class UploadShield {
 	 */
 	private static function legacy_dirs() {
 		return [
-			untrailingslashit( ABSPATH ) . '/' . WPINC,
+			untrailingslashit( \GemSecurity\Paths::root() ) . '/' . WPINC,
 			WP_LANG_DIR,
-			WP_CONTENT_DIR . '/upgrade',
-			WP_CONTENT_DIR . '/upgrade-temp-backup',
+			\GemSecurity\Paths::content() . '/upgrade',
+			\GemSecurity\Paths::content() . '/upgrade-temp-backup',
 		];
 	}
 
@@ -420,7 +420,7 @@ class UploadShield {
 	/** Relative paths of the protected directories (for the UI). */
 	public static function htaccess_dirs() {
 		return array_map( static function ( $dir ) {
-			return str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $dir ) );
+			return \GemSecurity\Paths::relative( wp_normalize_path( $dir ) );
 		}, array_keys( self::htaccess_targets() ) );
 	}
 

@@ -55,8 +55,8 @@ class Scanner {
 		$path = wp_normalize_path( trim( $path ) );
 
 		// The UI sends a root-relative path.
-		if ( '' !== $path && 0 !== strpos( $path, wp_normalize_path( ABSPATH ) ) ) {
-			$path = wp_normalize_path( ABSPATH ) . ltrim( $path, '/' );
+		if ( '' !== $path && 0 !== strpos( $path, \GemSecurity\Paths::root() ) ) {
+			$path = \GemSecurity\Paths::root() . ltrim( $path, '/' );
 		}
 
 		$res = Quarantine::add_file( $path );
@@ -82,13 +82,10 @@ class Scanner {
 	}
 
 	/**
-	 * POST /scan/core-file — restore the original, or save an edited copy.
+	 * POST /scan/core-file — put the official WordPress.org copy back.
 	 */
 	public static function core_file_fix( $req ) {
-		$file = (string) $req->get_param( 'file' );
-		$res  = 'save' === $req->get_param( 'action' )
-			? CoreFile::save( $file, (string) $req->get_param( 'content' ) )
-			: CoreFile::restore( $file );
+		$res = CoreFile::restore( (string) $req->get_param( 'file' ) );
 		if ( is_wp_error( $res ) ) {
 			return $res;
 		}

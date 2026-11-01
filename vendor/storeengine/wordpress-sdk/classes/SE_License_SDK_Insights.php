@@ -625,11 +625,19 @@ final class SE_License_SDK_Insights {
 	 * @return void
 	 */
 	public function optOut( $hide_notice = true ) {
+		// Only a site that had opted in has anything to withdraw, so only then
+		// tell the server that sharing stopped. Never send usage data here:
+		// send_tracking_data( true ) skips the consent check, and calling it sent
+		// the full payload from an administrator who had just clicked "No thanks".
+		$was_allowed = $this->is_tracking_allowed();
+
 		$this->client->set_option( 'allow_tracking', 'no' );
 		$this->client->set_option( 'tracking_notice', $hide_notice ? 'hide' : 'show' );
-		$this->client->request( [ 'body' => [ 'opt_in' => false ], 'route' => 'opt-in' ] );
 		$this->__clear_schedule_event();
-		$this->send_tracking_data( true );
+
+		if ( $was_allowed ) {
+			$this->client->request( [ 'body' => [ 'opt_in' => false ], 'route' => 'opt-in' ] );
+		}
 	}
 
 	/**
@@ -1250,6 +1258,12 @@ final class SE_License_SDK_Insights {
 	 * @return void
 	 */
 	public function theme_deactivated( $new_name, $new_theme, $old_theme ) {
+		// Themes get no feedback form, so there is no consent to ask for here:
+		// send only for a site that opted in to usage data.
+		if ( ! $this->is_tracking_allowed() ) {
+			return;
+		}
+
 		// Make sure this is correct theme to track.
 		if ( $old_theme->get_template() == $this->client->getSlug() ) {
 			$current_user = wp_get_current_user();

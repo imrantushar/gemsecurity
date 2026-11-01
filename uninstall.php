@@ -25,6 +25,7 @@ $options = [
 	'gemsecurity_hidden_admin_state',
 	'gemsecurity_daily_report_snapshot',
 	'gemsecurity_safe_files',
+	'gemsecurity_secret_key',
 	// Pre-2.2 standalone keys. Still deleted so an uninstall after an upgrade
 	// from before the OptionStore consolidation leaves nothing behind.
 	'gemsecurity_db_version',
@@ -39,6 +40,8 @@ $options = [
 foreach ( $options as $option ) {
 	delete_option( $option );
 }
+// Quarantined file payloads.
+$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'gemsecurity_quarantine_blob_' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 // Custom tables. Backup data (tables, archives, schedules) belongs to the
 // GemBackup plugin and is deliberately left alone — it may be the site's
@@ -59,6 +62,20 @@ $meta_keys = [
 	'_gemsec_2fa_secret',
 	'_gemsec_2fa_secret_pending',
 	'_gemsec_2fa_backup_codes',
+	'_gemsec_magic_hash',
+	'_gemsec_magic_expires',
+	'_gemsec_magic_sends',
+	'_gemsec_ta',
+	'_gemsec_ta_expires',
+	'_gemsec_ta_revoked',
+	'_gemsec_ta_ended',
+	'_gemsec_ta_hash',
+	'_gemsec_ta_link_expires',
+	'_gemsec_ta_created',
+	'_gemsec_ta_created_by',
+	'_gemsec_ta_last_login',
+	'_gemsec_ta_logins',
+	'_gemsec_ta_history',
 	'_gemsec_oauth_avatar',
 	'_gemsec_oauth_registered_via',
 	'_gemsec_geo_allowed_countries',
@@ -79,13 +96,14 @@ $hooks = [
 	'gemsecurity_weekly_digest',
 	'gemsecurity_admin_guard_sweep',
 	'gemsecurity_daily_report',
+	'gemsecurity_temp_access_sweep',
 ];
 foreach ( $hooks as $hook ) {
 	wp_clear_scheduled_hook( $hook );
 }
 
 // Extended-protection mu-plugin.
-$mu = ( defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins' ) . '/gemsecurity-extended-protection.php';
+$mu = WPMU_PLUGIN_DIR . '/gemsecurity-extended-protection.php';
 if ( file_exists( $mu ) ) {
 	wp_delete_file( $mu );
 }

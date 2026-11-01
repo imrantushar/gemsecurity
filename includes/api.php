@@ -190,9 +190,9 @@ class Api {
 				$path = (string) $req->get_param( 'path' );
 				// Accept either an absolute path or one relative to the
 				// install, since findings carry both.
-				$abs = ( 0 === strpos( wp_normalize_path( $path ), wp_normalize_path( ABSPATH ) ) )
+				$abs = ( 0 === strpos( wp_normalize_path( $path ), \GemSecurity\Paths::root() ) )
 					? $path
-					: ABSPATH . ltrim( $path, '/' );
+					: \GemSecurity\Paths::root() . ltrim( $path, '/' );
 
 				$res = Security\SafeFiles::mark( $abs );
 				if ( is_wp_error( $res ) ) {
@@ -385,15 +385,24 @@ class Api {
 				'permission_callback' => $perm,
 			] );
 			register_rest_route( $ns, '/scan/core-file', [
-				[
-					'methods'             => 'GET',
-					'callback'            => [ Rest\Scanner::class, 'core_file' ],
-					'permission_callback' => $perm,
+				'methods'             => 'GET',
+				'callback'            => [ Rest\Scanner::class, 'core_file' ],
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' );
+				},
+				'args'                => [
+					'file' => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
 				],
-				[
-					'methods'             => 'POST',
-					'callback'            => [ Rest\Scanner::class, 'core_file_fix' ],
-					'permission_callback' => $perm,
+			] );
+			// Writes a WordPress core file, so it also needs the core-update capability.
+			register_rest_route( $ns, '/scan/core-file', [
+				'methods'             => 'POST',
+				'callback'            => [ Rest\Scanner::class, 'core_file_fix' ],
+				'permission_callback' => static function () {
+					return current_user_can( 'manage_options' ) && current_user_can( 'update_core' );
+				},
+				'args'                => [
+					'file'   => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
 				],
 			] );
 			register_rest_route( $ns, '/scan/baseline', [
@@ -468,6 +477,31 @@ class Api {
 				'callback'            => [ Rest\Social::class, 'config' ],
 				'permission_callback' => $perm,
 			] );
+		}
+
+		// Temporary access. Gated on can_manage() so a temporary account can
+		// never manage (or extend) itself.
+		if ( self::module( 'temp-access' ) ) {
+			$ta_perm = [ Rest\TempAccess::class, 'permission' ];
+			register_rest_route( $ns, '/temp-access', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Rest\TempAccess::class, 'get' ],
+					'permission_callback' => $ta_perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Rest\TempAccess::class, 'create' ],
+					'permission_callback' => $ta_perm,
+				],
+			] );
+			foreach ( [ 'extend', 'regenerate', 'revoke' ] as $ta_action ) {
+				register_rest_route( $ns, '/temp-access/' . $ta_action, [
+					'methods'             => 'POST',
+					'callback'            => [ Rest\TempAccess::class, $ta_action ],
+					'permission_callback' => $ta_perm,
+				] );
+			}
 		}
 
 		// Sessions (Login Security module).

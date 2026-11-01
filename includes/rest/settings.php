@@ -135,6 +135,18 @@ class Settings {
 			'social_twitter_client_id'      => 'text',
 			'social_twitter_client_secret'  => 'text',
 
+			// Magic login.
+			'magic_login_enabled'           => 'bool',
+			'magic_login_expiry'            => 'int',
+			'magic_login_allow_admins'      => 'bool',
+			'magic_login_roles'             => 'slug_list',
+			'magic_login_require_2fa'       => 'bool',
+
+			// Temporary access notifications.
+			'temp_access_notify_created'    => 'bool',
+			'temp_access_notify_used'       => 'bool',
+			'temp_access_notify_revoked'    => 'bool',
+
 			// API & access hardening.
 			'rest_rate_limit_enabled'       => 'bool',
 			'rest_rate_limit_max'           => 'int',

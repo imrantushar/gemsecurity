@@ -112,18 +112,18 @@ class SupplyChain {
 		$out = [];
 
 		// Must-use plugins — a favourite hiding spot (auto-loaded, no UI).
-		$mu_dir = defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
+		$mu_dir = \GemSecurity\Paths::mu();
 		foreach ( self::php_files( $mu_dir, 1 ) as $f ) {
 			// Our own extended-protection loader is expected.
 			if ( false !== strpos( $f, 'gemsecurity-extended-protection' ) ) {
 				continue;
 			}
-			$out[] = [ 'type' => 'mu-plugin', 'path' => str_replace( WP_CONTENT_DIR, '', $f ), 'reason' => __( 'Auto-loaded must-use plugin', 'gemsecurity' ), 'severity' => 'warning' ];
+			$out[] = [ 'type' => 'mu-plugin', 'path' => str_replace( \GemSecurity\Paths::content(), '', $f ), 'reason' => __( 'Auto-loaded must-use plugin', 'gemsecurity' ), 'severity' => 'warning' ];
 		}
 
 		// Drop-ins.
 		foreach ( [ 'object-cache.php', 'advanced-cache.php', 'db.php', 'sunrise.php' ] as $drop ) {
-			$p = WP_CONTENT_DIR . '/' . $drop;
+			$p = \GemSecurity\Paths::content() . '/' . $drop;
 			if ( file_exists( $p ) ) {
 				$out[] = [ 'type' => 'drop-in', 'path' => '/' . $drop, 'reason' => __( 'Content drop-in (runs very early)', 'gemsecurity' ), 'severity' => 'notice' ];
 			}
@@ -144,7 +144,7 @@ class SupplyChain {
 				}
 				foreach ( $needles as $needle ) {
 					if ( false !== stripos( $src, $needle ) ) {
-						$out[]  = [ 'type' => 'obfuscation', 'path' => str_replace( WP_CONTENT_DIR, '', $f ), 'reason' => sprintf( /* translators: %s token */ __( 'Contains %s', 'gemsecurity' ), trim( $needle ) ), 'severity' => 'critical' ];
+						$out[]  = [ 'type' => 'obfuscation', 'path' => str_replace( \GemSecurity\Paths::content(), '', $f ), 'reason' => sprintf( /* translators: %s token */ __( 'Contains %s', 'gemsecurity' ), trim( $needle ) ), 'severity' => 'critical' ];
 						$hits++;
 						break;
 					}

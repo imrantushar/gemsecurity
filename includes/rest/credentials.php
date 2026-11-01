@@ -2,6 +2,7 @@
 namespace GemSecurity\Rest;
 
 use GemSecurity\Modules\Captcha;
+use GemSecurity\Modules\SocialLogin;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -57,7 +58,15 @@ class Credentials {
 				return self::respond( self::test_endpoint( $values, $target ) );
 
 			case 'social':
-				return self::respond( self::test_social( $values ) );
+				$result = self::test_social( $values );
+				// A pass is what lets the provider's button appear on the login
+				// form. The fingerprint covers this exact ID + secret, so editing
+				// either later un-verifies it again.
+				if ( ! empty( $result['ok'] ) ) {
+					SocialLogin::mark_verified( sanitize_key( $values['provider'] ?? '' ), $values['client_id'] ?? '', $values['client_secret'] ?? '' );
+					$result['verified'] = true;
+				}
+				return self::respond( $result );
 
 			case 'email':
 				return self::respond( self::test_email( $values ) );
@@ -542,7 +551,7 @@ class Credentials {
 	 * @param array $values provider, client_id, client_secret
 	 * @return array
 	 */
-	private static function test_social( array $values ) {
+	public static function test_social( array $values ) {
 		$provider = sanitize_key( $values['provider'] ?? '' );
 		$id       = $values['client_id'] ?? '';
 		$secret   = $values['client_secret'] ?? '';
@@ -551,11 +560,14 @@ class Credentials {
 			return [ 'message' => __( 'Enter both the client ID and the client secret first.', 'gemsecurity' ) ];
 		}
 
-		$bad_client = [ 'message' => __( 'The provider does not recognise this client ID / secret pair.', 'gemsecurity' ) ];
+		// `definitive` marks a clear "this pair is wrong" answer, as opposed to a
+		// network error or an inconclusive reply. The daily health check only
+		// acts on the former.
+		$bad_client = [ 'message' => __( 'The provider does not recognise this client ID / secret pair.', 'gemsecurity' ), 'definitive' => true ];
 		$good       = [
 			'ok'      => true,
 			'message' => __( 'Client ID and secret accepted by the provider.', 'gemsecurity' ),
-			'detail'  => __( 'The redirect URI is only checked during a real sign-in — make sure it is registered too.', 'gemsecurity' ),
+			'detail'  => __( 'The redirect URI is only checked during a real sign-in — use “Verify with a sign-in” to confirm it too.', 'gemsecurity' ),
 		];
 
 		switch ( $provider ) {

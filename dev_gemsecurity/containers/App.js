@@ -25,6 +25,8 @@ import LoginSecurity from '@Containers/pages/LoginSecurity';
 import Captcha from '@Containers/pages/Captcha';
 import TwoFactor from '@Containers/pages/TwoFactor';
 import SocialLogin from '@Containers/pages/SocialLogin';
+import MagicLogin from '@Containers/pages/MagicLogin';
+import TempAccess from '@Containers/pages/TempAccess';
 import Geolocation from '@Containers/pages/Geolocation';
 import AdminGuard from '@Containers/pages/AdminGuard';
 import ApiHardening from '@Containers/pages/ApiHardening';
@@ -49,6 +51,8 @@ const PAGES = {
 	'gemsecurity-captcha': Captcha,
 	'gemsecurity-two-factor': TwoFactor,
 	'gemsecurity-social-login': SocialLogin,
+	'gemsecurity-magic-login': MagicLogin,
+	'gemsecurity-temp-access': TempAccess,
 	'gemsecurity-geolocation': Geolocation,
 	'gemsecurity-admin-guard': AdminGuard,
 	'gemsecurity-api-hardening': ApiHardening,

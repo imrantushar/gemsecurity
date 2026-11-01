@@ -167,6 +167,20 @@ class Registry {
 				'classes'       => [ SocialLogin::class ],
 				'settings_keys' => [ 'social_login_enabled' ],
 			],
+			'magic-login' => [
+				'icon'          => 'users',
+				'category'      => 'access',
+				'page_slug'     => $slug . '-magic-login',
+				'classes'       => [ MagicLogin::class ],
+				'settings_keys' => [ 'magic_login_enabled' ],
+			],
+			'temp-access' => [
+				'icon'          => 'clock',
+				'category'      => 'access',
+				'page_slug'     => $slug . '-temp-access',
+				'classes'       => [ TempAccess::class ],
+				'settings_keys' => [],
+			],
 			'admin-guard' => [
 				'icon'          => 'crown',
 				'category'      => 'access',
@@ -432,6 +446,14 @@ class Registry {
 			'social-login' => [
 				'title' => __( 'Social Login', 'gemsecurity' ),
 				'desc'  => __( 'Let users sign in with Google, Facebook, GitHub or X.', 'gemsecurity' ),
+			],
+			'magic-login' => [
+				'title' => __( 'Magic Login', 'gemsecurity' ),
+				'desc'  => __( 'Passwordless sign-in with a one-time link sent by email.', 'gemsecurity' ),
+			],
+			'temp-access' => [
+				'title' => __( 'Temporary Access', 'gemsecurity' ),
+				'desc'  => __( 'Give developers or support time-limited dashboard access without sharing a password.', 'gemsecurity' ),
 			],
 			'geolocation' => [
 				'title' => __( 'Geolocation', 'gemsecurity' ),

@@ -60,6 +60,16 @@ final class SE_License_SDK_Promotions {
 	 */
 	public function init() {
 		add_action( 'admin_init', [ $this, 'init_internal' ] );
+		add_action( $this->get_refresh_hook(), [ $this, 'refresh_promos' ] );
+	}
+
+	/**
+	 * Cron hook that refreshes this product's promotions.
+	 *
+	 * @return string
+	 */
+	protected function get_refresh_hook(): string {
+		return $this->client->getHookName( 'refresh_promos' );
 	}
 
 	/**
@@ -197,43 +207,70 @@ final class SE_License_SDK_Promotions {
 		$promos = get_transient( $this->client->getHookName( 'cached_promos' ) );
 
 		if ( false === $promos || ! is_array( $promos ) ) {
-			// Fetch promotions data from JSON source.
-			$args = [
-				'timeout'  => 15, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
-				'method'   => 'GET',
-			];
-
-			if ( $this->promo_source ) {
-				$args['url'] = $this->promo_source;
-			} else {
-				$args['route'] = 'promotions';
+			// Never fetch on a page load (this runs on admin_init, i.e. on every
+			// admin request including admin-ajax). Refresh in the background and
+			// show nothing until then.
+			if ( ! class_exists( 'SE_License_SDK_Update_Batch' ) ) {
+				require_once __DIR__ . '/SE_License_SDK_Update_Batch.php';
 			}
 
-			$response = $this->client->request( $args );
+			if ( ! SE_License_SDK_Update_Batch::can_run_inline() ) {
+				if ( ! wp_installing() && ! wp_next_scheduled( $this->get_refresh_hook() ) ) {
+					wp_schedule_single_event( time(), $this->get_refresh_hook() );
+				}
 
-			if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-				// Cache Something, reduce request.
-				$promos = '[]';
-			} else {
-				$promos = wp_remote_retrieve_body( $response );
+				return [];
 			}
 
-			// Decode to array.
-			$promos = json_decode( $promos, true );
-
-			// @NOTE: Happens when firewall respond with html.
-			if ( ! $promos || json_last_error() !== JSON_ERROR_NONE ) {
-				$promos = [];
-			}
-
-			// Filter promotions by date.
-			$promos = array_filter( $promos, [ $this, 'is_promo_active' ] );
-
-			// Cache data.
-			set_transient( $this->client->getHookName( 'cached_promos' ), $promos, $this->cache_ttl );
+			$promos = $this->refresh_promos();
 		}
 
 		return array_filter( $promos, [ $this, 'is_promo_visible' ] );
+	}
+
+	/**
+	 * Fetch promotions from the source and cache them (an empty list on
+	 * failure, so a broken source is asked at most once per cache window).
+	 *
+	 * @return array
+	 */
+	public function refresh_promos(): array {
+		// Fetch promotions data from JSON source.
+		$args = [
+			'timeout'  => 15, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
+			'method'   => 'GET',
+		];
+
+		if ( $this->promo_source ) {
+			$args['url'] = $this->promo_source;
+		} else {
+			$args['route'] = 'promotions';
+		}
+
+		$response = $this->client->request( $args );
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			// Cache Something, reduce request.
+			$promos = '[]';
+		} else {
+			$promos = wp_remote_retrieve_body( $response );
+		}
+
+		// Decode to array.
+		$promos = json_decode( $promos, true );
+
+		// @NOTE: Happens when firewall respond with html.
+		if ( ! $promos || json_last_error() !== JSON_ERROR_NONE ) {
+			$promos = [];
+		}
+
+		// Filter promotions by date.
+		$promos = array_filter( $promos, [ $this, 'is_promo_active' ] );
+
+		// Cache data.
+		set_transient( $this->client->getHookName( 'cached_promos' ), $promos, $this->cache_ttl );
+
+		return $promos;
 	}
 
 	/**

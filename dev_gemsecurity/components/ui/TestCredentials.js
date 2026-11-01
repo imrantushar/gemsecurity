@@ -16,8 +16,9 @@ import { Button } from '@Components/ui/Controls';
  * @param {string}   target    Tester id: captcha | social | slack | telegram | webhook | siem.
  * @param {Function} getValues Returns the current form values for the test.
  * @param {string}   label     Optional button label.
+ * @param {Function} onResult  Optional. Called with the raw response after a test runs.
  */
-export default function TestCredentials( { target, getValues, label } ) {
+export default function TestCredentials( { target, getValues, label, onResult } ) {
 	const [ busy, setBusy ] = useState( false );
 	const [ result, setResult ] = useState( null );
 
@@ -34,6 +35,7 @@ export default function TestCredentials( { target, getValues, label } ) {
 				message: data.message,
 				detail: data.detail,
 			} );
+			onResult?.( data );
 		} catch ( e ) {
 			setResult( {
 				ok: false,

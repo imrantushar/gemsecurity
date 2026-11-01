@@ -76,6 +76,284 @@ class AdminGuard {
 		add_action( self::CRON_HOOK, [ __CLASS__, 'run_scheduled_sweep' ] );
 		add_action( 'init', [ __CLASS__, 'schedule_sweep' ] );
 		add_action( 'update_option_' . GEMSECURITY_SETTINGS_NAME, [ __CLASS__, 'on_settings_saved' ], 10, 2 );
+
+		// "Authorize this administrator" on the Add User / Edit User screens, so an
+		// approved administrator can create another one without it being removed.
+		// Processed at priority 5: before the removal hooks above (99).
+		add_action( 'user_new_form', [ $self, 'render_new_user_field' ] );
+		add_action( 'edit_user_profile', [ $self, 'render_edit_user_field' ] );
+		add_action( 'user_register', [ $self, 'authorize_from_request' ], 5, 1 );
+		add_action( 'set_user_role', [ $self, 'authorize_from_request' ], 5, 1 );
+		add_action( 'add_user_role', [ $self, 'authorize_from_request' ], 5, 1 );
+
+		// Say what happened on the next admin screen.
+		add_action( 'admin_init', [ $self, 'load_flash' ] );
+		// Not `admin_notices`: other plugins clear that hook of everyone else's
+		// callbacks at `in_admin_header` (priority 1000, e.g. a plugin that keeps
+		// its own screens tidy), which would silently swallow this message. It is
+		// printed after them instead; core's admin JS moves any `.notice` printed
+		// here up under the page title, exactly like a normal admin notice.
+		add_action( 'in_admin_header', [ $self, 'show_flash' ], 1100 );
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Authorize-on-create / on-promote                                       */
+	/* --------------------------------------------------------------------- */
+
+	const APPROVE_FIELD = 'gemsec_approve_admin';
+	const APPROVE_NONCE = 'gemsec_approve_admin_nonce';
+
+	/** Add User screen. @param string $type 'add-new-user' (or 'add-existing-user' on multisite). */
+	public function render_new_user_field( $type ) {
+		if ( 'add-new-user' !== $type || ! $this->guard_enabled() || ! current_user_can( 'promote_users' ) ) {
+			return;
+		}
+		$this->render_field( null );
+	}
+
+	/** Edit User screen (another user's profile). @param \WP_User $user */
+	public function render_edit_user_field( $user ) {
+		if ( ! $user instanceof \WP_User || ! $this->guard_enabled() || ! current_user_can( 'promote_users' ) ) {
+			return;
+		}
+		$this->render_field( $user );
+	}
+
+	/**
+	 * The checkbox row. Shown only while the Role field says Administrator.
+	 *
+	 * @param \WP_User|null $user The account being edited; null on Add User.
+	 */
+	private function render_field( $user ) {
+		$approved = $user && $this->is_whitelisted( $user );
+		$can      = $this->can_approve( wp_get_current_user() );
+
+		echo '<table class="form-table" role="presentation" id="gemsec-approve-admin"><tbody><tr><th scope="row">' . esc_html__( 'Admin Guard', 'gemsecurity' ) . '</th><td>';
+
+		if ( $approved ) {
+			echo '<p>' . esc_html__( 'Approved administrator — this account is on the Admin Guard whitelist.', 'gemsecurity' ) . '</p>';
+		} elseif ( ! $can ) {
+			echo '<p>' . esc_html__( 'Only an already-approved administrator can authorize a new one. Without approval, an administrator account is removed automatically.', 'gemsecurity' ) . '</p>';
+		} else {
+			wp_nonce_field( 'gemsec_approve_admin', self::APPROVE_NONCE );
+			printf(
+				'<label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="1" /> %2$s</label><p class="description">%3$s</p>',
+				esc_attr( self::APPROVE_FIELD ),
+				esc_html__( 'Authorize this administrator', 'gemsecurity' ),
+				esc_html__( 'Admin Guard removes any administrator whose email is not on its whitelist. Tick this to add this email to the whitelist so the account is kept.', 'gemsecurity' )
+			);
+		}
+
+		echo '</td></tr></tbody></table>';
+		wp_print_inline_script_tag( '(function(){var r=document.getElementById("role"),b=document.getElementById("gemsec-approve-admin");if(!r||!b){return;}function s(){b.style.display=r.value==="administrator"?"":"none";}r.addEventListener("change",s);s();}());' );
+	}
+
+	/**
+	 * Read the checkbox from the Add User / Edit User request and approve the
+	 * account before the removal hooks run.
+	 *
+	 * Only an administrator who is already approved (whitelisted or protected) may
+	 * approve another one — otherwise a rogue administrator could simply authorize
+	 * their own accounts.
+	 *
+	 * @param int $user_id
+	 */
+	public function authorize_from_request( $user_id ) {
+		if ( ! $this->guard_enabled() ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified just below.
+		if ( empty( $_POST[ self::APPROVE_FIELD ] ) ) {
+			return;
+		}
+		$nonce = isset( $_POST[ self::APPROVE_NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::APPROVE_NONCE ] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'gemsec_approve_admin' ) ) {
+			return;
+		}
+		// The Edit User form names the account it is about; never approve a
+		// different one that happens to be touched in the same request.
+		if ( isset( $_POST['user_id'] ) && (int) $_POST['user_id'] !== (int) $user_id ) {
+			return;
+		}
+		// phpcs:enable
+
+		$user = new \WP_User( (int) $user_id );
+		if ( ! $user->exists() || ! in_array( 'administrator', (array) $user->roles, true ) || $this->is_whitelisted( $user ) ) {
+			return;
+		}
+
+		$actor = wp_get_current_user();
+		if ( ! $actor->exists() || ! current_user_can( 'promote_users' ) || ! $this->can_approve( $actor ) ) {
+			self::flash( 'error', __( 'You cannot authorize administrators: only an already-approved administrator can.', 'gemsecurity' ) );
+			return;
+		}
+
+		$list   = $this->whitelist();
+		$seeded = empty( $list );
+		if ( $seeded ) {
+			// An empty whitelist means the guard is not enforcing yet. Adding one
+			// address would switch enforcement on and remove every administrator
+			// not on it, so approve the current ones in the same step.
+			$list = self::current_admin_emails();
+		}
+		$email = strtolower( trim( $user->user_email ) );
+		if ( ! in_array( $email, $list, true ) ) {
+			$list[] = $email;
+		}
+
+		$settings                    = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		$settings                    = is_array( $settings ) ? $settings : [];
+		$settings['admin_whitelist'] = array_values( array_unique( $list ) );
+		update_option( GEMSECURITY_SETTINGS_NAME, $settings );
+
+		Logger::log(
+			'admin_authorized',
+			sprintf( 'Administrator "%s" (%s) was authorized by %s.', $user->user_login, $user->user_email, $actor->user_login ),
+			Logger::SEVERITY_WARNING,
+			[ 'context' => [ 'target_user_id' => (int) $user->ID, 'target_email' => $user->user_email, 'authorized_by' => (int) $actor->ID ] ]
+		);
+
+		self::flash(
+			'success',
+			sprintf(
+				/* translators: %s: username. */
+				__( '%s was authorized as an administrator and added to the Admin Guard whitelist.', 'gemsecurity' ),
+				$user->user_login
+			) . ( $seeded ? ' ' . __( 'The whitelist was empty, so the current administrators were approved too.', 'gemsecurity' ) : '' )
+		);
+	}
+
+	/**
+	 * Whether this administrator may approve others: whitelisted, or one of the
+	 * protected accounts (user ID 1, the site-owner email, super admins).
+	 *
+	 * @param \WP_User $user
+	 * @return bool
+	 */
+	private function can_approve( $user ) {
+		if ( ! $user instanceof \WP_User || ! $user->exists() ) {
+			return false;
+		}
+		return $this->is_whitelisted( $user ) || AdminAudit::is_protected( $user, false );
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Notices                                                                */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Queue a notice for the current user's next admin screen. The Add User and
+	 * Edit User saves redirect, so the message has to survive the redirect.
+	 *
+	 * @param string $type    success | warning | error
+	 * @param string $message Plain text.
+	 */
+	private static function flash( $type, $message ) {
+		if ( ! get_current_user_id() || headers_sent() ) {
+			return;
+		}
+		// A signed cookie, not an option or transient: the next page may be served
+		// by a different PHP worker whose object cache has not seen this write, and
+		// a notice that silently never appears is worse than none.
+		self::$queue[] = [ 'type' => $type, 'message' => $message ];
+		setcookie(
+			self::FLASH_COOKIE,
+			Helper::sign_payload( [ 'items' => self::$queue ] ),
+			[
+				'expires'  => time() + 5 * MINUTE_IN_SECONDS,
+				'path'     => '/',
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			]
+		);
+	}
+
+	/** Notices written this request, kept so a second one adds to the first. */
+	private static $queue = [];
+
+	/** Notices read from the previous request, waiting to be printed. */
+	private static $pending = [];
+
+	const FLASH_COOKIE = 'gemsec_admin_flash';
+
+	/**
+	 * Pick up the notices left by the previous request and clear the cookie. Runs
+	 * on admin_init because the cookie can only be cleared before output starts.
+	 */
+	public function load_flash() {
+		if ( empty( $_COOKIE[ self::FLASH_COOKIE ] ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- signature-checked below.
+		$data = Helper::verify_signed_payload( wp_unslash( $_COOKIE[ self::FLASH_COOKIE ] ), 5 * MINUTE_IN_SECONDS );
+
+		if ( ! headers_sent() ) {
+			setcookie( self::FLASH_COOKIE, '', [ 'expires' => time() - 3600, 'path' => '/' ] );
+		}
+		unset( $_COOKIE[ self::FLASH_COOKIE ] );
+
+		if ( is_array( $data ) && ! empty( $data['items'] ) && is_array( $data['items'] ) ) {
+			self::$pending = $data['items'];
+		}
+	}
+
+	/** Print the notices picked up by load_flash(). */
+	public function show_flash() {
+		$items         = self::$pending;
+		self::$pending = [];
+
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) || ! isset( $item['type'], $item['message'] ) ) {
+				continue;
+			}
+			$type = in_array( $item['type'], [ 'success', 'warning', 'error' ], true ) ? $item['type'] : 'info';
+			printf(
+				'<div class="notice notice-%1$s is-dismissible"><p><strong>%2$s</strong> %3$s</p></div>',
+				esc_attr( $type ),
+				esc_html__( 'Admin Guard:', 'gemsecurity' ),
+				esc_html( $item['message'] )
+			);
+		}
+	}
+
+	/**
+	 * Tell the person who just created or promoted an administrator that Admin
+	 * Guard undid it, and what to do instead. Only when a signed-in person did it
+	 * from the admin — a cron sweep or a login has nobody to show it to.
+	 *
+	 * @param string $login
+	 * @param string $action 'delete' | 'demote'
+	 * @param string $origin
+	 * @param string $fallback Role the account was set to when demoted.
+	 */
+	private static function flash_removal( $login, $action, $origin, $fallback ) {
+		if ( ! is_admin() || ! get_current_user_id() || ! in_array( $origin, [ 'registration', 'promotion' ], true ) ) {
+			return;
+		}
+		$tip = __( 'To keep an administrator, tick “Authorize this administrator” on the user form, or add their email to the Admin Guard whitelist first.', 'gemsecurity' );
+
+		if ( 'delete' === $action ) {
+			self::flash(
+				'warning',
+				sprintf(
+					/* translators: %s: username. */
+					__( 'The administrator account “%s” was removed because its email is not on the whitelist.', 'gemsecurity' ),
+					$login
+				) . ' ' . $tip
+			);
+			return;
+		}
+		self::flash(
+			'warning',
+			sprintf(
+				/* translators: 1: username, 2: role. */
+				__( '“%1$s” was not made an administrator — its email is not on the whitelist — and was set to %2$s.', 'gemsecurity' ),
+				$login,
+				$fallback
+			) . ' ' . $tip
+		);
 	}
 
 	/** Keep the recurring sweep scheduled while the guard is enabled. */
@@ -504,12 +782,14 @@ class AdminGuard {
 
 			$this->log_removal( 'rogue_admin_deleted', $login, $email, $id, 'delete', $origin );
 			$this->maybe_notify( $login, $email, 'delete', $origin );
+			self::flash_removal( $login, 'delete', $origin, $fallback );
 			return;
 		}
 
 		// Demote.
 		$user->set_role( $fallback );
 		$this->after_removal( $user, 'demote', $origin );
+		self::flash_removal( $user->user_login, 'demote', $origin, $fallback );
 	}
 
 	/**

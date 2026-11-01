@@ -50,7 +50,7 @@ class HtaccessScan {
 	private static function targets() {
 		$found = [];
 
-		foreach ( [ ABSPATH, ABSPATH . 'wp-admin/', ABSPATH . 'wp-includes/', WP_CONTENT_DIR . '/' ] as $dir ) {
+		foreach ( [ \GemSecurity\Paths::root(), \GemSecurity\Paths::root() . 'wp-admin/', \GemSecurity\Paths::root() . 'wp-includes/', \GemSecurity\Paths::content() . '/' ] as $dir ) {
 			$file = $dir . '.htaccess';
 			if ( is_file( $file ) ) {
 				$found[] = wp_normalize_path( $file );
@@ -92,7 +92,7 @@ class HtaccessScan {
 		};
 
 		$collect( $up['basedir'], -1 ); // Unlimited depth.
-		$collect( WP_PLUGIN_DIR, 1 );   // plugin-slug/.htaccess
+		$collect( \GemSecurity\Paths::plugins(), 1 );   // plugin-slug/.htaccess
 		$collect( get_theme_root(), 1 ); // theme-slug/.htaccess
 
 		return array_values( array_unique( $found ) );
@@ -154,7 +154,7 @@ class HtaccessScan {
 	 */
 	public static function run() {
 		$findings = [];
-		$root     = wp_normalize_path( untrailingslashit( ABSPATH ) );
+		$root     = wp_normalize_path( untrailingslashit( \GemSecurity\Paths::root() ) );
 
 		foreach ( self::targets() as $abs ) {
 			// Never report our own lockdown files.

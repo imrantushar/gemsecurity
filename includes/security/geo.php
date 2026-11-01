@@ -98,21 +98,24 @@ class Geo {
 			return array_merge( $out, $cached );
 		}
 		/**
-		 * Filter the location API URL (must return ip-api.com style JSON).
+		 * Filter the location API URL. It must return ipapi.co-style JSON
+		 * (country_code, country_name, region, city, org); ip-api.com-style
+		 * JSON is understood too, for anyone pointing this at that service.
 		 *
 		 * @param string $url
 		 * @param string $ip
 		 */
-		$url  = apply_filters( 'gemsecurity/geo_location_endpoint', 'http://ip-api.com/json/' . rawurlencode( $ip ) . '?fields=status,country,countryCode,regionName,city,isp', $ip );
+		$url  = apply_filters( 'gemsecurity/geo_location_endpoint', 'https://ipapi.co/' . rawurlencode( $ip ) . '/json/', $ip );
 		$resp = wp_remote_get( $url, [ 'timeout' => 3, 'headers' => [ 'Accept' => 'application/json' ] ] );
 		$json = is_wp_error( $resp ) ? null : json_decode( wp_remote_retrieve_body( $resp ), true );
-		if ( is_array( $json ) && ( $json['status'] ?? '' ) === 'success' ) {
+		$ok   = is_array( $json ) && empty( $json['error'] ) && ( $json['status'] ?? 'success' ) === 'success';
+		if ( $ok && ( ! empty( $json['country_code'] ) || ! empty( $json['countryCode'] ) ) ) {
 			$out = [
-				'country_code' => strtoupper( substr( (string) ( $json['countryCode'] ?? '' ), 0, 2 ) ),
-				'country'      => sanitize_text_field( (string) ( $json['country'] ?? '' ) ),
-				'region'       => sanitize_text_field( (string) ( $json['regionName'] ?? '' ) ),
+				'country_code' => strtoupper( substr( (string) ( $json['country_code'] ?? $json['countryCode'] ), 0, 2 ) ),
+				'country'      => sanitize_text_field( (string) ( $json['country_name'] ?? ( $json['country'] ?? '' ) ) ),
+				'region'       => sanitize_text_field( (string) ( $json['region'] ?? ( $json['regionName'] ?? '' ) ) ),
 				'city'         => sanitize_text_field( (string) ( $json['city'] ?? '' ) ),
-				'isp'          => sanitize_text_field( (string) ( $json['isp'] ?? '' ) ),
+				'isp'          => sanitize_text_field( (string) ( $json['org'] ?? ( $json['isp'] ?? '' ) ) ),
 			];
 		} else {
 			// Fall back to the country-only resolver (CDN headers, second API).
@@ -167,7 +170,6 @@ class Geo {
 	 */
 	private static function from_api( $ip ) {
 		$endpoints = [
-			'http://ip-api.com/json/' . rawurlencode( $ip ) . '?fields=status,countryCode',
 			'https://ipapi.co/' . rawurlencode( $ip ) . '/country/',
 		];
 

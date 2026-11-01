@@ -11,41 +11,51 @@ if ( ! defined( 'ABSPATH' ) ) {
  * A TOTP seed stored in plain text means a database leak — an SQL injection,
  * a backup left on a public bucket, a staging copy — hands an attacker every
  * user's second factor. Sealed values are useless without the key, and the
- * key deliberately does NOT live in the database:
+ * key comes from, in order:
  *
- *  1. GEMSECURITY_SECRET_KEY in wp-config.php, when defined; else
- *  2. a key file in wp-content (PHP that exits before printing anything),
- *     created on first use. Kept separate from the WordPress salts on
- *     purpose: rotating salts after an incident must not lock every user out
- *     of 2FA.
- *  3. Only if that file cannot be written: a key derived from the salts
- *     (marked in the ciphertext, so a later key file does not break it).
+ *  1. GEMSECURITY_SECRET_KEY in wp-config.php, when defined (recommended:
+ *     keeps the key out of the database entirely);
+ *  2. a key file an earlier release wrote (read only, never created now), so
+ *     secrets it sealed keep opening;
+ *  3. a random key in a non-autoloaded option, created on first use. Kept
+ *     separate from the WordPress salts on purpose: rotating salts after an
+ *     incident must not lock every user out of 2FA.
+ *  4. Only if none of those is available: a key derived from the salts.
  *
  * Format: "gsx1<k>:" + base64( iv[12] | tag[16] | ciphertext ), AES-256-GCM,
- * where <k> is f (file/constant key) or s (salt-derived key). A value without
+ * where <k> is f (constant/legacy file key), o (option key) or s (salt-derived
+ * key). A value without
  * the prefix is legacy plain text and is returned as-is by open().
  */
 class SecretBox {
 
 	const PREFIX   = 'gsx1';
 	const KEY_FILE = 'gemsecurity-secret-key.php';
+	const OPTION   = 'gemsecurity_secret_key';
 
 	/** @var array<string,string> In-request key cache. */
 	private static $keys = [];
 
+	/**
+	 * Key file an earlier release created, if one is still on disk.
+	 *
+	 * @return string|null
+	 */
 	public static function key_file() {
-		// A key an earlier release put in wp-content stays where it is, so the
-		// secrets it sealed keep opening. New keys go to the uploads folder.
-		$legacy = WP_CONTENT_DIR . '/' . self::KEY_FILE;
-		if ( is_file( $legacy ) ) {
-			return $legacy;
+		$candidates = [
+			trailingslashit( wp_upload_dir( null, false )['basedir'] ) . 'gemsecurity/' . self::KEY_FILE,
+			trailingslashit( dirname( get_theme_root() ) ) . self::KEY_FILE, // Pre-1.x releases kept it in the content folder.
+		];
+		foreach ( $candidates as $file ) {
+			if ( is_readable( $file ) ) {
+				return $file;
+			}
 		}
-		$up = wp_get_upload_dir();
-		return trailingslashit( $up['basedir'] ) . 'gemsecurity/' . self::KEY_FILE;
+		return null;
 	}
 
 	/**
-	 * @param string $kind 'f' or 's'.
+	 * @param string $kind 'f', 'o' or 's'.
 	 * @return string|null 32-byte key.
 	 */
 	private static function key( $kind ) {
@@ -55,11 +65,15 @@ class SecretBox {
 		if ( 's' === $kind ) {
 			return self::$keys['s'] = hash( 'sha256', wp_salt( 'secure_auth' ) . '|gemsecurity-secretbox', true );
 		}
+		if ( 'o' === $kind ) {
+			$raw = base64_decode( (string) get_option( self::OPTION, '' ), true );
+			return $raw && 32 === strlen( $raw ) ? self::$keys['o'] = $raw : null;
+		}
 		if ( defined( 'GEMSECURITY_SECRET_KEY' ) && '' !== (string) GEMSECURITY_SECRET_KEY ) {
 			return self::$keys['f'] = hash( 'sha256', (string) GEMSECURITY_SECRET_KEY, true );
 		}
 		$file = self::key_file();
-		if ( is_readable( $file ) && preg_match( '/KEY:([A-Za-z0-9+\/=]{40,})/', (string) file_get_contents( $file ), $m ) ) { // phpcs:ignore
+		if ( $file && preg_match( '/KEY:([A-Za-z0-9+\/=]{40,})/', (string) file_get_contents( $file ), $m ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			$raw = base64_decode( $m[1], true );
 			if ( $raw && 32 === strlen( $raw ) ) {
 				return self::$keys['f'] = $raw;
@@ -68,32 +82,21 @@ class SecretBox {
 		return null;
 	}
 
-	/** Create the key file if it does not exist yet. @return bool */
-	private static function ensure_key_file() {
+	/**
+	 * Which key new values are sealed with, creating the option key if needed.
+	 *
+	 * @return string 'f', 'o' or 's'.
+	 */
+	private static function seal_kind() {
 		if ( null !== self::key( 'f' ) ) {
-			return true;
+			return 'f';
 		}
-		$file = self::key_file();
-		$dir  = dirname( $file );
-		if ( ! is_dir( $dir ) && wp_mkdir_p( $dir ) ) {
-			file_put_contents( $dir . '/index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- own uploads subfolder.
-			file_put_contents( $dir . '/.htaccess', "Require all denied\nDeny from all\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- own uploads subfolder.
+		if ( null === self::key( 'o' ) ) {
+			// add_option() never overwrites an existing key.
+			add_option( self::OPTION, base64_encode( random_bytes( 32 ) ), '', false );
+			unset( self::$keys['o'] );
 		}
-		if ( file_exists( $file ) || ! is_writable( $dir ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
-			return false; // Never overwrite an existing (unreadable/garbled) key.
-		}
-		$body = "<?php\n"
-			. "// GemSecurity encryption key for 2FA secrets. Do not delete or edit:\n"
-			. "// without it, authenticator-app codes stop working (backup codes still do).\n"
-			. "// Move it into wp-config.php as GEMSECURITY_SECRET_KEY if you prefer.\n"
-			. "exit;\n"
-			. '// KEY:' . base64_encode( random_bytes( 32 ) ) . "\n";
-		if ( false === @file_put_contents( $file, $body, LOCK_EX ) ) { // phpcs:ignore
-			return false;
-		}
-		@chmod( $file, 0640 ); // phpcs:ignore
-		self::$keys = [];
-		return null !== self::key( 'f' );
+		return null !== self::key( 'o' ) ? 'o' : 's';
 	}
 
 	public static function available() {
@@ -114,7 +117,7 @@ class SecretBox {
 		if ( '' === $plain || self::is_sealed( $plain ) || ! self::available() ) {
 			return $plain;
 		}
-		$kind = self::ensure_key_file() ? 'f' : 's';
+		$kind = self::seal_kind();
 		$iv   = random_bytes( 12 );
 		$tag  = '';
 		$ct   = openssl_encrypt( $plain, 'aes-256-gcm', self::key( $kind ), OPENSSL_RAW_DATA, $iv, $tag );
@@ -135,7 +138,7 @@ class SecretBox {
 		}
 		$kind = substr( $stored, strlen( self::PREFIX ), 1 );
 		$raw  = base64_decode( substr( $stored, strlen( self::PREFIX ) + 2 ), true );
-		$key  = in_array( $kind, [ 'f', 's' ], true ) ? self::key( $kind ) : null;
+		$key  = in_array( $kind, [ 'f', 'o', 's' ], true ) ? self::key( $kind ) : null;
 		if ( ! $raw || strlen( $raw ) < 29 || ! $key || ! self::available() ) {
 			return '';
 		}

@@ -74,20 +74,20 @@ class Firewall {
 		// wp-config.php readable by as few as possible (it holds the database
 		// password) — 400/440 where the host allows, 640 at most.
 		$targets = [
-			ABSPATH . 'wp-config.php'   => '0440',
-			ABSPATH . '.htaccess'       => '0644',
-			ABSPATH                     => '0755',
-			ABSPATH . 'wp-admin'        => '0755',
-			ABSPATH . WPINC             => '0755',
-			WP_CONTENT_DIR              => '0755',
-			WP_PLUGIN_DIR               => '0755',
+			\GemSecurity\Paths::root() . 'wp-config.php'   => '0440',
+			\GemSecurity\Paths::root() . '.htaccess'       => '0644',
+			\GemSecurity\Paths::root()                     => '0755',
+			\GemSecurity\Paths::root() . 'wp-admin'        => '0755',
+			\GemSecurity\Paths::root() . WPINC             => '0755',
+			\GemSecurity\Paths::content()              => '0755',
+			\GemSecurity\Paths::plugins()               => '0755',
 			get_theme_root()            => '0755',
-			WP_CONTENT_DIR . '/uploads' => '0755',
+			\GemSecurity\Paths::uploads() => '0755',
 		];
 		// wp-config.php may live one level above the install.
-		if ( ! file_exists( ABSPATH . 'wp-config.php' ) && file_exists( dirname( ABSPATH ) . '/wp-config.php' ) ) {
-			unset( $targets[ ABSPATH . 'wp-config.php' ] );
-			$targets = [ dirname( ABSPATH ) . '/wp-config.php' => '0440' ] + $targets;
+		if ( ! file_exists( \GemSecurity\Paths::root() . 'wp-config.php' ) && file_exists( dirname( \GemSecurity\Paths::root() ) . '/wp-config.php' ) ) {
+			unset( $targets[ \GemSecurity\Paths::root() . 'wp-config.php' ] );
+			$targets = [ dirname( \GemSecurity\Paths::root() ) . '/wp-config.php' => '0440' ] + $targets;
 		}
 
 		$rows = [];
@@ -110,7 +110,7 @@ class Firewall {
 				$note   = __( 'The group can change your configuration.', 'gemsecurity' );
 			}
 			$rows[] = [
-				'path'        => str_replace( wp_normalize_path( dirname( ABSPATH ) ) . '/', '../', str_replace( ABSPATH, '', $path ) ) ?: '/',
+				'path'        => str_replace( wp_normalize_path( dirname( \GemSecurity\Paths::root() ) ) . '/', '../', \GemSecurity\Paths::relative( $path ) ) ?: '/',
 				'perms'       => '0' . decoct( $perms ),
 				'recommended' => $recommended,
 				'status'      => $status,
