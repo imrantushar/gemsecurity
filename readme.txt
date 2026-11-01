@@ -4,7 +4,7 @@ Tags: security, firewall, two factor authentication, malware scanner, login secu
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
@@ -134,6 +134,35 @@ The ones the in-plugin guides call out: a custom login URL (save the new address
 Yes. Everything described above works in the free plugin. Pro adds active threat protection, malware remediation and scale features.
 
 == Changelog ==
+
+= 1.2.0 - 01/11/2026 =
+* Added - Temporary Access: time-limited accounts with a single-use sign-in link stored only as a hash. Expiry is enforced on every request, and revoking or expiring an account ends its sessions and application passwords. Existing users are never modified. Each account has its own history, with audit log events and optional admin notifications.
+* Added - Magic Login: users can ask for a one-time sign-in link by email from the login form.
+* Added - Plugin lock: a separate unlock password plus an emailed one-time code, not tied to any user account. It guards deactivating or deleting GemSecurity, turning the lock off and switching modules off, and while locked it blocks installing, uploading and editing code.
+* Added - IP safelist: safelisted addresses are never blocked, banned or rate-limited, and your own IP is refused in the blocklist so you cannot lock yourself out.
+* Added - A site-wide file upload switch on the Firewall page and in the admin bar. It blocks Media, REST, sideload and XML-RPC uploads.
+* Added - Scanner: open a flagged WordPress core file to compare it line by line with the official WordPress.org copy (checksum-verified) and restore the original in one click. The replaced file is kept in quarantine.
+* Added - Upload Shield bans the IP behind a refused executable upload (administrators and exempt IPs are spared), with a configurable ban length.
+* Added - Security alerts and the ban list show where an IP is (city, region, country and network).
+* Added - Alert emails include a "Request origin" table.
+* Added - Two-Factor: an "All roles" option for enforced roles.
+* Added - Social login buttons appear only after a provider's keys pass a check, either "Test credentials" or a new "Verify with a sign-in" round trip. Changing a key un-verifies it. A provider whose keys are rejected twice in a row is switched off and you are alerted. The Social Login page shows Verified, Not verified or Switched off for each provider.
+* Added - A "Plugin lock" check in the security score.
+* Changed - Quarantined files are now stored in the database and removed from disk, instead of being moved into the uploads folder. Files quarantined by earlier versions can still be restored.
+* Changed - The 2FA encryption key is now kept in the database (or in `GEMSECURITY_SECRET_KEY` in wp-config.php, which is still preferred) instead of a key file. Key files created by earlier versions keep working.
+* Changed - Plugin, must-use plugin, content and upload folders are always looked up through WordPress, so sites that move them are scanned correctly.
+* Changed - IP location lookups use HTTPS only (ipapi.co).
+* Changed - Rate limits, lockouts, alert throttling and unlock codes are stored in the database, so they keep working on hosts with a broken object cache.
+* Changed - Long scans are limited to 5 minutes instead of running without a time limit.
+* Changed - Updated the bundled StoreEngine SDK to 1.6.2. Declining usage tracking now sends nothing, and no promotional notices are loaded.
+* Changed - Every compiled JavaScript and CSS file names its source file and how to rebuild it.
+* Fixed - "Throttle 404 floods" only logged the flood and never blocked it.
+* Fixed - Unbanning an IP did not clear its strike count.
+* Fixed - Permanent bans expired immediately.
+* Fixed - The 2FA challenge signed out other sessions in the same browser. The challenge now runs before WordPress sets the login cookie.
+* Fixed - Deleting an unapproved administrator caused PHP warnings from WordPress's new-user email.
+* Fixed - The Cloudflare Turnstile "Verify keys" test never showed the widget.
+* Fixed - The core-file REST route now checks capabilities on each method, and restoring needs the `update_core` capability.
 
 = 1.1.0 - 19/10/2026 =
 * Added - Plugin Guard verifies every plugin against WordPress.org checksums with a trust list for premium, custom, theme and must-use plugins. With enforcement on, untrusted plugins are stopped before they load and deactivated, activation and non-.org installs are refused, unknown mu-plugins are quarantined, and a danger alert is sent. Runs from an early mu-plugin loader.
