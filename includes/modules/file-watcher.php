@@ -220,7 +220,7 @@ class FileWatcher {
 	 */
 	public static function run() {
 		// Scanner runs can take minutes on large sites.
-		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
+		@set_time_limit( 300 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- long scan; bounded, not unlimited.
 
 		$current  = self::hash_watched_files();
 		$baseline = self::get_baseline();

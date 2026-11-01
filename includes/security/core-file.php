@@ -84,7 +84,6 @@ class CoreFile {
 			'current'        => $current,
 			'original'       => is_wp_error( $original ) ? '' : $original,
 			'original_error' => is_wp_error( $original ) ? $original->get_error_message() : '',
-			'can_edit'       => current_user_can( 'edit_plugins' ),
 		];
 	}
 
@@ -131,35 +130,11 @@ class CoreFile {
 	}
 
 	/**
-	 * Save hand-edited content (only when file editing is allowed).
-	 *
-	 * @param string $file
-	 * @param string $content
-	 * @return true|\WP_Error
-	 */
-	public static function save( $file, $content ) {
-		// edit_plugins is what WordPress itself checks for the file editors: it is
-		// refused when DISALLOW_FILE_EDIT is set, and GemSecurity's lock removes it.
-		if ( ! current_user_can( 'edit_plugins' ) ) {
-			return new \WP_Error( 'gemsecurity_core_edit', __( 'File editing is not allowed right now (the file editor is disabled, or GemSecurity is locked). Restore the original instead.', 'gemsecurity' ), [ 'status' => 403 ] );
-		}
-		$r = self::resolve( $file );
-		if ( is_wp_error( $r ) ) {
-			return $r;
-		}
-		$content = (string) $content;
-		if ( strlen( $content ) > self::MAX_BYTES ) {
-			return new \WP_Error( 'gemsecurity_core_file', __( 'That content is too large.', 'gemsecurity' ), [ 'status' => 413 ] );
-		}
-		return self::write( $r, $content, 'edited' );
-	}
-
-	/**
 	 * Write a file, keeping a copy of what it replaces.
 	 *
 	 * @param array  $r
 	 * @param string $content
-	 * @param string $what    restored | edited
+	 * @param string $what    restored
 	 * @return true|\WP_Error
 	 */
 	private static function write( array $r, $content, $what ) {
@@ -169,9 +144,11 @@ class CoreFile {
 		}
 
 		if ( $fs->exists( $r['path'] ) ) {
-			$dir = self::backup_dir();
-			if ( $dir ) {
-				$fs->copy( $r['path'], $dir . gmdate( 'Ymd-His' ) . '-' . str_replace( '/', '__', $r['file'] ) . '.bak', true );
+			// Keep what is being replaced in the quarantine store (database, not
+			// disk), so it can still be inspected or put back.
+			$kept = Quarantine::snapshot( $r['path'], 'core-file' );
+			if ( is_wp_error( $kept ) ) {
+				return $kept;
 			}
 		} elseif ( ! $fs->is_dir( dirname( $r['path'] ) ) ) {
 			$fs->mkdir( dirname( $r['path'] ) );
@@ -202,20 +179,5 @@ class CoreFile {
 			return null;
 		}
 		return $wp_filesystem;
-	}
-
-	/** @return string Backup directory (trailing slash), or ''. Closed to web access. */
-	private static function backup_dir() {
-		$up  = wp_upload_dir();
-		$dir = trailingslashit( $up['basedir'] ) . 'gemsecurity-core-backup/';
-		if ( ! wp_mkdir_p( $dir ) ) {
-			return '';
-		}
-		$fs = self::fs();
-		if ( $fs && ! $fs->exists( $dir . '.htaccess' ) ) {
-			$fs->put_contents( $dir . '.htaccess', "Require all denied\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n", FS_CHMOD_FILE );
-			$fs->put_contents( $dir . 'index.php', "<?php\n// Silence is golden.\n", FS_CHMOD_FILE );
-		}
-		return $dir;
 	}
 }

@@ -242,8 +242,18 @@ final class SE_License_SDK_License {
 		// Activation/Deactivation hooks.
 		$this->activation_deactivation();
 
+		// Background re-verification of a license whose signature couldn't be checked.
+		add_action( $this->client->getHookName( 'license_recheck' ), [ $this, 'check_license_status' ] );
+
 		// Check the validity and save the state. (check after cron scheduled)
 		$this->is_valid();
+
+		// Self-heal: an active license must have its daily check scheduled.
+		// Runs after is_valid() so an old-format signature (which included the
+		// event's timestamp) is migrated before the event is re-created.
+		if ( ! empty( $this->license['license'] ) && 'active' === ( $this->license['status'] ?? '' ) && ! wp_next_scheduled( $this->schedule_hook ) ) {
+			$this->schedule_license_check();
+		}
 
 		// Set Did Init Flag
 		$this->did_init = true;
@@ -866,7 +876,7 @@ final class SE_License_SDK_License {
 		$check_key = $this->client->getSlug() . '-check-license';
 
 		if ( isset( $_GET[ $check_key ] ) && wp_verify_nonce( sanitize_text_field( $_GET[ $check_key ] ), $this->client->getSlug() ) ) {
-			$this->check_license_status();
+			$this->client->interactive( [ $this, 'check_license_status' ] );
 			wp_safe_redirect( $this->get_page_url() . '#' . $this->client->getSlug() . '-license-form' );
 			die();
 		}
@@ -986,21 +996,26 @@ final class SE_License_SDK_License {
 	 * @param array $license Current license array.
 	 */
 	protected function deactivate_local_license( array $license ) {
-		$license = wp_parse_args(
-			[
-				'license'     => '',
-				'status'      => 'inactive',
-				'device_id'   => $this->client->get_device_id(),
-				'slug'        => $this->client->getSlug(),
-				'product_id'  => $this->client->getProductId(),
-				'remaining'   => 0,
-				'activations' => 0,
-				'limit'       => 0,
-				'unlimited'   => false,
-				'expires'     => '',
-			],
-			$license
-		);
+		// `license` (the key) and `expires` are deliberately preserved: this
+		// method is the "server said no" / "grace ran out" path, not a user
+		// asking to unlink the site, and the caller's contract is that a later
+		// renewal can reactivate without the user digging out their key again.
+		//
+		// This used to pass the overrides below as wp_parse_args()' FIRST
+		// argument, i.e. as `$args` rather than `$defaults`, so they won every
+		// key — including `'license' => ''` and `'expires' => ''`. The stored key
+		// was destroyed on every expiry, revocation and grace timeout, which is
+		// the exact opposite of what both this docblock and the call sites say.
+		$license = array_merge( $license, [
+			'status'      => 'inactive',
+			'device_id'   => $this->client->get_device_id(),
+			'slug'        => $this->client->getSlug(),
+			'product_id'  => $this->client->getProductId(),
+			'remaining'   => 0,
+			'activations' => 0,
+			'limit'       => 0,
+			'unlimited'   => false,
+		] );
 
 		$this->set_license( $license );
 	}
@@ -1080,6 +1095,10 @@ final class SE_License_SDK_License {
 
 		if ( isset( $license['license'], $license['device_id'], $license['product_id'], $license['status'] ) && 'active' === $license['status'] ) {
 			$this->is_valid_license = $this->validate_license_signature();
+
+			if ( ! $this->is_valid_license ) {
+				$this->maybe_schedule_signature_recheck();
+			}
 		} else {
 			$this->is_valid_license = false;
 		}
@@ -1551,13 +1570,23 @@ final class SE_License_SDK_License {
 		$this->error_code = '';
 		$this->error_data = [];
 
+		$license = $this->get_license();
+
+		// Re-activating after an expiry/revocation: deactivate_local_license()
+		// keeps the key on file precisely so the user can renew upstream and
+		// click Activate without re-typing it. Fall back to the stored key when
+		// the caller sends none.
+		if ( empty( $postData['license_key'] ) && ! empty( $license['license'] ) ) {
+			$postData['license_key'] = $license['license'];
+		}
+
 		if ( empty( $postData['license_key'] ) ) {
 			$this->error = __( 'The license key field is required.', 'storeengine-sdk' );
+			$this->updating_license( false );
 
 			return;
 		}
 
-		$license   = $this->get_license();
 		$updateKey = $this->validate_license_data( $license ) && $postData['license_key'] !== $license['license']; // Check if it's a change request.
 
 		if ( $updateKey ) {
@@ -1571,6 +1600,8 @@ final class SE_License_SDK_License {
 					} else {
 						$this->error = __( 'Unknown error occurred.', 'storeengine-sdk' );
 					}
+
+					$this->updating_license( false );
 
 					return;
 				}
@@ -1726,7 +1757,9 @@ final class SE_License_SDK_License {
 		}
 
 		if ( ! wp_next_scheduled( $this->schedule_hook ) ) {
-			wp_schedule_event( time() + 60, 'daily', $this->schedule_hook );
+			// Spread over the first hour so sites activated together (or healed
+			// together after an update) don't all check at the same minute.
+			wp_schedule_event( time() + SE_License_SDK_Client::jitter( 30 * MINUTE_IN_SECONDS, 0.95 ), 'daily', $this->schedule_hook );
 		}
 	}
 
@@ -1882,25 +1915,38 @@ final class SE_License_SDK_License {
 		return $masked;
 	}
 
+	/**
+	 * Signature payload (v2): the product slug and the license data.
+	 *
+	 * Until 1.6.0 the payload also contained wp_next_scheduled() of the daily
+	 * check event, so anything that removed or moved that cron event (cron
+	 * cleanup plugins, migrations, a manual "run now") silently invalidated a
+	 * perfectly good license. The salted HMAC over the license data is what
+	 * stops the option from being edited by hand; the timestamp added nothing
+	 * to that.
+	 *
+	 * @return string
+	 */
 	private function license_signature_payload(): string {
-		/**
-		 * Once cron runs it updates the next schedule before running
-		 * the scheduled hook, so when we call the update_license_signature
-		 * method we get the new time stamp here (wp_next_scheduled).
-		 */
+		return 'v2||' . $this->client->getSlug() . '||' . implode( '||', array_values( $this->license ) );
+	}
 
-		$payload = $this->client->getSlug() . '||' . wp_next_scheduled( $this->schedule_hook );
+	/**
+	 * Pre-1.6.0 payload, kept only to migrate existing signatures.
+	 *
+	 * @return string
+	 */
+	private function legacy_license_signature_payload(): string {
+		return $this->client->getSlug() . '||' . wp_next_scheduled( $this->schedule_hook ) . '||' . implode( '||', array_values( $this->license ) );
+	}
 
-		return $payload . '||' . implode( '||', array_values( $this->license ) );
+	private function sign( string $payload ): string {
+		return hash_hmac( 'sha256', $payload, $this->hash( $payload ) );
 	}
 
 	private function update_license_signature() {
 		if ( $this->license && is_array( $this->license ) ) {
-
-			$payload   = $this->license_signature_payload();
-			$signature = hash_hmac( 'sha256', $payload, $this->hash( $payload ) );
-
-			$this->client->set_option( 'license_signature', $signature );
+			$this->client->set_option( 'license_signature', $this->sign( $this->license_signature_payload() ) );
 		}
 	}
 
@@ -1912,15 +1958,51 @@ final class SE_License_SDK_License {
 
 		$license_signature = $this->get_license_signature();
 
-		if ( ! $license_signature ) {
+		if ( ! $license_signature || ! is_string( $license_signature ) ) {
 			return false;
 		}
 
-		// Validate hash.
-		$payload   = $this->license_signature_payload();
-		$signature = hash_hmac( 'sha256', $payload, $this->hash( $payload ) );
+		if ( hash_equals( $this->sign( $this->license_signature_payload() ), $license_signature ) ) {
+			return true;
+		}
 
-		return hash_equals( $signature, $license_signature );
+		// Signed by an older SDK: accept once and re-sign in the new format.
+		if ( hash_equals( $this->sign( $this->legacy_license_signature_payload() ), $license_signature ) ) {
+			$this->update_license_signature();
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Recover licenses whose old-format signature can't be verified any more
+	 * because the daily check event was removed: ask the server in the
+	 * background instead of showing the product as unlicensed until the user
+	 * re-activates. The server's answer decides, so this can't be used to
+	 * unlock anything.
+	 *
+	 * @return void
+	 */
+	private function maybe_schedule_signature_recheck() {
+		$license = $this->get_license();
+
+		if ( empty( $license['license'] ) || 'active' !== ( $license['status'] ?? '' ) ) {
+			return;
+		}
+
+		$hook = $this->client->getHookName( 'license_recheck' );
+
+		if ( ! has_action( $hook, [ $this, 'check_license_status' ] ) ) {
+			add_action( $hook, [ $this, 'check_license_status' ] );
+		}
+
+		if ( ! wp_installing() && ! wp_next_scheduled( $hook ) && ! get_site_transient( $hook . '_tried' ) ) {
+			// Once a day at most, in case the server keeps rejecting it.
+			set_site_transient( $hook . '_tried', 1, DAY_IN_SECONDS );
+			wp_schedule_single_event( time(), $hook );
+		}
 	}
 
 	/**

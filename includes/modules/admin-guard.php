@@ -145,7 +145,7 @@ class AdminGuard {
 		}
 
 		echo '</td></tr></tbody></table>';
-		echo '<script>(function(){var r=document.getElementById("role"),b=document.getElementById("gemsec-approve-admin");if(!r||!b){return;}function s(){b.style.display=r.value==="administrator"?"":"none";}r.addEventListener("change",s);s();}());</script>';
+		wp_print_inline_script_tag( '(function(){var r=document.getElementById("role"),b=document.getElementById("gemsec-approve-admin");if(!r||!b){return;}function s(){b.style.display=r.value==="administrator"?"":"none";}r.addEventListener("change",s);s();}());' );
 	}
 
 	/**

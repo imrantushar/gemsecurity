@@ -82,13 +82,10 @@ class Scanner {
 	}
 
 	/**
-	 * POST /scan/core-file — restore the original, or save an edited copy.
+	 * POST /scan/core-file — put the official WordPress.org copy back.
 	 */
 	public static function core_file_fix( $req ) {
-		$file = (string) $req->get_param( 'file' );
-		$res  = 'save' === $req->get_param( 'action' )
-			? CoreFile::save( $file, (string) $req->get_param( 'content' ) )
-			: CoreFile::restore( $file );
+		$res = CoreFile::restore( (string) $req->get_param( 'file' ) );
 		if ( is_wp_error( $res ) ) {
 			return $res;
 		}

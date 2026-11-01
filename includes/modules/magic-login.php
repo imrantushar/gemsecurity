@@ -413,7 +413,7 @@ class MagicLogin {
 	/** wp-login.php — printed inside the form, then moved below the Log In button. */
 	public function render_link() {
 		echo $this->link_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built with escaping above.
-		echo '<script>document.addEventListener("DOMContentLoaded",function(){var f=document.getElementById("loginform"),m=document.querySelector("#loginform .gemsec-magic");if(f&&m&&f.parentNode){f.parentNode.insertBefore(m,f.nextSibling);}});</script>';
+		wp_print_inline_script_tag( 'document.addEventListener("DOMContentLoaded",function(){var f=document.getElementById("loginform"),m=document.querySelector("#loginform .gemsec-magic");if(f&&m&&f.parentNode){f.parentNode.insertBefore(m,f.nextSibling);}});' );
 	}
 
 	/** wp_login_form() / WooCommerce — appended to the returned markup. */

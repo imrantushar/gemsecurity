@@ -71,7 +71,7 @@ Plugin/theme slugs and versions are sent to WordPress.org to fetch official chec
 When enabled, the first 5 characters of the SHA-1 hash of a new password are sent to Have I Been Pwned (api.pwnedpasswords.com), also when you press "Test connection". The password itself never leaves your site. [Terms and privacy](https://haveibeenpwned.com/Privacy)
 
 = IP location lookup (Plugin Guard alerts) =
-When Plugin Guard blocks an executable upload or an untrusted plugin, the IP address of the visitor involved is sent to ip-api.com, falling back to ipapi.co, to add a country and city to the security alert. The GemSecurity Pro add-on uses the same lookup for its country access control. [ip-api.com terms](https://ip-api.com/docs/legal), [ipapi.co terms](https://ipapi.co/terms/), [ipapi.co privacy](https://ipapi.co/privacy/)
+When Plugin Guard blocks an executable upload or an untrusted plugin, the IP address of the visitor involved is sent over HTTPS to ipapi.co to add a country and city to the security alert. The GemSecurity Pro add-on uses the same lookup for its country access control. No lookup is made when your CDN already supplies the country. [Terms](https://ipapi.co/terms/), [Privacy](https://ipapi.co/privacy/)
 
 = Alerts (Notifications) =
 When you add a Slack webhook or Telegram bot, security alert text (event, user, IP address and time) is sent to that channel.
@@ -89,6 +89,8 @@ Uptime, TLS-certificate, DNS, SPF and DMARC checks are made against your own sit
 Only if you accept the opt-in notice, GemSecurity sends usage data to Kodezen at store.kodezen.com. This includes your site URL and name, the admin's name and email, the server IP, WordPress, PHP, database and server versions, the site language, active theme, and active and inactive plugins. If you choose to give feedback when deactivating, that feedback is sent too. Nothing is sent if you decline. [Terms](https://kodezen.com/terms-and-conditions/), [Privacy](https://kodezen.com/privacy-policy/)
 
 == Source code and libraries ==
+
+The malware and firewall signatures in the PHP code are stored hex-encoded and decoded with `GemSecurity\Helper::sig()`. They are detection patterns (data), not code, and are encoded only so that antivirus tools do not flag the plugin itself for containing the same strings as the malware it looks for.
 
 The admin JavaScript in `assets/build/` is compiled. Its human-readable source is included in the `dev_gemsecurity/` folder and is also public on GitHub: [github.com/imrantushar/gemsecurity](https://github.com/imrantushar/gemsecurity).
 

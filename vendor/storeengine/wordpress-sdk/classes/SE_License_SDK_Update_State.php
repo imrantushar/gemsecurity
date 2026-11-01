@@ -57,7 +57,15 @@ final class SE_License_SDK_Update_State {
 	public function get( string $key, $default = null ) {
 		$all = $this->all();
 
-		return array_key_exists( $key, $all ) ? $all[ $key ] : $default;
+		// all() back-fills every known key via wp_parse_args, so a plain
+		// array_key_exists() made the caller's $default unreachable for exactly
+		// the keys it was written for. Treat "present but never set" (null) as
+		// absent so the default applies.
+		if ( ! array_key_exists( $key, $all ) || null === $all[ $key ] ) {
+			return $default;
+		}
+
+		return $all[ $key ];
 	}
 
 	public function set( array $changes ): void {

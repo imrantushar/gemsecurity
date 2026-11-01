@@ -75,6 +75,9 @@ final class StoreLicense {
 			// the SDK's own license routes call `license()`, which throws for
 			// free products — activation belongs to the Pro client.
 			'init_insights'       => true,
+			// No promotional notices fetched from the license server: a
+			// WordPress.org plugin must not show remotely loaded admin content.
+			'init_promotions'     => false,
 			'license_server'      => 'https://store.kodezen.com/',
 			'purchase_url'        => 'https://kodezen.com/',
 			'product_logo'        => defined( 'GEMSECURITY_ASSETS_URI' ) ? GEMSECURITY_ASSETS_URI . 'images/icon_logo.png' : '',

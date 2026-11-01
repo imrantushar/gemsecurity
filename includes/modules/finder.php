@@ -62,7 +62,7 @@ class Finder {
 
 		// Scanning several large tables and all plugin/theme/upload files
 		// can take minutes on big sites.
-		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
+		@set_time_limit( 300 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- long scan; bounded, not unlimited.
 
 		$files     = in_array( 'files', $scope, true ) ? self::search_files( $pattern ) : [ 'matches' => [], 'files_scanned' => 0, 'truncated' => false ];
 		$database  = in_array( 'database', $scope, true ) ? self::search_database( $term, $regex ) : [ 'matches' => [], 'truncated' => false ];

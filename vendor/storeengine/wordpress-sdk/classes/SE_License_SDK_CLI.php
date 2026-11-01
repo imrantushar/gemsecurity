@@ -43,6 +43,26 @@ class SE_License_SDK_CLI {
 	}
 
 	/**
+	 * Resolve a client's license handler or stop with an error.
+	 *
+	 * `SE_License_SDK_Client::license()` throws a RuntimeException for free
+	 * products, and `wp se-license list` happily lists them as targets — so
+	 * without this guard `wp se-license status <free-slug>` died with an
+	 * uncaught exception and a stack trace instead of a message.
+	 *
+	 * @param SE_License_SDK_Client $client The client.
+	 *
+	 * @return SE_License_SDK_License
+	 */
+	protected function license_or_die( SE_License_SDK_Client $client ): SE_License_SDK_License {
+		if ( $client->isFree() ) {
+			WP_CLI::error( sprintf( '"%s" is a free product and has no license.', $client->getSlug() ) );
+		}
+
+		return $client->license( false );
+	}
+
+	/**
 	 * List all products registered with the SDK on this site.
 	 *
 	 * ## OPTIONS
@@ -106,8 +126,22 @@ class SE_License_SDK_CLI {
 	 * @param array $assoc_args Associative args.
 	 */
 	public function status( $args, $assoc_args ) {
-		$client  = $this->client_or_die( $args );
-		$license = $client->license( false );
+		$client = $this->client_or_die( $args );
+
+		// A free product has no license handler at all — report what we can
+		// rather than blowing up on SE_License_SDK_Client::license().
+		if ( $client->isFree() ) {
+			WP_CLI\Utils\format_items( $assoc_args['format'] ?? 'table', [
+				[ 'field' => 'slug', 'value' => $client->getSlug() ],
+				[ 'field' => 'name', 'value' => $client->getPackageName() ],
+				[ 'field' => 'installed_version', 'value' => $client->getProjectVersion() ],
+				[ 'field' => 'license_status', 'value' => 'n/a (free product)' ],
+			], [ 'field', 'value' ] );
+
+			return;
+		}
+
+		$license = $this->license_or_die( $client );
 		$data    = $license->get_license();
 
 		$rows = [
@@ -150,7 +184,7 @@ class SE_License_SDK_CLI {
 			WP_CLI::error( 'The --license=<key> option is required.' );
 		}
 
-		$license = $client->license( false );
+		$license = $this->license_or_die( $client );
 		$license->activate_client_license( [ 'license_key' => $key ] );
 
 		if ( $license->get_error() ) {
@@ -177,7 +211,7 @@ class SE_License_SDK_CLI {
 	 */
 	public function deactivate( $args, $assoc_args ) {
 		$client  = $this->client_or_die( $args );
-		$license = $client->license( false );
+		$license = $this->license_or_die( $client );
 		$license->deactivate_client_license();
 
 		if ( $license->get_error() ) {
@@ -247,8 +281,8 @@ class SE_License_SDK_CLI {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp se-license install storeengine-pro
-	 *     wp se-license install storeengine-pro --version=2.1.0
+	 *     wp se-license install storeengine-pro --user=1
+	 *     wp se-license install storeengine-pro --version=2.1.0 --user=1
 	 *
 	 * @param array $args       Positional args.
 	 * @param array $assoc_args Associative args.
@@ -258,6 +292,18 @@ class SE_License_SDK_CLI {
 
 		if ( ! $client->maybe_init_update() ) {
 			WP_CLI::error( 'Updates are not enabled for this product.' );
+		}
+
+		// The install job enforces install_plugins + activate_plugins. WP-CLI
+		// runs as user 0 unless `--user=` is given, so without this the command
+		// downloads a package and only then fails on a permission check that
+		// could never have passed. Fail fast with the actual remedy instead.
+		if ( ! current_user_can( 'install_plugins' ) || ! current_user_can( 'activate_plugins' ) ) {
+			WP_CLI::error(
+				get_current_user_id()
+					? 'The current user cannot install or activate plugins on this site.'
+					: 'Installing requires a user context. Re-run with `--user=<id|login|email>` (e.g. --user=1).'
+			);
 		}
 
 		$version = $assoc_args['version'] ?? '';

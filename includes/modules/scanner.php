@@ -67,7 +67,7 @@ class Scanner {
 	 */
 	public static function run() {
 		// Scanner runs can take minutes on large sites.
-		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
+		@set_time_limit( 300 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- long scan; bounded, not unlimited.
 
 		$core_issues = self::scan_core_integrity();
 		$foreign     = self::scan_foreign_files();

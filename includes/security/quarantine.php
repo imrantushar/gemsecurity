@@ -235,6 +235,38 @@ class Quarantine {
 	}
 
 	/**
+	 * Keep a copy of a file that is about to be overwritten, leaving it in place.
+	 *
+	 * @param string $path   Absolute path.
+	 * @param string $source Who took the snapshot (shown in the entry).
+	 * @return array|\WP_Error The stored entry.
+	 */
+	public static function snapshot( $path, $source ) {
+		$abs = wp_normalize_path( (string) $path );
+		if ( ! is_file( $abs ) || filesize( $abs ) > self::MAX_BYTES ) {
+			return new \WP_Error( 'gemsecurity_quarantine_failed', __( 'Could not keep a copy of the current file.', 'gemsecurity' ), [ 'status' => 500 ] );
+		}
+		$id   = md5( 'snap:' . $abs . microtime() );
+		$body = file_get_contents( $abs ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		if ( false === $body || ! add_option( self::BLOB_PREFIX . $id, base64_encode( $body ), '', false ) ) {
+			return new \WP_Error( 'gemsecurity_quarantine_failed', __( 'Could not keep a copy of the current file.', 'gemsecurity' ), [ 'status' => 500 ] );
+		}
+		$relative     = \GemSecurity\Paths::relative( $abs );
+		$store        = self::all();
+		$store[ $id ] = [
+			'id'             => $id,
+			'type'           => 'file',
+			'original'       => $abs,
+			'relative'       => $relative,
+			'label'          => $relative,
+			'source'         => (string) $source,
+			'quarantined_at' => current_time( 'mysql' ),
+		];
+		self::save( $store );
+		return $store[ $id ];
+	}
+
+	/**
 	 * Record a database snapshot (an injected option or post value that was
 	 * excised). The caller has already written the cleaned value.
 	 *
@@ -281,7 +313,10 @@ class Quarantine {
 		}
 
 		$body = self::payload( $id );
-		if ( null === $body || ! self::write_back( $entry['original'], $body ) ) {
+		// A snapshot was taken of a file that was then replaced, so it may
+		// overwrite; a quarantined file was removed and must not.
+		$overwrite = 'core-file' === ( $entry['source'] ?? '' );
+		if ( null === $body || ! self::write_back( $entry['original'], $body, $overwrite ) ) {
 			return new \WP_Error( 'gemsecurity_restore_failed', __( 'Could not restore the file.', 'gemsecurity' ), [ 'status' => 500 ] );
 		}
 
@@ -296,11 +331,12 @@ class Quarantine {
 	 *
 	 * @param string $path Absolute original path.
 	 * @param string $body
+	 * @param bool   $overwrite Replace an existing file.
 	 * @return bool
 	 */
-	public static function write_back( $path, $body ) {
+	public static function write_back( $path, $body, $overwrite = false ) {
 		$path = (string) $path;
-		if ( '' === $path || file_exists( $path ) || ( ! is_dir( dirname( $path ) ) && ! wp_mkdir_p( dirname( $path ) ) ) ) {
+		if ( '' === $path || ( ! $overwrite && file_exists( $path ) ) || ( ! is_dir( dirname( $path ) ) && ! wp_mkdir_p( dirname( $path ) ) ) ) {
 			return false;
 		}
 		return false !== file_put_contents( $path, $body, LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- restores the site's own file to where it came from.

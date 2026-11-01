@@ -403,7 +403,6 @@ class Api {
 				},
 				'args'                => [
 					'file'   => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
-					'action' => [ 'type' => 'string', 'enum' => [ 'restore', 'save' ], 'default' => 'restore' ],
 				],
 			] );
 			register_rest_route( $ns, '/scan/baseline', [

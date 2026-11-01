@@ -43,7 +43,7 @@ final class SE_License_SDK_Rest_API {
 
 		register_rest_route( self::NAMESPACE, '/' . $slug . '/license/activate', [
 			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'activate_license' ],
+			'callback'            => $this->user_action( 'activate_license' ),
 			'permission_callback' => [ $this, 'permissions_check' ],
 			'args'                => [
 				'license'                => [
@@ -62,13 +62,13 @@ final class SE_License_SDK_Rest_API {
 
 		register_rest_route( self::NAMESPACE, '/' . $slug . '/license/deactivate', [
 			'methods'             => WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'deactivate_license' ],
+			'callback'            => $this->user_action( 'deactivate_license' ),
 			'permission_callback' => [ $this, 'permissions_check' ],
 		] );
 
 		register_rest_route( self::NAMESPACE, '/' . $slug . '/license/status', [
 			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'check_license_status' ],
+			'callback'            => $this->user_action( 'check_license_status' ),
 			'permission_callback' => [ $this, 'permissions_check' ],
 			'args'                => [
 				'force' => [ 'type' => 'boolean', 'default' => false ],
@@ -78,7 +78,7 @@ final class SE_License_SDK_Rest_API {
 		if ( $this->client->maybe_init_update() ) {
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/package-info', [
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_package_info' ],
+				'callback'            => $this->user_action( 'get_package_info' ),
 				'permission_callback' => [ $this, 'permissions_check' ],
 				'args'                => [
 					'force' => [ 'type' => 'boolean', 'default' => false ],
@@ -87,25 +87,25 @@ final class SE_License_SDK_Rest_API {
 
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/updates/status', [
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'updates_status' ],
+				'callback'            => $this->user_action( 'updates_status' ),
 				'permission_callback' => [ $this, 'permissions_check' ],
 			] );
 
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/updates/check-now', [
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'updates_check_now' ],
+				'callback'            => $this->user_action( 'updates_check_now' ),
 				'permission_callback' => [ $this, 'permissions_check' ],
 			] );
 
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/updates/versions', [
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'updates_versions' ],
+				'callback'            => $this->user_action( 'updates_versions' ),
 				'permission_callback' => [ $this, 'permissions_check' ],
 			] );
 
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/updates/install', [
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'updates_install' ],
+				'callback'            => $this->user_action( 'updates_install' ),
 				'permission_callback' => [ $this, 'permissions_check' ],
 				'args'                => [
 					'version' => [
@@ -118,19 +118,19 @@ final class SE_License_SDK_Rest_API {
 
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/updates/rollback', [
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'updates_rollback' ],
+				'callback'            => $this->user_action( 'updates_rollback' ),
 				'permission_callback' => [ $this, 'permissions_check' ],
 			] );
 
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/settings/beta-channel', [
 				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_beta_channel' ],
+					'callback'            => $this->user_action( 'get_beta_channel' ),
 					'permission_callback' => [ $this, 'permissions_check' ],
 				],
 				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'set_beta_channel' ],
+					'callback'            => $this->user_action( 'set_beta_channel' ),
 					'permission_callback' => [ $this, 'permissions_check' ],
 					'args'                => [
 						'enabled' => [ 'type' => 'boolean', 'required' => true ],
@@ -141,12 +141,12 @@ final class SE_License_SDK_Rest_API {
 			register_rest_route( self::NAMESPACE, '/' . $slug . '/settings/auto-update-window', [
 				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_auto_update_window' ],
+					'callback'            => $this->user_action( 'get_auto_update_window' ),
 					'permission_callback' => [ $this, 'permissions_check' ],
 				],
 				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'set_auto_update_window' ],
+					'callback'            => $this->user_action( 'set_auto_update_window' ),
 					'permission_callback' => [ $this, 'permissions_check' ],
 					'args'                => [
 						'window' => [
@@ -160,7 +160,7 @@ final class SE_License_SDK_Rest_API {
 
 		register_rest_route( self::NAMESPACE, '/' . $slug . '/insights/optin', [
 			'methods'             => WP_REST_Server::ALLMETHODS,
-			'callback'            => [ $this, 'handle_insights_optin' ],
+			'callback'            => $this->user_action( 'handle_insights_optin' ),
 			'permission_callback' => [ $this, 'permissions_check' ],
 			'args'                => [
 				'opt_in' => [ 'type' => 'boolean' ],
@@ -173,8 +173,37 @@ final class SE_License_SDK_Rest_API {
 	 *
 	 * @return bool|WP_Error
 	 */
+	/**
+	 * Wrap a route callback so explicit actions (any POST, or a GET with
+	 * `force`) run through SE_License_SDK_Client::interactive(): a 30-second
+	 * timeout and no circuit breaker. A plain GET (opening the panel) stays a
+	 * background read, so it never waits on a server that's known to be down.
+	 *
+	 * @param string $method Method on this class.
+	 *
+	 * @return Closure
+	 */
+	private function user_action( string $method ): Closure {
+		return function ( WP_REST_Request $request ) use ( $method ) {
+			if ( 'GET' !== $request->get_method() || $request->get_param( 'force' ) ) {
+				return $this->client->interactive( function () use ( $method, $request ) {
+					return $this->{$method}( $request );
+				} );
+			}
+
+			return $this->{$method}( $request );
+		};
+	}
+
 	public function permissions_check() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		// A network-activated product keeps its license and update settings in
+		// site options — one license for the whole network — and its UI lives in
+		// the Network Admin. Every site admin on a multisite has manage_options,
+		// so gating on that alone would let any one of them deactivate the
+		// license, or flip the beta channel, for every site on the network.
+		$capability = $this->client->is_network_activated() ? 'manage_network_options' : 'manage_options';
+
+		if ( ! current_user_can( $capability ) ) {
 			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to manage licenses.', 'storeengine-sdk' ), [ 'status' => 403 ] );
 		}
 
@@ -349,9 +378,47 @@ final class SE_License_SDK_Rest_API {
 	}
 
 	/**
-	 * GET /updates/versions — proxy the server's version history.
+	 * GET /updates/versions — the server's version history, cached.
+	 *
+	 * The license panel requests this every time it mounts; before 1.5.9 each
+	 * mount was a license-server round trip. Pass `force=true` (the panel's
+	 * Refresh button) to bypass the cache. The cache is also dropped with the
+	 * rest of the version info on license changes.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function updates_versions() {
+	public function updates_versions( WP_REST_Request $request ) {
+		$key = $this->client->getHookName( 'versions_list' );
+
+		if ( ! $request->get_param( 'force' ) ) {
+			$cached = get_site_transient( $key );
+
+			if ( is_array( $cached ) ) {
+				return rest_ensure_response( $cached );
+			}
+		}
+
+		$result = $this->fetch_versions();
+
+		if ( ! is_wp_error( $result ) ) {
+			$data = $result instanceof WP_REST_Response ? $result->get_data() : $result;
+
+			if ( is_array( $data ) ) {
+				set_site_transient( $key, $data, (int) apply_filters( $this->client->getHookName( 'versions_cache_ttl' ), 6 * HOUR_IN_SECONDS ) );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Proxy the server's version history.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function fetch_versions() {
 		if ( $this->client->isFree() ) {
 			$body = [];
 		} else {
@@ -582,7 +649,7 @@ final class SE_License_SDK_Rest_API {
 	private function get_cached_update() {
 		$which = $this->client->isPlugin() ? 'plugin_update' : 'theme_update';
 		$key   = $this->client->getHookName( 'version_info' ) . $which;
-		$info  = get_transient( $key );
+		$info  = get_site_transient( $key );
 
 		return is_object( $info ) && isset( $info->new_version ) ? $info : null;
 	}

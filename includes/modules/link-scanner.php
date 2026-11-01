@@ -45,7 +45,7 @@ class LinkScanner {
 	 */
 	public static function run() {
 		// Scanner runs can take minutes on large sites.
-		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
+		@set_time_limit( 300 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- long scan; bounded, not unlimited.
 
 		$allow = self::allowlist();
 		$block = self::blocklist();

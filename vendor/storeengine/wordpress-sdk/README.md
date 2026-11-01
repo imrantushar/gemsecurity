@@ -233,6 +233,25 @@ $client->add_action( 'license_activated', function ( $license ) {
 | `update_installed` | This product's files were updated in place (native "Update now"/bulk/auto-update, or the SDK installer). | `$previous_version` |
 | `update_failed` | An SDK-driven install failed. | `$wp_error, $target_version, $current_version` |
 
+### Updates and license state
+
+Updates for a pro product are gated on the license. The license server omits the
+download URL for an unlicensed site, and WordPress renders "Automatic update is
+unavailable for this plugin" whenever an update row has no `package`. Because the
+server response is cached locally, the SDK also:
+
+- drops the cached version info on every license lifecycle transition
+  (`license_activated`, `license_deactivated`, `license_grace_expired`), so a
+  download URL obtained under an active license cannot outlive it — this covers
+  the PHP license form, the REST endpoints, WP-CLI and the scheduled re-check
+  alike; and
+- blanks `package` / `download_link` for a pro product with no valid license as
+  the update payload is injected, as a backstop for any payload cached before
+  this behaviour existed.
+
+Free products are never gated, and a license inside its **offline grace period**
+still counts as valid — a server outage does not strip working updates.
+
 ### Offline grace period
 
 If the license server can't be reached during the daily re-check (DNS/timeout/TLS
@@ -241,6 +260,46 @@ working for a grace window (default **14 days** since the last successful
 verification) instead of being deactivated by a transient outage. Configure it
 with the `license_grace_period` init arg (seconds; `0` = fail closed
 immediately) or the `{hook}_license_grace_period` filter.
+
+## Talking to the license server
+
+The SDK is built so a slow or failing license server can never slow down a customer's site, and so the server can steer every 1.6.0+ install without a new SDK release.
+
+- **No requests during page loads.** Update data, promotions and the localized JS params read cached data only. When something is due, one cron event is scheduled.
+- **One request per site.** That event, and WordPress's own update cron, send a single `check-updates` request for every SDK product on the site that shares a license server. Servers without that route get one `check-update` per product.
+- **Circuit breaker, shared by every product.** After a timeout, DNS/TLS error, 5xx, 408 or 429, background requests stop for 15 min → 30 min → … → 6 h (±25 %), or as long as `Retry-After` says. Explicit user actions (activate, deactivate, "check now", install) still go out, with a 30-second timeout.
+- **Randomised timing.** Cache lifetimes, back-offs and the first daily license check are spread, so sites that failed or updated together don't come back together.
+
+### Server directives
+
+Any `check-update` response, a `check-updates` item, or the top level of a `check-updates` response may include:
+
+| Field | Effect |
+|---|---|
+| `next_check_in` (seconds) | How long this answer is cached. Clamped to 1 hour – 7 days. A top-level value applies to items that don't set their own. |
+| `pause_background` (seconds) | Stop all background requests to this server for that long (max 7 days; never shorter than asked). `0` lifts a pause. User actions are unaffected and don't lift it. |
+
+### Filters
+
+| Filter | Default |
+|---|---|
+| `{hook}_updater_cache_ttl` | 12 h |
+| `{hook}_updater_failure_ttl` | 1 h |
+| `{hook}_versions_cache_ttl` | 6 h |
+| `se_license_sdk_server_backoff` | 15 min × 2ⁿ, max 6 h |
+| `se_license_sdk_interactive_timeout` | 30 s (15–30) |
+| `se_license_sdk_can_fetch_inline` | true in cron, WP-CLI and Dashboard → Updates "Check again" |
+
+## Development
+
+`tests/run.sh` runs end-to-end scenarios against a WordPress install with a faked license server (nothing leaves the machine):
+
+```bash
+WP_PATH=/path/to/wordpress tests/run.sh            # all scenarios
+WP_PATH=/path/to/wordpress tests/run.sh signature  # filter by name
+```
+
+CI runs them on PHP 7.4 and 8.3 for every pull request, together with `tests/check-version.sh`, which fails a PR that changes SDK code without bumping the version in `init.php` (unbumped code is silently ignored wherever another plugin bundles the same version) or without a changelog entry.
 
 ## Learn More
 
