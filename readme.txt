@@ -148,7 +148,9 @@ Yes. Everything described above works in the free plugin. Pro adds active threat
 * Added - Two-Factor: an "All roles" option for enforced roles.
 * Added - Social login buttons appear only after a provider's keys pass a check, either "Test credentials" or a new "Verify with a sign-in" round trip. Changing a key un-verifies it. A provider whose keys are rejected twice in a row is switched off and you are alerted. The Social Login page shows Verified, Not verified or Switched off for each provider.
 * Added - A "Plugin lock" check in the security score.
-* Changed - Temporary accounts can never create, promote, delete or edit other users, or deactivate GemSecurity, whatever their role. Deactivating GemSecurity ends all temporary access: the accounts lose their role and password, so a password reset cannot turn them into permanent ones.
+* Changed - Temporary accounts can never create, promote, delete or edit other users, or deactivate or delete GemSecurity, whatever their role. Deactivating GemSecurity ends all temporary access: the accounts lose their role and password, so a password reset cannot turn them into permanent ones.
+* Fixed - The plugin lock did not stop GemSecurity Pro from being deleted while inactive (WordPress never checks the per-plugin delete capability).
+* Fixed - The no-referrer policy on temporary access links was overridden by WordPress's own login-page referrer tag.
 * Changed - Magic links and social login now go through Admin Guard, and temporary accounts can sign in only with their own access link.
 * Changed - The confirm step of magic links and temporary access links only works in the browser that opened the link, so another site cannot sign a visitor in to someone else's account.
 * Changed - Quarantined files are now stored in the database and removed from disk, instead of being moved into the uploads folder. Files quarantined by earlier versions can still be restored.

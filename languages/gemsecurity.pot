@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-01T15:06:01+00:00\n"
+"POT-Creation-Date: 2026-11-01T15:13:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -17,7 +17,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: gemsecurity.php
 #: includes/admin/menu.php:125
-#: includes/security/site-guard.php:558
+#: includes/security/site-guard.php:568
 #: assets/build/backend.1.2.0.js:43
 msgid "GemSecurity"
 msgstr ""
@@ -2130,71 +2130,71 @@ msgstr ""
 msgid "Administrator signed in"
 msgstr ""
 
-#: includes/modules/magic-login.php:222
-#: includes/modules/magic-login.php:324
+#: includes/modules/magic-login.php:225
+#: includes/modules/magic-login.php:327
 msgid "This sign-in link is invalid, has expired, or was already used. Request a new one below."
 msgstr ""
 
-#: includes/modules/magic-login.php:246
+#: includes/modules/magic-login.php:249
 msgid "The page expired. Please try again."
 msgstr ""
 
-#: includes/modules/magic-login.php:252
+#: includes/modules/magic-login.php:255
 msgid "Too many requests. Please wait a few minutes and try again."
 msgstr ""
 
-#: includes/modules/magic-login.php:265
+#: includes/modules/magic-login.php:268
 msgid "If that account can sign in this way, a sign-in link is on its way to the email address on file. It works once and expires soon."
 msgstr ""
 
 #. translators: %s: site name.
-#: includes/modules/magic-login.php:288
+#: includes/modules/magic-login.php:291
 #, php-format
 msgid "Your sign-in link for %s"
 msgstr ""
 
 #. translators: %d: minutes the link is valid.
-#: includes/modules/magic-login.php:294
+#: includes/modules/magic-login.php:297
 #, php-format
 msgid "Use the button below to sign in. The link works once and expires in %d minutes."
 msgstr ""
 
-#: includes/modules/magic-login.php:301
-#: includes/modules/magic-login.php:413
+#: includes/modules/magic-login.php:304
+#: includes/modules/magic-login.php:420
 msgid "Sign in"
 msgstr ""
 
-#: includes/modules/magic-login.php:305
+#: includes/modules/magic-login.php:308
 msgid "If you did not ask for this link, ignore this email — nobody can sign in without it."
 msgstr ""
 
-#: includes/modules/magic-login.php:360
-#: includes/modules/magic-login.php:376
-#: includes/modules/magic-login.php:427
+#: includes/modules/magic-login.php:367
+#: includes/modules/magic-login.php:383
+#: includes/modules/magic-login.php:434
 msgid "Email me a sign-in link"
 msgstr ""
 
-#: includes/modules/magic-login.php:368
+#: includes/modules/magic-login.php:375
 #: assets/build/backend.1.2.0.js:44
 msgid "Username or Email Address"
 msgstr ""
 
-#: includes/modules/magic-login.php:381
+#: includes/modules/magic-login.php:388
 #: includes/modules/two-factor.php:826
 msgid "← Back to login"
 msgstr ""
 
-#: includes/modules/magic-login.php:388
+#: includes/modules/magic-login.php:395
 msgid "Confirm sign-in"
 msgstr ""
 
 #. translators: %s: user display name.
-#: includes/modules/magic-login.php:396
+#: includes/modules/magic-login.php:403
 #, php-format
 msgid "Sign in as %s?"
 msgstr ""
 
-#: includes/modules/magic-login.php:410
+#: includes/modules/magic-login.php:417
 msgid "Remember Me"
 msgstr ""
 
@@ -2656,181 +2656,185 @@ msgstr ""
 msgid "Suspicious cron hook name"
 msgstr ""
 
-#: includes/modules/temp-access.php:179
+#: includes/modules/temp-access.php:183
 msgid "Access expired."
 msgstr ""
 
-#: includes/modules/temp-access.php:216
+#: includes/modules/temp-access.php:220
 msgid "<strong>Sign-in blocked.</strong> This temporary account can only be used through its access link."
 msgstr ""
 
-#: includes/modules/temp-access.php:374
+#: includes/modules/temp-access.php:262
+msgid "Temporary accounts cannot delete GemSecurity."
+msgstr ""
+
+#: includes/modules/temp-access.php:397
 msgid "Choose how long access should last."
 msgstr ""
 
-#: includes/modules/temp-access.php:385
+#: includes/modules/temp-access.php:408
 msgid "The expiry must be at least 5 minutes from now."
 msgstr ""
 
 #. translators: %d: days.
-#: includes/modules/temp-access.php:389
+#: includes/modules/temp-access.php:412
 #, php-format
 msgid "Temporary access can last at most %d days."
 msgstr ""
 
-#: includes/modules/temp-access.php:407
+#: includes/modules/temp-access.php:430
 msgid "Enter a valid email address."
 msgstr ""
 
-#: includes/modules/temp-access.php:415
+#: includes/modules/temp-access.php:438
 msgid "A user with this email address already exists. Existing accounts are never changed or converted — use a different address for the temporary account."
 msgstr ""
 
-#: includes/modules/temp-access.php:423
+#: includes/modules/temp-access.php:446
 msgid "Choose a role to grant."
 msgstr ""
 
-#: includes/modules/temp-access.php:426
+#: includes/modules/temp-access.php:449
 msgid "This role can change the site. A temporary account cannot create users or switch GemSecurity off, but installing or editing plugins and themes runs code that can outlive the access. Confirm that you want to grant it."
 msgstr ""
 
-#: includes/modules/temp-access.php:441
+#: includes/modules/temp-access.php:464
 msgid "Too many temporary accounts were created in the last hour. Try again later."
 msgstr ""
 
-#: includes/modules/temp-access.php:456
-#: includes/modules/temp-access.php:848
-#: includes/modules/temp-access.php:859
+#: includes/modules/temp-access.php:479
+#: includes/modules/temp-access.php:873
+#: includes/modules/temp-access.php:884
 #: assets/build/backend.1.2.0.js:44
 msgid "Temporary access"
 msgstr ""
 
 #. translators: 1: email, 2: role, 3: expiry date.
-#: includes/modules/temp-access.php:478
+#: includes/modules/temp-access.php:501
 #, php-format
 msgid "Temporary access created for %1$s with role \"%2$s\", ending %3$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:494
+#: includes/modules/temp-access.php:517
 msgid "Temporary access created"
 msgstr ""
 
 #. translators: 1: email, 2: role, 3: expiry date.
-#: includes/modules/temp-access.php:497
+#: includes/modules/temp-access.php:520
 #, php-format
 msgid "%1$s was given temporary access with the \"%2$s\" role until %3$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:521
+#: includes/modules/temp-access.php:544
 msgid "Revoked access cannot be extended. Create a new temporary account instead."
 msgstr ""
 
 #. translators: %s: date.
-#: includes/modules/temp-access.php:537
+#: includes/modules/temp-access.php:560
 #, php-format
 msgid "Access extended to %s."
 msgstr ""
 
-#: includes/modules/temp-access.php:554
+#: includes/modules/temp-access.php:577
 msgid "Extend this access first — only active accounts can have a link."
 msgstr ""
 
-#: includes/modules/temp-access.php:557
+#: includes/modules/temp-access.php:580
 msgid "A new sign-in link was generated; the previous one no longer works."
 msgstr ""
 
-#: includes/modules/temp-access.php:568
+#: includes/modules/temp-access.php:591
 msgid "This access was already revoked."
 msgstr ""
 
-#: includes/modules/temp-access.php:573
+#: includes/modules/temp-access.php:596
 msgid "Access revoked; sessions ended."
 msgstr ""
 
-#: includes/modules/temp-access.php:578
+#: includes/modules/temp-access.php:601
 msgid "Temporary access revoked"
 msgstr ""
 
 #. translators: %s: email.
-#: includes/modules/temp-access.php:580
+#: includes/modules/temp-access.php:603
 #, php-format
 msgid "Temporary access for %s was revoked and its sessions were ended."
 msgstr ""
 
-#: includes/modules/temp-access.php:588
+#: includes/modules/temp-access.php:611
 msgid "That is not a temporary access account."
 msgstr ""
 
 #. translators: %s: site name.
-#: includes/modules/temp-access.php:657
+#: includes/modules/temp-access.php:680
 #, php-format
 msgid "Temporary access to %s"
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/modules/temp-access.php:662
+#: includes/modules/temp-access.php:685
 #, php-format
 msgid "You have been given temporary access to the dashboard. It ends on %s."
 msgstr ""
 
-#: includes/modules/temp-access.php:664
+#: includes/modules/temp-access.php:687
 msgid "Open the dashboard"
 msgstr ""
 
-#: includes/modules/temp-access.php:667
+#: includes/modules/temp-access.php:690
 msgid "The link works once. Do not forward it — whoever opens it first gets the access."
 msgstr ""
 
-#: includes/modules/temp-access.php:673
+#: includes/modules/temp-access.php:696
 msgid "Sign-in link emailed to the recipient."
 msgstr ""
 
-#: includes/modules/temp-access.php:767
+#: includes/modules/temp-access.php:792
 msgid "Too many attempts. Please wait a few minutes and try again."
 msgstr ""
 
-#: includes/modules/temp-access.php:773
-#: includes/modules/temp-access.php:785
+#: includes/modules/temp-access.php:798
+#: includes/modules/temp-access.php:810
 msgid "This access link is invalid, has expired, or was already used. Ask the site owner for a new one."
 msgstr ""
 
-#: includes/modules/temp-access.php:791
+#: includes/modules/temp-access.php:816
 msgid "This account cannot sign in right now."
 msgstr ""
 
-#: includes/modules/temp-access.php:798
+#: includes/modules/temp-access.php:823
 msgid "Signed in with the access link."
 msgstr ""
 
-#: includes/modules/temp-access.php:802
+#: includes/modules/temp-access.php:827
 msgid "Temporary access used"
 msgstr ""
 
 #. translators: 1: email, 2: IP address.
-#: includes/modules/temp-access.php:805
+#: includes/modules/temp-access.php:830
 #, php-format
 msgid "%1$s used their temporary access link for the first time, from %2$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:827
+#: includes/modules/temp-access.php:852
 msgid "An access link was refused: invalid, expired or already used."
 msgstr ""
 
-#: includes/modules/temp-access.php:849
+#: includes/modules/temp-access.php:874
 msgid "← Back to site"
 msgstr ""
 
 #. translators: 1: role name, 2: date and time.
-#: includes/modules/temp-access.php:867
+#: includes/modules/temp-access.php:892
 #, php-format
 msgid "You have been given temporary %1$s access until %2$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:868
+#: includes/modules/temp-access.php:893
 msgid "dashboard"
 msgstr ""
 
-#: includes/modules/temp-access.php:878
+#: includes/modules/temp-access.php:903
 msgid "Continue to the dashboard"
 msgstr ""
 
@@ -4109,119 +4113,123 @@ msgstr ""
 msgid "Turn the module on"
 msgstr ""
 
-#: includes/security/site-guard.php:281
+#: includes/security/site-guard.php:253
+msgid "GemSecurity is locked. Unlock it on the Firewall page before deleting it."
+msgstr ""
+
+#: includes/security/site-guard.php:291
 msgid "Blocked an attempt to deactivate GemSecurity (plugin lock)."
 msgstr ""
 
-#: includes/security/site-guard.php:374
+#: includes/security/site-guard.php:384
 msgid "The lock is already on."
 msgstr ""
 
-#: includes/security/site-guard.php:378
+#: includes/security/site-guard.php:388
 msgid "Your account has no valid email address. Unlock codes are sent by email, so add one to your profile first."
 msgstr ""
 
-#: includes/security/site-guard.php:382
+#: includes/security/site-guard.php:392
 msgid "Use at least 8 characters for the unlock password."
 msgstr ""
 
-#: includes/security/site-guard.php:390
+#: includes/security/site-guard.php:400
 msgid "GemSecurity plugin lock turned on."
 msgstr ""
 
-#: includes/security/site-guard.php:404
+#: includes/security/site-guard.php:414
 msgid "No lock is set."
 msgstr ""
 
-#: includes/security/site-guard.php:407
+#: includes/security/site-guard.php:417
 msgid "This lock has no email address on file. Remove it with the wp-config recovery line and set it up again."
 msgstr ""
 
-#: includes/security/site-guard.php:414
+#: includes/security/site-guard.php:424
 msgid "Too many wrong passwords. Try again in 15 minutes."
 msgstr ""
 
-#: includes/security/site-guard.php:419
+#: includes/security/site-guard.php:429
 msgid "Wrong GemSecurity unlock password entered."
 msgstr ""
 
-#: includes/security/site-guard.php:420
+#: includes/security/site-guard.php:430
 msgid "Wrong password."
 msgstr ""
 
-#: includes/security/site-guard.php:428
+#: includes/security/site-guard.php:438
 msgid "Too many codes requested. Try again in 15 minutes."
 msgstr ""
 
-#: includes/security/site-guard.php:435
+#: includes/security/site-guard.php:445
 msgid "Your GemSecurity unlock code"
 msgstr ""
 
-#: includes/security/site-guard.php:437
+#: includes/security/site-guard.php:447
 msgid "Someone entered the unlock password to open the GemSecurity plugin lock. Use this code to finish:"
 msgstr ""
 
-#: includes/security/site-guard.php:438
+#: includes/security/site-guard.php:448
 msgid "Unlock code"
 msgstr ""
 
-#: includes/security/site-guard.php:439
+#: includes/security/site-guard.php:449
 msgid "The code works for 10 minutes. If this was not you, someone knows your unlock password. Do not share the code."
 msgstr ""
 
-#: includes/security/site-guard.php:443
+#: includes/security/site-guard.php:453
 msgid "The email with the code could not be sent. Check that your site can send email."
 msgstr ""
 
-#: includes/security/site-guard.php:448
+#: includes/security/site-guard.php:458
 msgid "GemSecurity unlock code emailed."
 msgstr ""
 
-#: includes/security/site-guard.php:457
+#: includes/security/site-guard.php:467
 msgid "No code is waiting, or it expired. Enter the password again to get a new one."
 msgstr ""
 
-#: includes/security/site-guard.php:461
+#: includes/security/site-guard.php:471
 msgid "Too many wrong codes. Enter the password again to get a new one."
 msgstr ""
 
-#: includes/security/site-guard.php:468
+#: includes/security/site-guard.php:478
 msgid "Wrong GemSecurity unlock code entered."
 msgstr ""
 
-#: includes/security/site-guard.php:469
+#: includes/security/site-guard.php:479
 msgid "Wrong code."
 msgstr ""
 
-#: includes/security/site-guard.php:474
+#: includes/security/site-guard.php:484
 msgid "GemSecurity plugin lock opened for 10 minutes."
 msgstr ""
 
-#: includes/security/site-guard.php:498
+#: includes/security/site-guard.php:508
 msgid "Enter the unlock password first."
 msgstr ""
 
-#: includes/security/site-guard.php:504
+#: includes/security/site-guard.php:514
 msgid "GemSecurity plugin lock turned off."
 msgstr ""
 
-#: includes/security/site-guard.php:525
+#: includes/security/site-guard.php:535
 msgid "File uploads are turned off on this site."
 msgstr ""
 
-#: includes/security/site-guard.php:565
+#: includes/security/site-guard.php:575
 msgid "File uploads: OFF — click to turn on"
 msgstr ""
 
-#: includes/security/site-guard.php:566
+#: includes/security/site-guard.php:576
 msgid "File uploads: ON — click to turn off"
 msgstr ""
 
-#: includes/security/site-guard.php:573
+#: includes/security/site-guard.php:583
 msgid "You are not allowed to do this."
 msgstr ""
 
-#: includes/security/site-guard.php:579
+#: includes/security/site-guard.php:589
 msgid "GemSecurity is locked. Unlock it on the Firewall page (password and emailed code) before changing this."
 msgstr ""
 

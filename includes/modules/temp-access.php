@@ -120,6 +120,10 @@ class TempAccess {
 		add_filter( 'gemsecurity/login_gate', [ __CLASS__, 'block_password_login' ] );
 		// Nothing a temporary account does may outlive its grant.
 		add_filter( 'map_meta_cap', [ __CLASS__, 'restrict_caps' ], 99, 4 );
+		// Core gates deletion only on the plain delete_plugins capability, never
+		// the per-plugin one, so deleting GemSecurity is stopped as it happens.
+		add_action( 'delete_plugin', [ __CLASS__, 'refuse_delete' ] );
+		add_filter( 'plugin_action_links', [ __CLASS__, 'hide_delete_link' ], 99, 2 );
 		add_filter( 'allow_password_reset', [ __CLASS__, 'block_password_reset' ], 10, 2 );
 		add_filter( 'wp_is_application_passwords_available_for_user', [ __CLASS__, 'block_app_passwords' ], 10, 2 );
 		// A session cookie can never outlive the grant.
@@ -250,6 +254,25 @@ class TempAccess {
 			return [ 'do_not_allow' ];
 		}
 		return $caps;
+	}
+
+	/** @param string $file Plugin basename about to be deleted. */
+	public static function refuse_delete( $file ) {
+		if ( self::is_temp( get_current_user_id() ) && preg_match( '#^gemsecurity(-pro)?/#', (string) $file ) ) {
+			wp_die( esc_html__( 'Temporary accounts cannot delete GemSecurity.', 'gemsecurity' ), '', [ 'response' => 403 ] );
+		}
+	}
+
+	/**
+	 * @param array  $links
+	 * @param string $file
+	 * @return array
+	 */
+	public static function hide_delete_link( $links, $file ) {
+		if ( self::is_temp( get_current_user_id() ) && preg_match( '#^gemsecurity(-pro)?/#', (string) $file ) ) {
+			unset( $links['delete'] );
+		}
+		return $links;
 	}
 
 	/**
@@ -754,7 +777,9 @@ class TempAccess {
 		// Keep the token out of referrers, caches and search indexes.
 		header( 'Referrer-Policy: no-referrer' );
 		header( 'X-Robots-Tag: noindex, nofollow' );
-		add_action( 'login_head', [ $this, 'head_meta' ] );
+		// login_header() adds core's strict-origin-when-cross-origin <meta> at
+		// priority 10, and the last referrer <meta> wins: print ours after it.
+		add_action( 'login_head', [ $this, 'head_meta' ], 99 );
 
 		// The link's own token authorises this request in place of a nonce.
 		// phpcs:disable WordPress.Security.NonceVerification

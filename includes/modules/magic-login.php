@@ -203,8 +203,11 @@ class MagicLogin {
 
 	public function handle() {
 		nocache_headers();
-		// Keep the token out of referrers.
+		// Keep the token out of referrers. login_header() adds core's own
+		// referrer <meta>, which would override the header; the last <meta>
+		// wins, so ours is printed after it.
 		header( 'Referrer-Policy: no-referrer' );
+		add_action( 'login_head', [ __CLASS__, 'head_meta' ], 99 );
 
 		// A magic link carries its own token, which stands in for a nonce; the
 		// request form below is nonce-protected.
@@ -345,6 +348,10 @@ class MagicLogin {
 
 		wp_safe_redirect( $redirect );
 		exit;
+	}
+
+	public static function head_meta() {
+		echo '<meta name="referrer" content="no-referrer" />' . "\n";
 	}
 
 	/* ------------------------------------------------------------------ */

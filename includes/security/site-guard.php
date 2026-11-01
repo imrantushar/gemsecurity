@@ -71,6 +71,9 @@ class SiteGuard {
 
 		// Plugin lock.
 		add_filter( 'map_meta_cap', [ $self, 'lock_caps' ], 10, 4 );
+		// delete_plugin (the capability) is never checked by core, so the
+		// lock_caps entry for it alone does not stop a deletion; this does.
+		add_action( 'delete_plugin', [ $self, 'refuse_delete' ] );
 		add_filter( 'plugin_action_links', [ $self, 'lock_action_links' ], 99, 2 );
 		add_filter( 'network_admin_plugin_action_links', [ $self, 'lock_action_links' ], 99, 2 );
 		add_filter( 'pre_update_option_active_plugins', [ $self, 'keep_active' ], 10, 2 );
@@ -242,6 +245,13 @@ class SiteGuard {
 			return [ 'do_not_allow' ];
 		}
 		return $caps;
+	}
+
+	/** @param string $file Plugin basename about to be deleted. */
+	public function refuse_delete( $file ) {
+		if ( self::is_ours( $file ) && self::locked_for_current_user() ) {
+			wp_die( esc_html__( 'GemSecurity is locked. Unlock it on the Firewall page before deleting it.', 'gemsecurity' ), '', [ 'response' => 403 ] );
+		}
 	}
 
 	/**
