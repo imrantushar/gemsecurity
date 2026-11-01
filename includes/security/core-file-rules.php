@@ -53,7 +53,7 @@ class CoreFileRules {
 	 * @return bool Whether the file now matches $enabled.
 	 */
 	public static function sync( $enabled, $file = null ) {
-		$file = $file ?: ABSPATH . '.htaccess';
+		$file = $file ?: \GemSecurity\Paths::root() . '.htaccess';
 		if ( ! $enabled && ! file_exists( $file ) ) {
 			return true;
 		}
@@ -94,7 +94,7 @@ class CoreFileRules {
 	 * @return bool
 	 */
 	public static function installed( $file = null ) {
-		$file = $file ?: ABSPATH . '.htaccess';
+		$file = $file ?: \GemSecurity\Paths::root() . '.htaccess';
 		return is_readable( $file ) && false !== strpos( (string) file_get_contents( $file ), '# BEGIN ' . self::MARKER ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file.
 	}
 }

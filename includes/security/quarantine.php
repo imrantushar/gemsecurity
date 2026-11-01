@@ -10,8 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The site's single quarantine store.
  *
- * Quarantine is "move, don't delete": a suspicious file is renamed into a
- * web-inaccessible folder under uploads and indexed, so the action is always
+ * Quarantine is "store, then remove": a suspicious file's bytes are copied
+ * into a non-autoloaded option (never onto disk, so no executable code is
+ * ever written anywhere) and the original is deleted, so the action is always
  * reversible. Injected database payloads are snapshotted the same way, with
  * the original value held in the index instead of on disk.
  *
@@ -22,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * indexes are folded in on upgrade by {@see migrate_legacy()}.
  *
  * Entries are keyed by id. Shape:
- *   id             string  Index key; a file entry is stored at "<id>.quar".
+ *   id             string  Index key; a file's bytes live in option BLOB_PREFIX . id.
  *   type           string  'file' | 'db'
  *   label          string  Human label (root-relative path, or option/post ref)
  *   relative       string  Root-relative path for file entries
@@ -50,21 +51,52 @@ class Quarantine {
 	/* Store                                                              */
 	/* ------------------------------------------------------------------ */
 
+	/** Option prefix for a quarantined file's payload. */
+	const BLOB_PREFIX = 'gemsecurity_quarantine_blob_';
+
+	/** Largest file quarantined (payloads are held in the database). */
+	const MAX_BYTES = 8388608;
+
 	/**
-	 * The quarantine directory, created and hard-denied on first use.
+	 * Folder earlier releases moved quarantined files into. Read-only now: it is
+	 * never created, only drained by {@see payload()} / {@see delete_payload()}.
 	 *
 	 * @return string
 	 */
 	public static function dir() {
-		$up  = wp_get_upload_dir();
-		$dir = trailingslashit( $up['basedir'] ) . 'gemsecurity-quarantine';
-		if ( ! is_dir( $dir ) ) {
-			wp_mkdir_p( $dir );
-			// Both directives: Require is Apache 2.4, Deny is 2.2.
-			@file_put_contents( $dir . '/.htaccess', "Require all denied\nDeny from all\n" ); // phpcs:ignore
-			@file_put_contents( $dir . '/index.php', "<?php // Silence is golden.\n" ); // phpcs:ignore
+		return trailingslashit( wp_upload_dir( null, false )['basedir'] ) . 'gemsecurity-quarantine';
+	}
+
+	/**
+	 * A quarantined file's original bytes.
+	 *
+	 * @param string $id
+	 * @return string|null
+	 */
+	public static function payload( $id ) {
+		$id   = sanitize_key( $id );
+		$blob = get_option( self::BLOB_PREFIX . $id, null );
+		if ( is_string( $blob ) ) {
+			$raw = base64_decode( $blob, true );
+			return false === $raw ? null : $raw;
 		}
-		return $dir;
+		$legacy = self::dir() . '/' . $id . '.quar';
+		return is_file( $legacy ) ? (string) file_get_contents( $legacy ) : null; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	}
+
+	/**
+	 * Remove a quarantined file's stored bytes (and any legacy on-disk copy).
+	 *
+	 * @param string $id
+	 * @return void
+	 */
+	public static function delete_payload( $id ) {
+		$id = sanitize_key( $id );
+		delete_option( self::BLOB_PREFIX . $id );
+		$legacy = self::dir() . '/' . $id . '.quar';
+		if ( is_file( $legacy ) ) {
+			wp_delete_file( $legacy );
+		}
 	}
 
 	/**
@@ -135,17 +167,16 @@ class Quarantine {
 		// and a symlink could point anywhere.
 		$real = (string) $path !== '' ? realpath( (string) $path ) : false;
 		$abs  = $real ? wp_normalize_path( $real ) : '';
-		$root = wp_normalize_path( (string) realpath( ABSPATH ) );
-		$root = '' === $root ? wp_normalize_path( untrailingslashit( ABSPATH ) ) : $root;
+		$root = wp_normalize_path( (string) realpath( \GemSecurity\Paths::root() ) );
+		$root = '' === $root ? wp_normalize_path( untrailingslashit( \GemSecurity\Paths::root() ) ) : $root;
 
 		// Anywhere in the install, not just wp-content: real infections drop
 		// their stubs into wp-admin and wp-includes too. Compared with a
 		// trailing slash so /var/www/site2 is not "inside" /var/www/site. The
 		// plugin's own directories are off limits so a scan can never
 		// quarantine the scanner.
-		$plugins = wp_normalize_path( (string) realpath( WP_PLUGIN_DIR ) );
+		$plugins = wp_normalize_path( (string) realpath( \GemSecurity\Paths::plugins() ) );
 		$own     = '' !== $plugins && preg_match( '#^' . preg_quote( trailingslashit( $plugins ), '#' ) . 'gemsecurity(-pro)?/#', $abs );
-		$own     = $own || 0 === strpos( $abs, trailingslashit( wp_normalize_path( (string) realpath( self::dir() ) ) ) );
 		if ( '' === $abs || 0 !== strpos( $abs, trailingslashit( $root ) ) || $own ) {
 			return new \WP_Error(
 				'gemsecurity_quarantine_denied',
@@ -170,14 +201,22 @@ class Quarantine {
 			return new \WP_Error( 'gemsecurity_quarantine_missing', __( 'File no longer exists.', 'gemsecurity' ), [ 'status' => 404 ] );
 		}
 
-		$id   = md5( $abs . microtime() );
-		$dest = self::dir() . '/' . $id . '.quar';
-
-		if ( ! @rename( $abs, $dest ) ) { // phpcs:ignore
-			return new \WP_Error( 'gemsecurity_quarantine_failed', __( 'Could not move the file.', 'gemsecurity' ), [ 'status' => 500 ] );
+		if ( filesize( $abs ) > self::MAX_BYTES ) {
+			return new \WP_Error( 'gemsecurity_quarantine_size', __( 'That file is too large to quarantine. Delete it or replace it with a clean copy.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
-		$relative = str_replace( wp_normalize_path( ABSPATH ), '', $abs );
+		$id   = md5( $abs . microtime() );
+		$body = file_get_contents( $abs ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		if ( false === $body || ! add_option( self::BLOB_PREFIX . $id, base64_encode( $body ), '', false ) ) {
+			return new \WP_Error( 'gemsecurity_quarantine_failed', __( 'Could not quarantine the file.', 'gemsecurity' ), [ 'status' => 500 ] );
+		}
+		wp_delete_file( $abs );
+		if ( file_exists( $abs ) ) {
+			delete_option( self::BLOB_PREFIX . $id );
+			return new \WP_Error( 'gemsecurity_quarantine_failed', __( 'Could not remove the file.', 'gemsecurity' ), [ 'status' => 500 ] );
+		}
+
+		$relative = \GemSecurity\Paths::relative( $abs );
 
 		$store        = self::all();
 		$store[ $id ] = [
@@ -241,16 +280,30 @@ class Quarantine {
 			return new \WP_Error( 'gemsecurity_restore_type', __( 'That entry is a database snapshot, not a file.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
-		$src = self::dir() . '/' . $id . '.quar';
-		$dst = $entry['original'];
-
-		if ( ! is_file( $src ) || ! @rename( $src, $dst ) ) { // phpcs:ignore
+		$body = self::payload( $id );
+		if ( null === $body || ! self::write_back( $entry['original'], $body ) ) {
 			return new \WP_Error( 'gemsecurity_restore_failed', __( 'Could not restore the file.', 'gemsecurity' ), [ 'status' => 500 ] );
 		}
 
+		self::delete_payload( $id );
 		self::forget( $id );
 		Logger::log( 'quarantine_restore', sprintf( 'Restored %s.', $entry['label'] ), Logger::SEVERITY_NOTICE );
 		return true;
+	}
+
+	/**
+	 * Put a file's bytes back at the path it was quarantined from.
+	 *
+	 * @param string $path Absolute original path.
+	 * @param string $body
+	 * @return bool
+	 */
+	public static function write_back( $path, $body ) {
+		$path = (string) $path;
+		if ( '' === $path || file_exists( $path ) || ( ! is_dir( dirname( $path ) ) && ! wp_mkdir_p( dirname( $path ) ) ) ) {
+			return false;
+		}
+		return false !== file_put_contents( $path, $body, LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- restores the site's own file to where it came from.
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -263,7 +316,7 @@ class Quarantine {
 	 * The old Incident Response index was a *list* of
 	 * `[ id, orig, stored, time ]`; the old Pro malware index was a keyed map
 	 * living inside the Pro scanner's state option. Both wrote their payloads
-	 * into this same directory, so nothing has to move on disk — only the
+	 * into the legacy directory, which {@see payload()} still reads — only the
 	 * bookkeeping is merged. Idempotent: entries already keyed by id are left
 	 * alone, and the legacy Pro map is cleared once folded in.
 	 *
@@ -281,7 +334,7 @@ class Quarantine {
 			$id = (string) $entry['id'];
 			if ( is_int( $key ) || ! isset( $entry['type'] ) ) {
 				$relative        = isset( $entry['orig'] )
-					? str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $entry['orig'] ) )
+					? \GemSecurity\Paths::relative( wp_normalize_path( $entry['orig'] ) )
 					: $id;
 				$merged[ $id ] = [
 					'id'             => $id,

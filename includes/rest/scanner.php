@@ -55,8 +55,8 @@ class Scanner {
 		$path = wp_normalize_path( trim( $path ) );
 
 		// The UI sends a root-relative path.
-		if ( '' !== $path && 0 !== strpos( $path, wp_normalize_path( ABSPATH ) ) ) {
-			$path = wp_normalize_path( ABSPATH ) . ltrim( $path, '/' );
+		if ( '' !== $path && 0 !== strpos( $path, \GemSecurity\Paths::root() ) ) {
+			$path = \GemSecurity\Paths::root() . ltrim( $path, '/' );
 		}
 
 		$res = Quarantine::add_file( $path );

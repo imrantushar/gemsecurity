@@ -102,12 +102,12 @@ class Finder {
 		// Loose files at the install root (wp-config.php, index.php, .htaccess,
 		// .user.ini…) and directly in wp-content (drop-ins) — tiny, and a
 		// favourite hiding spot.
-		$abs   = untrailingslashit( ABSPATH );
+		$abs   = untrailingslashit( \GemSecurity\Paths::root() );
 		$loose = array_merge(
 			(array) glob( $abs . '/*' ),
 			(array) glob( $abs . '/.[!.]*' ),
-			(array) glob( WP_CONTENT_DIR . '/*' ),
-			(array) glob( WP_CONTENT_DIR . '/.[!.]*' )
+			(array) glob( \GemSecurity\Paths::content() . '/*' ),
+			(array) glob( \GemSecurity\Paths::content() . '/.[!.]*' )
 		);
 		foreach ( array_unique( $loose ) as $path ) {
 			if ( is_file( $path ) ) {
@@ -122,18 +122,16 @@ class Finder {
 		// pruned from later walks, and the catch-all wp-content/root walks also
 		// skip whatever is still queued, so nothing is scanned twice.
 		$roots = [
-			WP_CONTENT_DIR . '/mu-plugins',
-			WPMU_PLUGIN_DIR,
+			\GemSecurity\Paths::mu(),
 			get_stylesheet_directory(),
 			get_template_directory(),
 			get_theme_root(),
 			$abs . '/wp-admin',
 			$abs . '/' . WPINC,
-			WP_CONTENT_DIR,
+			\GemSecurity\Paths::content(),
 			$abs,
-			WP_CONTENT_DIR . '/plugins',
-			WP_PLUGIN_DIR,
-			WP_CONTENT_DIR . '/uploads',
+			\GemSecurity\Paths::plugins(),
+			\GemSecurity\Paths::uploads(),
 		];
 		$roots = array_values( array_unique( array_filter( array_map( 'untrailingslashit', $roots ), 'is_dir' ) ) );
 
@@ -224,7 +222,7 @@ class Finder {
 			return;
 		}
 
-		$rel      = str_replace( ABSPATH, '', $path );
+		$rel      = \GemSecurity\Paths::relative( $path );
 		$lines    = preg_split( '/\r\n|\r|\n/', $contents );
 		$per_file = 0;
 		foreach ( $lines as $i => $line ) {

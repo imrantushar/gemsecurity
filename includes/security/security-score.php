@@ -307,9 +307,9 @@ class SecurityScore {
 
 		// WP_DEBUG_LOG's default target is inside the web root.
 		$log         = defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG
-			? ( is_string( WP_DEBUG_LOG ) ? WP_DEBUG_LOG : WP_CONTENT_DIR . '/debug.log' )
+			? ( is_string( WP_DEBUG_LOG ) ? WP_DEBUG_LOG : \GemSecurity\Paths::content() . '/debug.log' )
 			: '';
-		$log_in_root = '' !== $log && file_exists( $log ) && 0 === strpos( wp_normalize_path( $log ), wp_normalize_path( ABSPATH ) );
+		$log_in_root = '' !== $log && file_exists( $log ) && 0 === strpos( wp_normalize_path( $log ), \GemSecurity\Paths::root() );
 		$protected   = Helper::get_setting( 'protect_core_files_enabled', false ) && \GemSecurity\Security\CoreFileRules::installed();
 		$add(
 			'debug_log_private',

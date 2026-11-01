@@ -201,7 +201,7 @@ class Scanner {
 			if ( 0 === strpos( $file, 'wp-content/' ) ) {
 				continue;
 			}
-			$path = ABSPATH . $file;
+			$path = \GemSecurity\Paths::root() . $file;
 			if ( ! file_exists( $path ) ) {
 				$issues[] = [ 'file' => $file, 'issue' => 'missing' ];
 				continue;
@@ -255,7 +255,7 @@ class Scanner {
 		// wp-admin and wp-includes must be 100% core — anything executable there
 		// that is not in the manifest is a high-confidence implant.
 		foreach ( [ 'wp-admin', 'wp-includes' ] as $dir ) {
-			$root = ABSPATH . $dir;
+			$root = \GemSecurity\Paths::root() . $dir;
 			if ( ! is_dir( $root ) ) {
 				continue;
 			}
@@ -271,7 +271,7 @@ class Scanner {
 				if ( ! $file->isFile() || ! in_array( strtolower( $file->getExtension() ), $exec, true ) ) {
 					continue;
 				}
-				$rel = str_replace( '\\', '/', str_replace( ABSPATH, '', $file->getPathname() ) );
+				$rel = str_replace( '\\', '/', \GemSecurity\Paths::relative( $file->getPathname() ) );
 				if ( ! isset( $checksums[ $rel ] ) && ! \GemSecurity\Security\SafeFiles::is_safe( $file->getPathname() ) ) {
 					$findings[] = [
 						'file'     => $rel,
@@ -286,8 +286,8 @@ class Scanner {
 		// Top-level PHP in the site root (non-recursive). wp-config.php is the one
 		// legitimate non-manifest root PHP file.
 		$allow_root = [ 'wp-config.php' => true ];
-		foreach ( (array) glob( ABSPATH . '*.php' ) as $path ) {
-			$rel = str_replace( '\\', '/', str_replace( ABSPATH, '', $path ) );
+		foreach ( (array) glob( \GemSecurity\Paths::root() . '*.php' ) as $path ) {
+			$rel = str_replace( '\\', '/', \GemSecurity\Paths::relative( $path ) );
 			if ( isset( $checksums[ $rel ] ) || isset( $allow_root[ $rel ] ) ) {
 				continue;
 			}
@@ -340,7 +340,7 @@ class Scanner {
 
 		// Loose *.php directly in the plugins folder that WordPress does not
 		// recognise as a plugin (no header) — a favourite dropper location.
-		foreach ( (array) glob( WP_PLUGIN_DIR . '/*.php' ) as $path ) {
+		foreach ( (array) glob( \GemSecurity\Paths::plugins() . '/*.php' ) as $path ) {
 			$base = basename( $path );
 			if ( isset( $listed[ $base ] ) ) {
 				continue; // A legitimate single-file plugin (has a header).
@@ -452,7 +452,7 @@ class Scanner {
 
 		// wp-content drop-ins (auto-loaded, a favourite hiding spot).
 		foreach ( [ 'db.php', 'object-cache.php', 'advanced-cache.php', 'sunrise.php', 'maintenance.php' ] as $dropin ) {
-			$files[ WP_CONTENT_DIR . '/' . $dropin ] = true;
+			$files[ \GemSecurity\Paths::content() . '/' . $dropin ] = true;
 		}
 
 		// Active theme (parent + child) functions.php.
@@ -460,7 +460,7 @@ class Scanner {
 		$files[ get_template_directory() . '/functions.php' ]   = true;
 
 		// Every PHP file under mu-plugins.
-		$mu = WP_CONTENT_DIR . '/mu-plugins';
+		$mu = \GemSecurity\Paths::mu();
 		if ( is_dir( $mu ) ) {
 			try {
 				$it = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $mu, \FilesystemIterator::SKIP_DOTS ) );
@@ -477,7 +477,7 @@ class Scanner {
 		$out = [];
 		foreach ( array_keys( $files ) as $path ) {
 			if ( is_readable( $path ) ) {
-				$out[ str_replace( ABSPATH, '', $path ) ] = $path;
+				$out[ \GemSecurity\Paths::relative( $path ) ] = $path;
 			}
 		}
 		return $out;
@@ -507,7 +507,7 @@ class Scanner {
 		$skip_dir = [ 'node_modules', '.git', '.svn' ];
 		$visited  = 0;
 
-		foreach ( [ WP_PLUGIN_DIR, get_theme_root() ] as $root ) {
+		foreach ( [ \GemSecurity\Paths::plugins(), get_theme_root() ] as $root ) {
 			if ( ! is_dir( $root ) ) {
 				continue;
 			}
@@ -558,7 +558,7 @@ class Scanner {
 				}
 
 				$findings[] = [
-					'file'     => str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $path ) ),
+					'file'     => \GemSecurity\Paths::relative( wp_normalize_path( $path ) ),
 					'reason'   => $reason,
 					'severity' => 'critical',
 				];
@@ -634,7 +634,7 @@ class Scanner {
 		$upload_dir = wp_upload_dir();
 		$roots = [
 			$upload_dir['basedir'] => 'uploads',
-			WP_CONTENT_DIR . '/mu-plugins' => 'mu-plugins',
+			\GemSecurity\Paths::mu() => 'mu-plugins',
 		];
 
 		$max_files = 5000;
@@ -664,7 +664,7 @@ class Scanner {
 
 				$ext  = strtolower( $file->getExtension() );
 				$path = $file->getPathname();
-				$rel  = str_replace( ABSPATH, '', $path );
+				$rel  = \GemSecurity\Paths::relative( $path );
 
 				// "Silence is golden" index.php files, and anything a person
 				// has reviewed and marked safe, are not findings.

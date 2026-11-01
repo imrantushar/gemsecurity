@@ -596,7 +596,7 @@ class FileWatcher {
 		$roots = [
 			get_stylesheet_directory(),
 			get_template_directory(),
-			WP_CONTENT_DIR . '/mu-plugins',
+			\GemSecurity\Paths::mu(),
 		];
 
 		/**
@@ -638,7 +638,7 @@ class FileWatcher {
 		$roots = [
 			get_stylesheet_directory(),
 			get_template_directory(),
-			WP_CONTENT_DIR . '/mu-plugins',
+			\GemSecurity\Paths::mu(),
 		];
 		return array_values( array_unique( array_filter( $roots ) ) );
 	}
@@ -650,7 +650,7 @@ class FileWatcher {
 	 * @return bool
 	 */
 	private static function is_heuristic_target( $rel ) {
-		$abs = wp_normalize_path( ABSPATH . $rel );
+		$abs = wp_normalize_path( \GemSecurity\Paths::root() . $rel );
 		foreach ( self::heuristic_roots() as $root ) {
 			if ( 0 === strpos( $abs, trailingslashit( wp_normalize_path( $root ) ) ) ) {
 				return true;
@@ -684,13 +684,13 @@ class FileWatcher {
 	private static function dropin_files() {
 		$out = [];
 		foreach ( [ 'db.php', 'object-cache.php', 'advanced-cache.php', 'sunrise.php', 'maintenance.php' ] as $dropin ) {
-			$out[] = WP_CONTENT_DIR . '/' . $dropin;
+			$out[] = \GemSecurity\Paths::content() . '/' . $dropin;
 		}
 		return $out;
 	}
 
 	private static function rel( $path ) {
-		return str_replace( ABSPATH, '', $path );
+		return \GemSecurity\Paths::relative( $path );
 	}
 
 	/* --------------------------------------------------------------------- */
@@ -715,7 +715,7 @@ class FileWatcher {
 				continue;
 			}
 
-			$path = ABSPATH . $rel;
+			$path = \GemSecurity\Paths::root() . $rel;
 			$code = @file_get_contents( $path );
 			if ( false === $code ) {
 				continue;

@@ -37,7 +37,7 @@ class CoreFile {
 		if ( empty( $sums[ $file ] ) ) {
 			return new \WP_Error( 'gemsecurity_core_file', __( 'That file is not part of this WordPress release.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
-		return [ 'file' => $file, 'path' => wp_normalize_path( ABSPATH ) . $file, 'sum' => $sums[ $file ] ];
+		return [ 'file' => $file, 'path' => \GemSecurity\Paths::root() . $file, 'sum' => $sums[ $file ] ];
 	}
 
 	/** @return array<string,string> */

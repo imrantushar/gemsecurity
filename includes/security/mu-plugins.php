@@ -55,8 +55,8 @@ class MuPlugins {
 	 * }
 	 */
 	public static function inventory() {
-		$dir         = defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : WP_CONTENT_DIR . '/mu-plugins';
-		$default_dir = WP_CONTENT_DIR . '/mu-plugins';
+		$dir         = \GemSecurity\Paths::mu();
+		$default_dir = \GemSecurity\Paths::content() . '/mu-plugins'; // Where WordPress puts it unless WPMU_PLUGIN_DIR moves it.
 		$relocated   = wp_normalize_path( untrailingslashit( $dir ) ) !== wp_normalize_path( $default_dir );
 
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -120,7 +120,7 @@ class MuPlugins {
 
 		// ---- Drop-ins ----------------------------------------------------
 		foreach ( self::dropin_names() as $dropin ) {
-			$path = WP_CONTENT_DIR . '/' . $dropin;
+			$path = \GemSecurity\Paths::content() . '/' . $dropin;
 			if ( ! is_file( $path ) ) {
 				continue;
 			}
@@ -172,7 +172,7 @@ class MuPlugins {
 	 * @return string
 	 */
 	private static function rel( $path ) {
-		return str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $path ) );
+		return \GemSecurity\Paths::relative( wp_normalize_path( $path ) );
 	}
 
 	/**
