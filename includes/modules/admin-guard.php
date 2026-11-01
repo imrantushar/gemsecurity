@@ -68,6 +68,8 @@ class AdminGuard {
 		// after WordPress has authenticated the credentials, so an unapproved
 		// account is only revealed to someone who already knows its password.
 		add_filter( 'authenticate', [ $self, 'block_login' ], 99, 1 );
+		// Magic links and social login skip `authenticate`.
+		add_filter( 'gemsecurity/login_gate', [ $self, 'block_login' ] );
 		// And end a session that predates the whitelist.
 		add_action( 'init', [ $self, 'guard_session' ], 1 );
 
