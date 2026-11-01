@@ -199,9 +199,10 @@ export default function TestCaptcha( { provider, siteKey, secretKey, onResult } 
 
 			// grecaptcha attaches `render` before its internal client is
 			// actually ready, so `render` existing isn't enough — Google's
-			// own docs gate every call behind `ready()`. hCaptcha/Turnstile
-			// don't expose this, so only gate when it's there.
-			if ( 'function' === typeof widget.ready ) {
+			// own docs gate every call behind `ready()`. Turnstile also has
+			// a `ready()`, but it throws when the script tag is async/defer,
+			// so only gate Google's.
+			if ( 'recaptcha_v2' === provider ) {
 				widget.ready( renderWidget );
 			} else {
 				renderWidget();
