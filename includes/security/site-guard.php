@@ -93,6 +93,15 @@ class SiteGuard {
 		// Uploads switch.
 		add_action( 'admin_bar_menu', [ $self, 'admin_bar' ], 100 );
 		add_action( 'admin_post_' . self::TOGGLE_ACTION, [ $self, 'handle_toggle' ] );
+		// Styles for the admin-bar count pill (printed inline — a few rules
+		// isn't worth a separate stylesheet request on every page).
+		add_action( 'wp_head', [ $self, 'admin_bar_css' ], 1000 );
+		add_action( 'admin_head', [ $self, 'admin_bar_css' ], 1000 );
+		// Any settings change can move the score — bust the admin-bar cache
+		// so the next page render shows the current number, not a 5-min-stale one.
+		add_action( 'update_option_' . GEMSECURITY_SETTINGS_NAME, static function () {
+			delete_transient( 'gemsecurity_score_ab' );
+		} );
 		if ( Helper::get_setting( 'uploads_disabled', false ) ) {
 			add_filter( 'upload_mimes', '__return_empty_array', 999 );
 			add_filter( 'wp_handle_upload_prefilter', [ $self, 'refuse_upload' ], 0 );
@@ -563,11 +572,70 @@ class SiteGuard {
 		}
 		$off = (bool) Helper::get_setting( 'uploads_disabled', false );
 
+		// Show badge counts of hardening switches that are currently ON, so
+		// an administrator can tell at a glance that the site is locked
+		// down (and jump to the setting to turn one off).
+		$active = $this->active_hardening_chips();
+		$score  = $this->cached_security_score();
+
+		$title = '<span class="ab-icon dashicons dashicons-shield"></span>'
+			. '<span class="ab-label">' . esc_html__( 'GemSecurity', 'gemsecurity' ) . '</span>';
+
+		// Score pill: colored by grade so it reads at a glance (green=A/B,
+		// amber=C/D, red=F). Clicking the parent still opens the dashboard,
+		// where the "boost your score" breakdown explains what to fix.
+		if ( null !== $score ) {
+			$tone = $score['score'] >= 75 ? 'ok' : ( $score['score'] >= 40 ? 'warn' : 'bad' );
+			$title .= '<span class="gemsecurity-ab-score gemsecurity-ab-score--' . esc_attr( $tone ) . '" aria-label="'
+				/* translators: 1: numeric score 0-100, 2: letter grade A-F. */
+				. esc_attr( sprintf( __( 'Security score %1$d, grade %2$s', 'gemsecurity' ), $score['score'], $score['grade'] ) )
+				. '">' . (int) $score['score'] . '</span>';
+		}
+
+		if ( $active ) {
+			$title .= '<span class="gemsecurity-ab-count" aria-label="'
+				/* translators: %d: number of active hardening switches. */
+				. esc_attr( sprintf( _n( '%d hardening switch on', '%d hardening switches on', count( $active ), 'gemsecurity' ), count( $active ) ) )
+				. '">' . (int) count( $active ) . '</span>';
+		}
+
 		$bar->add_node( [
 			'id'    => 'gemsecurity',
-			'title' => '<span class="ab-icon dashicons dashicons-shield" style="margin-top:2px"></span><span class="ab-label">' . esc_html__( 'GemSecurity', 'gemsecurity' ) . '</span>',
+			'title' => $title,
 			'href'  => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG ),
 		] );
+
+		// Score header inside the dropdown — repeats the badge with its grade
+		// and a one-line nudge, so a low score is visible even before the
+		// hardening chips. Links to the dashboard where the fix list lives.
+		if ( null !== $score ) {
+			$bar->add_node( [
+				'id'     => 'gemsecurity-score',
+				'parent' => 'gemsecurity',
+				'title'  => sprintf(
+					/* translators: 1: score, 2: grade, 3: nudge text. */
+					'%1$d / 100 · %2$s — %3$s',
+					(int) $score['score'],
+					esc_html( $score['grade'] ),
+					esc_html( $this->score_nudge( $score['score'] ) )
+				),
+				'href'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG ),
+			] );
+		}
+
+		// One child per hardening switch currently ON — a quick status
+		// readout that doubles as a jump list to each setting's page.
+		foreach ( $active as $chip ) {
+			$bar->add_node( [
+				'id'     => 'gemsecurity-chip-' . $chip['id'],
+				'parent' => 'gemsecurity',
+				'title'  => '✓ ' . esc_html( $chip['label'] ),
+				'href'   => esc_url( $chip['href'] ),
+			] );
+		}
+
+		// Uploads toggle stays its own node: it is the one chip that
+		// toggles in-place from the admin bar rather than linking out.
 		$bar->add_node( [
 			'id'     => 'gemsecurity-uploads',
 			'parent' => 'gemsecurity',
@@ -576,6 +644,130 @@ class SiteGuard {
 				: esc_html__( 'File uploads: ON — click to turn off', 'gemsecurity' ),
 			'href'   => wp_nonce_url( admin_url( 'admin-post.php?action=' . self::TOGGLE_ACTION ), self::TOGGLE_ACTION ),
 		] );
+	}
+
+	/**
+	 * The high-impact hardening switches that are currently ON, as admin-bar
+	 * chips: [{ id, label, href }, …]. Only switches that materially change
+	 * site behaviour are listed here — a long row of "everything's fine" is
+	 * noise, so each entry is something an admin should know is active.
+	 *
+	 * @return array<int,array{id:string,label:string,href:string}>
+	 */
+	private function active_hardening_chips() {
+		$firewall    = admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-firewall' );
+		$settings    = admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-settings' );
+		$wp_general  = admin_url( 'options-general.php' );
+
+		$candidates = [
+			[
+				'id'    => 'file-editor',
+				'on'    => (bool) Helper::get_setting( 'disable_file_editing', false ),
+				'label' => __( 'File editor off', 'gemsecurity' ),
+				'href'  => $firewall,
+			],
+			[
+				'id'    => 'xmlrpc',
+				'on'    => (bool) Helper::get_setting( 'xmlrpc_disabled', false ),
+				'label' => __( 'XML-RPC off', 'gemsecurity' ),
+				'href'  => $firewall,
+			],
+			[
+				'id'    => 'plugin-lock',
+				'on'    => (bool) Helper::get_setting( 'plugin_lock_enabled', false ),
+				'label' => __( 'Plugin lock on', 'gemsecurity' ),
+				'href'  => $settings,
+			],
+			[
+				'id'    => 'registration',
+				'on'    => ! (bool) get_option( 'users_can_register' ),
+				'label' => __( 'User registration off', 'gemsecurity' ),
+				'href'  => $wp_general,
+			],
+		];
+
+		return array_values( array_filter( $candidates, static function ( $c ) {
+			return ! empty( $c['on'] );
+		} ) );
+	}
+
+	/**
+	 * Memoised security score for the admin bar. Full assessment runs posture
+	 * checks and threat scans, which would be wasted on every page load, so a
+	 * five-minute transient keeps the cost bounded. Returns null if the
+	 * SecurityScore class is unreachable (e.g. during an upgrade).
+	 *
+	 * @return array{score:int,grade:string}|null
+	 */
+	private function cached_security_score() {
+		if ( ! class_exists( SecurityScore::class ) ) {
+			return null;
+		}
+		$cached = get_transient( 'gemsecurity_score_ab' );
+		if ( is_array( $cached ) && isset( $cached['score'], $cached['grade'] ) ) {
+			return $cached;
+		}
+		$a = SecurityScore::assess();
+		$out = [ 'score' => (int) $a['score'], 'grade' => (string) $a['grade'] ];
+		set_transient( 'gemsecurity_score_ab', $out, 5 * MINUTE_IN_SECONDS );
+		return $out;
+	}
+
+	/**
+	 * One-line nudge for the admin-bar score header, tuned to the grade range
+	 * so the message isn't "fix this" at 95 or "you're set" at 20.
+	 *
+	 * @param int $score
+	 * @return string
+	 */
+	private function score_nudge( $score ) {
+		if ( $score >= 90 ) {
+			return __( 'Looking great.', 'gemsecurity' );
+		}
+		if ( $score >= 75 ) {
+			return __( 'A few switches away from an A.', 'gemsecurity' );
+		}
+		if ( $score >= 60 ) {
+			return __( 'Review your to-do list.', 'gemsecurity' );
+		}
+		if ( $score >= 40 ) {
+			return __( 'At risk — fix the warnings.', 'gemsecurity' );
+		}
+		return __( 'Open the dashboard and start with the critical items.', 'gemsecurity' );
+	}
+
+	/**
+	 * Inline CSS for the admin-bar count pill. Only prints when the admin
+	 * bar is actually showing.
+	 */
+	public function admin_bar_css() {
+		if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		?>
+<style id="gemsecurity-ab-css">
+#wpadminbar #wp-admin-bar-gemsecurity > .ab-item { display: flex; align-items: center; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-count,
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-score {
+	display: inline-flex; align-items: center; justify-content: center;
+	min-width: 18px; height: 18px; padding: 0 6px; margin-left: 6px;
+	color: #fff;
+	border-radius: 9px;
+	font-size: 11px; font-weight: 600; line-height: 1;
+}
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-count { background: #00AD6B; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-score--ok   { background: #00AD6B; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-score--warn { background: #FDB022; color: #3B2706; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-score--bad  { background: #E2483D; }
+#wpadminbar #wp-admin-bar-gemsecurity:hover .gemsecurity-ab-count,
+#wpadminbar #wp-admin-bar-gemsecurity.hover .gemsecurity-ab-count,
+#wpadminbar #wp-admin-bar-gemsecurity:hover .gemsecurity-ab-score--ok,
+#wpadminbar #wp-admin-bar-gemsecurity.hover .gemsecurity-ab-score--ok,
+#wpadminbar #wp-admin-bar-gemsecurity:hover .gemsecurity-ab-score--bad,
+#wpadminbar #wp-admin-bar-gemsecurity.hover .gemsecurity-ab-score--bad { color: #fff; }
+#wpadminbar #wp-admin-bar-gemsecurity-score > .ab-item { font-weight: 600; }
+</style>
+		<?php
 	}
 
 	public function handle_toggle() {
