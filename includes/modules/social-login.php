@@ -857,6 +857,10 @@ class SocialLogin {
 		}
 
 		$user = get_user_by( 'id', $user_id );
+		$gate = Helper::login_gate( $user );
+		if ( is_wp_error( $gate ) ) {
+			$this->bail( wp_strip_all_tags( $gate->get_error_message() ) );
+		}
 		Logger::log( 'social_login', sprintf( '%s signed in via %s.', $user->user_login, ucfirst( $provider ) ), Logger::SEVERITY_NOTICE, [ 'user_id' => $user_id ] );
 
 		wp_set_current_user( $user_id );

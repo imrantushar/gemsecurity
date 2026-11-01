@@ -4,6 +4,7 @@ namespace GemSecurity\Modules;
 use GemSecurity\Helper;
 use GemSecurity\Logger;
 use GemSecurity\Mailer;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -71,6 +72,11 @@ class MagicLogin {
 	 */
 	public static function user_allowed( $user ) {
 		if ( ! $user instanceof \WP_User ) {
+			return false;
+		}
+
+		// Temporary accounts sign in only through their own access link.
+		if ( TempAccess::is_temp( $user->ID ) ) {
 			return false;
 		}
 
@@ -164,12 +170,13 @@ class MagicLogin {
 
 	/** Count this request against the caller's IP. False once over the limit. */
 	private function take_ip_slot() {
-		$key   = 'gemsec_magic_ip_' . md5( Helper::get_ip_address() );
-		$count = (int) get_transient( $key );
+		// Store, not a transient: a broken object cache must not disable the limit.
+		$key   = 'magic_ip_' . md5( Helper::get_ip_address() );
+		$count = (int) Store::get( $key );
 		if ( $count >= self::MAX_REQUESTS_PER_IP ) {
 			return false;
 		}
-		set_transient( $key, $count + 1, self::LIMIT_WINDOW );
+		Store::set( $key, $count + 1, self::LIMIT_WINDOW );
 		return true;
 	}
 
@@ -196,6 +203,8 @@ class MagicLogin {
 
 	public function handle() {
 		nocache_headers();
+		// Keep the token out of referrers.
+		header( 'Referrer-Policy: no-referrer' );
 
 		// A magic link carries its own token, which stands in for a nonce; the
 		// request form below is nonce-protected.
@@ -304,7 +313,13 @@ class MagicLogin {
 	/** The link was confirmed: sign in, via the second-factor prompt where required. */
 	private function complete( $user, $key, $redirect ) {
 		// The policy may have changed since the link was sent.
-		if ( ! self::user_allowed( $user ) || ! $this->consume_token( $user, $key ) ) {
+		$confirm = isset( $_POST['gemsec_magic_confirm'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_magic_confirm'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked against its SameSite cookie.
+		if ( ! Helper::confirm_check( 'magic_confirm', $confirm ) ) {
+			$this->render_confirm( $user, $key, $redirect );
+			return;
+		}
+
+		if ( ! self::user_allowed( $user ) || is_wp_error( Helper::login_gate( $user ) ) || ! $this->consume_token( $user, $key ) ) {
 			Logger::log( 'magic_login_failed', sprintf( 'Magic login for "%s" was refused.', $user->user_login ), Logger::SEVERITY_WARNING, [ 'user_id' => $user->ID ] );
 			$this->render_request_form( '', '', __( 'This sign-in link is invalid, has expired, or was already used. Request a new one below.', 'gemsecurity' ) );
 			return;
@@ -369,6 +384,7 @@ class MagicLogin {
 
 	/** The page a link opens on. Signing in needs this POST, not the GET itself. */
 	private function render_confirm( $user, $key, $redirect ) {
+		$confirm = Helper::confirm_issue( 'magic_confirm' );
 		login_header( __( 'Confirm sign-in', 'gemsecurity' ) );
 		?>
 		<form name="gemsec_magic_confirm" id="loginform" action="<?php echo esc_url( $this->form_url() ); ?>" method="post">
@@ -385,6 +401,7 @@ class MagicLogin {
 			</p>
 			<input type="hidden" name="gemsec_magic_uid" value="<?php echo esc_attr( $user->ID ); ?>" />
 			<input type="hidden" name="gemsec_magic_key" value="<?php echo esc_attr( $key ); ?>" />
+			<input type="hidden" name="gemsec_magic_confirm" value="<?php echo esc_attr( $confirm ); ?>" />
 			<?php if ( $redirect ) : ?>
 				<input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect ); ?>" />
 			<?php endif; ?>

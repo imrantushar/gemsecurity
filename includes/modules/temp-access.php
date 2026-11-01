@@ -4,6 +4,7 @@ namespace GemSecurity\Modules;
 use GemSecurity\Helper;
 use GemSecurity\Logger;
 use GemSecurity\Mailer;
+use GemSecurity\Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -115,6 +116,10 @@ class TempAccess {
 		add_filter( 'determine_current_user', [ __CLASS__, 'filter_current_user' ], 99 );
 		// Temporary accounts have no password: the link is the only way in.
 		add_filter( 'authenticate', [ __CLASS__, 'block_password_login' ], 99 );
+		// Nor a magic link or a social profile with the same email.
+		add_filter( 'gemsecurity/login_gate', [ __CLASS__, 'block_password_login' ] );
+		// Nothing a temporary account does may outlive its grant.
+		add_filter( 'map_meta_cap', [ __CLASS__, 'restrict_caps' ], 99, 4 );
 		add_filter( 'allow_password_reset', [ __CLASS__, 'block_password_reset' ], 10, 2 );
 		add_filter( 'wp_is_application_passwords_available_for_user', [ __CLASS__, 'block_app_passwords' ], 10, 2 );
 		// A session cookie can never outlive the grant.
@@ -211,6 +216,78 @@ class TempAccess {
 			return new \WP_Error( 'gemsec_temp_link_only', __( '<strong>Sign-in blocked.</strong> This temporary account can only be used through its access link.', 'gemsecurity' ) );
 		}
 		return $user;
+	}
+
+	/** User-management capabilities a temporary account never gets, whatever its role. */
+	const DENIED_CAPS = [
+		'create_users', 'add_users', 'promote_users', 'promote_user', 'delete_users', 'delete_user',
+		'remove_users', 'remove_user', 'manage_network_users',
+	];
+
+	/**
+	 * Stop a temporary account from making its access permanent: it may not
+	 * create or promote users, edit anyone but itself, or switch GemSecurity
+	 * off (which would lift every limit in this class).
+	 *
+	 * @param string[] $caps
+	 * @param string   $cap
+	 * @param int      $user_id
+	 * @param array    $args
+	 * @return string[]
+	 */
+	public static function restrict_caps( $caps, $cap, $user_id, $args ) {
+		if ( ! $user_id || ! self::is_temp( $user_id ) ) {
+			return $caps;
+		}
+		if ( in_array( $cap, self::DENIED_CAPS, true ) ) {
+			return [ 'do_not_allow' ];
+		}
+		if ( 'edit_user' === $cap && ( empty( $args[0] ) || (int) $args[0] !== (int) $user_id ) ) {
+			return [ 'do_not_allow' ];
+		}
+		if ( in_array( $cap, [ 'deactivate_plugin', 'delete_plugin' ], true ) && ! empty( $args[0] )
+			&& preg_match( '#^gemsecurity(-pro)?/#', (string) $args[0] ) ) {
+			return [ 'do_not_allow' ];
+		}
+		return $caps;
+	}
+
+	/**
+	 * End every temporary account for good: no role, an unknown password, no
+	 * sessions or application passwords, marked revoked. Run when GemSecurity
+	 * is deactivated or uninstalled, since nothing enforces expiry after that
+	 * and a password reset would otherwise turn the grant into a permanent one.
+	 *
+	 * @return int Accounts closed.
+	 */
+	public static function disable_all() {
+		$ids = get_users( [
+			'fields'     => 'ID',
+			'number'     => -1,
+			'blog_id'    => 0,
+			'meta_key'   => self::META_FLAG, // phpcs:ignore WordPress.DB.SlowDBQuery
+			'meta_value' => 1,               // phpcs:ignore WordPress.DB.SlowDBQuery
+		] );
+		foreach ( $ids as $id ) {
+			$id   = (int) $id;
+			$user = get_userdata( $id );
+			if ( ! $user ) {
+				continue;
+			}
+			$user->set_role( '' );
+			wp_set_password( wp_generate_password( 64, true, true ), $id );
+			\WP_Session_Tokens::get_instance( $id )->destroy_all();
+			if ( class_exists( '\WP_Application_Passwords' ) ) {
+				\WP_Application_Passwords::delete_all_application_passwords( $id );
+			}
+			delete_user_meta( $id, self::META_HASH );
+			delete_user_meta( $id, self::META_LINK_EXPIRES );
+			if ( ! (int) get_user_meta( $id, self::META_REVOKED, true ) ) {
+				update_user_meta( $id, self::META_REVOKED, time() );
+			}
+			update_user_meta( $id, self::META_ENDED, time() );
+		}
+		return count( $ids );
 	}
 
 	public static function block_password_reset( $allow, $user_id ) {
@@ -346,7 +423,7 @@ class TempAccess {
 			return new \WP_Error( 'bad_role', __( 'Choose a role to grant.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 		if ( $roles[ $slug ] && empty( $args['confirm_elevated'] ) ) {
-			return new \WP_Error( 'confirm_elevated', __( 'This role can change the site. Confirm that you want to grant it.', 'gemsecurity' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'confirm_elevated', __( 'This role can change the site. A temporary account cannot create users or switch GemSecurity off, but installing or editing plugins and themes runs code that can outlive the access. Confirm that you want to grant it.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
 		$expires = self::resolve_expiry(
@@ -358,12 +435,12 @@ class TempAccess {
 			return $expires;
 		}
 
-		$limit_key = 'gemsec_ta_create_' . get_current_user_id();
-		$made      = (int) get_transient( $limit_key );
+		$limit_key = 'ta_create_' . get_current_user_id();
+		$made      = (int) Store::get( $limit_key );
 		if ( $made >= self::MAX_CREATES_PER_HOUR ) {
 			return new \WP_Error( 'rate_limited', __( 'Too many temporary accounts were created in the last hour. Try again later.', 'gemsecurity' ), [ 'status' => 429 ] );
 		}
-		set_transient( $limit_key, $made + 1, HOUR_IN_SECONDS );
+		Store::set( $limit_key, $made + 1, HOUR_IN_SECONDS );
 
 		$login = '';
 		do {
@@ -697,7 +774,8 @@ class TempAccess {
 			exit;
 		}
 
-		if ( ! $post ) {
+		$confirm = isset( $_POST['gemsec_temp_confirm'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_temp_confirm'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked against its SameSite cookie.
+		if ( ! $post || ! Helper::confirm_check( 'temp_confirm', $confirm ) ) {
 			$this->render_confirm( $uid, $key );
 			exit;
 		}
@@ -752,14 +830,14 @@ class TempAccess {
 		} else {
 			Logger::log( 'temp_access_link_failed', $message, Logger::SEVERITY_WARNING, [ 'user_id' => 0 ] );
 		}
-		$key   = 'gemsec_ta_bad_' . md5( Helper::get_ip_address() );
-		$count = (int) get_transient( $key );
-		set_transient( $key, $count + 1, self::LIMIT_WINDOW );
+		$key   = 'ta_bad_' . md5( Helper::get_ip_address() );
+		$count = (int) Store::get( $key );
+		Store::set( $key, $count + 1, self::LIMIT_WINDOW );
 	}
 
 	/** True while the caller is still under the bad-link limit. */
 	private function take_ip_slot() {
-		return (int) get_transient( 'gemsec_ta_bad_' . md5( Helper::get_ip_address() ) ) < self::MAX_BAD_LINKS_PER_IP;
+		return (int) Store::get( 'ta_bad_' . md5( Helper::get_ip_address() ) ) < self::MAX_BAD_LINKS_PER_IP;
 	}
 
 	public function head_meta() {
@@ -777,6 +855,7 @@ class TempAccess {
 		$user = get_userdata( $uid );
 		$role = $user && $user->roles ? reset( $user->roles ) : '';
 		$name = $role && isset( wp_roles()->role_names[ $role ] ) ? translate_user_role( wp_roles()->role_names[ $role ] ) : '';
+		$confirm = Helper::confirm_issue( 'temp_confirm' );
 		login_header( __( 'Temporary access', 'gemsecurity' ) );
 		?>
 		<form name="gemsec_temp_confirm" id="loginform" action="<?php echo esc_url( add_query_arg( 'action', self::ACTION, wp_login_url() ) ); ?>" method="post">
@@ -794,6 +873,7 @@ class TempAccess {
 			</p>
 			<input type="hidden" name="gemsec_temp_uid" value="<?php echo esc_attr( $uid ); ?>" />
 			<input type="hidden" name="gemsec_temp_key" value="<?php echo esc_attr( $key ); ?>" />
+			<input type="hidden" name="gemsec_temp_confirm" value="<?php echo esc_attr( $confirm ); ?>" />
 			<p class="submit">
 				<input type="submit" class="button button-primary button-large" value="<?php esc_attr_e( 'Continue to the dashboard', 'gemsecurity' ); ?>" />
 			</p>

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-01T14:55:33+00:00\n"
+"POT-Creation-Date: 2026-11-01T15:06:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -74,43 +74,43 @@ msgstr ""
 msgid "Signature malware scan, database injection scan, quarantine/restore and plugin integrity verification."
 msgstr ""
 
-#: includes/installer.php:63
+#: includes/installer.php:65
 msgid "unknown — not a logged-in user"
 msgstr ""
 
-#: includes/installer.php:82
+#: includes/installer.php:84
 msgid "DANGER: GemSecurity was deactivated — this site is no longer protected"
 msgstr ""
 
-#: includes/installer.php:87
+#: includes/installer.php:89
 msgid "The firewall, login protection, scanning and monitoring on this site have all stopped. If you did not do this yourself, treat it as an active intrusion — disabling security is usually the first step, not the last."
 msgstr ""
 
-#: includes/installer.php:91
+#: includes/installer.php:93
 msgid "What happened"
 msgstr ""
 
-#: includes/installer.php:93
+#: includes/installer.php:95
 msgid "Action"
 msgstr ""
 
-#: includes/installer.php:93
+#: includes/installer.php:95
 msgid "GemSecurity deactivated"
 msgstr ""
 
-#: includes/installer.php:94
+#: includes/installer.php:96
 msgid "By"
 msgstr ""
 
-#: includes/installer.php:95
+#: includes/installer.php:97
 #: includes/mailer.php:181
-#: includes/modules/admin-guard.php:853
+#: includes/modules/admin-guard.php:855
 #: includes/modules/alerts.php:80
 #: includes/modules/login-security.php:209
 msgid "IP address"
 msgstr ""
 
-#: includes/installer.php:96
+#: includes/installer.php:98
 #: includes/modules/alerts.php:75
 #: includes/modules/login-security.php:208
 #: includes/security/plugin-guard.php:1028
@@ -118,32 +118,32 @@ msgstr ""
 msgid "Time"
 msgstr ""
 
-#: includes/installer.php:101
+#: includes/installer.php:103
 msgid "If this was not you"
 msgstr ""
 
-#: includes/installer.php:103
+#: includes/installer.php:105
 msgid "Reactivate GemSecurity immediately."
 msgstr ""
 
-#: includes/installer.php:104
+#: includes/installer.php:106
 msgid "Change every administrator password and log all sessions out."
 msgstr ""
 
-#: includes/installer.php:105
+#: includes/installer.php:107
 msgid "Run a full malware scan, and check the administrator list for accounts you do not recognise."
 msgstr ""
 
-#: includes/installer.php:106
+#: includes/installer.php:108
 msgid "Review the activity log — it survives deactivation and records what led up to this."
 msgstr ""
 
-#: includes/installer.php:112
+#: includes/installer.php:114
 msgid "Reactivate GemSecurity"
 msgstr ""
 
 #. translators: 1: site name, 2: who, 3: ip
-#: includes/installer.php:122
+#: includes/installer.php:124
 #, php-format
 msgid "[%1$s] CRITICAL: GemSecurity was deactivated by %2$s from %3$s. The site is no longer protected."
 msgstr ""
@@ -163,112 +163,112 @@ msgstr ""
 msgid "Nothing to report."
 msgstr ""
 
-#: includes/modules/admin-guard.php:131
+#: includes/modules/admin-guard.php:133
 #: includes/modules/registry.php:463
 #: assets/build/backend.1.2.0.js:51
 msgid "Admin Guard"
 msgstr ""
 
-#: includes/modules/admin-guard.php:134
+#: includes/modules/admin-guard.php:136
 msgid "Approved administrator — this account is on the Admin Guard whitelist."
 msgstr ""
 
-#: includes/modules/admin-guard.php:136
+#: includes/modules/admin-guard.php:138
 msgid "Only an already-approved administrator can authorize a new one. Without approval, an administrator account is removed automatically."
 msgstr ""
 
-#: includes/modules/admin-guard.php:142
+#: includes/modules/admin-guard.php:144
 msgid "Authorize this administrator"
 msgstr ""
 
-#: includes/modules/admin-guard.php:143
+#: includes/modules/admin-guard.php:145
 msgid "Admin Guard removes any administrator whose email is not on its whitelist. Tick this to add this email to the whitelist so the account is kept."
 msgstr ""
 
-#: includes/modules/admin-guard.php:188
+#: includes/modules/admin-guard.php:190
 msgid "You cannot authorize administrators: only an already-approved administrator can."
 msgstr ""
 
 #. translators: %s: username.
-#: includes/modules/admin-guard.php:221
+#: includes/modules/admin-guard.php:223
 #, php-format
 msgid "%s was authorized as an administrator and added to the Admin Guard whitelist."
 msgstr ""
 
-#: includes/modules/admin-guard.php:223
+#: includes/modules/admin-guard.php:225
 msgid "The whitelist was empty, so the current administrators were approved too."
 msgstr ""
 
-#: includes/modules/admin-guard.php:315
+#: includes/modules/admin-guard.php:317
 msgid "Admin Guard:"
 msgstr ""
 
-#: includes/modules/admin-guard.php:335
+#: includes/modules/admin-guard.php:337
 msgid "To keep an administrator, tick “Authorize this administrator” on the user form, or add their email to the Admin Guard whitelist first."
 msgstr ""
 
 #. translators: %s: username.
-#: includes/modules/admin-guard.php:342
+#: includes/modules/admin-guard.php:344
 #, php-format
 msgid "The administrator account “%s” was removed because its email is not on the whitelist."
 msgstr ""
 
 #. translators: 1: username, 2: role.
-#: includes/modules/admin-guard.php:352
+#: includes/modules/admin-guard.php:354
 #, php-format
 msgid "“%1$s” was not made an administrator — its email is not on the whitelist — and was set to %2$s."
 msgstr ""
 
-#: includes/modules/admin-guard.php:539
+#: includes/modules/admin-guard.php:541
 msgid "<strong>Sign-in blocked.</strong> This administrator account is not on the approved list."
 msgstr ""
 
-#: includes/modules/admin-guard.php:829
+#: includes/modules/admin-guard.php:831
 #: assets/build/backend.1.2.0.js:48
 #: assets/build/backend.1.2.0.js:49
 msgid "deleted"
 msgstr ""
 
-#: includes/modules/admin-guard.php:829
+#: includes/modules/admin-guard.php:831
 #: assets/build/backend.1.2.0.js:48
 #: assets/build/backend.1.2.0.js:49
 msgid "demoted"
 msgstr ""
 
-#: includes/modules/admin-guard.php:834
+#: includes/modules/admin-guard.php:836
 msgid "Unapproved administrator blocked"
 msgstr ""
 
 #. translators: 1: username, 2: deleted|demoted
-#: includes/modules/admin-guard.php:841
+#: includes/modules/admin-guard.php:843
 #, php-format
 msgid "The administrator account <strong>%1$s</strong> was not on the approved list and has been %2$s."
 msgstr ""
 
-#: includes/modules/admin-guard.php:848
+#: includes/modules/admin-guard.php:850
 msgid "Account"
 msgstr ""
 
-#: includes/modules/admin-guard.php:850
+#: includes/modules/admin-guard.php:852
 #: assets/build/backend.1.2.0.js:44
 msgid "Username"
 msgstr ""
 
-#: includes/modules/admin-guard.php:851
+#: includes/modules/admin-guard.php:853
 #: includes/modules/daily-report.php:367
 #: assets/build/backend.1.2.0.js:44
 msgid "Email"
 msgstr ""
 
-#: includes/modules/admin-guard.php:852
+#: includes/modules/admin-guard.php:854
 msgid "Trigger"
 msgstr ""
 
-#: includes/modules/admin-guard.php:858
+#: includes/modules/admin-guard.php:860
 msgid "If this administrator was legitimate, add their email to the whitelist and recreate the account."
 msgstr ""
 
-#: includes/modules/admin-guard.php:863
+#: includes/modules/admin-guard.php:865
 msgid "Review Admin Guard"
 msgstr ""
 
@@ -2130,71 +2130,71 @@ msgstr ""
 msgid "Administrator signed in"
 msgstr ""
 
-#: includes/modules/magic-login.php:213
-#: includes/modules/magic-login.php:309
+#: includes/modules/magic-login.php:222
+#: includes/modules/magic-login.php:324
 msgid "This sign-in link is invalid, has expired, or was already used. Request a new one below."
 msgstr ""
 
-#: includes/modules/magic-login.php:237
+#: includes/modules/magic-login.php:246
 msgid "The page expired. Please try again."
 msgstr ""
 
-#: includes/modules/magic-login.php:243
+#: includes/modules/magic-login.php:252
 msgid "Too many requests. Please wait a few minutes and try again."
 msgstr ""
 
-#: includes/modules/magic-login.php:256
+#: includes/modules/magic-login.php:265
 msgid "If that account can sign in this way, a sign-in link is on its way to the email address on file. It works once and expires soon."
 msgstr ""
 
 #. translators: %s: site name.
-#: includes/modules/magic-login.php:279
+#: includes/modules/magic-login.php:288
 #, php-format
 msgid "Your sign-in link for %s"
 msgstr ""
 
 #. translators: %d: minutes the link is valid.
-#: includes/modules/magic-login.php:285
+#: includes/modules/magic-login.php:294
 #, php-format
 msgid "Use the button below to sign in. The link works once and expires in %d minutes."
 msgstr ""
 
-#: includes/modules/magic-login.php:292
-#: includes/modules/magic-login.php:396
+#: includes/modules/magic-login.php:301
+#: includes/modules/magic-login.php:413
 msgid "Sign in"
 msgstr ""
 
-#: includes/modules/magic-login.php:296
+#: includes/modules/magic-login.php:305
 msgid "If you did not ask for this link, ignore this email — nobody can sign in without it."
 msgstr ""
 
-#: includes/modules/magic-login.php:345
-#: includes/modules/magic-login.php:361
-#: includes/modules/magic-login.php:410
+#: includes/modules/magic-login.php:360
+#: includes/modules/magic-login.php:376
+#: includes/modules/magic-login.php:427
 msgid "Email me a sign-in link"
 msgstr ""
 
-#: includes/modules/magic-login.php:353
+#: includes/modules/magic-login.php:368
 #: assets/build/backend.1.2.0.js:44
 msgid "Username or Email Address"
 msgstr ""
 
-#: includes/modules/magic-login.php:366
+#: includes/modules/magic-login.php:381
 #: includes/modules/two-factor.php:826
 msgid "← Back to login"
 msgstr ""
 
-#: includes/modules/magic-login.php:372
+#: includes/modules/magic-login.php:388
 msgid "Confirm sign-in"
 msgstr ""
 
 #. translators: %s: user display name.
-#: includes/modules/magic-login.php:380
+#: includes/modules/magic-login.php:396
 #, php-format
 msgid "Sign in as %s?"
 msgstr ""
 
-#: includes/modules/magic-login.php:393
+#: includes/modules/magic-login.php:410
 msgid "Remember Me"
 msgstr ""
 
@@ -2608,17 +2608,17 @@ msgstr ""
 msgid "No account is linked to this profile and registration is disabled."
 msgstr ""
 
-#: includes/modules/social-login.php:1073
+#: includes/modules/social-login.php:1077
 msgid "or sign in with"
 msgstr ""
 
 #. translators: %s: social-login provider name (e.g. Google, Facebook).
-#: includes/modules/social-login.php:1084
+#: includes/modules/social-login.php:1088
 #, php-format
 msgid "Continue with %s"
 msgstr ""
 
-#: includes/modules/social-login.php:1136
+#: includes/modules/social-login.php:1140
 msgid "Sign-in error"
 msgstr ""
 
@@ -2656,181 +2656,181 @@ msgstr ""
 msgid "Suspicious cron hook name"
 msgstr ""
 
-#: includes/modules/temp-access.php:174
+#: includes/modules/temp-access.php:179
 msgid "Access expired."
 msgstr ""
 
-#: includes/modules/temp-access.php:211
+#: includes/modules/temp-access.php:216
 msgid "<strong>Sign-in blocked.</strong> This temporary account can only be used through its access link."
 msgstr ""
 
-#: includes/modules/temp-access.php:297
+#: includes/modules/temp-access.php:374
 msgid "Choose how long access should last."
 msgstr ""
 
-#: includes/modules/temp-access.php:308
+#: includes/modules/temp-access.php:385
 msgid "The expiry must be at least 5 minutes from now."
 msgstr ""
 
 #. translators: %d: days.
-#: includes/modules/temp-access.php:312
+#: includes/modules/temp-access.php:389
 #, php-format
 msgid "Temporary access can last at most %d days."
 msgstr ""
 
-#: includes/modules/temp-access.php:330
+#: includes/modules/temp-access.php:407
 msgid "Enter a valid email address."
 msgstr ""
 
-#: includes/modules/temp-access.php:338
+#: includes/modules/temp-access.php:415
 msgid "A user with this email address already exists. Existing accounts are never changed or converted — use a different address for the temporary account."
 msgstr ""
 
-#: includes/modules/temp-access.php:346
+#: includes/modules/temp-access.php:423
 msgid "Choose a role to grant."
 msgstr ""
 
-#: includes/modules/temp-access.php:349
-msgid "This role can change the site. Confirm that you want to grant it."
+#: includes/modules/temp-access.php:426
+msgid "This role can change the site. A temporary account cannot create users or switch GemSecurity off, but installing or editing plugins and themes runs code that can outlive the access. Confirm that you want to grant it."
 msgstr ""
 
-#: includes/modules/temp-access.php:364
+#: includes/modules/temp-access.php:441
 msgid "Too many temporary accounts were created in the last hour. Try again later."
 msgstr ""
 
-#: includes/modules/temp-access.php:379
-#: includes/modules/temp-access.php:770
-#: includes/modules/temp-access.php:780
+#: includes/modules/temp-access.php:456
+#: includes/modules/temp-access.php:848
+#: includes/modules/temp-access.php:859
 #: assets/build/backend.1.2.0.js:44
 msgid "Temporary access"
 msgstr ""
 
 #. translators: 1: email, 2: role, 3: expiry date.
-#: includes/modules/temp-access.php:401
+#: includes/modules/temp-access.php:478
 #, php-format
 msgid "Temporary access created for %1$s with role \"%2$s\", ending %3$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:417
+#: includes/modules/temp-access.php:494
 msgid "Temporary access created"
 msgstr ""
 
 #. translators: 1: email, 2: role, 3: expiry date.
-#: includes/modules/temp-access.php:420
+#: includes/modules/temp-access.php:497
 #, php-format
 msgid "%1$s was given temporary access with the \"%2$s\" role until %3$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:444
+#: includes/modules/temp-access.php:521
 msgid "Revoked access cannot be extended. Create a new temporary account instead."
 msgstr ""
 
 #. translators: %s: date.
-#: includes/modules/temp-access.php:460
+#: includes/modules/temp-access.php:537
 #, php-format
 msgid "Access extended to %s."
 msgstr ""
 
-#: includes/modules/temp-access.php:477
+#: includes/modules/temp-access.php:554
 msgid "Extend this access first — only active accounts can have a link."
 msgstr ""
 
-#: includes/modules/temp-access.php:480
+#: includes/modules/temp-access.php:557
 msgid "A new sign-in link was generated; the previous one no longer works."
 msgstr ""
 
-#: includes/modules/temp-access.php:491
+#: includes/modules/temp-access.php:568
 msgid "This access was already revoked."
 msgstr ""
 
-#: includes/modules/temp-access.php:496
+#: includes/modules/temp-access.php:573
 msgid "Access revoked; sessions ended."
 msgstr ""
 
-#: includes/modules/temp-access.php:501
+#: includes/modules/temp-access.php:578
 msgid "Temporary access revoked"
 msgstr ""
 
 #. translators: %s: email.
-#: includes/modules/temp-access.php:503
+#: includes/modules/temp-access.php:580
 #, php-format
 msgid "Temporary access for %s was revoked and its sessions were ended."
 msgstr ""
 
-#: includes/modules/temp-access.php:511
+#: includes/modules/temp-access.php:588
 msgid "That is not a temporary access account."
 msgstr ""
 
 #. translators: %s: site name.
-#: includes/modules/temp-access.php:580
+#: includes/modules/temp-access.php:657
 #, php-format
 msgid "Temporary access to %s"
 msgstr ""
 
 #. translators: %s: date and time.
-#: includes/modules/temp-access.php:585
+#: includes/modules/temp-access.php:662
 #, php-format
 msgid "You have been given temporary access to the dashboard. It ends on %s."
 msgstr ""
 
-#: includes/modules/temp-access.php:587
+#: includes/modules/temp-access.php:664
 msgid "Open the dashboard"
 msgstr ""
 
-#: includes/modules/temp-access.php:590
+#: includes/modules/temp-access.php:667
 msgid "The link works once. Do not forward it — whoever opens it first gets the access."
 msgstr ""
 
-#: includes/modules/temp-access.php:596
+#: includes/modules/temp-access.php:673
 msgid "Sign-in link emailed to the recipient."
 msgstr ""
 
-#: includes/modules/temp-access.php:690
+#: includes/modules/temp-access.php:767
 msgid "Too many attempts. Please wait a few minutes and try again."
 msgstr ""
 
-#: includes/modules/temp-access.php:696
-#: includes/modules/temp-access.php:707
+#: includes/modules/temp-access.php:773
+#: includes/modules/temp-access.php:785
 msgid "This access link is invalid, has expired, or was already used. Ask the site owner for a new one."
 msgstr ""
 
-#: includes/modules/temp-access.php:713
+#: includes/modules/temp-access.php:791
 msgid "This account cannot sign in right now."
 msgstr ""
 
-#: includes/modules/temp-access.php:720
+#: includes/modules/temp-access.php:798
 msgid "Signed in with the access link."
 msgstr ""
 
-#: includes/modules/temp-access.php:724
+#: includes/modules/temp-access.php:802
 msgid "Temporary access used"
 msgstr ""
 
 #. translators: 1: email, 2: IP address.
-#: includes/modules/temp-access.php:727
+#: includes/modules/temp-access.php:805
 #, php-format
 msgid "%1$s used their temporary access link for the first time, from %2$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:749
+#: includes/modules/temp-access.php:827
 msgid "An access link was refused: invalid, expired or already used."
 msgstr ""
 
-#: includes/modules/temp-access.php:771
+#: includes/modules/temp-access.php:849
 msgid "← Back to site"
 msgstr ""
 
 #. translators: 1: role name, 2: date and time.
-#: includes/modules/temp-access.php:788
+#: includes/modules/temp-access.php:867
 #, php-format
 msgid "You have been given temporary %1$s access until %2$s."
 msgstr ""
 
-#: includes/modules/temp-access.php:789
+#: includes/modules/temp-access.php:868
 msgid "dashboard"
 msgstr ""
 
-#: includes/modules/temp-access.php:798
+#: includes/modules/temp-access.php:878
 msgid "Continue to the dashboard"
 msgstr ""
 

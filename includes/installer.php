@@ -38,6 +38,8 @@ class Installer {
 		self::notify_deactivated();
 
 		self::clear_events();
+		// Nothing enforces temporary access once the plugin is off, so end it.
+		\GemSecurity\Modules\TempAccess::disable_all();
 		// Remove the extended-protection mu-plugin so a deactivated plugin
 		// never leaves an orphaned early firewall behind.
 		\GemSecurity\Security\PluginGuard::uninstall_mu();

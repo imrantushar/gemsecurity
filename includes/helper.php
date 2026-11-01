@@ -452,4 +452,61 @@ class Helper {
 		$mask = chr( ( 0xFF << ( 8 - $remaining_bits ) ) & 0xFF );
 		return ( $ip_bin[ $full_bytes ] & $mask ) === ( $subnet_bin[ $full_bytes ] & $mask );
 	}
+
+	/**
+	 * Sign-in paths that bypass the password form (magic link, social login)
+	 * never reach the `authenticate` filter, so the guards hooked there would
+	 * never see them. They call this instead.
+	 *
+	 * @param \WP_User $user
+	 * @return \WP_User|\WP_Error
+	 */
+	public static function login_gate( $user ) {
+		/**
+		 * Veto a sign-in that did not go through the password form.
+		 *
+		 * @param \WP_User|\WP_Error $user
+		 */
+		return apply_filters( 'gemsecurity/login_gate', $user );
+	}
+
+	/**
+	 * Start a confirm step: a random value set as a SameSite=Strict cookie and
+	 * returned for a hidden field. A form posted from another site arrives
+	 * without the cookie, so it cannot sign the visitor in to someone else's
+	 * account (login CSRF).
+	 *
+	 * @param string $name Short, unique name for this confirm step.
+	 * @return string Value for the hidden field.
+	 */
+	public static function confirm_issue( $name ) {
+		$value = bin2hex( random_bytes( 16 ) );
+		if ( headers_sent() ) {
+			return $value; // The check will fail and the step is shown again.
+		}
+		setcookie( 'gemsec_' . $name, $value, [
+			'expires'  => time() + HOUR_IN_SECONDS,
+			'path'     => SITECOOKIEPATH,
+			'domain'   => COOKIE_DOMAIN,
+			'secure'   => is_ssl(),
+			'httponly' => true,
+			'samesite' => 'Strict',
+		] );
+		return $value;
+	}
+
+	/**
+	 * Check (and clear) a confirm step started by {@see confirm_issue()}.
+	 *
+	 * @param string $name
+	 * @param string $posted Value from the hidden field.
+	 * @return bool
+	 */
+	public static function confirm_check( $name, $posted ) {
+		$cookie = isset( $_COOKIE[ 'gemsec_' . $name ] ) ? sanitize_text_field( wp_unslash( $_COOKIE[ 'gemsec_' . $name ] ) ) : '';
+		if ( ! headers_sent() ) {
+			setcookie( 'gemsec_' . $name, '', [ 'expires' => time() - HOUR_IN_SECONDS, 'path' => SITECOOKIEPATH, 'domain' => COOKIE_DOMAIN ] );
+		}
+		return '' !== $cookie && hash_equals( $cookie, (string) $posted );
+	}
 }
