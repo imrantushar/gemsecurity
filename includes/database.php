@@ -89,5 +89,9 @@ class Database {
 		if ( Modules\HiddenAdmin::enabled() ) {
 			Modules\HiddenAdmin::scan_and_store();
 		}
+		// Catch a revoked or rotated social-login secret before a visitor does.
+		if ( Modules\Registry::is_active( 'social-login' ) && Helper::get_setting( 'social_login_enabled', false ) ) {
+			Modules\SocialLogin::health_check();
+		}
 	}
 }

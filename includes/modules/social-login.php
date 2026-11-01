@@ -3,6 +3,7 @@ namespace GemSecurity\Modules;
 
 use GemSecurity\Helper;
 use GemSecurity\Logger;
+use GemSecurity\OptionStore;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -20,6 +21,9 @@ class SocialLogin {
 
 	/** What the provider said the last time a token exchange failed. */
 	private static $last_token_error = '';
+
+	/** The provider's bare error code for that failure (e.g. invalid_client). */
+	private static $last_token_code = '';
 
 	const STATE_PREFIX = 'gemsec_oauth_state_';
 
@@ -78,6 +82,10 @@ class SocialLogin {
 	}
 
 	public static function init() {
+		// Registered even while social login is off, so the notice outlives the
+		// switch being flipped.
+		add_action( 'admin_notices', [ __CLASS__, 'admin_notice' ] );
+
 		if ( ! Helper::get_setting( 'social_login_enabled', false ) ) {
 			return;
 		}
@@ -105,7 +113,14 @@ class SocialLogin {
 		return site_url( 'wp-login.php?gemsec_oauth_cb=1' );
 	}
 
-	public static function enabled_providers() {
+	/** State key holding the per-provider fingerprint of the credentials that passed a check. */
+	const VERIFIED_STATE = 'social_verified';
+
+	/**
+	 * Providers that are switched on and have a client ID + secret saved,
+	 * whether or not those credentials have been proven to work.
+	 */
+	public static function configured_providers() {
 		$out = [];
 		foreach ( self::providers_meta() as $key => $meta ) {
 			if (
@@ -117,6 +132,269 @@ class SocialLogin {
 			}
 		}
 		return $out;
+	}
+
+	/**
+	 * Providers that may be offered to visitors: configured AND verified.
+	 * An unproven client ID / secret puts a button on the login form that can
+	 * only fail, so it stays hidden until a check has passed.
+	 */
+	public static function enabled_providers() {
+		return array_filter(
+			self::configured_providers(),
+			static function ( $key ) {
+				return self::is_verified( $key );
+			},
+			ARRAY_FILTER_USE_KEY
+		);
+	}
+
+	/** Fingerprint of a credential pair; changes whenever the ID or secret does. */
+	private static function credential_hash( $provider, $client_id, $client_secret ) {
+		return hash_hmac( 'sha256', $provider . '|' . trim( (string) $client_id ) . '|' . trim( (string) $client_secret ), wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * Whether the credentials currently saved for a provider are the ones that
+	 * passed a check. Editing either value invalidates it automatically.
+	 */
+	public static function is_verified( $provider ) {
+		$map = OptionStore::get_state( self::VERIFIED_STATE, [] );
+		if ( ! is_array( $map ) || empty( $map[ $provider ] ) ) {
+			return false;
+		}
+		$expected = self::credential_hash(
+			$provider,
+			Helper::get_setting( "social_{$provider}_client_id", '' ),
+			Helper::get_setting( "social_{$provider}_client_secret", '' )
+		);
+		return hash_equals( (string) $map[ $provider ], $expected );
+	}
+
+	/** Record that this exact credential pair works. */
+	public static function mark_verified( $provider, $client_id, $client_secret ) {
+		if ( ! isset( self::providers_meta()[ $provider ] ) ) {
+			return;
+		}
+		$map = OptionStore::get_state( self::VERIFIED_STATE, [] );
+		$map = is_array( $map ) ? $map : [];
+		$map[ $provider ] = self::credential_hash( $provider, $client_id, $client_secret );
+		OptionStore::set_state( self::VERIFIED_STATE, $map );
+
+		// Working again: forget any earlier failures and the "switched off" notice.
+		self::record_success( $provider );
+		self::clear_broken( $provider );
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Health: credentials that stop working                               */
+	/* ------------------------------------------------------------------ */
+
+	const HEALTH_STATE = 'social_health';
+	const BROKEN_STATE = 'social_broken';
+
+	/** Definite failures in a row before a provider is switched off. */
+	const FAIL_LIMIT = 2;
+
+	/** Provider answers that mean the client ID / secret itself is no good. */
+	const CLIENT_ERRORS = [ 'invalid_client', 'unauthorized_client', 'incorrect_client_credentials' ];
+
+	/**
+	 * Providers that were switched off because their credentials stopped
+	 * working, keyed by provider: { at, reason }.
+	 *
+	 * @return array<string,array>
+	 */
+	public static function broken_all() {
+		$map = OptionStore::get_state( self::BROKEN_STATE, [] );
+		return is_array( $map ) ? $map : [];
+	}
+
+	/** @return array|null */
+	public static function broken( $provider ) {
+		$all = self::broken_all();
+		return isset( $all[ $provider ] ) ? $all[ $provider ] : null;
+	}
+
+	private static function clear_broken( $provider ) {
+		$all = self::broken_all();
+		if ( isset( $all[ $provider ] ) ) {
+			unset( $all[ $provider ] );
+			OptionStore::set_state( self::BROKEN_STATE, $all );
+		}
+	}
+
+	/** A provider answered normally: reset its failure count. */
+	public static function record_success( $provider ) {
+		$health = OptionStore::get_state( self::HEALTH_STATE, [] );
+		if ( is_array( $health ) && isset( $health[ $provider ] ) ) {
+			unset( $health[ $provider ] );
+			OptionStore::set_state( self::HEALTH_STATE, $health );
+		}
+	}
+
+	/**
+	 * The provider said the client ID / secret is wrong. One miss can be a blip,
+	 * so the provider is only switched off after FAIL_LIMIT in a row.
+	 *
+	 * @param string $provider
+	 * @param string $reason   What the provider said.
+	 * @return bool Whether this failure switched the provider off.
+	 */
+	public static function record_failure( $provider, $reason ) {
+		$health = OptionStore::get_state( self::HEALTH_STATE, [] );
+		$health = is_array( $health ) ? $health : [];
+		$fails  = ( isset( $health[ $provider ]['fails'] ) ? (int) $health[ $provider ]['fails'] : 0 ) + 1;
+
+		$health[ $provider ] = [ 'fails' => $fails, 'last' => time() ];
+		OptionStore::set_state( self::HEALTH_STATE, $health );
+
+		if ( $fails < self::FAIL_LIMIT ) {
+			return false;
+		}
+		self::switch_off( $provider, $reason );
+		return true;
+	}
+
+	/**
+	 * Switch a provider off: hide its button, turn its setting off, leave a
+	 * notice, and tell the owner. Administrators' own password logins are not
+	 * touched.
+	 */
+	private static function switch_off( $provider, $reason ) {
+		$meta = self::providers_meta();
+		if ( ! isset( $meta[ $provider ] ) || self::broken( $provider ) ) {
+			return;
+		}
+		$label = $meta[ $provider ]['label'];
+		$reason = '' !== trim( (string) $reason ) ? sanitize_text_field( $reason ) : 'invalid_client';
+
+		// Un-verify, so the button is gone even before the setting write lands.
+		$map = OptionStore::get_state( self::VERIFIED_STATE, [] );
+		if ( is_array( $map ) && isset( $map[ $provider ] ) ) {
+			unset( $map[ $provider ] );
+			OptionStore::set_state( self::VERIFIED_STATE, $map );
+		}
+
+		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		$settings = is_array( $settings ) ? $settings : [];
+		$settings[ "social_{$provider}_enabled" ] = false;
+		update_option( GEMSECURITY_SETTINGS_NAME, $settings );
+
+		$all              = self::broken_all();
+		$all[ $provider ] = [ 'at' => time(), 'reason' => $reason ];
+		OptionStore::set_state( self::BROKEN_STATE, $all );
+
+		Logger::log(
+			'social_login_disabled',
+			sprintf( '%s social login was switched off: the provider no longer accepts its credentials (%s).', $label, $reason ),
+			Logger::SEVERITY_CRITICAL,
+			[ 'user_id' => 0, 'context' => [ 'provider' => $provider, 'reason' => $reason ] ]
+		);
+
+		$link = admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-social-login' );
+		\GemSecurity\Mailer::send(
+			\GemSecurity\Mailer::recipient(),
+			'⚠️',
+			/* translators: %s: provider name. */
+			sprintf( __( '%s social login was switched off', 'gemsecurity' ), $label ),
+			[
+				[
+					'type' => 'notice',
+					'tone' => 'critical',
+					'text' => sprintf(
+						/* translators: 1: provider name, 2: the provider's error. */
+						__( '%1$s stopped accepting this site’s client ID / secret (%2$s), so its sign-in button has been removed from the login form. Passwords and other sign-in methods are not affected.', 'gemsecurity' ),
+						$label,
+						esc_html( $reason )
+					),
+				],
+				[
+					'type'  => 'button',
+					'url'   => $link,
+					'label' => __( 'Fix the credentials', 'gemsecurity' ),
+				],
+			]
+		);
+
+		if ( Helper::get_setting( 'alerts_enabled', false ) ) {
+			( new Alerts() )->dispatch(
+				sprintf(
+					/* translators: 1: site name, 2: provider name, 3: reason. */
+					__( '[%1$s] %2$s social login was switched off: the provider rejected its credentials (%3$s).', 'gemsecurity' ),
+					\GemSecurity\Mailer::site_name(),
+					$label,
+					$reason
+				)
+			);
+		}
+	}
+
+	/**
+	 * Daily check of every provider that is currently offered to visitors, so a
+	 * revoked or rotated secret is caught before the next person tries to sign
+	 * in. Only a definite "wrong client" answer counts; network errors and
+	 * inconclusive replies (e.g. X) leave things as they are.
+	 */
+	public static function health_check() {
+		foreach ( array_keys( self::enabled_providers() ) as $key ) {
+			$result = \GemSecurity\Rest\Credentials::test_social( [
+				'provider'      => $key,
+				'client_id'     => Helper::get_setting( "social_{$key}_client_id", '' ),
+				'client_secret' => Helper::get_setting( "social_{$key}_client_secret", '' ),
+			] );
+
+			if ( ! empty( $result['ok'] ) ) {
+				self::record_success( $key );
+			} elseif ( ! empty( $result['definitive'] ) ) {
+				self::record_failure( $key, isset( $result['detail'] ) ? (string) $result['detail'] : '' );
+			}
+		}
+	}
+
+	/** Site-wide notice while any provider is switched off. */
+	public static function admin_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$meta = self::providers_meta();
+		foreach ( self::broken_all() as $key => $info ) {
+			if ( ! isset( $meta[ $key ] ) ) {
+				continue;
+			}
+			printf(
+				'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
+				esc_html( sprintf(
+					/* translators: %s: provider name. */
+					__( '%s social login was switched off.', 'gemsecurity' ),
+					$meta[ $key ]['label']
+				) ),
+				esc_html__( 'The provider no longer accepts the saved client ID / secret, so its button was removed from the login form.', 'gemsecurity' ),
+				esc_url( admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-social-login' ) ),
+				esc_html__( 'Update the credentials and verify again.', 'gemsecurity' )
+			);
+		}
+	}
+
+	/**
+	 * One-time grandfathering: a site that already had social login working
+	 * before verification existed keeps its buttons. Runs on upgrade/activation
+	 * and only while nothing has ever been recorded, so credentials entered
+	 * afterwards must be verified.
+	 */
+	public static function seed_verified() {
+		if ( null !== OptionStore::get_state( self::VERIFIED_STATE, null ) ) {
+			return;
+		}
+		$map = [];
+		foreach ( array_keys( self::configured_providers() ) as $key ) {
+			$map[ $key ] = self::credential_hash(
+				$key,
+				Helper::get_setting( "social_{$key}_client_id", '' ),
+				Helper::get_setting( "social_{$key}_client_secret", '' )
+			);
+		}
+		OptionStore::set_state( self::VERIFIED_STATE, $map );
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -138,7 +416,13 @@ class SocialLogin {
 	}
 
 	private function start_flow( $provider ) {
-		$providers = self::enabled_providers();
+		// An administrator can run a real sign-in against credentials that are not
+		// verified yet; completing it is what verifies them (see handle_callback).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the nonce is checked here.
+		$nonce   = isset( $_GET['gemsec_oauth_test'] ) ? sanitize_text_field( wp_unslash( $_GET['gemsec_oauth_test'] ) ) : '';
+		$is_test = '' !== $nonce && current_user_can( 'manage_options' ) && wp_verify_nonce( $nonce, 'gemsec_oauth_test_' . $provider );
+
+		$providers = $is_test ? self::configured_providers() : self::enabled_providers();
 		if ( ! isset( $providers[ $provider ] ) ) {
 			$this->bail( __( 'This sign-in method is not available.', 'gemsecurity' ) );
 		}
@@ -150,6 +434,7 @@ class SocialLogin {
 			'provider'    => $provider,
 			'redirect_to' => isset( $_GET['redirect_to'] ) ? esc_url_raw( wp_unslash( $_GET['redirect_to'] ) ) : admin_url(),
 			'time'        => time(),
+			'test'        => (bool) $is_test,
 			// Carries the role a caller (e.g. Academy's per-page registration
 			// forms via buttons_html()'s $role param) wants a *new* account
 			// created with, through the redirect round-trip to the provider
@@ -324,7 +609,8 @@ class SocialLogin {
 		self::clear_state_cookie();
 
 		$provider  = $data['provider'];
-		$providers = self::enabled_providers();
+		$is_test   = ! empty( $data['test'] ) && current_user_can( 'manage_options' );
+		$providers = $is_test ? self::configured_providers() : self::enabled_providers();
 		if ( ! isset( $providers[ $provider ] ) ) {
 			$this->bail( __( 'This sign-in method is not available.', 'gemsecurity' ) );
 		}
@@ -336,6 +622,14 @@ class SocialLogin {
 			// registered with the provider differs from this site's). Showing
 			// it turns an unactionable failure into a one-line fix.
 			$detail = self::$last_token_error;
+
+			// A client-level refusal means the key itself is dead (rotated,
+			// revoked, deleted). Count it; enough in a row switches the provider
+			// off. A redirect mismatch or a network error is not that.
+			if ( ! $is_test && in_array( self::$last_token_code, self::CLIENT_ERRORS, true ) ) {
+				self::record_failure( $provider, self::$last_token_code );
+			}
+
 			Logger::log(
 				'social_login_failed',
 				sprintf( 'Token exchange with %s failed. %s', $provider, $detail ? $detail : 'No reason returned.' ),
@@ -353,9 +647,26 @@ class SocialLogin {
 			);
 		}
 
+		// The provider accepted the credentials.
+		self::record_success( $provider );
+
 		$profile = $this->fetch_profile( $provider, $token );
 		if ( empty( $profile['id'] ) ) {
 			$this->bail( __( 'Could not read your profile from the provider.', 'gemsecurity' ) );
+		}
+
+		if ( $is_test ) {
+			// The whole round trip worked — client ID, secret and redirect URI.
+			// Record it and go back to the settings page; nobody is logged in
+			// as the provider's user.
+			self::mark_verified(
+				$provider,
+				Helper::get_setting( "social_{$provider}_client_id", '' ),
+				Helper::get_setting( "social_{$provider}_client_secret", '' )
+			);
+			Logger::log( 'social_login_verified', sprintf( '%s credentials verified by a test sign-in.', ucfirst( $provider ) ), Logger::SEVERITY_NOTICE );
+			wp_safe_redirect( add_query_arg( 'gemsec_social_verified', $provider, admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG . '-social-login' ) ) );
+			exit;
 		}
 
 		$this->login_user(
@@ -392,6 +703,7 @@ class SocialLogin {
 		}
 
 		self::$last_token_error = '';
+		self::$last_token_code  = '';
 
 		$response = wp_remote_post( $meta['token'], [ 'timeout' => 15, 'headers' => $headers, 'body' => $body ] );
 		if ( is_wp_error( $response ) ) {
@@ -412,6 +724,7 @@ class SocialLogin {
 			}
 			$desc = isset( $parsed['error_description'] ) ? $parsed['error_description'] : '';
 
+			self::$last_token_code  = is_string( $error ) ? sanitize_key( $error ) : '';
 			self::$last_token_error = trim( sanitize_text_field( (string) $error . ( $desc ? ' — ' . $desc : '' ) ) );
 			return '';
 		}

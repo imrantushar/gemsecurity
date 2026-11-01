@@ -20,6 +20,7 @@ class Installer {
 		// Seed the module-activation map from current settings so a fresh install
 		// boots core + recommended modules and an existing site keeps its behavior.
 		\GemSecurity\Modules\Registry::seed_if_missing();
+		\GemSecurity\Modules\SocialLogin::seed_verified();
 		\GemSecurity\Security\Quarantine::migrate_legacy();
 		self::schedule_events();
 		self::snapshot_admin_whitelist();
@@ -147,6 +148,9 @@ class Installer {
 			// Derive module activation from the existing settings on first
 			// upgrade to the module system — no behavior change for the site.
 			\GemSecurity\Modules\Registry::seed_if_missing();
+			// Social providers that already work keep their buttons; anything
+			// configured from here on has to be verified first.
+			\GemSecurity\Modules\SocialLogin::seed_verified();
 			\GemSecurity\Security\Quarantine::migrate_legacy();
 			self::schedule_events();
 		}
