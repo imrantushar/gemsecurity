@@ -280,6 +280,11 @@ class AdminAudit {
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return true;
 		}
+		// An administrator granted temporary access by an administrator, while
+		// that grant is live. Once it ends the account no longer qualifies.
+		if ( \GemSecurity\Modules\TempAccess::is_live( $user->ID ) ) {
+			return true;
+		}
 		return false;
 	}
 

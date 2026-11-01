@@ -470,6 +470,31 @@ class Api {
 			] );
 		}
 
+		// Temporary access. Gated on can_manage() so a temporary account can
+		// never manage (or extend) itself.
+		if ( self::module( 'temp-access' ) ) {
+			$ta_perm = [ Rest\TempAccess::class, 'permission' ];
+			register_rest_route( $ns, '/temp-access', [
+				[
+					'methods'             => 'GET',
+					'callback'            => [ Rest\TempAccess::class, 'get' ],
+					'permission_callback' => $ta_perm,
+				],
+				[
+					'methods'             => 'POST',
+					'callback'            => [ Rest\TempAccess::class, 'create' ],
+					'permission_callback' => $ta_perm,
+				],
+			] );
+			foreach ( [ 'extend', 'regenerate', 'revoke' ] as $ta_action ) {
+				register_rest_route( $ns, '/temp-access/' . $ta_action, [
+					'methods'             => 'POST',
+					'callback'            => [ Rest\TempAccess::class, $ta_action ],
+					'permission_callback' => $ta_perm,
+				] );
+			}
+		}
+
 		// Sessions (Login Security module).
 		if ( self::module( 'login-security' ) ) {
 			register_rest_route( $ns, '/sessions', [

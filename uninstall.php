@@ -59,6 +59,20 @@ $meta_keys = [
 	'_gemsec_2fa_secret',
 	'_gemsec_2fa_secret_pending',
 	'_gemsec_2fa_backup_codes',
+	'_gemsec_magic_hash',
+	'_gemsec_magic_expires',
+	'_gemsec_magic_sends',
+	'_gemsec_ta',
+	'_gemsec_ta_expires',
+	'_gemsec_ta_revoked',
+	'_gemsec_ta_ended',
+	'_gemsec_ta_hash',
+	'_gemsec_ta_link_expires',
+	'_gemsec_ta_created',
+	'_gemsec_ta_created_by',
+	'_gemsec_ta_last_login',
+	'_gemsec_ta_logins',
+	'_gemsec_ta_history',
 	'_gemsec_oauth_avatar',
 	'_gemsec_oauth_registered_via',
 	'_gemsec_geo_allowed_countries',
@@ -79,6 +93,7 @@ $hooks = [
 	'gemsecurity_weekly_digest',
 	'gemsecurity_admin_guard_sweep',
 	'gemsecurity_daily_report',
+	'gemsecurity_temp_access_sweep',
 ];
 foreach ( $hooks as $hook ) {
 	wp_clear_scheduled_hook( $hook );

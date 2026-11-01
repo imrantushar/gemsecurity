@@ -459,6 +459,18 @@ class Installer {
 			'social_twitter_client_id'     => '',
 			'social_twitter_client_secret' => '',
 
+			// Magic login. Administrators are off by default; 2FA still applies.
+			'magic_login_enabled'          => false,
+			'magic_login_expiry'           => 10,
+			'magic_login_allow_admins'     => false,
+			'magic_login_roles'            => [],
+			'magic_login_require_2fa'      => true,
+
+			// Temporary access: which events email the site administrator.
+			'temp_access_notify_created'   => true,
+			'temp_access_notify_used'      => true,
+			'temp_access_notify_revoked'   => true,
+
 			// API & access hardening.
 			'rest_rate_limit_enabled'      => false,
 			'rest_rate_limit_max'          => 120,

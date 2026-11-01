@@ -135,6 +135,31 @@ class TwoFactor {
 			}
 		}
 
+		$token = $this->open_challenge( $user, $remember, $redirect );
+
+		if ( 'form' === $context ) {
+			// Login forms outside wp-login.php cannot render the challenge
+			// themselves (login_header() only exists there), so hand over.
+			wp_safe_redirect( add_query_arg( 'gemsec_2fa_token', rawurlencode( $token ), site_url( 'wp-login.php?action=gemsec_2fa', 'login' ) ) );
+			exit;
+		}
+
+		$this->render_form( $token, $method, '' );
+		exit;
+	}
+
+	/**
+	 * Park a login that has passed its first factor until the second one is
+	 * entered: store the pending challenge (transient plus signed cookie) and
+	 * send the email code when that is the user's method.
+	 *
+	 * @param \WP_User $user
+	 * @param bool     $remember
+	 * @param string   $redirect Where to land once the challenge is passed.
+	 * @return string The challenge token.
+	 */
+	private function open_challenge( $user, $remember, $redirect ) {
+		$method  = self::user_method( $user );
 		$token   = wp_generate_password( 32, false );
 		$pending = [ 'user_id' => $user->ID, 'remember' => $remember, 'redirect' => $redirect, 'method' => $method ];
 
@@ -151,14 +176,20 @@ class TwoFactor {
 
 		Logger::log( '2fa_challenge', sprintf( 'Second factor required for "%s" (%s).', $user->user_login, $method ), Logger::SEVERITY_INFO, [ 'user_id' => $user->ID ] );
 
-		if ( 'form' === $context ) {
-			// Login forms outside wp-login.php cannot render the challenge
-			// themselves (login_header() only exists there), so hand over.
-			wp_safe_redirect( add_query_arg( 'gemsec_2fa_token', rawurlencode( $token ), site_url( 'wp-login.php?action=gemsec_2fa', 'login' ) ) );
-			exit;
-		}
+		return $token;
+	}
 
-		$this->render_form( $token, $method, '' );
+	/**
+	 * Send a user who signed in by another route (e.g. an emailed magic link)
+	 * to the same second-factor prompt a password login gets. Does not return.
+	 *
+	 * @param \WP_User $user
+	 * @param bool     $remember
+	 * @param string   $redirect
+	 */
+	public static function challenge_and_exit( $user, $remember, $redirect ) {
+		$token = ( new self() )->open_challenge( $user, $remember, $redirect );
+		wp_safe_redirect( add_query_arg( 'gemsec_2fa_token', rawurlencode( $token ), site_url( 'wp-login.php?action=gemsec_2fa', 'login' ) ) );
 		exit;
 	}
 
