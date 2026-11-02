@@ -589,6 +589,7 @@ class SiteGuard {
 			$title .= '<span class="gemsecurity-ab-score gemsecurity-ab-score--' . esc_attr( $tone ) . '" aria-label="'
 				/* translators: 1: numeric score 0-100, 2: letter grade A-F. */
 				. esc_attr( sprintf( __( 'Security score %1$d, grade %2$s', 'gemsecurity' ), $score['score'], $score['grade'] ) )
+				. '" title="' . esc_attr( sprintf( /* translators: 1: score, 2: grade. */ __( 'Security score %1$d/100 — grade %2$s', 'gemsecurity' ), $score['score'], $score['grade'] ) )
 				. '">' . (int) $score['score'] . '</span>';
 		}
 
@@ -596,7 +597,8 @@ class SiteGuard {
 			$title .= '<span class="gemsecurity-ab-count" aria-label="'
 				/* translators: %d: number of active hardening switches. */
 				. esc_attr( sprintf( _n( '%d hardening switch on', '%d hardening switches on', count( $active ), 'gemsecurity' ), count( $active ) ) )
-				. '">' . (int) count( $active ) . '</span>';
+				. '" title="' . esc_attr( sprintf( _n( '%d protection active', '%d protections active', count( $active ), 'gemsecurity' ), count( $active ) ) )
+				. '">✓ ' . (int) count( $active ) . '</span>';
 		}
 
 		$bar->add_node( [
@@ -608,41 +610,70 @@ class SiteGuard {
 		// Score header inside the dropdown — repeats the badge with its grade
 		// and a one-line nudge, so a low score is visible even before the
 		// hardening chips. Links to the dashboard where the fix list lives.
+		$dashboard = admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG );
+
 		if ( null !== $score ) {
+			$tone = $score['score'] >= 75 ? 'ok' : ( $score['score'] >= 40 ? 'warn' : 'bad' );
 			$bar->add_node( [
 				'id'     => 'gemsecurity-score',
 				'parent' => 'gemsecurity',
-				'title'  => sprintf(
-					/* translators: 1: score, 2: grade, 3: nudge text. */
-					'%1$d / 100 · %2$s — %3$s',
-					(int) $score['score'],
-					esc_html( $score['grade'] ),
-					esc_html( $this->score_nudge( $score['score'] ) )
-				),
-				'href'   => admin_url( 'admin.php?page=' . GEMSECURITY_PLUGIN_SLUG ),
+				'title'  => '<span class="gemsecurity-ab-scorehead">'
+					. '<span class="gemsecurity-ab-scorehead__top"><strong>' . esc_html__( 'Security score', 'gemsecurity' ) . '</strong>'
+					. '<span class="gemsecurity-ab-score gemsecurity-ab-score--' . esc_attr( $tone ) . '">'
+					. (int) $score['score'] . '/100 · ' . esc_html( $score['grade'] ) . '</span></span>'
+					. '<span class="gemsecurity-ab-scorehead__note">' . esc_html( $this->score_nudge( $score['score'] ) ) . '</span>'
+					. '</span>',
+				'href'   => $dashboard,
+				'meta'   => [ 'class' => 'gemsecurity-ab-scoreitem' ],
 			] );
 		}
 
 		// One child per hardening switch currently ON — a quick status
 		// readout that doubles as a jump list to each setting's page.
-		foreach ( $active as $chip ) {
+		if ( $active ) {
 			$bar->add_node( [
-				'id'     => 'gemsecurity-chip-' . $chip['id'],
+				'id'     => 'gemsecurity-h-protect',
 				'parent' => 'gemsecurity',
-				'title'  => '✓ ' . esc_html( $chip['label'] ),
-				'href'   => esc_url( $chip['href'] ),
+				'title'  => esc_html__( 'Active protections', 'gemsecurity' ),
+				'meta'   => [ 'class' => 'gemsecurity-ab-heading' ],
 			] );
+			foreach ( $active as $chip ) {
+				$bar->add_node( [
+					'id'     => 'gemsecurity-chip-' . $chip['id'],
+					'parent' => 'gemsecurity',
+					'title'  => '<span class="gemsecurity-ab-check">✓</span>' . esc_html( $chip['label'] ),
+					'href'   => esc_url( $chip['href'] ),
+				] );
+			}
 		}
+
+		$bar->add_node( [
+			'id'     => 'gemsecurity-h-actions',
+			'parent' => 'gemsecurity',
+			'title'  => esc_html__( 'Quick actions', 'gemsecurity' ),
+			'meta'   => [ 'class' => 'gemsecurity-ab-heading' ],
+		] );
 
 		// Uploads toggle stays its own node: it is the one chip that
 		// toggles in-place from the admin bar rather than linking out.
 		$bar->add_node( [
 			'id'     => 'gemsecurity-uploads',
 			'parent' => 'gemsecurity',
-			'title'  => $off
-				? esc_html__( 'File uploads: OFF — click to turn on', 'gemsecurity' )
-				: esc_html__( 'File uploads: ON — click to turn off', 'gemsecurity' ),
+			'title'  => '<span class="gemsecurity-ab-dot gemsecurity-ab-dot--' . ( $off ? 'off' : 'on' ) . '"></span>'
+				. ( $off
+					? esc_html__( 'File uploads: blocked', 'gemsecurity' )
+					: esc_html__( 'File uploads: allowed', 'gemsecurity' ) )
+				. '<span class="gemsecurity-ab-action">'
+				. ( $off ? esc_html__( 'Allow', 'gemsecurity' ) : esc_html__( 'Block', 'gemsecurity' ) )
+				. '</span>',
 			'href'   => wp_nonce_url( admin_url( 'admin-post.php?action=' . self::TOGGLE_ACTION ), self::TOGGLE_ACTION ),
+		] );
+
+		$bar->add_node( [
+			'id'     => 'gemsecurity-open',
+			'parent' => 'gemsecurity',
+			'title'  => esc_html__( 'Open GemSecurity dashboard', 'gemsecurity' ) . ' →',
+			'href'   => $dashboard,
 		] );
 	}
 
@@ -765,7 +796,22 @@ class SiteGuard {
 #wpadminbar #wp-admin-bar-gemsecurity.hover .gemsecurity-ab-score--ok,
 #wpadminbar #wp-admin-bar-gemsecurity:hover .gemsecurity-ab-score--bad,
 #wpadminbar #wp-admin-bar-gemsecurity.hover .gemsecurity-ab-score--bad { color: #fff; }
-#wpadminbar #wp-admin-bar-gemsecurity-score > .ab-item { font-weight: 600; }
+/* Dropdown: roomier rows, a clear score header and labelled sections. */
+#wpadminbar #wp-admin-bar-gemsecurity .ab-sub-wrapper { min-width: 260px; }
+#wpadminbar #wp-admin-bar-gemsecurity .ab-submenu { padding: 6px 0; }
+#wpadminbar #wp-admin-bar-gemsecurity .ab-submenu .ab-item { display: flex; align-items: center; gap: 8px; height: auto; min-height: 30px; line-height: 1.4; padding: 4px 14px; white-space: normal; }
+#wpadminbar #wp-admin-bar-gemsecurity .ab-submenu .gemsecurity-ab-score { margin-left: 0; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-scoreitem > .ab-item { padding: 8px 14px 10px; border-bottom: 1px solid rgba(255,255,255,.12); margin-bottom: 4px; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-scorehead { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-scorehead__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-scorehead__note { font-size: 12px; opacity: .75; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-heading > .ab-item { min-height: 0; padding: 8px 14px 2px; font-size: 10.5px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: #8c8f94 !important; cursor: default; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-check { color: #34d399; font-weight: 700; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-dot--on { background: #34d399; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-dot--off { background: #f87171; }
+#wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-action { margin-left: auto; padding: 1px 8px; border-radius: 10px; background: rgba(255,255,255,.14); font-size: 11px; font-weight: 600; }
+#wpadminbar #wp-admin-bar-gemsecurity-open > .ab-item { margin-top: 4px; border-top: 1px solid rgba(255,255,255,.12); color: #72aee6 !important; }
 </style>
 		<?php
 	}
