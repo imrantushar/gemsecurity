@@ -343,6 +343,26 @@ class Settings {
 			}
 		}
 
+		// Same for the administrator country list: if it does not include the
+		// country the administrator is in right now, their next sign-in would
+		// be refused. Add it. (Unknown / private addresses give '' and are skipped.)
+		if (
+			! ( defined( 'WP_CLI' ) && WP_CLI ) && ! wp_doing_cron()
+			&& ! empty( $merged['geo_admin_restrict_enabled'] ) && ! empty( $merged['geo_admin_countries'] )
+		) {
+			$my_country = \GemSecurity\Security\Geo::current_country();
+			$countries  = array_map( 'strtoupper', (array) $merged['geo_admin_countries'] );
+			if ( '' !== $my_country && ! in_array( $my_country, $countries, true ) ) {
+				$countries[]                    = $my_country;
+				$merged['geo_admin_countries'] = array_values( $countries );
+				self::$notices[]                = sprintf(
+					/* translators: %s: the administrator's country code. */
+					__( 'Your own country (%s) was added to the administrator country list. Without it you could not sign in again.', 'gemsecurity' ),
+					$my_country
+				);
+			}
+		}
+
 		$merged = SiteGuard::guard_lock_settings( $current, $merged );
 
 		list( $merged, $held ) = SiteGuard::guard_protected( $current, $merged );

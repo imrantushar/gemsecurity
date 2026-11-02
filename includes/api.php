@@ -304,6 +304,14 @@ class Api {
 			'callback'            => [ Rest\Firewall::class, 'file_permissions' ],
 			'permission_callback' => $perm,
 		] );
+		register_rest_route( $ns, '/file-permissions/fix', [
+			'methods'             => 'POST',
+			'callback'            => [ Rest\Firewall::class, 'file_permissions_fix' ],
+			'permission_callback' => $perm,
+			'args'                => [
+				'path' => [ 'type' => 'string', 'required' => true ],
+			],
+		] );
 
 		/* -------------------------------------------------------------- */
 		/* Module-owned groups — registered only when their module is on. */

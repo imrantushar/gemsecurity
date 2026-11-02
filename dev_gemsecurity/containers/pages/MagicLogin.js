@@ -2,7 +2,7 @@ import React from 'react';
 import { __ } from '@wordpress/i18n';
 import { GS } from '@Utils/api';
 import useSettingsForm from '@Utils/useSettingsForm';
-import { Card, Toggle, Field, Select } from '@Components/ui/Controls';
+import { Card, Toggle, Field, Select, MultiSelect, toOptions } from '@Components/ui/Controls';
 
 const KEYS = [
 	'magic_login_enabled',
@@ -22,13 +22,6 @@ export default function MagicLogin() {
 	const { form, setField } = useSettingsForm( KEYS );
 	const roles = GS.roles || {};
 	const selected = Array.isArray( form.magic_login_roles ) ? form.magic_login_roles : [];
-
-	const toggleRole = ( slug, on ) => {
-		setField(
-			'magic_login_roles',
-			on ? [ ...selected, slug ] : selected.filter( ( r ) => r !== slug )
-		);
-	};
 
 	return (
 		<div className="gs-page">
@@ -63,16 +56,14 @@ export default function MagicLogin() {
 				/>
 				<Field
 					label={ __( 'Limit to these roles', 'gemsecurity' ) }
-					description={ __( 'Leave all unticked to allow every role (administrators still need the switch above).', 'gemsecurity' ) }
+					description={ __( 'Leave empty to allow every role (administrators still need the switch above).', 'gemsecurity' ) }
 				>
-					{ Object.entries( roles ).map( ( [ slug, name ] ) => (
-						<Toggle
-							key={ slug }
-							label={ name }
-							checked={ selected.includes( slug ) }
-							onChange={ ( v ) => toggleRole( slug, v ) }
-						/>
-					) ) }
+					<MultiSelect
+						options={ toOptions( roles ) }
+						value={ selected }
+						onChange={ ( next ) => setField( 'magic_login_roles', next ) }
+						placeholder={ __( 'All roles', 'gemsecurity' ) }
+					/>
 				</Field>
 			</Card>
 

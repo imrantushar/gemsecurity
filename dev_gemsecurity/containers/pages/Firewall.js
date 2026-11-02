@@ -71,12 +71,34 @@ const KEYS = [
 	'securitytxt_policy',
 ];
 
-/** Read-only file-permission audit. */
+/** File-permission audit with per-row "Fix" (chmod to recommended mode). */
 function FilePermissions() {
 	const [ rows, setRows ] = useState( null );
+	const [ fixing, setFixing ] = useState( '' );
+	const toast = useToast();
+
 	useEffect( () => {
 		api.get( 'file-permissions' ).then( ( r ) => setRows( r.data.items ) ).catch( () => setRows( [] ) );
 	}, [] );
+
+	const fix = async ( path ) => {
+		setFixing( path );
+		try {
+			const { data } = await api.post( 'file-permissions/fix', { path } );
+			setRows( ( prev ) => prev.map( ( r ) => (
+				r.path === path
+					? { ...r, perms: data.perms, status: 'ok', note: '', fixable: false }
+					: r
+			) ) );
+			toast( __( 'Permissions updated.', 'gemsecurity' ), 'success' );
+		} catch ( e ) {
+			const msg = e?.response?.data?.message || __( 'Could not change the mode.', 'gemsecurity' );
+			toast( msg, 'error' );
+		} finally {
+			setFixing( '' );
+		}
+	};
+
 	return (
 		<Card
 			title={ __( 'File permissions', 'gemsecurity' ) }
@@ -91,6 +113,7 @@ function FilePermissions() {
 						<th>{ __( 'Current', 'gemsecurity' ) }</th>
 						<th>{ __( 'Recommended', 'gemsecurity' ) }</th>
 						<th>{ __( 'Status', 'gemsecurity' ) }</th>
+						<th aria-label={ __( 'Actions', 'gemsecurity' ) }></th>
 					</tr></thead>
 					<tbody>
 						{ rows.map( ( r ) => (
@@ -102,6 +125,18 @@ function FilePermissions() {
 								<td className="gs-nowrap">{ r.perms }</td>
 								<td className="gs-nowrap">{ r.recommended }</td>
 								<td><Badge tone={ r.status === 'critical' ? 'danger' : r.status === 'warning' ? 'warning' : 'success' }>{ r.status === 'ok' ? __( 'OK', 'gemsecurity' ) : r.status }</Badge></td>
+								<td className="gs-nowrap">
+									{ r.fixable && (
+										<Button
+											variant="secondary"
+											size="small"
+											onClick={ () => fix( r.path ) }
+											disabled={ !! fixing }
+										>
+											{ fixing === r.path ? __( 'Fixing…', 'gemsecurity' ) : __( 'Fix', 'gemsecurity' ) }
+										</Button>
+									) }
+								</td>
 							</tr>
 						) ) }
 					</tbody>
