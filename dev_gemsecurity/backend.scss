@@ -36,13 +36,6 @@ html {
 	scrollbar-gutter: stable;
 }
 
-/* Single navigation: the in-content sub-nav is the menu now, so hide the
-   native WordPress GemSecurity submenu on plugin pages (this stylesheet only
-   loads there). The top-level item still opens the app. */
-#adminmenu #toplevel_page_gemsecurity .wp-submenu {
-	display: none;
-}
-
 #gemsecuritywrap.gemsecuritywrap {
 	/* ---- Light theme (default) — GemCRM palette ---- */
 	--gs-bg: #F6F7F8;
@@ -1464,5 +1457,42 @@ html {
 		display: flex; flex-direction: column; gap: 12px; align-items: flex-start;
 		.gs-table { width: 100%; }
 		code { font-size: 12px; word-break: break-all; }
+	}
+}
+
+/* Sidebar sub-menu for nested groups (Settings): the active group keeps its
+   pages inline; other groups fly out beside the menu on hover. */
+#adminmenu .wp-submenu-wrap li.gemsec-has-flyout {
+	position: relative;
+
+	> ul.wp-submenu.gemsec-submenu-flyout {
+		display: none;
+		position: absolute;
+		left: 100%;
+		top: 0;
+		margin: 0 !important;
+		padding: 6px 0 !important;
+		min-width: 180px;
+		background: #2c3338;
+		border-radius: 0 4px 4px 0;
+		box-shadow: 0 3px 5px rgba(0, 0, 0, .2);
+		z-index: 9999;
+
+		li a { display: block; padding: 6px 14px; white-space: nowrap; }
+	}
+
+	&:hover > ul.wp-submenu.gemsec-submenu-flyout,
+	&:focus-within > ul.wp-submenu.gemsec-submenu-flyout { display: block; }
+
+	> ul.wp-submenu:not(.gemsec-submenu-flyout) {
+		padding: 0 !important;
+		margin: 0 !important;
+
+		li a {
+			font-size: 13px;
+			color: rgba(240, 246, 252, .7);
+			&::before { content: "↳"; padding: 0 2px; }
+		}
+		li.current a { color: #fff; font-weight: 500; }
 	}
 }

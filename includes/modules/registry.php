@@ -79,6 +79,7 @@ class Registry {
 				'icon'          => 'layers',
 				'category'      => 'core',
 				'core'          => true,
+				'group'         => 'addons',
 				'page_slug'     => $slug . '-modules',
 				'classes'       => [],
 			],
@@ -342,6 +343,7 @@ class Registry {
 			'access'   => [ 'title' => __( 'Login & Access', 'gemsecurity' ), 'icon' => 'lock' ],
 			'scanning' => [ 'title' => __( 'Scanning', 'gemsecurity' ), 'icon' => 'radar' ],
 			'logs'     => [ 'title' => __( 'Logs & Monitoring', 'gemsecurity' ), 'icon' => 'list' ],
+			'addons'   => [ 'title' => __( 'Addons', 'gemsecurity' ), 'icon' => 'layers' ],
 			'settings' => [ 'title' => __( 'Settings', 'gemsecurity' ), 'icon' => 'cog' ],
 		] );
 	}
@@ -412,7 +414,7 @@ class Registry {
 				'desc'  => __( 'Security overview and at-a-glance status.', 'gemsecurity' ),
 			],
 			'modules' => [
-				'title' => __( 'Modules', 'gemsecurity' ),
+				'title' => __( 'Addons', 'gemsecurity' ),
 				'desc'  => __( 'Turn security modules on or off. Activate only what this site needs.', 'gemsecurity' ),
 			],
 			'firewall' => [

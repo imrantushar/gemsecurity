@@ -3,8 +3,9 @@ import { __ } from '@wordpress/i18n';
 import { useDispatch, useSelector } from 'react-redux';
 import useNavigate from '@Utils/useGuardedNavigate';
 import { fetchSettings } from '@Redux/settingsSlice';
-import { useActivePage, useNavItems, useNavGroups, useModuleBySlug, pageUrl, pageFromHref, syncAdminMenu, getModules } from '@Utils/nav';
+import { useActivePage, useNavItems, useNavGroups, useModuleBySlug, pageUrl, pageFromHref } from '@Utils/nav';
 import TopNav from '@Components/Layout/TopNav';
+import AdminMenu, { NESTED_GROUPS } from '@Components/Layout/AdminMenu';
 import { Loading, EmptyState, Button } from '@Components/ui/Controls';
 import { isLocked, isPro, proFeatures, ProBadge, ProGate } from '@Components/ui/Pro';
 import ErrorBoundary from '@Components/ui/ErrorBoundary';
@@ -104,8 +105,6 @@ export default function App() {
 			el.scrollTo?.( 0, 0 );
 		}
 		window.scrollTo?.( 0, 0 );
-		// Keep the WP sidebar's group highlight in step with client-side routing.
-		syncAdminMenu( getModules() );
 	}, [ page ] );
 
 	// The malware scanner is now a tab inside Scanner — resolve the old slug.
@@ -114,7 +113,9 @@ export default function App() {
 	const navItems = useNavItems();
 	const navItem = navItems.find( ( i ) => i.key === resolvedPage );
 	// Side nav lists only the current group's pages; the topbar switches groups.
-	const groupItems = useNavGroups().find( ( g ) => g.items.some( ( i ) => i.key === resolvedPage ) )?.items || [];
+	const currentGroup = useNavGroups().find( ( g ) => g.items.some( ( i ) => i.key === resolvedPage ) );
+	// Nested groups are navigated from the WP sidebar sub-menu instead.
+	const groupItems = currentGroup && ! NESTED_GROUPS.includes( currentGroup.id ) ? currentGroup.items : [];
 	const locked = isLocked( resolvedPage );
 	const feature = proFeatures()[ resolvedPage ] || {};
 
@@ -154,6 +155,7 @@ export default function App() {
 
 	return (
 		<div className="gs-app">
+			<AdminMenu />
 			<main className="gs-main">
 				<header className="gs-topbar" ref={ topbarRef }>
 					<div className="gs-topbar__inner">

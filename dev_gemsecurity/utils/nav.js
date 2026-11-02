@@ -34,7 +34,6 @@ export function setModules( next ) {
 	}
 	modules = next;
 	GS.modules = next;
-	syncAdminMenu( next );
 	listeners.forEach( ( fn ) => fn() );
 }
 
@@ -92,51 +91,6 @@ export function useNavGroups() {
 export function useNavItems() {
 	const list = useModules();
 	return useMemo( () => toNavItems( list ), [ list ] );
-}
-
-/**
- * Rebuild GemSecurity's entries in the native WordPress admin sidebar so they
- * match the current activation state.
- *
- * The sidebar shows one entry per group (see Admin\Menu::collapse_to_groups),
- * linking to the group's first visible module. Toggling a module can empty a
- * group or change its lead page, so the entries are simply rebuilt from the
- * grouped list, keeping the highlight on the group of the current page.
- *
- * @param {Array} list Module descriptors, in registry order.
- */
-export function syncAdminMenu( list ) {
-	const adminMenu = document.getElementById( 'adminmenu' );
-	if ( ! adminMenu ) {
-		return;
-	}
-
-	// `page=` is the last query arg, so ends-with is an exact slug match:
-	// "page=gemsecurity" never matches "page=gemsecurity-firewall".
-	const topLink = adminMenu.querySelector( `a[href$="page=${ SLUG }"]` );
-	const submenu = topLink?.closest( 'li' )?.querySelector( '.wp-submenu' );
-	if ( ! submenu ) {
-		return;
-	}
-
-	const current = getCurrentPage();
-	submenu
-		.querySelectorAll( ':scope > li:not(.wp-submenu-head)' )
-		.forEach( ( li ) => li.remove() );
-
-	toNavGroups( toNavItems( list ) ).forEach( ( g ) => {
-		const li = document.createElement( 'li' );
-		const a = document.createElement( 'a' );
-		a.href = pageUrl( g.lead );
-		a.textContent = g.title;
-		if ( g.items.some( ( i ) => i.key === current ) ) {
-			li.className = 'current';
-			a.className = 'current';
-			a.setAttribute( 'aria-current', 'page' );
-		}
-		li.appendChild( a );
-		submenu.appendChild( li );
-	} );
 }
 
 /** Base admin path used for client-side router links, e.g. "/wp-admin/". */
