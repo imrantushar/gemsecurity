@@ -75,16 +75,6 @@ class MagicLogin {
 			return false;
 		}
 
-		/**
-		 * Whether another component keeps this account off magic-link sign-in.
-		 *
-		 * @param bool     $blocked
-		 * @param \WP_User $user
-		 */
-		if ( apply_filters( 'gemsecurity/magic_login/user_blocked', false, $user ) ) {
-			return false;
-		}
-
 		$privileged = false;
 		foreach ( SocialLogin::PRIVILEGED_CAPS as $cap ) {
 			if ( $user->has_cap( $cap ) ) {

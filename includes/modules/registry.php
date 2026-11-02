@@ -175,6 +175,13 @@ class Registry {
 				'classes'       => [ MagicLogin::class ],
 				'settings_keys' => [ 'magic_login_enabled' ],
 			],
+			'temp-access' => [
+				'icon'          => 'clock',
+				'category'      => 'access',
+				'page_slug'     => $slug . '-temp-access',
+				'classes'       => [ TempAccess::class ],
+				'settings_keys' => [],
+			],
 			'admin-guard' => [
 				'icon'          => 'crown',
 				'category'      => 'access',
@@ -447,7 +454,7 @@ class Registry {
 			],
 			'temp-access' => [
 				'title' => __( 'Temporary Access', 'gemsecurity' ),
-				'desc'  => __( 'Give developers or support time-limited dashboard access without sharing a password.', 'gemsecurity' ),
+				'desc'  => __( 'Give an existing user a role for a limited time; it is taken back automatically.', 'gemsecurity' ),
 			],
 			'geolocation' => [
 				'title' => __( 'Geolocation', 'gemsecurity' ),

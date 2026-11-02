@@ -368,23 +368,23 @@ class Docs {
 			],
 
 			'temp-access' => [
-				'summary' => __( 'Gives a developer or support person a real account that stops working by itself, so nobody has to share a password.', 'gemsecurity' ),
+				'summary' => __( 'Gives an existing user a role for a limited time and takes it back by itself, so nobody keeps access they no longer need.', 'gemsecurity' ),
 				'does'    => [
-					__( 'Creates a new user with the role you choose and emails a single-use sign-in link; only a hash of the link is stored.', 'gemsecurity' ),
-					__( 'Ends access at the expiry time on every request, not just on a schedule, and ends all sessions when access expires or is revoked.', 'gemsecurity' ),
-					__( 'Never touches an existing user: an email address that already has an account is refused.', 'gemsecurity' ),
-					__( 'Records creation, sign-ins, failed link attempts, extensions, expiry and revocation in each account’s history and in the Logs.', 'gemsecurity' ),
+					__( 'Changes the role of a user you pick until the time you choose; their previous roles are stored and put back when it ends.', 'gemsecurity' ),
+					__( 'Ends access at the expiry time on every request, not just on a schedule, and ends the user’s sessions when access expires or is revoked.', 'gemsecurity' ),
+					__( 'Never creates accounts and never signs anyone in: the user already exists and signs in the normal way, with every login protection you have turned on.', 'gemsecurity' ),
+					__( 'Records grants, extensions, expiry and revocation in each user’s history and in the Logs.', 'gemsecurity' ),
 				],
 				'setup'   => [
-					__( 'Open Temporary Access, choose Create temporary access, then enter the email, role and duration.', 'gemsecurity' ),
+					__( 'Add the person under Users → Add New first, with a role that has no special access.', 'gemsecurity' ),
+					__( 'Open Temporary Access, choose Grant access, then search for the user and pick a role and duration.', 'gemsecurity' ),
 					__( 'Pick the least-privileged role that gets the job done; roles that can change the site need an explicit confirmation.', 'gemsecurity' ),
-					__( 'Copy the link or let it be emailed. It works once — use Regenerate link if it is lost.', 'gemsecurity' ),
 					__( 'Choose which events email the security notification address.', 'gemsecurity' ),
 				],
 				'notes'   => [
-					__( 'Links are shown only when created or regenerated and cannot be recovered later.', 'gemsecurity' ),
-					__( 'Serve your site over HTTPS so the link is not sent in the clear.', 'gemsecurity' ),
-					__( 'Revoked and expired accounts are kept for the audit trail; they cannot sign in.', 'gemsecurity' ),
+					__( 'Users who already have full administrator access cannot be given temporary access.', 'gemsecurity' ),
+					__( 'While access is active the user cannot create, promote or delete users or switch GemSecurity off.', 'gemsecurity' ),
+					__( 'Ended grants are kept for the audit trail.', 'gemsecurity' ),
 				],
 			],
 

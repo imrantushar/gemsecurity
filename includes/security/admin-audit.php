@@ -280,14 +280,12 @@ class AdminAudit {
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return true;
 		}
-		/**
-		 * Whether another component vouches for this administrator, for
-		 * instance a time-limited grant that is still live.
-		 *
-		 * @param bool     $trusted
-		 * @param \WP_User $user
-		 */
-		return (bool) apply_filters( 'gemsecurity/admin_audit/trusted_admin', false, $user );
+		// A user given an administrator role by a time-limited grant, while that
+		// grant is live. Once it ends the account no longer qualifies.
+		if ( \GemSecurity\Modules\TempAccess::is_live( $user->ID ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

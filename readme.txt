@@ -136,7 +136,7 @@ Yes. Everything described above works in the free plugin. Pro adds active threat
 == Changelog ==
 
 = 1.2.0 - 01/11/2026 =
-* Changed - Temporary Access is now part of GemSecurity Pro.
+* Changed - Temporary Access now gives an existing user a role for a limited time and puts their previous role back when it ends. It no longer creates accounts or sign-in links.
 * Changed - GemSecurity no longer writes to WordPress core, plugin, theme or must-use folders. Quarantine restores only to the uploads folder, and the core-file restore and chmod "Fix" buttons are gone; the core-file popup and permission audit remain read-only.
 * Added - Magic Login: users can ask for a one-time sign-in link by email from the login form.
 * Added - Plugin lock: a separate unlock password plus an emailed one-time code, not tied to any user account. It guards deactivating or deleting GemSecurity, turning the lock off and switching modules off, and while locked it blocks installing, uploading and editing code.

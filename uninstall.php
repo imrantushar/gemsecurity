@@ -76,6 +76,8 @@ $meta_keys = [
 	'_gemsec_ta_last_login',
 	'_gemsec_ta_logins',
 	'_gemsec_ta_history',
+	'_gemsec_ta_role',
+	'_gemsec_ta_prev_roles',
 	'_gemsec_oauth_avatar',
 	'_gemsec_oauth_registered_via',
 	'_gemsec_geo_allowed_countries',

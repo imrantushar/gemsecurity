@@ -142,6 +142,10 @@ class Settings {
 			'magic_login_roles'             => 'slug_list',
 			'magic_login_require_2fa'       => 'bool',
 
+			// Temporary access notifications.
+			'temp_access_notify_created'    => 'bool',
+			'temp_access_notify_revoked'    => 'bool',
+
 			// API & access hardening.
 			'rest_rate_limit_enabled'       => 'bool',
 			'rest_rate_limit_max'           => 'int',

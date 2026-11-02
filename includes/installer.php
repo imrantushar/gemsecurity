@@ -38,10 +38,8 @@ class Installer {
 		self::notify_deactivated();
 
 		self::clear_events();
-		/**
-		 * Fires while GemSecurity is being deactivated, before it unloads.
-		 */
-		do_action( 'gemsecurity/deactivating' );
+		// Nothing enforces temporary access once the plugin is off, so end it.
+		\GemSecurity\Modules\TempAccess::disable_all();
 		// Remove the extended-protection mu-plugin so a deactivated plugin
 		// never leaves an orphaned early firewall behind.
 		\GemSecurity\Security\PluginGuard::uninstall_mu();
@@ -469,6 +467,10 @@ class Installer {
 			'magic_login_allow_admins'     => false,
 			'magic_login_roles'            => [],
 			'magic_login_require_2fa'      => true,
+
+			// Temporary access: which events email the site administrator.
+			'temp_access_notify_created'   => true,
+			'temp_access_notify_revoked'   => true,
 
 			// API & access hardening.
 			'rest_rate_limit_enabled'      => false,

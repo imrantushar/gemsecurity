@@ -5,7 +5,7 @@ import useSettingsForm from '@Utils/useSettingsForm';
 import { useToast } from '@Components/ui/Toast';
 import { Card, Toggle, Field, Select, TextInput, Button, Badge, Loading, EmptyState } from '@Components/ui/Controls';
 
-const KEYS = [ 'temp_access_notify_created', 'temp_access_notify_used', 'temp_access_notify_revoked' ];
+const KEYS = [ 'temp_access_notify_created', 'temp_access_notify_revoked' ];
 
 const PRESET_LABELS = {
 	'1h': __( '1 hour', 'gemsecurity' ),
@@ -24,11 +24,7 @@ const STATUS_LABELS = {
 };
 
 const EVENT_LABELS = {
-	created: __( 'Created', 'gemsecurity' ),
-	link_sent: __( 'Link emailed', 'gemsecurity' ),
-	link_regenerated: __( 'Link regenerated', 'gemsecurity' ),
-	login: __( 'Signed in', 'gemsecurity' ),
-	link_failed: __( 'Failed link attempt', 'gemsecurity' ),
+	created: __( 'Granted', 'gemsecurity' ),
 	extended: __( 'Extended', 'gemsecurity' ),
 	expired: __( 'Expired', 'gemsecurity' ),
 	revoked: __( 'Revoked', 'gemsecurity' ),
@@ -69,10 +65,66 @@ function DurationPicker( { presets, value, onChange } ) {
 	);
 }
 
-const emptyForm = { email: '', role: '', duration: '24h', local: '', expires_at: 0, send_email: true, confirm_elevated: false };
+/** Search existing users by name, login or email. */
+function UserPicker( { value, onChange } ) {
+	const [ term, setTerm ] = useState( '' );
+	const [ results, setResults ] = useState( [] );
 
-function CreateForm( { data, onDone, onCancel } ) {
+	useEffect( () => {
+		if ( term.trim().length < 2 ) {
+			setResults( [] );
+			return undefined;
+		}
+		const t = setTimeout( () => {
+			api.get( 'temp-access/users', { params: { search: term.trim() } } )
+				.then( ( r ) => setResults( r.data.users || [] ) )
+				.catch( () => setResults( [] ) );
+		}, 250 );
+		return () => clearTimeout( t );
+	}, [ term ] );
+
+	if ( value ) {
+		return (
+			<div style={ ROW }>
+				<strong>{ value.name }</strong>
+				<span className="gs-muted">{ value.email }</span>
+				<Button variant="secondary" onClick={ () => onChange( null ) }>{ __( 'Change', 'gemsecurity' ) }</Button>
+			</div>
+		);
+	}
+
+	return (
+		<>
+			<TextInput
+				value={ term }
+				placeholder={ __( 'Search by name, username or email…', 'gemsecurity' ) }
+				onChange={ ( e ) => setTerm( e.target.value ) }
+			/>
+			{ results.length > 0 && (
+				<table className="gs-table">
+					<tbody>
+						{ results.map( ( u ) => (
+							<tr key={ u.id }>
+								<td>{ u.name }<div className="gs-muted">{ u.email }</div></td>
+								<td className="gs-muted">{ u.roles.join( ', ' ) }</td>
+								<td><Button variant="secondary" onClick={ () => onChange( u ) }>{ __( 'Choose', 'gemsecurity' ) }</Button></td>
+							</tr>
+						) ) }
+					</tbody>
+				</table>
+			) }
+			{ term.trim().length >= 2 && results.length === 0 && (
+				<p className="gs-muted">{ __( 'No matching users. Add the person under Users → Add New first.', 'gemsecurity' ) }</p>
+			) }
+		</>
+	);
+}
+
+const emptyForm = { role: '', duration: '24h', local: '', expires_at: 0, confirm_elevated: false };
+
+function GrantForm( { data, onDone, onCancel } ) {
 	const toast = useToast();
+	const [ user, setUser ] = useState( null );
 	const [ form, setForm ] = useState( emptyForm );
 	const [ busy, setBusy ] = useState( false );
 	const role = data.roles.find( ( r ) => r.slug === form.role );
@@ -81,11 +133,11 @@ function CreateForm( { data, onDone, onCancel } ) {
 	const submit = async () => {
 		setBusy( true );
 		try {
-			const { data: res } = await api.post( 'temp-access', form );
-			toast( res.emailed ? __( 'Temporary access created and emailed.', 'gemsecurity' ) : __( 'Temporary access created.', 'gemsecurity' ), 'success' );
-			onDone( { link: res.link, email: form.email } );
+			await api.post( 'temp-access', { ...form, user_id: user.id } );
+			toast( __( 'Temporary access granted.', 'gemsecurity' ), 'success' );
+			onDone();
 		} catch ( e ) {
-			toast( e?.response?.data?.message || __( 'Could not create the account.', 'gemsecurity' ), 'error' );
+			toast( e?.response?.data?.message || __( 'Could not grant access.', 'gemsecurity' ), 'error' );
 		} finally {
 			setBusy( false );
 		}
@@ -93,16 +145,11 @@ function CreateForm( { data, onDone, onCancel } ) {
 
 	return (
 		<Card
-			title={ __( 'Create temporary access', 'gemsecurity' ) }
-			description={ __( 'A new account is created with the role you pick. An address that already belongs to a user is refused — existing accounts are never changed.', 'gemsecurity' ) }
+			title={ __( 'Grant temporary access', 'gemsecurity' ) }
+			description={ __( 'Pick a user who already has an account. They get the role you choose until the time is up, then their previous role is restored. Nothing is created and no sign-in link is sent.', 'gemsecurity' ) }
 		>
-			<Field label={ __( 'Email address', 'gemsecurity' ) }>
-				<TextInput
-					type="email"
-					value={ form.email }
-					placeholder="developer@example.com"
-					onChange={ ( e ) => setForm( { ...form, email: e.target.value } ) }
-				/>
+			<Field label={ __( 'User', 'gemsecurity' ) }>
+				<UserPicker value={ user } onChange={ setUser } />
 			</Field>
 			<Field label={ __( 'Role', 'gemsecurity' ) } description={ __( 'Grant the least access that gets the job done.', 'gemsecurity' ) }>
 				<Select
@@ -131,55 +178,15 @@ function CreateForm( { data, onDone, onCancel } ) {
 			<Field label={ __( 'Access lasts', 'gemsecurity' ) } description={ sprintf( /* translators: %d: days. */ __( 'At most %d days.', 'gemsecurity' ), data.max_days ) }>
 				<DurationPicker presets={ data.presets } value={ form } onChange={ ( v ) => setForm( { ...form, ...v } ) } />
 			</Field>
-			<Toggle
-				label={ __( 'Email the access link to this address', 'gemsecurity' ) }
-				description={ __( 'You can also copy the link after the account is created.', 'gemsecurity' ) }
-				checked={ form.send_email }
-				onChange={ ( v ) => setForm( { ...form, send_email: v } ) }
-			/>
-			{ ! data.https && (
-				<p className="gs-muted">{ __( 'Your site is not served over HTTPS, so this link would travel unencrypted. Enable HTTPS before sharing it.', 'gemsecurity' ) }</p>
-			) }
 			<div style={ ROW }>
 				<Button
 					loading={ busy }
-					disabled={ ! form.email || ! form.role || ( elevated && ! form.confirm_elevated ) || ( form.duration === 'custom' && ! form.expires_at ) }
+					disabled={ ! user || ! form.role || ( elevated && ! form.confirm_elevated ) || ( form.duration === 'custom' && ! form.expires_at ) }
 					onClick={ submit }
 				>
-					{ __( 'Create access', 'gemsecurity' ) }
+					{ __( 'Grant access', 'gemsecurity' ) }
 				</Button>
 				<Button variant="secondary" onClick={ onCancel }>{ __( 'Cancel', 'gemsecurity' ) }</Button>
-			</div>
-		</Card>
-	);
-}
-
-/** The one place a raw link is ever shown. */
-function LinkReveal( { reveal, onClose } ) {
-	const toast = useToast();
-	const copy = async () => {
-		try {
-			await navigator.clipboard.writeText( reveal.link );
-			toast( __( 'Link copied.', 'gemsecurity' ), 'success' );
-		} catch ( e ) {
-			toast( __( 'Copy failed — select the link and copy it manually.', 'gemsecurity' ), 'error' );
-		}
-	};
-	return (
-		<Card
-			title={ sprintf( /* translators: %s: email. */ __( 'Access link for %s', 'gemsecurity' ), reveal.email ) }
-			description={ __( 'This link works once and is shown only now — it is not stored. Anyone who opens it first gets the access, so send it privately.', 'gemsecurity' ) }
-			actions={ <Button variant="secondary" onClick={ onClose }>{ __( 'Done', 'gemsecurity' ) }</Button> }
-		>
-			<input
-				readOnly
-				className="gs-input"
-				style={ { width: '100%' } }
-				value={ reveal.link }
-				onFocus={ ( e ) => e.target.select() }
-			/>
-			<div style={ ROW }>
-				<Button onClick={ copy }>{ __( 'Copy link', 'gemsecurity' ) }</Button>
 			</div>
 		</Card>
 	);
@@ -241,7 +248,6 @@ export default function TempAccess() {
 	const toast = useToast();
 	const [ data, setData ] = useState( null );
 	const [ creating, setCreating ] = useState( false );
-	const [ reveal, setReveal ] = useState( null );
 	const [ open, setOpen ] = useState( 0 );
 	const [ extending, setExtending ] = useState( 0 );
 	const [ busyId, setBusyId ] = useState( 0 );
@@ -251,40 +257,25 @@ export default function TempAccess() {
 			.then( ( r ) => setData( r.data ) )
 			.catch( ( e ) => {
 				toast( e?.response?.data?.message || __( 'Could not load temporary access.', 'gemsecurity' ), 'error' );
-				setData( { items: [], counts: { active: 0, expired: 0, revoked: 0 }, roles: [], presets: [], https: true, max_days: 90 } );
+				setData( { items: [], counts: { active: 0, expired: 0, revoked: 0 }, roles: [], presets: [], max_days: 90 } );
 			} );
 	};
 	useEffect( load, [] );
 
-	const act = async ( item, path, payload, success, confirmText ) => {
+	const revoke = async ( item ) => {
 		// eslint-disable-next-line no-alert
-		if ( confirmText && ! window.confirm( confirmText ) ) {
-			return null;
+		if ( ! window.confirm( sprintf( /* translators: %s: email. */ __( 'Revoke access for %s now? Their previous role is restored and their sessions end immediately.', 'gemsecurity' ), item.email ) ) ) {
+			return;
 		}
 		setBusyId( item.id );
 		try {
-			const { data: res } = await api.post( `temp-access/${ path }`, { user_id: item.id, ...payload } );
-			toast( success, 'success' );
+			await api.post( 'temp-access/revoke', { user_id: item.id } );
+			toast( __( 'Access revoked.', 'gemsecurity' ), 'success' );
 			load();
-			return res;
 		} catch ( e ) {
 			toast( e?.response?.data?.message || __( 'That did not work.', 'gemsecurity' ), 'error' );
-			return null;
 		} finally {
 			setBusyId( 0 );
-		}
-	};
-
-	const regenerate = async ( item ) => {
-		const res = await act(
-			item,
-			'regenerate',
-			{ send_email: false },
-			__( 'New link generated.', 'gemsecurity' ),
-			__( 'Generate a new link? The current one will stop working immediately.', 'gemsecurity' )
-		);
-		if ( res && res.link ) {
-			setReveal( { link: res.link, email: item.email } );
 		}
 	};
 
@@ -296,8 +287,8 @@ export default function TempAccess() {
 		<div className="gs-page">
 			<Card
 				title={ __( 'Temporary access', 'gemsecurity' ) }
-				description={ __( 'Give a developer or support person a real account that stops working on its own — no shared passwords. Sign-in is by a single-use link; expiry and revocation end every session at once.', 'gemsecurity' ) }
-				actions={ ! creating && <Button onClick={ () => { setCreating( true ); setReveal( null ); } }>{ __( 'Create temporary access', 'gemsecurity' ) }</Button> }
+				description={ __( 'Give an existing user a role for a limited time. It is taken back automatically — on expiry, or when you revoke it — and their sessions end at once.', 'gemsecurity' ) }
+				actions={ ! creating && <Button onClick={ () => setCreating( true ) }>{ __( 'Grant access', 'gemsecurity' ) }</Button> }
 			>
 				<div style={ ROW }>
 					{ [ 'active', 'expired', 'revoked' ].map( ( s ) => (
@@ -309,35 +300,31 @@ export default function TempAccess() {
 				</div>
 			</Card>
 
-			{ reveal && <LinkReveal reveal={ reveal } onClose={ () => setReveal( null ) } /> }
-
 			{ creating && (
-				<CreateForm
+				<GrantForm
 					data={ data }
 					onCancel={ () => setCreating( false ) }
-					onDone={ ( r ) => {
+					onDone={ () => {
 						setCreating( false );
-						setReveal( r );
 						load();
 					} }
 				/>
 			) }
 
-			<Card title={ __( 'Accounts', 'gemsecurity' ) }>
+			<Card title={ __( 'Grants', 'gemsecurity' ) }>
 				{ data.items.length === 0 ? (
 					<EmptyState
-						title={ __( 'No temporary accounts', 'gemsecurity' ) }
-						description={ __( 'Create one to give someone time-limited access.', 'gemsecurity' ) }
+						title={ __( 'No temporary access', 'gemsecurity' ) }
+						description={ __( 'Grant a role to an existing user for a limited time.', 'gemsecurity' ) }
 					/>
 				) : (
 					<table className="gs-table">
 						<thead><tr>
-							<th>{ __( 'Email', 'gemsecurity' ) }</th>
-							<th>{ __( 'Role', 'gemsecurity' ) }</th>
+							<th>{ __( 'User', 'gemsecurity' ) }</th>
+							<th>{ __( 'Role granted', 'gemsecurity' ) }</th>
 							<th>{ __( 'Status', 'gemsecurity' ) }</th>
-							<th>{ __( 'Created', 'gemsecurity' ) }</th>
+							<th>{ __( 'Granted', 'gemsecurity' ) }</th>
 							<th>{ __( 'Expires', 'gemsecurity' ) }</th>
-							<th>{ __( 'Last login', 'gemsecurity' ) }</th>
 							<th>{ __( 'Latest activity', 'gemsecurity' ) }</th>
 							<th />
 						</tr></thead>
@@ -345,18 +332,17 @@ export default function TempAccess() {
 							{ data.items.map( ( it ) => (
 								<React.Fragment key={ it.id }>
 									<tr>
-										<td>{ it.email }</td>
+										<td>{ it.name }<div className="gs-muted">{ it.email }</div></td>
 										<td>
 											{ it.role_name }{ ' ' }
 											{ it.elevated && <Badge tone="warning">{ __( 'full control', 'gemsecurity' ) }</Badge> }
+											{ it.prev_roles.length > 0 && (
+												<div className="gs-muted">{ sprintf( /* translators: %s: role names. */ __( 'was: %s', 'gemsecurity' ), it.prev_roles.join( ', ' ) ) }</div>
+											) }
 										</td>
-										<td>
-											<Badge tone={ TONES[ it.status ] }>{ STATUS_LABELS[ it.status ] }</Badge>
-											{ it.link_pending && <div className="gs-muted">{ __( 'link not used yet', 'gemsecurity' ) }</div> }
-										</td>
+										<td><Badge tone={ TONES[ it.status ] }>{ STATUS_LABELS[ it.status ] }</Badge></td>
 										<td className="gs-nowrap">{ fmt( it.created ) }</td>
 										<td className="gs-nowrap">{ fmt( it.status === 'revoked' ? it.revoked : it.expires ) }</td>
-										<td className="gs-nowrap">{ it.last_login ? fmt( it.last_login ) : __( 'never', 'gemsecurity' ) }</td>
 										<td>
 											{ it.last_event ? (
 												<>
@@ -365,7 +351,7 @@ export default function TempAccess() {
 												</>
 											) : '—' }
 										</td>
-										<td style={ { minWidth: 220 } }>
+										<td style={ { minWidth: 200 } }>
 											<Button variant="secondary" onClick={ () => setOpen( open === it.id ? 0 : it.id ) }>
 												{ open === it.id ? __( 'Hide', 'gemsecurity' ) : __( 'View', 'gemsecurity' ) }
 											</Button>{ ' ' }
@@ -375,22 +361,7 @@ export default function TempAccess() {
 												</Button>
 											) }{ ' ' }
 											{ it.status === 'active' && (
-												<Button variant="secondary" loading={ busyId === it.id } onClick={ () => regenerate( it ) }>
-													{ __( 'Regenerate link', 'gemsecurity' ) }
-												</Button>
-											) }{ ' ' }
-											{ it.status !== 'revoked' && (
-												<Button
-													variant="danger"
-													loading={ busyId === it.id }
-													onClick={ () => act(
-														it,
-														'revoke',
-														{},
-														__( 'Access revoked.', 'gemsecurity' ),
-														sprintf( /* translators: %s: email. */ __( 'Revoke access for %s now? Their sessions end immediately.', 'gemsecurity' ), it.email )
-													) }
-												>
+												<Button variant="danger" loading={ busyId === it.id } onClick={ () => revoke( it ) }>
 													{ __( 'Revoke', 'gemsecurity' ) }
 												</Button>
 											) }
@@ -398,29 +369,25 @@ export default function TempAccess() {
 									</tr>
 									{ extending === it.id && (
 										<tr>
-											<td colSpan={ 8 }>
+											<td colSpan={ 7 }>
 												<ExtendForm
 													data={ data }
 													item={ it }
 													onCancel={ () => setExtending( 0 ) }
 													onDone={ () => { setExtending( 0 ); load(); } }
 												/>
-												{ it.status === 'expired' && (
-													<p className="gs-muted">{ __( 'After reopening, use “Regenerate link” — the old link and sessions are gone.', 'gemsecurity' ) }</p>
-												) }
 											</td>
 										</tr>
 									) }
 									{ open === it.id && (
 										<tr>
-											<td colSpan={ 8 }>
+											<td colSpan={ 7 }>
 												<p className="gs-muted">
 													{ sprintf(
-														/* translators: 1: username, 2: creator, 3: number of sign-ins. */
-														__( 'Username %1$s · created by %2$s · %3$d sign-in(s)', 'gemsecurity' ),
+														/* translators: 1: username, 2: who granted it. */
+														__( 'Username %1$s · granted by %2$s', 'gemsecurity' ),
 														it.login,
-														it.created_by || '—',
-														it.logins
+														it.created_by || '—'
 													) }
 												</p>
 												<History item={ it } />
@@ -439,14 +406,9 @@ export default function TempAccess() {
 				description={ __( 'Notices go to the security notification address.', 'gemsecurity' ) }
 			>
 				<Toggle
-					label={ __( 'Access is created', 'gemsecurity' ) }
+					label={ __( 'Access is granted', 'gemsecurity' ) }
 					checked={ form.temp_access_notify_created !== false }
 					onChange={ ( v ) => setField( 'temp_access_notify_created', v ) }
-				/>
-				<Toggle
-					label={ __( 'A link is used for the first time', 'gemsecurity' ) }
-					checked={ form.temp_access_notify_used !== false }
-					onChange={ ( v ) => setField( 'temp_access_notify_used', v ) }
 				/>
 				<Toggle
 					label={ __( 'Access is revoked', 'gemsecurity' ) }
