@@ -5,5 +5,5 @@
 		'react-jsx-runtime',
 		'wp-i18n'
 	),
-	'version' => 'b804c4745119ddd67a8b'
+	'version' => '7ec769a0bf877155d36b'
 );

@@ -26,9 +26,17 @@ class Paths {
 		return untrailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
 	}
 
-	/** The plugins folder. */
+	/**
+	 * The plugins folder: the parent of this plugin's own folder, so it follows
+	 * wherever the site keeps its plugins.
+	 */
 	public static function plugins() {
-		return untrailingslashit( wp_normalize_path( WP_PLUGIN_DIR ) );
+		return untrailingslashit( wp_normalize_path( dirname( untrailingslashit( GEMSECURITY_ROOT_DIR_PATH ) ) ) );
+	}
+
+	/** WordPress' own includes folder. */
+	public static function includes() {
+		return untrailingslashit( wp_normalize_path( ABSPATH . WPINC ) );
 	}
 
 	/** The must-use plugins folder. */

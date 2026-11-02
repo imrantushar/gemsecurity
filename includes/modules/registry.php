@@ -79,7 +79,7 @@ class Registry {
 				'icon'          => 'layers',
 				'category'      => 'core',
 				'core'          => true,
-				'group'         => 'addons',
+				'group'         => 'settings',
 				'page_slug'     => $slug . '-modules',
 				'classes'       => [],
 			],
@@ -174,13 +174,6 @@ class Registry {
 				'page_slug'     => $slug . '-magic-login',
 				'classes'       => [ MagicLogin::class ],
 				'settings_keys' => [ 'magic_login_enabled' ],
-			],
-			'temp-access' => [
-				'icon'          => 'clock',
-				'category'      => 'access',
-				'page_slug'     => $slug . '-temp-access',
-				'classes'       => [ TempAccess::class ],
-				'settings_keys' => [],
 			],
 			'admin-guard' => [
 				'icon'          => 'crown',
@@ -342,8 +335,7 @@ class Registry {
 			'firewall' => [ 'title' => __( 'Firewall', 'gemsecurity' ), 'icon' => 'shield' ],
 			'access'   => [ 'title' => __( 'Login & Access', 'gemsecurity' ), 'icon' => 'lock' ],
 			'scanning' => [ 'title' => __( 'Scanning', 'gemsecurity' ), 'icon' => 'radar' ],
-			'logs'     => [ 'title' => __( 'Logs & Monitoring', 'gemsecurity' ), 'icon' => 'list' ],
-			'addons'   => [ 'title' => __( 'Addons', 'gemsecurity' ), 'icon' => 'layers' ],
+			'logs'     => [ 'title' => __( 'Logs', 'gemsecurity' ), 'icon' => 'list' ],
 			'settings' => [ 'title' => __( 'Settings', 'gemsecurity' ), 'icon' => 'cog' ],
 		] );
 	}

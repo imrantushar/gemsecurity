@@ -9,7 +9,7 @@ const SLUG = 'gemsecurity';
 
 // Groups whose pages are listed as a sub-menu under the group in the WP
 // sidebar, rather than as tabs inside the page.
-export const NESTED_GROUPS = [ 'settings' ];
+export const NESTED_GROUPS = [];
 
 /**
  * The GemSecurity entry of the native WordPress admin sidebar, rendered by
@@ -67,8 +67,9 @@ export default function AdminMenu() {
 					const current = g.items.some( ( item ) => item.key === page );
 					const cls = [ i === 0 ? 'wp-first-item' : '', current ? 'current' : '' ].filter( Boolean ).join( ' ' );
 					// The group entry itself opens the lead page, so the sub-menu lists
-					// only the other pages (Settings → Notifications), never a duplicate.
-					const children = g.items.filter( ( item ) => item.key !== g.lead );
+					// only the other pages, never a duplicate. Notifications stays out of the
+					// sidebar; it is reached from the Settings page and the top nav.
+					const children = g.items.filter( ( item ) => item.key !== g.lead && item.key !== 'gemsecurity-notifications' );
 					const nested = NESTED_GROUPS.includes( g.id ) && children.length > 0;
 					return (
 						<li key={ g.id } className={ `${ cls }${ nested ? ' gemsec-has-flyout' : '' }`.trim() }>

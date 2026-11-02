@@ -75,8 +75,13 @@ class MagicLogin {
 			return false;
 		}
 
-		// Temporary accounts sign in only through their own access link.
-		if ( TempAccess::is_temp( $user->ID ) ) {
+		/**
+		 * Whether another component keeps this account off magic-link sign-in.
+		 *
+		 * @param bool     $blocked
+		 * @param \WP_User $user
+		 */
+		if ( apply_filters( 'gemsecurity/magic_login/user_blocked', false, $user ) ) {
 			return false;
 		}
 

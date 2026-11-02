@@ -75,7 +75,7 @@ function collapse( rows ) {
 
 /**
  * Popup for one flagged core file: what differs from the official release,
- * with a one-click restore of the official copy.
+ * next to the official copy.
  *
  * @param {Object}   props
  * @param {string}   props.file    Root-relative path.
@@ -86,7 +86,6 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 	const toast = useToast();
 	const [ info, setInfo ] = useState( null );
 	const [ error, setError ] = useState( '' );
-	const [ busy, setBusy ] = useState( false );
 
 	useEffect( () => {
 		api.get( 'scan/core-file', { params: { file } } )
@@ -106,26 +105,6 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 		}
 		return collapse( diffLines( info.original, info.current ) );
 	}, [ info ] );
-
-	const run = async ( body, done ) => {
-		setBusy( true );
-		try {
-			const { data } = await api.post( 'scan/core-file', { file, ...body } );
-			toast( done, 'success' );
-			onFixed( data.result );
-			onClose();
-		} catch ( e ) {
-			toast( e?.response?.data?.message || __( 'Could not update the file.', 'gemsecurity' ), 'error' );
-		}
-		setBusy( false );
-	};
-
-	const restore = () => {
-		// eslint-disable-next-line no-alert
-		if ( window.confirm( __( 'Replace this file with the official WordPress copy? The current file is kept in quarantine first.', 'gemsecurity' ) ) ) {
-			run( { action: 'restore' }, __( 'Original file restored.', 'gemsecurity' ) );
-		}
-	};
 
 	// Rendered in place, not in a portal: the plugin's styles and dark theme are
 	// scoped to its own wrapper, which a portal on <body> would sit outside of.
@@ -169,7 +148,6 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 
 				{ info && (
 					<div className="gs-modal__foot">
-						{ info.original && <Button onClick={ restore } loading={ busy }>{ __( 'Restore original', 'gemsecurity' ) }</Button> }
 						<Button variant="secondary" onClick={ onClose }>{ __( 'Close', 'gemsecurity' ) }</Button>
 					</div>
 				) }

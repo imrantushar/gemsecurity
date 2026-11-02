@@ -8,10 +8,9 @@ import TestCredentials from '@Components/ui/TestCredentials';
 import { useToast } from '@Components/ui/Toast';
 import { useDispatch } from 'react-redux';
 import { fetchSettings } from '@Redux/settingsSlice';
-import useNavigate from '@Utils/useGuardedNavigate';
-import { setModules, pageUrl } from '@Utils/nav';
+import { setModules } from '@Utils/nav';
+import { useSettingsTab } from '@Utils/settingsTabs';
 import { isPro, ProBadge } from '@Components/ui/Pro';
-import Icon from '@Components/ui/Icon';
 
 const KEYS = [
 	'logs_retention_days',
@@ -27,30 +26,6 @@ const KEYS = [
 	'backup_before_updates',
 ];
 
-/** Takes you to the page these settings moved to. */
-function NotificationsLink() {
-	const navigate = useNavigate();
-	const href = pageUrl( 'gemsecurity-notifications' );
-
-	return (
-		<a
-			className="gs-actionlist__go"
-			href={ href }
-			onClick={ ( e ) => {
-				// Modifier-clicks keep their normal open-in-new-tab behaviour.
-				if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
-					return;
-				}
-				e.preventDefault();
-				navigate( href );
-			} }
-		>
-			{ __( 'Open Notifications', 'gemsecurity' ) }
-			<Icon name="arrow-right" size={ 14 } />
-		</a>
-	);
-}
-
 export default function Settings() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( KEYS );
 	const toast = useToast();
@@ -60,6 +35,7 @@ export default function Settings() {
 	const [ verifying, setVerifying ] = useState( false );
 	const [ busy, setBusy ] = useState( '' );
 	const [ includeSecrets, setIncludeSecrets ] = useState( false );
+	const tab = useSettingsTab();
 
 	/* ------------------------- Settings portability ------------------------- */
 
@@ -179,6 +155,8 @@ export default function Settings() {
 
 	return (
 		<div className="gs-page">
+			<div className="gs-settings__panel">
+			{ tab === 'general' && (
 			<Card
 				title={ __( 'General settings', 'gemsecurity' ) }
 				description={ __( 'Plugin-wide preferences. Firewall, login and admin options live on their own pages.', 'gemsecurity' ) }
@@ -191,7 +169,9 @@ export default function Settings() {
 					<NumberInput min="0" value={ form.logs_retention_days ?? 30 } onChange={ ( e ) => setField( 'logs_retention_days', Number( e.target.value ) ) } />
 				</Field>
 			</Card>
+			) }
 
+			{ tab === 'compliance' && (
 			<Card
 				title={ __( 'Compliance & SIEM', 'gemsecurity' ) }
 				description={ __( 'Tamper-evident logging and forwarding for GDPR / PCI / SOC2 evidence.', 'gemsecurity' ) }
@@ -250,20 +230,9 @@ export default function Settings() {
 					</>
 				) }
 			</Card>
+			) }
 
-			{ /* Alert delivery, the per-module triggers and the scheduled sends
-			     moved to their own page — they are the one thing every module
-			     feeds into, and they were unfindable as a card down here. */ }
-			<Card title={ __( 'Notifications & reports', 'gemsecurity' ) }>
-				<div className="gs-alertrow">
-					<div>
-						<strong>{ __( 'Configured on the Notifications page', 'gemsecurity' ) }</strong>
-						<p className="gs-card__desc">{ __( 'The security email and its channels, what each module alerts on, the daily report and the weekly digest.', 'gemsecurity' ) }</p>
-					</div>
-					<NotificationsLink />
-				</div>
-			</Card>
-
+			{ tab === 'maintenance' && (
 			<Card
 				title={ __( 'Maintenance & recovery', 'gemsecurity' ) }
 				description={ __( 'Emergency lockdown and pre-update backups.', 'gemsecurity' ) }
@@ -289,8 +258,9 @@ export default function Settings() {
 					/>
 				) }
 			</Card>
+			) }
 
-			{ pro && (
+			{ pro && tab === 'portability' && (
 				<Card
 					title={ <>{ __( 'Settings import / export', 'gemsecurity' ) } { ! pro && <ProBadge /> }</> }
 					description={ __( 'Back up or migrate the whole GemSecurity configuration — settings and module activation — as JSON.', 'gemsecurity' ) }
@@ -318,6 +288,7 @@ export default function Settings() {
 				</Card>
 			) }
 
+			</div>
 		</div>
 	);
 }

@@ -310,7 +310,7 @@ class UploadShield {
 	 */
 	private static function legacy_dirs() {
 		return [
-			untrailingslashit( \GemSecurity\Paths::root() ) . '/' . WPINC,
+			\GemSecurity\Paths::includes(),
 			WP_LANG_DIR,
 			\GemSecurity\Paths::content() . '/upgrade',
 			\GemSecurity\Paths::content() . '/upgrade-temp-backup',

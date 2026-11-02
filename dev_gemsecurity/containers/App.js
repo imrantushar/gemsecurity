@@ -40,6 +40,7 @@ import Logs from '@Containers/pages/Logs';
 import Monitoring from '@Containers/pages/Monitoring';
 import Notifications from '@Containers/pages/Notifications';
 import Settings from '@Containers/pages/Settings';
+import { SETTINGS_PAGE, getSettingsTabs, useSettingsTab } from '@Utils/settingsTabs';
 
 const PAGES = {
 	gemsecurity: Dashboard,
@@ -108,6 +109,7 @@ export default function App() {
 	}, [ page ] );
 
 	// The malware scanner is now a tab inside Scanner — resolve the old slug.
+	const settingsTab = useSettingsTab();
 	const resolvedPage = page === 'gemsecurity-malware' ? 'gemsecurity-scanner' : page;
 	const PageComponent = PAGES[ resolvedPage ] || Dashboard;
 	const navItems = useNavItems();
@@ -214,8 +216,8 @@ export default function App() {
 						{ groupItems.map( ( item ) => {
 							const href = pageUrl( item.key );
 							return (
+								<React.Fragment key={ item.key }>
 								<a
-									key={ item.key }
 									href={ href }
 									className={ `gs-subnav__item ${ item.key === resolvedPage ? 'is-active' : '' }` }
 									onClick={ ( e ) => {
@@ -234,6 +236,27 @@ export default function App() {
 									<span>{ item.label }</span>
 									{ item.isPro && ! isPro() && <ProBadge /> }
 								</a>
+								{ item.key === SETTINGS_PAGE && getSettingsTabs( isPro() ).map( ( t ) => {
+									const tabHref = `${ href }&tab=${ t.id }`;
+									return (
+										<a
+											key={ t.id }
+											href={ tabHref }
+											className={ `gs-subnav__item gs-subnav__item--child ${ resolvedPage === SETTINGS_PAGE && settingsTab === t.id ? 'is-active' : '' }` }
+											onClick={ ( e ) => {
+												if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+													return;
+												}
+												e.preventDefault();
+												navigate( tabHref );
+											} }
+										>
+											<Icon name={ t.icon } size={ 15 } />
+											<span>{ t.label }</span>
+										</a>
+									);
+								} ) }
+								</React.Fragment>
 							);
 						} ) }
 					</nav>

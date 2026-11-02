@@ -581,6 +581,22 @@ html {
 		&__actions { flex-shrink: 0; }
 	}
 
+	/* Settings page: the active section's cards stack in the panel; the sections
+	   themselves are the indented children under Settings in the sub-nav. */
+	.gs-settings__panel { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+	.gs-subnav__item--child { margin-left: 18px; padding: 7px 12px; font-size: 13px; }
+
+	/* Two-column card: heading and description on the left, the controls on the
+	   right. Collapses back to the stacked layout on narrow screens. */
+	.gs-card--split {
+		display: grid; grid-template-columns: minmax(220px, 1fr) 2fr; align-items: start;
+		.gs-card__head { border-bottom: 0; border-right: 1px solid $gs-border; height: 100%; box-sizing: border-box; }
+		@media (max-width: 782px) {
+			display: block;
+			.gs-card__head { border-right: 0; border-bottom: 1px solid $gs-border; height: auto; }
+		}
+	}
+
 	/* A grouped block inside a card — for a feature that belongs with its
 	   neighbours but still needs its own heading (e.g. the Pro auto-update
 	   rules sitting under the vulnerability scan that feeds them). */

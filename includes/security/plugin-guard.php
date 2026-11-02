@@ -547,34 +547,6 @@ class PluginGuard {
 		self::$stubs = [];
 	}
 
-	/**
-	 * Restore a mu-plugin this guard quarantined and trust it (by content hash).
-	 *
-	 * @param string $id Quarantine id.
-	 * @return true|\WP_Error
-	 */
-	public static function restore_and_trust_mu( $id ) {
-		$store = \GemSecurity\OptionStore::get_state( 'quarantine', [] );
-		if ( ! isset( $store[ $id ] ) || 'plugin-guard' !== ( $store[ $id ]['source'] ?? '' ) ) {
-			return new \WP_Error( 'gemsecurity_guard_missing', __( 'Quarantine entry not found.', 'gemsecurity' ), [ 'status' => 404 ] );
-		}
-		$entry = $store[ $id ];
-		$body  = Quarantine::payload( $id );
-		if ( null === $body ) {
-			return new \WP_Error( 'gemsecurity_guard_missing', __( 'The quarantined file is missing.', 'gemsecurity' ), [ 'status' => 404 ] );
-		}
-		// Trust first, so the restored file is not swept again on the next request.
-		self::trust( 'mu:' . basename( $entry['original'] ), basename( $entry['original'] ), hash( 'sha256', $body ) );
-		if ( ! Quarantine::write_back( $entry['original'], $body ) ) {
-			return new \WP_Error( 'gemsecurity_guard_restore', __( 'Could not restore the file.', 'gemsecurity' ), [ 'status' => 500 ] );
-		}
-		Quarantine::delete_payload( $id );
-		unset( $store[ $id ] );
-		\GemSecurity\OptionStore::set_state( 'quarantine', $store );
-		self::log( 'plugin_guard_restore', sprintf( 'Restored and trusted must-use plugin %s.', $entry['label'] ), 'notice' );
-		return true;
-	}
-
 	/* ------------------------------------------------------------------ */
 	/* Installs                                                           */
 	/* ------------------------------------------------------------------ */

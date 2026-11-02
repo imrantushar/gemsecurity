@@ -127,7 +127,7 @@ class Finder {
 			get_template_directory(),
 			get_theme_root(),
 			$abs . '/wp-admin',
-			$abs . '/' . WPINC,
+			\GemSecurity\Paths::includes(),
 			\GemSecurity\Paths::content(),
 			$abs,
 			\GemSecurity\Paths::plugins(),

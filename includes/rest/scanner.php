@@ -82,17 +82,6 @@ class Scanner {
 	}
 
 	/**
-	 * POST /scan/core-file — put the official WordPress.org copy back.
-	 */
-	public static function core_file_fix( $req ) {
-		$res = CoreFile::restore( (string) $req->get_param( 'file' ) );
-		if ( is_wp_error( $res ) ) {
-			return $res;
-		}
-		return rest_ensure_response( [ 'success' => true, 'result' => ScannerModule::run_and_store() ] );
-	}
-
-	/**
 	 * POST /scan/baseline — capture a fresh known-good file baseline.
 	 *
 	 * Use this after cleaning a site so the change watcher measures drift from
