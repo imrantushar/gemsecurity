@@ -102,7 +102,7 @@ class Waf {
 		if ( Helper::get_setting( 'rate_limit_enabled', false ) && $this->rate_limited( $ip ) ) {
 			Logger::log( 'waf_rate_limited', sprintf( 'Rate limit exceeded by %s.', $ip ), Logger::SEVERITY_WARNING, [ 'user_id' => 0, 'ip_address' => $ip ] );
 			BanList::record_strike( $ip, 'rate limit' );
-			$this->deny( __( 'Too many requests. Please slow down.', 'gemsecurity' ), 429 );
+			$this->deny( __( 'Too many requests. Please slow down.', 'gemsecurity' ), 429, max( 1, (int) Helper::get_setting( 'rate_limit_window', 1 ) ) * MINUTE_IN_SECONDS );
 		}
 
 		// 4. Malicious request inspection (front-end / login only — avoids admin & REST false positives).
@@ -154,7 +154,7 @@ class Waf {
 			// above feeds GemSecurity Pro's auto-ban escalation, which is not
 			// active on every site; the free plugin needs to slow the flood down
 			// on its own too.
-			$this->deny( __( 'Too many requests. Please slow down.', 'gemsecurity' ), 429 );
+			$this->deny( __( 'Too many requests. Please slow down.', 'gemsecurity' ), 429, max( 1, (int) Helper::get_setting( 'throttle_404_window', 5 ) ) * MINUTE_IN_SECONDS );
 		}
 	}
 
@@ -499,10 +499,14 @@ class Waf {
 	/**
 	 * @param string $message
 	 * @param int    $code
+	 * @param int    $retry_after Seconds until the client may retry; sent as Retry-After when > 0.
 	 */
-	private function deny( $message, $code = 403 ) {
+	private function deny( $message, $code = 403, $retry_after = 0 ) {
 		status_header( $code );
 		nocache_headers();
+		if ( $retry_after > 0 ) {
+			header( 'Retry-After: ' . (int) $retry_after );
+		}
 		wp_die(
 			esc_html( $message ),
 			esc_html__( 'Blocked', 'gemsecurity' ),
