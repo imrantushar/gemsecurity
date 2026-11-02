@@ -233,11 +233,25 @@ html {
 	}
 
 	// Topbar group nav: one tab per module group, dropdown when it has several.
-	.gs-topbar__nav { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
+	// The nav takes whatever width the logo/title and actions leave (basis 0, so
+	// its own content never sets the width); TopNav then fits tabs into it.
+	.gs-topbar__nav { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
 	.gs-topbar__left { flex: 0 1 auto; }
 	.gs-topnav {
-		display: flex; flex-wrap: wrap; justify-content: center; gap: 2px;
-		&__group { position: relative; }
+		position: relative; width: 100%; min-width: 0;
+		display: flex; flex-wrap: nowrap; justify-content: center; gap: 4px;
+		// Off-screen copy of every tab; read for widths, never seen or focused.
+		&__measure {
+			position: absolute; left: 0; top: 0; height: 0; overflow: hidden;
+			visibility: hidden; pointer-events: none;
+			display: flex; flex-wrap: nowrap; gap: 4px; width: max-content;
+		}
+		&__heading {
+			padding: 8px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .4px;
+			text-transform: uppercase; color: var(--gs-placeholder);
+		}
+		&__menu.gs-topnav__menu--end { left: auto; right: 0; }
+		&__group { position: relative; flex: 0 0 auto; }
 		&__tab {
 			display: inline-flex; align-items: center; gap: 7px;
 			padding: 8px 12px; border: 0; border-radius: 6px;
