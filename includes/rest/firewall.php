@@ -66,8 +66,8 @@ class Firewall {
 
 	/**
 	 * The paths file_permissions() audits, keyed by their relative display path
-	 * (what the table shows) → [ absolute, recommended ]. Shared with the fix
-	 * endpoint so a client can only chmod a path the audit itself lists.
+	 * (what the table shows) → [ absolute, recommended ]. Read-only: the audit
+	 * reports modes and never changes them.
 	 *
 	 * @return array<string,array{abs:string,rec:string}>
 	 */
@@ -125,11 +125,7 @@ class Firewall {
 				'recommended' => $t['rec'],
 				'status'      => $status,
 				'note'        => $note,
-				// Signals to the UI that a Fix button should be offered. A
-				// row is only fixable when it is not already at the
-				// recommended mode (and it is owned by the web server, so
-				// chmod will succeed — else PHP returns false and we report
-				// a helpful error instead).
+				// Always false: the audit is read-only, there is no Fix button.
 				'fixable'     => false,
 			];
 		}

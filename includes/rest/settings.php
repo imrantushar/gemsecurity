@@ -225,10 +225,10 @@ class Settings {
 			'alerts_enabled'                => 'bool',
 			'alert_min_severity'            => 'enum:critical,warning,notice',
 			'alert_to_email'                => 'email',
-			'alert_slack_webhook'           => 'text',
+			'alert_slack_webhook'           => 'url',
 			'alert_telegram_token'          => 'text',
 			'alert_telegram_chat'           => 'text',
-			'alert_webhook_url'             => 'text',
+			'alert_webhook_url'             => 'url',
 			'digest_enabled'                => 'bool',
 			// Daily morning report.
 			'daily_report_enabled'          => 'bool',
@@ -581,6 +581,12 @@ class Settings {
 				}
 				return $out;
 
+			case 'url':
+				// An outbound webhook: http(s) only, and nothing that resolves to a
+				// loopback, private or link-local address (SSRF). Blank clears it.
+				$value = esc_url_raw( trim( (string) $value ), [ 'http', 'https' ] );
+				return '' !== $value && wp_http_validate_url( $value ) ? $value : '';
+
 			case 'email':
 				$value = sanitize_email( (string) $value );
 				return is_email( $value ) ? $value : '';
@@ -606,8 +612,9 @@ class Settings {
 					}
 					// Allow plain IPs and CIDR ranges.
 					if ( false !== strpos( $ip, '/' ) ) {
-						list( $addr ) = explode( '/', $ip, 2 );
-						if ( filter_var( $addr, FILTER_VALIDATE_IP ) ) {
+						list( $addr, $prefix ) = explode( '/', $ip, 2 );
+						$max_prefix = false !== strpos( $addr, ':' ) ? 128 : 32;
+						if ( filter_var( $addr, FILTER_VALIDATE_IP ) && ctype_digit( $prefix ) && (int) $prefix <= $max_prefix ) {
 							$out[] = $ip;
 						}
 					} elseif ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {

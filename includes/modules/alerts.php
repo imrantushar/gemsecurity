@@ -70,14 +70,14 @@ class Alerts {
 	private function email( $event_type, $message, $severity, $args = [] ) {
 		$emoji = ( 'critical' === $severity ) ? '🚨' : '⚠️';
 		$rows  = [
-			[ __( 'Event', 'gemsecurity' ), $event_type ],
+			[ __( 'Event', 'gemsecurity' ), esc_html( $event_type ) ],
 			[ __( 'Severity', 'gemsecurity' ), ucfirst( $severity ) ],
 			[ __( 'Time', 'gemsecurity' ), wp_date( 'F j, Y \a\t g:i a' ) ],
 		];
 
 		$ip = isset( $args['ip'] ) ? $args['ip'] : \GemSecurity\Helper::get_ip_address();
 		if ( $ip ) {
-			$rows[] = [ __( 'IP address', 'gemsecurity' ), $ip ];
+			$rows[] = [ __( 'IP address', 'gemsecurity' ), esc_html( $ip ) ];
 		}
 
 		\GemSecurity\Mailer::send(
@@ -92,7 +92,7 @@ class Alerts {
 				[
 					'type' => 'notice',
 					'tone' => ( 'critical' === $severity ) ? 'critical' : 'warning',
-					'text' => $message,
+					'text' => esc_html( $message ),
 				],
 				[
 					'type'    => 'table',
@@ -116,7 +116,7 @@ class Alerts {
 	public function dispatch( $text ) {
 		$slack = trim( (string) Helper::get_setting( 'alert_slack_webhook', '' ) );
 		if ( $slack ) {
-			wp_remote_post( $slack, [
+			wp_safe_remote_post( $slack, [
 				'blocking' => false,
 				'timeout'  => 5,
 				'headers'  => [ 'Content-Type' => 'application/json' ],
@@ -126,7 +126,7 @@ class Alerts {
 
 		$tg_token = trim( (string) Helper::get_setting( 'alert_telegram_token', '' ) );
 		$tg_chat  = trim( (string) Helper::get_setting( 'alert_telegram_chat', '' ) );
-		if ( $tg_token && $tg_chat ) {
+		if ( $tg_token && $tg_chat && preg_match( '/^\d+:[A-Za-z0-9_-]+$/', $tg_token ) ) {
 			wp_remote_post( "https://api.telegram.org/bot{$tg_token}/sendMessage", [
 				'blocking' => false,
 				'timeout'  => 5,
@@ -136,7 +136,7 @@ class Alerts {
 
 		$webhook = trim( (string) Helper::get_setting( 'alert_webhook_url', '' ) );
 		if ( $webhook ) {
-			wp_remote_post( $webhook, [
+			wp_safe_remote_post( $webhook, [
 				'blocking' => false,
 				'timeout'  => 5,
 				'headers'  => [ 'Content-Type' => 'application/json' ],
