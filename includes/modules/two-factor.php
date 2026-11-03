@@ -678,7 +678,6 @@ class TwoFactor {
 			return false;
 		}
 		$normalized = strtolower( str_replace( '-', '', $code ) );
-		require_once ABSPATH . WPINC . '/class-phpass.php';
 
 		foreach ( $codes as $i => $hash ) {
 			if ( wp_check_password( $normalized, $hash ) ) {

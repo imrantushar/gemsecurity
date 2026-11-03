@@ -136,7 +136,8 @@ Yes. Everything described above works in the free plugin. Pro adds active threat
 == Changelog ==
 
 = 1.2.0 - 01/11/2026 =
-* Added - Temporary Access: time-limited accounts with a single-use sign-in link stored only as a hash. Expiry is enforced on every request, and revoking or expiring an account ends its sessions and application passwords. Existing users are never modified. Each account has its own history, with audit log events and optional admin notifications.
+* Changed - Temporary Access now gives an existing user a role for a limited time and puts their previous role back when it ends. It no longer creates accounts or sign-in links.
+* Changed - GemSecurity no longer writes to WordPress core, plugin, theme or must-use folders. Quarantine restores only to the uploads folder, and the core-file restore and chmod "Fix" buttons are gone; the core-file popup and permission audit remain read-only.
 * Added - Magic Login: users can ask for a one-time sign-in link by email from the login form.
 * Added - Plugin lock: a separate unlock password plus an emailed one-time code, not tied to any user account. It guards deactivating or deleting GemSecurity, turning the lock off and switching modules off, and while locked it blocks installing, uploading and editing code.
 * Added - IP safelist: safelisted addresses are never blocked, banned or rate-limited, and your own IP is refused in the blocklist so you cannot lock yourself out.
@@ -148,16 +149,14 @@ Yes. Everything described above works in the free plugin. Pro adds active threat
 * Added - Two-Factor: an "All roles" option for enforced roles.
 * Added - Social login buttons appear only after a provider's keys pass a check, either "Test credentials" or a new "Verify with a sign-in" round trip. Changing a key un-verifies it. A provider whose keys are rejected twice in a row is switched off and you are alerted. The Social Login page shows Verified, Not verified or Switched off for each provider.
 * Added - A "Plugin lock" check in the security score.
-* Changed - Temporary accounts can never create, promote, delete or edit other users, or deactivate or delete GemSecurity, whatever their role. Deactivating GemSecurity ends all temporary access: the accounts lose their role and password, so a password reset cannot turn them into permanent ones.
 * Fixed - The plugin lock did not stop GemSecurity Pro from being deleted while inactive (WordPress never checks the per-plugin delete capability).
-* Fixed - The no-referrer policy on temporary access links was overridden by WordPress's own login-page referrer tag.
-* Changed - Magic links and social login now go through Admin Guard, and temporary accounts can sign in only with their own access link.
-* Changed - The confirm step of magic links and temporary access links only works in the browser that opened the link, so another site cannot sign a visitor in to someone else's account.
+* Changed - Magic links and social login now go through Admin Guard.
+* Changed - The confirm step of magic links only works in the browser that opened the link, so another site cannot sign a visitor in to someone else's account.
 * Changed - Quarantined files are now stored in the database and removed from disk, instead of being moved into the uploads folder. Files quarantined by earlier versions can still be restored.
 * Changed - The 2FA encryption key is now kept in the database (or in `GEMSECURITY_SECRET_KEY` in wp-config.php, which is still preferred) instead of a key file. Key files created by earlier versions keep working.
 * Changed - Plugin, must-use plugin, content and upload folders are always looked up through WordPress, so sites that move them are scanned correctly.
 * Changed - IP location lookups use HTTPS only (ipapi.co).
-* Changed - Rate limits (including magic link and temporary access limits), lockouts, alert throttling and unlock codes are stored in the database, so they keep working on hosts with a broken object cache.
+* Changed - Rate limits (including magic link limits), lockouts, alert throttling and unlock codes are stored in the database, so they keep working on hosts with a broken object cache.
 * Changed - Long scans are limited to 5 minutes instead of running without a time limit.
 * Changed - Updated the bundled StoreEngine SDK to 1.6.2. Declining usage tracking now sends nothing, and no promotional notices are loaded.
 * Changed - Every compiled JavaScript and CSS file names its source file and how to rebuild it.

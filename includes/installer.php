@@ -470,7 +470,6 @@ class Installer {
 
 			// Temporary access: which events email the site administrator.
 			'temp_access_notify_created'   => true,
-			'temp_access_notify_used'      => true,
 			'temp_access_notify_revoked'   => true,
 
 			// API & access hardening.

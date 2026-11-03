@@ -312,6 +312,10 @@ class Quarantine {
 			return new \WP_Error( 'gemsecurity_restore_type', __( 'That entry is a database snapshot, not a file.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
+		if ( ! self::can_restore_to( $entry['original'] ) ) {
+			return new \WP_Error( 'gemsecurity_restore_location', __( 'GemSecurity only restores files to the uploads folder. Re-install the plugin, theme or WordPress core file from its original source instead.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+
 		$body = self::payload( $id );
 		// A snapshot was taken of a file that was then replaced, so it may
 		// overwrite; a quarantined file was removed and must not.
@@ -327,6 +331,20 @@ class Quarantine {
 	}
 
 	/**
+	 * Files are only ever put back inside the uploads folder. Plugin, theme,
+	 * must-use and core folders are never written to; a file that came from
+	 * one of those is re-installed from its original source instead.
+	 *
+	 * @param string $path Absolute original path.
+	 * @return bool
+	 */
+	public static function can_restore_to( $path ) {
+		$uploads = wp_normalize_path( (string) realpath( \GemSecurity\Paths::uploads() ) );
+		$dir     = wp_normalize_path( (string) realpath( dirname( (string) $path ) ) );
+		return '' !== $uploads && '' !== $dir && 0 === strpos( trailingslashit( $dir ), trailingslashit( $uploads ) );
+	}
+
+	/**
 	 * Put a file's bytes back at the path it was quarantined from.
 	 *
 	 * @param string $path Absolute original path.
@@ -336,6 +354,9 @@ class Quarantine {
 	 */
 	public static function write_back( $path, $body, $overwrite = false ) {
 		$path = (string) $path;
+		if ( ! self::can_restore_to( $path ) ) {
+			return false;
+		}
 		if ( '' === $path || ( ! $overwrite && file_exists( $path ) ) || ( ! is_dir( dirname( $path ) ) && ! wp_mkdir_p( dirname( $path ) ) ) ) {
 			return false;
 		}

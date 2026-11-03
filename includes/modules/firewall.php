@@ -30,16 +30,12 @@ class Firewall {
 			add_filter( 'xmlrpc_methods', '__return_empty_array' );
 			// xmlrpc_call only fires inside individual WP method handlers;
 			// system.* IXR built-ins bypass it entirely. Killing the request
-			// at plugins_loaded (XMLRPC_REQUEST is defined before wp-load.php
-			// runs) blocks everything before IXR_Server dispatches any method.
+			// on init (XMLRPC_REQUEST is defined before wp-load.php runs)
+			// blocks everything before IXR_Server dispatches any method. It
+			// cannot happen earlier: the message is translated, and loading
+			// the textdomain before init is a notice in WordPress 6.7+.
 			if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
-				status_header( 403 );
-				nocache_headers();
-				wp_die(
-					esc_html__( 'XML-RPC services are disabled on this site.', 'gemsecurity' ),
-					esc_html__( 'Disabled', 'gemsecurity' ),
-					[ 'response' => 403 ]
-				);
+				add_action( 'init', [ $self, 'block_xmlrpc_request' ], 0 );
 			}
 		}
 
@@ -61,8 +57,19 @@ class Firewall {
 
 	}
 
+	/** Refuse an XML-RPC request outright when XML-RPC is switched off. */
+	public function block_xmlrpc_request() {
+		status_header( 403 );
+		nocache_headers();
+		wp_die(
+			esc_html__( 'XML-RPC services are disabled on this site.', 'gemsecurity' ),
+			esc_html__( 'Disabled', 'gemsecurity' ),
+			[ 'response' => 403 ]
+		);
+	}
+
 	/* --------------------------------------------------------------------- */
-	/* IP blocklist                                                           */
+	/* IP blocklist                                                          */
 	/* --------------------------------------------------------------------- */
 
 	public function enforce_ip_blocklist() {

@@ -184,7 +184,7 @@ export default function Captcha() {
 										<strong>{ __( 'Comment form', 'gemsecurity' ) }</strong>
 										<small>{ __( 'Lives with the other comment controls', 'gemsecurity' ) }</small>
 									</div>
-									<a href={ `${ window.location.pathname }?page=gemsecurity-antispam` }>
+									<a href={ `${ window.location.pathname }?page=gemsecurity-anti-spam` }>
 										{ __( 'Set up in Anti-Spam', 'gemsecurity' ) }<Icon name="arrow-right" size={ 14 } />
 									</a>
 								</div>

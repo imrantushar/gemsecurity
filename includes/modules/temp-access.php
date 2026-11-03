@@ -11,67 +11,54 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Temporary access — time-limited dashboard accounts for developers and
- * support staff, without sharing anyone's password.
+ * Temporary access — give an existing user a role for a limited time, then
+ * return them to the role they had.
  *
- * Each grant is a real WordPress user with a real role, so WordPress's own
- * capability checks decide what it may do. The account has a random 64-character
- * password nobody knows; the only way in is a single-use link:
+ * Nothing here creates an account or signs anyone in. The person receiving
+ * access already has a WordPress user (added through Users → Add New, so
+ * WordPress's own password, e-mail and login protections apply) and signs in
+ * the normal way. An administrator picks that user, a role and a duration;
+ * the user's previous roles are stored and put back when the time is up.
  *
- *   wp-login.php?action=gemsec_temp&gemsec_temp_uid=…&gemsec_temp_key=…
- *
- * Opening the link shows a "Continue" page; the POST from that page consumes the
- * token and signs in. The two steps keep mail scanners that pre-fetch links
- * from burning the token. Only the SHA-256 of the token is stored.
- *
- * Expiry is enforced on every request ({@see enforce()}), not only by cron, and
- * ending access (expiry or revocation) destroys the account's sessions and
- * application passwords. {@see enforce()} is booted whether or not the module
- * is switched on, so turning the module off cannot extend anyone's access.
+ * Expiry is enforced on every request ({@see enforce()}), not only by cron.
+ * Ending a grant restores the previous roles, destroys the user's sessions and
+ * removes application passwords created during the grant.
+ * {@see enforce()} is booted whether or not the module is switched on, so
+ * turning the module off cannot extend anyone's access.
  *
  * User meta:
- *   _gemsec_ta              1 on every temporary account
- *   _gemsec_ta_expires      unix time access ends
- *   _gemsec_ta_revoked      unix time access was revoked (absent otherwise)
- *   _gemsec_ta_ended        unix time sessions were torn down after expiry/revoke
- *   _gemsec_ta_hash         sha256 of the pending setup token
- *   _gemsec_ta_link_expires unix time the pending token stops working
- *   _gemsec_ta_created      unix time, _gemsec_ta_created_by creator's user id
- *   _gemsec_ta_last_login   unix time of the last link sign-in
- *   _gemsec_ta_logins       number of link sign-ins
- *   _gemsec_ta_history      capped list of [ time, event, detail, ip ]
+ *   _gemsec_ta            1 on every user that has (or had) a grant
+ *   _gemsec_ta_role       role granted
+ *   _gemsec_ta_prev_roles roles the user had before the grant
+ *   _gemsec_ta_expires    unix time access ends
+ *   _gemsec_ta_revoked    unix time access was revoked (absent otherwise)
+ *   _gemsec_ta_ended      unix time the grant was torn down
+ *   _gemsec_ta_created    unix time, _gemsec_ta_created_by granter's user id
+ *   _gemsec_ta_history    capped list of [ time, event, detail, ip ]
  */
 class TempAccess {
 
-	const ACTION = 'gemsec_temp';
-	const CRON   = 'gemsecurity_temp_access_sweep';
+	const CRON = 'gemsecurity_temp_access_sweep';
 
-	const META_FLAG         = '_gemsec_ta';
-	const META_EXPIRES      = '_gemsec_ta_expires';
-	const META_REVOKED      = '_gemsec_ta_revoked';
-	const META_ENDED        = '_gemsec_ta_ended';
-	const META_HASH         = '_gemsec_ta_hash';
-	const META_LINK_EXPIRES = '_gemsec_ta_link_expires';
-	const META_CREATED      = '_gemsec_ta_created';
-	const META_CREATED_BY   = '_gemsec_ta_created_by';
-	const META_LAST_LOGIN   = '_gemsec_ta_last_login';
-	const META_LOGINS       = '_gemsec_ta_logins';
-	const META_HISTORY      = '_gemsec_ta_history';
+	const META_FLAG       = '_gemsec_ta';
+	const META_ROLE       = '_gemsec_ta_role';
+	const META_PREV_ROLES = '_gemsec_ta_prev_roles';
+	const META_EXPIRES    = '_gemsec_ta_expires';
+	const META_REVOKED    = '_gemsec_ta_revoked';
+	const META_ENDED      = '_gemsec_ta_ended';
+	const META_CREATED    = '_gemsec_ta_created';
+	const META_CREATED_BY = '_gemsec_ta_created_by';
+	const META_HISTORY    = '_gemsec_ta_history';
 
-	/** Accounts an administrator may create per hour. */
-	const MAX_CREATES_PER_HOUR = 10;
-
-	/** Bad link attempts one IP address may make per window. */
-	const MAX_BAD_LINKS_PER_IP = 8;
-
-	const LIMIT_WINDOW = 15 * MINUTE_IN_SECONDS;
+	/** Grants an administrator may make per hour. */
+	const MAX_GRANTS_PER_HOUR = 10;
 
 	const HISTORY_LIMIT = 30;
 
 	/** Longest access window that can be granted. */
 	const MAX_SECONDS = 90 * DAY_IN_SECONDS;
 
-	/** Shortest window — anything less would expire before the link arrives. */
+	/** Shortest window. */
 	const MIN_SECONDS = 5 * MINUTE_IN_SECONDS;
 
 	/**
@@ -98,10 +85,8 @@ class TempAccess {
 	/* Boot                                                                */
 	/* ------------------------------------------------------------------ */
 
-	/** Module boot: the sign-in link and the sweep schedule. */
+	/** Module boot: the sweep schedule. */
 	public static function init() {
-		$self = new self();
-		add_action( 'login_form_' . self::ACTION, [ $self, 'handle' ] );
 		if ( ! wp_next_scheduled( self::CRON ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CRON );
 		}
@@ -114,20 +99,12 @@ class TempAccess {
 	public static function enforce() {
 		// Every request, REST and cookie-less app-password calls included.
 		add_filter( 'determine_current_user', [ __CLASS__, 'filter_current_user' ], 99 );
-		// Temporary accounts have no password: the link is the only way in.
-		add_filter( 'authenticate', [ __CLASS__, 'block_password_login' ], 99 );
-		// Nor a magic link or a social profile with the same email.
-		add_filter( 'gemsecurity/login_gate', [ __CLASS__, 'block_password_login' ] );
-		// Nothing a temporary account does may outlive its grant.
+		// Nothing a user does while granted may outlive the grant.
 		add_filter( 'map_meta_cap', [ __CLASS__, 'restrict_caps' ], 99, 4 );
 		// Core gates deletion only on the plain delete_plugins capability, never
 		// the per-plugin one, so deleting GemSecurity is stopped as it happens.
 		add_action( 'delete_plugin', [ __CLASS__, 'refuse_delete' ] );
 		add_filter( 'plugin_action_links', [ __CLASS__, 'hide_delete_link' ], 99, 2 );
-		add_filter( 'allow_password_reset', [ __CLASS__, 'block_password_reset' ], 10, 2 );
-		add_filter( 'wp_is_application_passwords_available_for_user', [ __CLASS__, 'block_app_passwords' ], 10, 2 );
-		// A session cookie can never outlive the grant.
-		add_filter( 'auth_cookie_expiration', [ __CLASS__, 'cap_cookie_lifetime' ], 99, 3 );
 		add_action( self::CRON, [ __CLASS__, 'sweep' ] );
 	}
 
@@ -135,6 +112,7 @@ class TempAccess {
 	/* State                                                               */
 	/* ------------------------------------------------------------------ */
 
+	/** Whether this user has (or had) a grant. */
 	public static function is_temp( $user_id ) {
 		return $user_id && (bool) get_user_meta( (int) $user_id, self::META_FLAG, true );
 	}
@@ -147,15 +125,16 @@ class TempAccess {
 		return (int) get_user_meta( $user_id, self::META_EXPIRES, true ) > time() ? 'active' : 'expired';
 	}
 
-	/** Whether this account is a temporary one whose grant is still live. */
+	/** Whether this user holds a grant that is still live. */
 	public static function is_live( $user_id ) {
 		return self::is_temp( $user_id ) && 'active' === self::status( $user_id );
 	}
 
 	/**
-	 * Tear down an account whose grant has ended: sessions, application
-	 * passwords and any pending link. Runs once per ending (guarded by
-	 * META_ENDED), whoever notices first — a request, the sweep, or revoke().
+	 * Tear down a grant that has ended: put the previous roles back, end the
+	 * sessions and remove application passwords created during the grant. Runs
+	 * once per ending (guarded by META_ENDED), whoever notices first — a request,
+	 * the sweep, or revoke().
 	 *
 	 * @return bool True when this call did the teardown.
 	 */
@@ -164,12 +143,33 @@ class TempAccess {
 			return false;
 		}
 		update_user_meta( $user_id, self::META_ENDED, time() );
-		delete_user_meta( $user_id, self::META_HASH );
-		delete_user_meta( $user_id, self::META_LINK_EXPIRES );
+
+		$user = get_userdata( $user_id );
+		if ( $user ) {
+			$granted = (string) get_user_meta( $user_id, self::META_ROLE, true );
+			$prev    = array_values( array_filter( (array) get_user_meta( $user_id, self::META_PREV_ROLES, true ), 'is_string' ) );
+			// Only undo our own change: if the administrator has since set a
+			// different role by hand, that decision stands.
+			if ( $granted && array_values( $user->roles ) === [ $granted ] ) {
+				foreach ( $user->roles as $role ) {
+					$user->remove_role( $role );
+				}
+				foreach ( $prev as $role ) {
+					if ( get_role( $role ) ) {
+						$user->add_role( $role );
+					}
+				}
+			}
+		}
 
 		\WP_Session_Tokens::get_instance( $user_id )->destroy_all();
 		if ( class_exists( '\WP_Application_Passwords' ) ) {
-			\WP_Application_Passwords::delete_all_application_passwords( $user_id );
+			$since = (int) get_user_meta( $user_id, self::META_CREATED, true );
+			foreach ( \WP_Application_Passwords::get_user_application_passwords( $user_id ) as $item ) {
+				if ( isset( $item['created'], $item['uuid'] ) && (int) $item['created'] >= $since ) {
+					\WP_Application_Passwords::delete_application_password( $user_id, $item['uuid'] );
+				}
+			}
 		}
 		return true;
 	}
@@ -180,7 +180,7 @@ class TempAccess {
 			return;
 		}
 		if ( self::close_out( $user_id ) ) {
-			self::record( $user_id, 'expired', __( 'Access expired.', 'gemsecurity' ), Logger::SEVERITY_INFO );
+			self::record( $user_id, 'expired', __( 'Access expired; the previous role was restored.', 'gemsecurity' ), Logger::SEVERITY_INFO );
 		}
 	}
 
@@ -202,35 +202,53 @@ class TempAccess {
 		}
 	}
 
+	/**
+	 * End every live grant: roles go back, sessions end. Run when GemSecurity is
+	 * deactivated, since nothing enforces expiry after that.
+	 *
+	 * @return int Grants closed.
+	 */
+	public static function disable_all() {
+		$ids = get_users( [
+			'fields'     => 'ID',
+			'number'     => -1,
+			'blog_id'    => 0,
+			'meta_key'   => self::META_FLAG, // phpcs:ignore WordPress.DB.SlowDBQuery
+			'meta_value' => 1,               // phpcs:ignore WordPress.DB.SlowDBQuery
+		] );
+		$closed = 0;
+		foreach ( $ids as $id ) {
+			$id = (int) $id;
+			if ( 'revoked' !== self::status( $id ) && ! (int) get_user_meta( $id, self::META_ENDED, true ) ) {
+				update_user_meta( $id, self::META_REVOKED, time() );
+				self::close_out( $id );
+				++$closed;
+			}
+		}
+		return $closed;
+	}
+
 	/* ------------------------------------------------------------------ */
 	/* Enforcement filters                                                 */
 	/* ------------------------------------------------------------------ */
 
-	/** An ended grant is never "logged in", whatever cookie or credential it presents. */
+	/** An ended grant is closed out the moment its user makes a request. */
 	public static function filter_current_user( $user_id ) {
-		if ( $user_id && self::is_temp( $user_id ) && 'active' !== self::status( $user_id ) ) {
+		if ( $user_id && self::is_temp( $user_id ) ) {
 			self::maybe_expire( (int) $user_id );
-			return 0;
 		}
 		return $user_id;
 	}
 
-	public static function block_password_login( $user ) {
-		if ( $user instanceof \WP_User && self::is_temp( $user->ID ) ) {
-			return new \WP_Error( 'gemsec_temp_link_only', __( '<strong>Sign-in blocked.</strong> This temporary account can only be used through its access link.', 'gemsecurity' ) );
-		}
-		return $user;
-	}
-
-	/** User-management capabilities a temporary account never gets, whatever its role. */
+	/** User-management capabilities a granted user never gets, whatever the role. */
 	const DENIED_CAPS = [
 		'create_users', 'add_users', 'promote_users', 'promote_user', 'delete_users', 'delete_user',
 		'remove_users', 'remove_user', 'manage_network_users',
 	];
 
 	/**
-	 * Stop a temporary account from making its access permanent: it may not
-	 * create or promote users, edit anyone but itself, or switch GemSecurity
+	 * Stop a user holding a grant from making that access permanent: they may not
+	 * create or promote users, edit anyone but themselves, or switch GemSecurity
 	 * off (which would lift every limit in this class).
 	 *
 	 * @param string[] $caps
@@ -240,7 +258,7 @@ class TempAccess {
 	 * @return string[]
 	 */
 	public static function restrict_caps( $caps, $cap, $user_id, $args ) {
-		if ( ! $user_id || ! self::is_temp( $user_id ) ) {
+		if ( ! $user_id || ! self::is_live( $user_id ) ) {
 			return $caps;
 		}
 		if ( in_array( $cap, self::DENIED_CAPS, true ) ) {
@@ -258,8 +276,8 @@ class TempAccess {
 
 	/** @param string $file Plugin basename about to be deleted. */
 	public static function refuse_delete( $file ) {
-		if ( self::is_temp( get_current_user_id() ) && preg_match( '#^gemsecurity(-pro)?/#', (string) $file ) ) {
-			wp_die( esc_html__( 'Temporary accounts cannot delete GemSecurity.', 'gemsecurity' ), '', [ 'response' => 403 ] );
+		if ( self::is_live( get_current_user_id() ) && preg_match( '#^gemsecurity(-pro)?/#', (string) $file ) ) {
+			wp_die( esc_html__( 'A user with temporary access cannot delete GemSecurity.', 'gemsecurity' ), '', [ 'response' => 403 ] );
 		}
 	}
 
@@ -269,64 +287,10 @@ class TempAccess {
 	 * @return array
 	 */
 	public static function hide_delete_link( $links, $file ) {
-		if ( self::is_temp( get_current_user_id() ) && preg_match( '#^gemsecurity(-pro)?/#', (string) $file ) ) {
+		if ( self::is_live( get_current_user_id() ) && preg_match( '#^gemsecurity(-pro)?/#', (string) $file ) ) {
 			unset( $links['delete'] );
 		}
 		return $links;
-	}
-
-	/**
-	 * End every temporary account for good: no role, an unknown password, no
-	 * sessions or application passwords, marked revoked. Run when GemSecurity
-	 * is deactivated or uninstalled, since nothing enforces expiry after that
-	 * and a password reset would otherwise turn the grant into a permanent one.
-	 *
-	 * @return int Accounts closed.
-	 */
-	public static function disable_all() {
-		$ids = get_users( [
-			'fields'     => 'ID',
-			'number'     => -1,
-			'blog_id'    => 0,
-			'meta_key'   => self::META_FLAG, // phpcs:ignore WordPress.DB.SlowDBQuery
-			'meta_value' => 1,               // phpcs:ignore WordPress.DB.SlowDBQuery
-		] );
-		foreach ( $ids as $id ) {
-			$id   = (int) $id;
-			$user = get_userdata( $id );
-			if ( ! $user ) {
-				continue;
-			}
-			$user->set_role( '' );
-			wp_set_password( wp_generate_password( 64, true, true ), $id );
-			\WP_Session_Tokens::get_instance( $id )->destroy_all();
-			if ( class_exists( '\WP_Application_Passwords' ) ) {
-				\WP_Application_Passwords::delete_all_application_passwords( $id );
-			}
-			delete_user_meta( $id, self::META_HASH );
-			delete_user_meta( $id, self::META_LINK_EXPIRES );
-			if ( ! (int) get_user_meta( $id, self::META_REVOKED, true ) ) {
-				update_user_meta( $id, self::META_REVOKED, time() );
-			}
-			update_user_meta( $id, self::META_ENDED, time() );
-		}
-		return count( $ids );
-	}
-
-	public static function block_password_reset( $allow, $user_id ) {
-		return self::is_temp( $user_id ) ? false : $allow;
-	}
-
-	public static function block_app_passwords( $available, $user ) {
-		return ( $user instanceof \WP_User && self::is_temp( $user->ID ) ) ? false : $available;
-	}
-
-	public static function cap_cookie_lifetime( $length, $user_id, $remember ) {
-		if ( self::is_temp( $user_id ) ) {
-			$left = (int) get_user_meta( $user_id, self::META_EXPIRES, true ) - time();
-			return max( 1, min( (int) $length, $left ) );
-		}
-		return $length;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -334,15 +298,15 @@ class TempAccess {
 	/* ------------------------------------------------------------------ */
 
 	/**
-	 * Who may manage temporary access. Temporary accounts never can, so a
-	 * short-lived administrator cannot mint itself more time or more accounts.
+	 * Who may manage temporary access. A user holding a grant never can, so
+	 * short-lived access cannot mint itself more time or hand it to others.
 	 */
 	public static function can_manage() {
 		$user = wp_get_current_user();
 		return $user->exists()
 			&& current_user_can( 'manage_options' )
-			&& current_user_can( 'create_users' )
-			&& ! self::is_temp( $user->ID );
+			&& current_user_can( 'promote_users' )
+			&& ! self::is_live( $user->ID );
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -414,39 +378,71 @@ class TempAccess {
 		return $expires;
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* Management actions (called by the REST controller)                  */
-	/* ------------------------------------------------------------------ */
-
 	/**
-	 * Create a temporary account.
+	 * Check a role may be granted and that an elevated one was confirmed.
 	 *
-	 * @param array $args email, role, duration, expires_at, send_email, confirm_elevated.
-	 * @return array|\WP_Error { id, link, emailed }
+	 * @return string|\WP_Error The role slug.
 	 */
-	public static function create( array $args ) {
-		$email = isset( $args['email'] ) ? sanitize_email( $args['email'] ) : '';
-		if ( ! is_email( $email ) ) {
-			return new \WP_Error( 'bad_email', __( 'Enter a valid email address.', 'gemsecurity' ), [ 'status' => 400 ] );
-		}
-
-		// An address that already belongs to someone is never touched: no
-		// reuse, no role change, no "temporary" flag on a real person.
-		if ( email_exists( $email ) ) {
-			return new \WP_Error(
-				'email_exists',
-				__( 'A user with this email address already exists. Existing accounts are never changed or converted — use a different address for the temporary account.', 'gemsecurity' ),
-				[ 'status' => 409 ]
-			);
-		}
-
+	private static function check_role( array $args ) {
 		$slug  = isset( $args['role'] ) ? sanitize_key( $args['role'] ) : '';
 		$roles = wp_list_pluck( self::assignable_roles(), 'elevated', 'slug' );
 		if ( ! isset( $roles[ $slug ] ) ) {
 			return new \WP_Error( 'bad_role', __( 'Choose a role to grant.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 		if ( $roles[ $slug ] && empty( $args['confirm_elevated'] ) ) {
-			return new \WP_Error( 'confirm_elevated', __( 'This role can change the site. A temporary account cannot create users or switch GemSecurity off, but installing or editing plugins and themes runs code that can outlive the access. Confirm that you want to grant it.', 'gemsecurity' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'confirm_elevated', __( 'This role can change the site. A user with temporary access cannot create users or switch GemSecurity off, but installing or editing plugins and themes runs code that can outlive the access. Confirm that you want to grant it.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+		return $slug;
+	}
+
+	/**
+	 * Why a user cannot be given a grant, or null when they can.
+	 *
+	 * @return \WP_Error|null
+	 */
+	private static function check_target( $user_id ) {
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return new \WP_Error( 'bad_user', __( 'That user does not exist.', 'gemsecurity' ), [ 'status' => 404 ] );
+		}
+		if ( (int) $user_id === get_current_user_id() ) {
+			return new \WP_Error( 'self_grant', __( 'You cannot change your own access.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+		if ( is_multisite() && is_super_admin( $user_id ) ) {
+			return new \WP_Error( 'super_admin', __( 'Network administrators cannot be given temporary access.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+		if ( $user->has_cap( 'manage_options' ) ) {
+			return new \WP_Error( 'target_admin', __( 'This user already has full access. Temporary access is for users who do not.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+		if ( ! current_user_can( 'promote_user', $user_id ) ) {
+			return new \WP_Error( 'forbidden', __( 'You are not allowed to change this user’s role.', 'gemsecurity' ), [ 'status' => 403 ] );
+		}
+		return null;
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Management actions (called by the REST controller)                  */
+	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Grant an existing user a role until a set time.
+	 *
+	 * @param array $args user_id, role, duration, expires_at, confirm_elevated.
+	 * @return array|\WP_Error { id }
+	 */
+	public static function grant( array $args ) {
+		$user_id = isset( $args['user_id'] ) ? absint( $args['user_id'] ) : 0;
+		$err     = self::check_target( $user_id );
+		if ( $err ) {
+			return $err;
+		}
+		if ( self::is_live( $user_id ) ) {
+			return new \WP_Error( 'already_granted', __( 'This user already has temporary access. Extend or revoke it instead.', 'gemsecurity' ), [ 'status' => 409 ] );
+		}
+
+		$slug = self::check_role( $args );
+		if ( is_wp_error( $slug ) ) {
+			return $slug;
 		}
 
 		$expires = self::resolve_expiry(
@@ -458,79 +454,58 @@ class TempAccess {
 			return $expires;
 		}
 
-		$limit_key = 'ta_create_' . get_current_user_id();
+		$limit_key = 'ta_grant_' . get_current_user_id();
 		$made      = (int) Store::get( $limit_key );
-		if ( $made >= self::MAX_CREATES_PER_HOUR ) {
-			return new \WP_Error( 'rate_limited', __( 'Too many temporary accounts were created in the last hour. Try again later.', 'gemsecurity' ), [ 'status' => 429 ] );
+		if ( $made >= self::MAX_GRANTS_PER_HOUR ) {
+			return new \WP_Error( 'rate_limited', __( 'Too many grants were made in the last hour. Try again later.', 'gemsecurity' ), [ 'status' => 429 ] );
 		}
 		Store::set( $limit_key, $made + 1, HOUR_IN_SECONDS );
 
-		$login = '';
-		do {
-			$login = 'temp-' . strtolower( wp_generate_password( 8, false ) );
-		} while ( username_exists( $login ) );
+		$user = get_userdata( $user_id );
+		$now  = time();
+		update_user_meta( $user_id, self::META_PREV_ROLES, array_values( $user->roles ) );
+		update_user_meta( $user_id, self::META_ROLE, $slug );
+		update_user_meta( $user_id, self::META_EXPIRES, $expires );
+		update_user_meta( $user_id, self::META_CREATED, $now );
+		update_user_meta( $user_id, self::META_CREATED_BY, get_current_user_id() );
+		delete_user_meta( $user_id, self::META_REVOKED );
+		delete_user_meta( $user_id, self::META_ENDED );
+		update_user_meta( $user_id, self::META_FLAG, 1 );
+		$user->set_role( $slug );
 
-		$now     = time();
-		$user_id = wp_insert_user( [
-			'user_login'   => $login,
-			'user_email'   => $email,
-			'user_pass'    => wp_generate_password( 64, true, true ),
-			'role'         => $slug,
-			'display_name' => __( 'Temporary access', 'gemsecurity' ),
-			'nickname'     => $login,
-			// Written before user_register fires so other guards can recognise the account.
-			'meta_input'   => [
-				self::META_FLAG       => 1,
-				self::META_EXPIRES    => $expires,
-				self::META_CREATED    => $now,
-				self::META_CREATED_BY => get_current_user_id(),
-			],
-		] );
-		if ( is_wp_error( $user_id ) ) {
-			return new \WP_Error( 'create_failed', $user_id->get_error_message(), [ 'status' => 500 ] );
-		}
-		if ( is_multisite() ) {
-			add_user_to_blog( get_current_blog_id(), $user_id, $slug );
-		}
-
+		$elevated = self::role_is_elevated( $slug );
 		self::record(
 			$user_id,
 			'created',
 			sprintf(
 				/* translators: 1: email, 2: role, 3: expiry date. */
-				__( 'Temporary access created for %1$s with role "%2$s", ending %3$s.', 'gemsecurity' ),
-				$email,
+				__( 'Temporary access granted to %1$s with role "%2$s", ending %3$s.', 'gemsecurity' ),
+				$user->user_email,
 				$slug,
 				wp_date( 'Y-m-d H:i', $expires )
 			),
-			$roles[ $slug ] ? Logger::SEVERITY_WARNING : Logger::SEVERITY_NOTICE
+			$elevated ? Logger::SEVERITY_WARNING : Logger::SEVERITY_NOTICE
 		);
-
-		$link   = self::issue_link( $user_id );
-		$mailed = false;
-		if ( ! empty( $args['send_email'] ) ) {
-			$mailed = self::email_invite( $user_id, $link );
-		}
 
 		if ( Helper::get_setting( 'temp_access_notify_created', true ) ) {
 			self::notify_admin(
-				__( 'Temporary access created', 'gemsecurity' ),
+				__( 'Temporary access granted', 'gemsecurity' ),
 				sprintf(
 					/* translators: 1: email, 2: role, 3: expiry date. */
 					__( '%1$s was given temporary access with the "%2$s" role until %3$s.', 'gemsecurity' ),
-					$email,
+					$user->user_email,
 					$slug,
 					wp_date( 'Y-m-d H:i', $expires )
 				)
 			);
 		}
 
-		return [ 'id' => $user_id, 'link' => $link, 'emailed' => $mailed ];
+		return [ 'id' => $user_id ];
 	}
 
 	/**
-	 * Extend or reopen access. Active grants grow from their current expiry,
-	 * expired ones restart from now. Revoked grants stay revoked.
+	 * Extend or reopen access. Active grants grow from their current expiry;
+	 * expired ones are granted again from now. Revoked grants stay revoked.
 	 *
 	 * @return true|\WP_Error
 	 */
@@ -541,7 +516,7 @@ class TempAccess {
 		}
 		$status = self::status( $user_id );
 		if ( 'revoked' === $status ) {
-			return new \WP_Error( 'revoked', __( 'Revoked access cannot be extended. Create a new temporary account instead.', 'gemsecurity' ), [ 'status' => 409 ] );
+			return new \WP_Error( 'revoked', __( 'Revoked access cannot be extended. Grant it again instead.', 'gemsecurity' ), [ 'status' => 409 ] );
 		}
 
 		$current = (int) get_user_meta( $user_id, self::META_EXPIRES, true );
@@ -549,6 +524,22 @@ class TempAccess {
 		$expires = self::resolve_expiry( sanitize_key( $duration ), $custom, $base );
 		if ( is_wp_error( $expires ) ) {
 			return $expires;
+		}
+
+		if ( 'expired' === $status ) {
+			// The role was already taken back, so grant it again.
+			$err = self::check_target( $user_id );
+			if ( $err ) {
+				return $err;
+			}
+			$user = get_userdata( $user_id );
+			$role = (string) get_user_meta( $user_id, self::META_ROLE, true );
+			if ( ! get_role( $role ) ) {
+				return new \WP_Error( 'bad_role', __( 'The role for this grant no longer exists.', 'gemsecurity' ), [ 'status' => 409 ] );
+			}
+			update_user_meta( $user_id, self::META_PREV_ROLES, array_values( $user->roles ) );
+			update_user_meta( $user_id, self::META_CREATED, time() );
+			$user->set_role( $role );
 		}
 
 		update_user_meta( $user_id, self::META_EXPIRES, $expires );
@@ -563,24 +554,6 @@ class TempAccess {
 		return true;
 	}
 
-	/**
-	 * Replace the sign-in link. The old one stops working at once.
-	 *
-	 * @return array|\WP_Error { link, emailed }
-	 */
-	public static function regenerate( $user_id, $send_email ) {
-		$err = self::require_temp( $user_id );
-		if ( $err ) {
-			return $err;
-		}
-		if ( 'active' !== self::status( $user_id ) ) {
-			return new \WP_Error( 'not_active', __( 'Extend this access first — only active accounts can have a link.', 'gemsecurity' ), [ 'status' => 409 ] );
-		}
-		$link = self::issue_link( $user_id );
-		self::record( $user_id, 'link_regenerated', __( 'A new sign-in link was generated; the previous one no longer works.', 'gemsecurity' ), Logger::SEVERITY_NOTICE );
-		return [ 'link' => $link, 'emailed' => $send_email ? self::email_invite( $user_id, $link ) : false ];
-	}
-
 	/** End access immediately. @return true|\WP_Error */
 	public static function revoke( $user_id ) {
 		$err = self::require_temp( $user_id );
@@ -593,7 +566,7 @@ class TempAccess {
 		update_user_meta( $user_id, self::META_REVOKED, time() );
 		delete_user_meta( $user_id, self::META_ENDED );
 		self::close_out( $user_id );
-		self::record( $user_id, 'revoked', __( 'Access revoked; sessions ended.', 'gemsecurity' ), Logger::SEVERITY_NOTICE );
+		self::record( $user_id, 'revoked', __( 'Access revoked; the previous role was restored and sessions ended.', 'gemsecurity' ), Logger::SEVERITY_NOTICE );
 
 		if ( Helper::get_setting( 'temp_access_notify_revoked', true ) ) {
 			$user = get_userdata( $user_id );
@@ -608,94 +581,9 @@ class TempAccess {
 
 	private static function require_temp( $user_id ) {
 		if ( ! self::is_temp( $user_id ) || ! get_userdata( $user_id ) ) {
-			return new \WP_Error( 'not_temp', __( 'That is not a temporary access account.', 'gemsecurity' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_temp', __( 'That user has no temporary access.', 'gemsecurity' ), [ 'status' => 404 ] );
 		}
 		return null;
-	}
-
-	/* ------------------------------------------------------------------ */
-	/* Tokens & mail                                                       */
-	/* ------------------------------------------------------------------ */
-
-	/**
-	 * Store a fresh token's hash (replacing any earlier one) and return the link.
-	 * The raw token exists only in the returned URL.
-	 */
-	private static function issue_link( $user_id ) {
-		$token = bin2hex( random_bytes( 32 ) );
-
-		/**
-		 * Hours a sign-in link stays usable; it never outlives the access itself.
-		 *
-		 * @param int $hours
-		 */
-		$hours   = max( 1, (int) apply_filters( 'gemsecurity/temp_access/link_hours', 48 ) );
-		$expires = min( time() + $hours * HOUR_IN_SECONDS, (int) get_user_meta( $user_id, self::META_EXPIRES, true ) );
-
-		update_user_meta( $user_id, self::META_HASH, hash( 'sha256', $token ) );
-		update_user_meta( $user_id, self::META_LINK_EXPIRES, $expires );
-
-		return add_query_arg(
-			[
-				'action'          => self::ACTION,
-				'gemsec_temp_uid' => $user_id,
-				'gemsec_temp_key' => $token,
-			],
-			wp_login_url()
-		);
-	}
-
-	private static function token_valid( $user_id, $token ) {
-		if ( ! preg_match( '/^[a-f0-9]{64}$/', $token ) || ! self::is_live( $user_id ) ) {
-			return false;
-		}
-		$stored  = (string) get_user_meta( $user_id, self::META_HASH, true );
-		$expires = (int) get_user_meta( $user_id, self::META_LINK_EXPIRES, true );
-		return '' !== $stored && $expires > time() && hash_equals( $stored, hash( 'sha256', $token ) );
-	}
-
-	/**
-	 * Use the token up. delete_user_meta() only removes the row while it still
-	 * holds this exact hash, so of two simultaneous confirmations one wins.
-	 */
-	private static function consume_token( $user_id, $token ) {
-		if ( ! self::token_valid( $user_id, $token ) ) {
-			return false;
-		}
-		$consumed = delete_user_meta( $user_id, self::META_HASH, hash( 'sha256', $token ) );
-		delete_user_meta( $user_id, self::META_LINK_EXPIRES );
-		return (bool) $consumed;
-	}
-
-	private static function email_invite( $user_id, $link ) {
-		$user = get_userdata( $user_id );
-		if ( ! $user ) {
-			return false;
-		}
-		$expires = (int) get_user_meta( $user_id, self::META_EXPIRES, true );
-		$sent    = Mailer::send(
-			$user->user_email,
-			'🔑',
-			/* translators: %s: site name. */
-			sprintf( __( 'Temporary access to %s', 'gemsecurity' ), Mailer::site_name() ),
-			[
-				[
-					'type' => 'paragraph',
-					/* translators: %s: date and time. */
-					'text' => sprintf( __( 'You have been given temporary access to the dashboard. It ends on %s.', 'gemsecurity' ), wp_date( 'Y-m-d H:i T', $expires ) ),
-				],
-				[ 'type' => 'button', 'url' => $link, 'label' => __( 'Open the dashboard', 'gemsecurity' ) ],
-				[
-					'type' => 'paragraph',
-					'text' => __( 'The link works once. Do not forward it — whoever opens it first gets the access.', 'gemsecurity' ),
-				],
-			],
-			[ 'origin' => false ]
-		);
-		if ( $sent ) {
-			self::record( $user_id, 'link_sent', __( 'Sign-in link emailed to the recipient.', 'gemsecurity' ), Logger::SEVERITY_INFO );
-		}
-		return (bool) $sent;
 	}
 
 	private static function notify_admin( $title, $text ) {
@@ -706,7 +594,7 @@ class TempAccess {
 	/* History                                                             */
 	/* ------------------------------------------------------------------ */
 
-	/** Write to the account's own history and to the site-wide audit log. */
+	/** Write to the user's own history and to the site-wide audit log. */
 	private static function record( $user_id, $event, $message, $severity ) {
 		$history   = (array) get_user_meta( $user_id, self::META_HISTORY, true );
 		$history[] = [ time(), $event, $message, Helper::get_ip_address() ];
@@ -719,6 +607,37 @@ class TempAccess {
 	/* Listing                                                             */
 	/* ------------------------------------------------------------------ */
 
+	/** Users that could be given access, matched by name, login or email. */
+	public static function search_users( $term ) {
+		$term = trim( (string) $term );
+		if ( strlen( $term ) < 2 ) {
+			return [];
+		}
+		$out = [];
+		foreach ( get_users( [
+			'search'         => '*' . $term . '*',
+			'search_columns' => [ 'user_login', 'user_email', 'display_name' ],
+			'number'         => 20,
+			'exclude'        => [ get_current_user_id() ],
+		] ) as $user ) {
+			if ( $user->has_cap( 'manage_options' ) || self::is_live( $user->ID ) ) {
+				continue;
+			}
+			$out[] = [
+				'id'    => $user->ID,
+				'name'  => $user->display_name,
+				'email' => $user->user_email,
+				'roles' => array_map(
+					static function ( $r ) {
+						return isset( wp_roles()->role_names[ $r ] ) ? translate_user_role( wp_roles()->role_names[ $r ] ) : $r;
+					},
+					$user->roles
+				),
+			];
+		}
+		return $out;
+	}
+
 	public static function items() {
 		$users = get_users( [
 			'number'     => 300,
@@ -728,6 +647,7 @@ class TempAccess {
 			'meta_value' => 1,               // phpcs:ignore WordPress.DB.SlowDBQuery
 		] );
 
+		$names = wp_roles()->role_names;
 		$items = [];
 		foreach ( $users as $user ) {
 			self::maybe_expire( $user->ID );
@@ -736,27 +656,30 @@ class TempAccess {
 			$history = array_values( array_filter( (array) get_user_meta( $user->ID, self::META_HISTORY, true ), 'is_array' ) );
 			$last    = $history ? end( $history ) : null;
 			$creator = get_userdata( (int) get_user_meta( $user->ID, self::META_CREATED_BY, true ) );
-			$role    = $user->roles ? reset( $user->roles ) : '';
+			$role    = (string) get_user_meta( $user->ID, self::META_ROLE, true );
+			$prev    = array_map(
+				static function ( $r ) use ( $names ) {
+					return isset( $names[ $r ] ) ? translate_user_role( $names[ $r ] ) : $r;
+				},
+				array_filter( (array) get_user_meta( $user->ID, self::META_PREV_ROLES, true ), 'is_string' )
+			);
 
 			$items[] = [
-				'id'           => $user->ID,
-				'email'        => $user->user_email,
-				'login'        => $user->user_login,
-				'role'         => $role,
-				'role_name'    => $role && isset( wp_roles()->role_names[ $role ] ) ? translate_user_role( wp_roles()->role_names[ $role ] ) : $role,
-				'elevated'     => $role ? self::role_is_elevated( $role ) : false,
-				'status'       => $status,
-				'created'      => (int) get_user_meta( $user->ID, self::META_CREATED, true ),
-				'created_by'   => $creator ? $creator->display_name : '',
-				'expires'      => (int) get_user_meta( $user->ID, self::META_EXPIRES, true ),
-				'revoked'      => (int) get_user_meta( $user->ID, self::META_REVOKED, true ),
-				'last_login'   => (int) get_user_meta( $user->ID, self::META_LAST_LOGIN, true ),
-				'logins'       => (int) get_user_meta( $user->ID, self::META_LOGINS, true ),
-				'link_pending' => 'active' === $status
-					&& '' !== (string) get_user_meta( $user->ID, self::META_HASH, true )
-					&& (int) get_user_meta( $user->ID, self::META_LINK_EXPIRES, true ) > time(),
-				'last_event'   => $last ? [ 'time' => (int) $last[0], 'event' => $last[1], 'message' => $last[2] ] : null,
-				'history'      => array_map(
+				'id'         => $user->ID,
+				'email'      => $user->user_email,
+				'login'      => $user->user_login,
+				'name'       => $user->display_name,
+				'role'       => $role,
+				'role_name'  => $role && isset( $names[ $role ] ) ? translate_user_role( $names[ $role ] ) : $role,
+				'prev_roles' => array_values( $prev ),
+				'elevated'   => $role ? self::role_is_elevated( $role ) : false,
+				'status'     => $status,
+				'created'    => (int) get_user_meta( $user->ID, self::META_CREATED, true ),
+				'created_by' => $creator ? $creator->display_name : '',
+				'expires'    => (int) get_user_meta( $user->ID, self::META_EXPIRES, true ),
+				'revoked'    => (int) get_user_meta( $user->ID, self::META_REVOKED, true ),
+				'last_event' => $last ? [ 'time' => (int) $last[0], 'event' => $last[1], 'message' => $last[2] ] : null,
+				'history'    => array_map(
 					static function ( $h ) {
 						return [ 'time' => (int) $h[0], 'event' => $h[1], 'message' => $h[2], 'ip' => isset( $h[3] ) ? $h[3] : '' ];
 					},
@@ -766,144 +689,5 @@ class TempAccess {
 		}
 
 		return $items;
-	}
-
-	/* ------------------------------------------------------------------ */
-	/* Sign-in link (wp-login.php?action=gemsec_temp)                      */
-	/* ------------------------------------------------------------------ */
-
-	public function handle() {
-		nocache_headers();
-		// Keep the token out of referrers, caches and search indexes.
-		header( 'Referrer-Policy: no-referrer' );
-		header( 'X-Robots-Tag: noindex, nofollow' );
-		// login_header() adds core's strict-origin-when-cross-origin <meta> at
-		// priority 10, and the last referrer <meta> wins: print ours after it.
-		add_action( 'login_head', [ $this, 'head_meta' ], 99 );
-
-		// The link's own token authorises this request in place of a nonce.
-		// phpcs:disable WordPress.Security.NonceVerification
-		$key  = isset( $_REQUEST['gemsec_temp_key'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['gemsec_temp_key'] ) ) : '';
-		$uid  = isset( $_REQUEST['gemsec_temp_uid'] ) ? absint( $_REQUEST['gemsec_temp_uid'] ) : 0;
-		$post = isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'];
-		// phpcs:enable
-
-		if ( ! $this->take_ip_slot() ) {
-			$this->render_error( __( 'Too many attempts. Please wait a few minutes and try again.', 'gemsecurity' ) );
-			exit;
-		}
-
-		if ( '' === $key || ! $uid || ! self::is_temp( $uid ) || ! self::token_valid( $uid, $key ) ) {
-			$this->fail( $uid );
-			$this->render_error( __( 'This access link is invalid, has expired, or was already used. Ask the site owner for a new one.', 'gemsecurity' ) );
-			exit;
-		}
-
-		$confirm = isset( $_POST['gemsec_temp_confirm'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_temp_confirm'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked against its SameSite cookie.
-		if ( ! $post || ! Helper::confirm_check( 'temp_confirm', $confirm ) ) {
-			$this->render_confirm( $uid, $key );
-			exit;
-		}
-
-		if ( ! self::consume_token( $uid, $key ) ) {
-			$this->fail( $uid );
-			$this->render_error( __( 'This access link is invalid, has expired, or was already used. Ask the site owner for a new one.', 'gemsecurity' ) );
-			exit;
-		}
-
-		$user = get_userdata( $uid );
-		if ( ! $user || ! self::is_live( $uid ) ) {
-			$this->render_error( __( 'This account cannot sign in right now.', 'gemsecurity' ) );
-			exit;
-		}
-
-		$first = ! (int) get_user_meta( $uid, self::META_LAST_LOGIN, true );
-		update_user_meta( $uid, self::META_LAST_LOGIN, time() );
-		update_user_meta( $uid, self::META_LOGINS, 1 + (int) get_user_meta( $uid, self::META_LOGINS, true ) );
-		self::record( $uid, 'login', __( 'Signed in with the access link.', 'gemsecurity' ), Logger::SEVERITY_NOTICE );
-
-		if ( $first && Helper::get_setting( 'temp_access_notify_used', true ) ) {
-			self::notify_admin(
-				__( 'Temporary access used', 'gemsecurity' ),
-				sprintf(
-					/* translators: 1: email, 2: IP address. */
-					__( '%1$s used their temporary access link for the first time, from %2$s.', 'gemsecurity' ),
-					$user->user_email,
-					Helper::get_ip_address()
-				)
-			);
-		}
-
-		wp_set_current_user( $uid );
-		wp_set_auth_cookie( $uid, false );
-		do_action( 'wp_login', $user->user_login, $user ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-
-		/**
-		 * Where a temporary user lands after signing in.
-		 *
-		 * @param string   $url
-		 * @param \WP_User $user
-		 */
-		wp_safe_redirect( apply_filters( 'gemsecurity/temp_access/redirect', admin_url(), $user ) );
-		exit;
-	}
-
-	private function fail( $uid ) {
-		$message = __( 'An access link was refused: invalid, expired or already used.', 'gemsecurity' );
-		if ( $uid && self::is_temp( $uid ) ) {
-			self::record( $uid, 'link_failed', $message, Logger::SEVERITY_WARNING );
-		} else {
-			Logger::log( 'temp_access_link_failed', $message, Logger::SEVERITY_WARNING, [ 'user_id' => 0 ] );
-		}
-		$key   = 'ta_bad_' . md5( Helper::get_ip_address() );
-		$count = (int) Store::get( $key );
-		Store::set( $key, $count + 1, self::LIMIT_WINDOW );
-	}
-
-	/** True while the caller is still under the bad-link limit. */
-	private function take_ip_slot() {
-		return (int) Store::get( 'ta_bad_' . md5( Helper::get_ip_address() ) ) < self::MAX_BAD_LINKS_PER_IP;
-	}
-
-	public function head_meta() {
-		echo '<meta name="referrer" content="no-referrer" />' . "\n";
-	}
-
-	private function render_error( $message ) {
-		login_header( __( 'Temporary access', 'gemsecurity' ), '', new \WP_Error( 'gemsec_temp', $message ) );
-		echo '<p id="backtoblog"><a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html__( '← Back to site', 'gemsecurity' ) . '</a></p>';
-		login_footer();
-	}
-
-	/** The page a link opens on. Signing in needs this POST, not the GET itself. */
-	private function render_confirm( $uid, $key ) {
-		$user = get_userdata( $uid );
-		$role = $user && $user->roles ? reset( $user->roles ) : '';
-		$name = $role && isset( wp_roles()->role_names[ $role ] ) ? translate_user_role( wp_roles()->role_names[ $role ] ) : '';
-		$confirm = Helper::confirm_issue( 'temp_confirm' );
-		login_header( __( 'Temporary access', 'gemsecurity' ) );
-		?>
-		<form name="gemsec_temp_confirm" id="loginform" action="<?php echo esc_url( add_query_arg( 'action', self::ACTION, wp_login_url() ) ); ?>" method="post">
-			<p style="margin-bottom:14px;">
-				<?php
-				echo esc_html(
-					sprintf(
-						/* translators: 1: role name, 2: date and time. */
-						__( 'You have been given temporary %1$s access until %2$s.', 'gemsecurity' ),
-						$name ? $name : __( 'dashboard', 'gemsecurity' ),
-						wp_date( 'Y-m-d H:i T', (int) get_user_meta( $uid, self::META_EXPIRES, true ) )
-					)
-				);
-				?>
-			</p>
-			<input type="hidden" name="gemsec_temp_uid" value="<?php echo esc_attr( $uid ); ?>" />
-			<input type="hidden" name="gemsec_temp_key" value="<?php echo esc_attr( $key ); ?>" />
-			<input type="hidden" name="gemsec_temp_confirm" value="<?php echo esc_attr( $confirm ); ?>" />
-			<p class="submit">
-				<input type="submit" class="button button-primary button-large" value="<?php esc_attr_e( 'Continue to the dashboard', 'gemsecurity' ); ?>" />
-			</p>
-		</form>
-		<?php
-		login_footer();
 	}
 }

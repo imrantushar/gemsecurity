@@ -80,7 +80,7 @@ final class StoreLicense {
 			'init_promotions'     => false,
 			'license_server'      => 'https://store.kodezen.com/',
 			'purchase_url'        => 'https://kodezen.com/',
-			'product_logo'        => defined( 'GEMSECURITY_ASSETS_URI' ) ? GEMSECURITY_ASSETS_URI . 'images/icon_logo.png' : '',
+			'product_logo'        => defined( 'GEMSECURITY_ASSETS_URI' ) ? GEMSECURITY_ASSETS_URI . 'images/icon_logo.svg' : '',
 			'store_dashboard_url' => 'https://store.kodezen.com/dashboard/license-keys/',
 			'terms_url'           => 'https://kodezen.com/terms-and-conditions/',
 			'privacy_policy_url'  => 'https://kodezen.com/privacy-policy/',

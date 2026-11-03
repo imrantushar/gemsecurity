@@ -112,12 +112,6 @@ class PluginGuard {
 		return self::get();
 	}
 
-	/** POST /plugin-guard/restore { id } — restore a quarantined mu-plugin and trust it. */
-	public static function restore( \WP_REST_Request $request ) {
-		$res = Guard::restore_and_trust_mu( sanitize_key( (string) $request->get_param( 'id' ) ) );
-		return is_wp_error( $res ) ? $res : self::get();
-	}
-
 	/**
 	 * @param string $key
 	 * @param array  $inv

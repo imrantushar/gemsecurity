@@ -10,15 +10,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Temporary access REST controller.
  *
- * GET  /temp-access             → accounts, counts and the options the form needs.
- * POST /temp-access             → create an account { email, role, duration, expires_at, send_email, confirm_elevated }.
- * POST /temp-access/extend      → { user_id, duration, expires_at }.
- * POST /temp-access/regenerate  → { user_id, send_email }.
- * POST /temp-access/revoke      → { user_id }.
- *
- * Every route is gated by {@see TempAccessModule::can_manage()} and, being
- * cookie-authenticated, by the REST nonce. Raw links are returned only by the
- * call that created them and are never stored.
+ * Every route is gated on {@see TempAccessModule::can_manage()}, so a user who
+ * is holding a grant can never manage (or extend) it.
  */
 class TempAccess {
 
@@ -40,19 +33,25 @@ class TempAccess {
 			'roles'     => TempAccessModule::assignable_roles(),
 			'presets'   => array_keys( TempAccessModule::PRESETS ),
 			'max_days'  => (int) floor( TempAccessModule::MAX_SECONDS / DAY_IN_SECONDS ),
-			'https'     => is_ssl() || 0 === strpos( wp_login_url(), 'https://' ),
 			'server_ts' => time(),
 		] );
 	}
 
 	/** @param \WP_REST_Request $request */
+	public static function users( $request ) {
+		return rest_ensure_response( [
+			'success' => true,
+			'users'   => TempAccessModule::search_users( (string) $request->get_param( 'search' ) ),
+		] );
+	}
+
+	/** @param \WP_REST_Request $request */
 	public static function create( $request ) {
-		$result = TempAccessModule::create( [
-			'email'            => (string) $request->get_param( 'email' ),
+		$result = TempAccessModule::grant( [
+			'user_id'          => absint( $request->get_param( 'user_id' ) ),
 			'role'             => (string) $request->get_param( 'role' ),
 			'duration'         => (string) $request->get_param( 'duration' ),
 			'expires_at'       => (int) $request->get_param( 'expires_at' ),
-			'send_email'       => (bool) $request->get_param( 'send_email' ),
 			'confirm_elevated' => (bool) $request->get_param( 'confirm_elevated' ),
 		] );
 		return self::respond( $result );
@@ -66,11 +65,6 @@ class TempAccess {
 			(int) $request->get_param( 'expires_at' )
 		);
 		return self::respond( $result );
-	}
-
-	/** @param \WP_REST_Request $request */
-	public static function regenerate( $request ) {
-		return self::respond( TempAccessModule::regenerate( absint( $request->get_param( 'user_id' ) ), (bool) $request->get_param( 'send_email' ) ) );
 	}
 
 	/** @param \WP_REST_Request $request */

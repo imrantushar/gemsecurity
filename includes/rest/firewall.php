@@ -77,7 +77,7 @@ class Firewall {
 			\GemSecurity\Paths::root() . '.htaccess'       => '0644',
 			\GemSecurity\Paths::root()                     => '0755',
 			\GemSecurity\Paths::root() . 'wp-admin'        => '0755',
-			\GemSecurity\Paths::root() . WPINC             => '0755',
+			\GemSecurity\Paths::includes()          => '0755',
 			\GemSecurity\Paths::content()                  => '0755',
 			\GemSecurity\Paths::plugins()                  => '0755',
 			get_theme_root()                               => '0755',
@@ -130,52 +130,11 @@ class Firewall {
 				// recommended mode (and it is owned by the web server, so
 				// chmod will succeed — else PHP returns false and we report
 				// a helpful error instead).
-				'fixable'     => $status !== 'ok',
+				'fixable'     => false,
 			];
 		}
 
 		return rest_ensure_response( [ 'success' => true, 'items' => $rows ] );
 	}
 
-	/**
-	 * POST /file-permissions/fix — chmod one audited path to its recommended
-	 * mode. Only paths listed by the audit are accepted.
-	 */
-	public static function file_permissions_fix( \WP_REST_Request $req ) {
-		$rel = (string) $req->get_param( 'path' );
-		$targets = self::perm_targets();
-		if ( '' === $rel || ! isset( $targets[ $rel ] ) ) {
-			return new \WP_Error( 'gemsecurity_bad_path', __( 'Unknown path.', 'gemsecurity' ), [ 'status' => 400 ] );
-		}
-		$abs = $targets[ $rel ]['abs'];
-		$rec = octdec( $targets[ $rel ]['rec'] );
-
-		// chmod is a no-op (returns true) when PHP already has the mode set
-		// but WILL return false when the file is owned by another user and
-		// PHP cannot change its mode. Clear the stat cache so the next read
-		// reflects the new mode.
-		$ok = @chmod( $abs, $rec );
-		clearstatcache( true, $abs );
-
-		if ( ! $ok ) {
-			$owner = function_exists( 'posix_getpwuid' ) && function_exists( 'fileowner' )
-				? ( posix_getpwuid( fileowner( $abs ) )['name'] ?? '' )
-				: '';
-			return new \WP_Error(
-				'gemsecurity_chmod_failed',
-				$owner
-					/* translators: %s: the user who owns the file. */
-					? sprintf( __( 'The web server could not change this file. It is owned by %s — ask your host to run: chmod on your behalf, or set the mode yourself over SSH / SFTP.', 'gemsecurity' ), $owner )
-					: __( 'The web server could not change this file. Set the mode manually over SSH / SFTP.', 'gemsecurity' ),
-				[ 'status' => 403, 'current' => '0' . decoct( fileperms( $abs ) & 0777 ), 'recommended' => $targets[ $rel ]['rec'] ]
-			);
-		}
-
-		return rest_ensure_response( [
-			'success'     => true,
-			'path'        => $rel,
-			'perms'       => '0' . decoct( fileperms( $abs ) & 0777 ),
-			'recommended' => $targets[ $rel ]['rec'],
-		] );
-	}
 }

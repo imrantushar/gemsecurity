@@ -504,7 +504,7 @@ class AuditLog {
 	/** Event-type → category map, shared with the Logs REST filter. */
 	public static function category_map() {
 		return [
-			'login'           => [ 'admin_login', 'user_login', 'login_failed', 'login_lockout', 'admin_session_expired', 'user_logout', '2fa_challenge', '2fa_failed', '2fa_success', 'magic_login', 'magic_login_sent', 'magic_login_failed', 'magic_login_throttled', 'temp_access_login', 'temp_access_link_failed' ],
+			'login'           => [ 'admin_login', 'user_login', 'login_failed', 'login_lockout', 'admin_session_expired', 'user_logout', '2fa_challenge', '2fa_failed', '2fa_success', 'magic_login', 'magic_login_sent', 'magic_login_failed', 'magic_login_throttled' ],
 			'firewall'        => [ 'firewall_block', 'author_enumeration_blocked', 'captcha_failed', 'waf_block', 'waf_bad_bot', 'waf_rate_limited', 'waf_404_flood', 'ip_banned' ],
 			'bots'            => [ 'waf_bad_bot', 'seems_bot' ],
 			'vulnerability'   => [ 'vuln_found' ],
@@ -512,7 +512,7 @@ class AuditLog {
 			'scanner'         => [ 'scan_completed' ],
 			'content'         => [ 'content_published', 'content_updated', 'content_trashed', 'content_deleted', 'content_meta_changed' ],
 			'plugins_themes'  => [ 'plugin_activated', 'plugin_deactivated', 'theme_switched', 'software_update', 'software_install' ],
-			'users'           => [ 'user_deleted', 'password_reset', 'user_registered', 'user_role_changed', 'user_credentials_changed', 'temp_access_created', 'temp_access_link_sent', 'temp_access_link_regenerated', 'temp_access_extended', 'temp_access_expired', 'temp_access_revoked' ],
+			'users'           => [ 'user_deleted', 'password_reset', 'user_registered', 'user_role_changed', 'user_credentials_changed', 'temp_access_created', 'temp_access_extended', 'temp_access_expired', 'temp_access_revoked' ],
 			'settings'        => [ 'option_changed' ],
 			'geolocation'     => [ 'geo_login_blocked', 'geo_site_blocked', 'geo_new_location', 'geo_verified', 'geo_verify_failed' ],
 			'academy'         => [ 'academy_login_blocked', 'academy_captcha_failed', 'academy_registration', 'academy_instructor_status', 'academy_content_blocked', 'academy_geo_blocked', 'academy_enrollment_abuse', 'academy_ajax_rate_limited' ],

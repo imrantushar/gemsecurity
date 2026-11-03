@@ -304,14 +304,6 @@ class Api {
 			'callback'            => [ Rest\Firewall::class, 'file_permissions' ],
 			'permission_callback' => $perm,
 		] );
-		register_rest_route( $ns, '/file-permissions/fix', [
-			'methods'             => 'POST',
-			'callback'            => [ Rest\Firewall::class, 'file_permissions_fix' ],
-			'permission_callback' => $perm,
-			'args'                => [
-				'path' => [ 'type' => 'string', 'required' => true ],
-			],
-		] );
 
 		/* -------------------------------------------------------------- */
 		/* Module-owned groups — registered only when their module is on. */
@@ -324,7 +316,7 @@ class Api {
 				'callback'            => [ Rest\PluginGuard::class, 'get' ],
 				'permission_callback' => $perm,
 			] );
-			foreach ( [ 'verify', 'enable', 'trust', 'untrust', 'restore', 'lock', 'unlock', 'shield', 'probe' ] as $action ) {
+			foreach ( [ 'verify', 'enable', 'trust', 'untrust', 'lock', 'unlock', 'shield', 'probe' ] as $action ) {
 				register_rest_route( $ns, '/plugin-guard/' . $action, [
 					'methods'             => 'POST',
 					'callback'            => [ Rest\PluginGuard::class, $action ],
@@ -402,17 +394,6 @@ class Api {
 					'file' => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
 				],
 			] );
-			// Writes a WordPress core file, so it also needs the core-update capability.
-			register_rest_route( $ns, '/scan/core-file', [
-				'methods'             => 'POST',
-				'callback'            => [ Rest\Scanner::class, 'core_file_fix' ],
-				'permission_callback' => static function () {
-					return current_user_can( 'manage_options' ) && current_user_can( 'update_core' );
-				},
-				'args'                => [
-					'file'   => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
-				],
-			] );
 			register_rest_route( $ns, '/scan/baseline', [
 				'methods'             => 'POST',
 				'callback'            => [ Rest\Scanner::class, 'reset_baseline' ],
@@ -487,8 +468,8 @@ class Api {
 			] );
 		}
 
-		// Temporary access. Gated on can_manage() so a temporary account can
-		// never manage (or extend) itself.
+		// Temporary access. Gated on can_manage() so a user holding a grant can
+		// never manage (or extend) it.
 		if ( self::module( 'temp-access' ) ) {
 			$ta_perm = [ Rest\TempAccess::class, 'permission' ];
 			register_rest_route( $ns, '/temp-access', [
@@ -503,7 +484,12 @@ class Api {
 					'permission_callback' => $ta_perm,
 				],
 			] );
-			foreach ( [ 'extend', 'regenerate', 'revoke' ] as $ta_action ) {
+			register_rest_route( $ns, '/temp-access/users', [
+				'methods'             => 'GET',
+				'callback'            => [ Rest\TempAccess::class, 'users' ],
+				'permission_callback' => $ta_perm,
+			] );
+			foreach ( [ 'extend', 'revoke' ] as $ta_action ) {
 				register_rest_route( $ns, '/temp-access/' . $ta_action, [
 					'methods'             => 'POST',
 					'callback'            => [ Rest\TempAccess::class, $ta_action ],

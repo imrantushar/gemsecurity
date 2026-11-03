@@ -75,11 +75,6 @@ class MagicLogin {
 			return false;
 		}
 
-		// Temporary accounts sign in only through their own access link.
-		if ( TempAccess::is_temp( $user->ID ) ) {
-			return false;
-		}
-
 		$privileged = false;
 		foreach ( SocialLogin::PRIVILEGED_CAPS as $cap ) {
 			if ( $user->has_cap( $cap ) ) {

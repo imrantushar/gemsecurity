@@ -399,11 +399,6 @@ export default function PluginGuard() {
 									{ data.quarantined.map( ( q ) => (
 										<tr key={ q.id }>
 											<td><code>{ q.relative }</code><div className="gs-muted">{ q.quarantined_at }</div></td>
-											<td className="gs-nowrap">
-												<Button variant="secondary" loading={ busy === 'r' + q.id } onClick={ () => window.confirm( __( 'Restore this file and trust it? It will run on every request.', 'gemsecurity' ) ) && call( 'r' + q.id, 'plugin-guard/restore', { id: q.id }, __( 'Restored and trusted.', 'gemsecurity' ) ) }>
-													{ __( 'Restore & trust', 'gemsecurity' ) }
-												</Button>
-											</td>
 										</tr>
 									) ) }
 								</tbody>

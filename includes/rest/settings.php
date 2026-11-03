@@ -144,7 +144,6 @@ class Settings {
 
 			// Temporary access notifications.
 			'temp_access_notify_created'    => 'bool',
-			'temp_access_notify_used'       => 'bool',
 			'temp_access_notify_revoked'    => 'bool',
 
 			// API & access hardening.
