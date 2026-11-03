@@ -32,7 +32,9 @@ class Menu {
 
 		$pro_active = Helper::is_pro_active();
 
-		foreach ( Helper::get_admin_menu_list() as $item_key => $item ) {
+		$menu_list = Helper::get_admin_menu_list();
+
+		foreach ( $menu_list as $item_key => $item ) {
 			$title = $item['title'];
 
 			// Surface a PRO pill on Pro-gated items while Pro is inactive.
@@ -46,6 +48,21 @@ class Menu {
 				$title,
 				$item['capability'],
 				$item_key,
+				[ $this, 'load_main_template' ]
+			);
+		}
+
+		// Legacy slug: the malware scanner is now a tab inside Scanner. Register
+		// it so old bookmarks resolve; collapse_to_groups() hides it, and the app
+		// opens the Malware tab for it.
+		$scanner_slug = GEMSECURITY_PLUGIN_SLUG . '-scanner';
+		if ( isset( $menu_list[ $scanner_slug ] ) ) {
+			add_submenu_page(
+				GEMSECURITY_PLUGIN_SLUG,
+				$menu_list[ $scanner_slug ]['title'],
+				$menu_list[ $scanner_slug ]['title'],
+				'manage_options',
+				GEMSECURITY_PLUGIN_SLUG . '-malware',
 				[ $this, 'load_main_template' ]
 			);
 		}
