@@ -5,7 +5,7 @@ const path = require('path');
 
 const isProduction = process.env.NODE_ENV !== 'development';
 
-const GEMSECURITY_VERSION = '1.2.0';
+const GEMSECURITY_VERSION = '1.2.1';
 
 /**
  * The uncompiled source each generated file is built from. Every entry is

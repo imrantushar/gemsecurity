@@ -4,7 +4,7 @@ Tags: security, firewall, two factor authentication, malware scanner, login secu
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
@@ -137,6 +137,16 @@ The ones the in-plugin guides call out: a custom login URL (save the new address
 Yes. Everything described above works in the free plugin. Pro adds active threat protection, malware remediation and scale features.
 
 == Changelog ==
+
+= 1.2.1 - 03/11/2026 =
+* Fixed - Two-factor code checks are now handled one at a time per user, so several codes sent in parallel can no longer get extra guesses. A code is only accepted from the sign-in form itself, not from the address bar.
+* Fixed - IP lists no longer treat a malformed range such as `1.2.3.4/abc` as "every address". Ranges are checked when you save and when they are matched.
+* Fixed - Alert webhooks (Slack and generic) must be http(s) addresses that are not on your own network or loopback, and are sent with WordPress's safe request function. The text of alert emails is now escaped, and the Telegram bot token is checked for the right format.
+* Changed - Quarantine restore only puts back non-executable files in the uploads folder. PHP and other scripts, `.htaccess`, `.user.ini`, `web.config` and `php.ini` stay quarantined and must be reinstalled from their original source.
+* Changed - Paths to WordPress core folders no longer rely on the `WPINC` and `WP_LANG_DIR` constants.
+* Changed - Search terms in the Code & database finder are limited to 500 characters.
+* Changed - Every Temporary Access route now declares its own capability check.
+* Added - The FAQ lists which files the plugin changes and when.
 
 = 1.2.0 - 01/11/2026 =
 * Changed - Temporary Access now gives an existing user a role for a limited time and puts their previous role back when it ends. It no longer creates accounts or sign-in links.
