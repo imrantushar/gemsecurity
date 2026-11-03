@@ -304,7 +304,12 @@ class TwoFactor {
 		// It replaces the login nonce for the second step of the flow.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$token   = isset( $_POST['gemsec_2fa_token'] ) ? sanitize_text_field( wp_unslash( $_POST['gemsec_2fa_token'] ) ) : '';
+		// The redirect from a front-end login form lands here with the token in the
+		// query string; it is only read to show the prompt, never to verify a code
+		// (the code is checked on the POST below).
+		$token_from_url = false;
 		if ( '' === $token && isset( $_GET['gemsec_2fa_token'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$token_from_url = true;
 			$token = sanitize_text_field( wp_unslash( $_GET['gemsec_2fa_token'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 		$pending = $token ? get_transient( self::PENDING_PREFIX . $token ) : false;
@@ -345,7 +350,7 @@ class TwoFactor {
 		$method = $pending['method'];
 
 		// Arrived by redirect from a front-end login form: show the prompt.
-		if ( ! isset( $_POST['gemsec_2fa_code'] ) && ! isset( $_POST['gemsec_2fa_resend'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( $token_from_url || ( ! isset( $_POST['gemsec_2fa_code'] ) && ! isset( $_POST['gemsec_2fa_resend'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$this->render_form( $token, $method, '' );
 			exit;
 		}
@@ -427,6 +432,31 @@ class TwoFactor {
 			return false;
 		}
 
+		// The guess counter is read, checked and written back, so two requests
+		// in flight at once would each see the same count and both get to
+		// guess. Serialise attempts per user: a request that cannot get its
+		// turn is refused rather than allowed through uncounted.
+		global $wpdb;
+		$lock = 'gemsec_2fa_' . (int) $user->ID . '_' . $wpdb->blogid;
+		if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			self::$otp_failure = 'blocked';
+			return false;
+		}
+
+		try {
+			return $this->verify_factor_locked( $user, $method, $code );
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+	}
+
+	/**
+	 * @param \WP_User $user
+	 * @param string   $method
+	 * @param string   $code
+	 * @return bool
+	 */
+	private function verify_factor_locked( $user, $method, $code ) {
 		// Per user, not per challenge: signing in with the password again
 		// must not buy a fresh set of guesses.
 		if ( self::is_locked( $user ) ) {

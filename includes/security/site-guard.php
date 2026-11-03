@@ -597,7 +597,7 @@ class SiteGuard {
 			$title .= '<span class="gemsecurity-ab-count" aria-label="'
 				/* translators: %d: number of active hardening switches. */
 				. esc_attr( sprintf( _n( '%d hardening switch on', '%d hardening switches on', count( $active ), 'gemsecurity' ), count( $active ) ) )
-				. '" title="' . esc_attr( sprintf( _n( '%d protection active', '%d protections active', count( $active ), 'gemsecurity' ), count( $active ) ) )
+				. '" title="' . esc_attr( sprintf( /* translators: %d: number of active protections. */ _n( '%d protection active', '%d protections active', count( $active ), 'gemsecurity' ), count( $active ) ) )
 				. '">✓ ' . (int) count( $active ) . '</span>';
 		}
 

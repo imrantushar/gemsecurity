@@ -431,7 +431,12 @@ class Helper {
 		}
 
 		$max_bits = strlen( $ip_bin ) * 8;
-		$bits     = isset( $parts[1] ) ? (int) $parts[1] : $max_bits;
+		// A non-numeric prefix ("1.2.3.4/abc") must not cast to 0, which would
+		// match every address.
+		if ( isset( $parts[1] ) && ! ctype_digit( $parts[1] ) ) {
+			return false;
+		}
+		$bits = isset( $parts[1] ) ? (int) $parts[1] : $max_bits;
 		if ( $bits < 0 || $bits > $max_bits ) {
 			return false;
 		}

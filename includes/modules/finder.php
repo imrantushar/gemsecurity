@@ -51,6 +51,10 @@ class Finder {
 			return new \WP_Error( 'gemsecurity_search_short', __( 'Enter at least 2 characters to search.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
+		if ( strlen( $term ) > 500 ) {
+			return new \WP_Error( 'gemsecurity_search_long', __( 'That search is too long.', 'gemsecurity' ), [ 'status' => 400 ] );
+		}
+
 		$regex = ! empty( $opts['regex'] );
 		$scope = ! empty( $opts['scope'] ) && is_array( $opts['scope'] ) ? $opts['scope'] : [ 'files', 'database' ];
 

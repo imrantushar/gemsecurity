@@ -34,9 +34,17 @@ class Paths {
 		return untrailingslashit( wp_normalize_path( dirname( untrailingslashit( GEMSECURITY_ROOT_DIR_PATH ) ) ) );
 	}
 
-	/** WordPress' own includes folder. */
+	/**
+	 * WordPress' own includes folder, found from where core defines one of its
+	 * functions rather than from a constant or a hard-coded folder name.
+	 */
 	public static function includes() {
-		return untrailingslashit( wp_normalize_path( ABSPATH . WPINC ) );
+		static $dir = null;
+		if ( null === $dir ) {
+			$file = function_exists( 'wp_die' ) ? ( new \ReflectionFunction( 'wp_die' ) )->getFileName() : false;
+			$dir  = untrailingslashit( wp_normalize_path( $file ? dirname( $file ) : self::root() . 'wp-includes' ) );
+		}
+		return $dir;
 	}
 
 	/** The must-use plugins folder. */

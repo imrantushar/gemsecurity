@@ -124,6 +124,9 @@ Yes. The "?" button in the top bar opens a guide for the page you are on: a shor
 = What does turning a module off actually do? =
 A module that is off loads none of its code, registers no REST routes and shows no menu entry — so features you do not use cost nothing. Its settings are kept, so switching it back on restores your configuration exactly as it was. Menu entries appear and disappear as you toggle, without reloading the page.
 
+= Which files does GemSecurity change? =
+Only when you switch the matching feature on, and only through WordPress's own helpers: Upload Shield adds deny rules to `wp-content/uploads/.htaccess`, and "Protect wp-config.php and error logs" (off by default) adds a marked block to the site's root `.htaccess` that blocks web access to `wp-config.php`, `debug.log` and `wp-admin/includes`. Turning either off removes only its own block. Nothing is written to WordPress core, plugin, theme or must-use folders, and quarantined files are kept in the database and can only be restored, as non-executable files, to the uploads folder.
+
 = Will the firewall lock me out? =
 No. Logged-in administrators are never blocked by the IP blocklist or auto-bans, and aggressive options default to off so you can opt in deliberately.
 

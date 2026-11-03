@@ -313,7 +313,7 @@ class Quarantine {
 		}
 
 		if ( ! self::can_restore_to( $entry['original'] ) ) {
-			return new \WP_Error( 'gemsecurity_restore_location', __( 'GemSecurity only restores files to the uploads folder. Re-install the plugin, theme or WordPress core file from its original source instead.', 'gemsecurity' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'gemsecurity_restore_location', __( 'GemSecurity only restores non-executable files to the uploads folder. Re-install the plugin, theme or WordPress core file from its original source instead.', 'gemsecurity' ), [ 'status' => 400 ] );
 		}
 
 		$body = self::payload( $id );
@@ -339,8 +339,22 @@ class Quarantine {
 	 * @return bool
 	 */
 	public static function can_restore_to( $path ) {
+		$path = (string) $path;
+		if ( '' === $path ) {
+			return false;
+		}
+
+		// Never put back anything the server could run or that changes how it
+		// treats a folder: a quarantined back-door must stay quarantined.
+		$name = strtolower( basename( $path ) );
+		$ext  = strtolower( (string) pathinfo( $name, PATHINFO_EXTENSION ) );
+		if ( in_array( $name, [ '.htaccess', '.user.ini', 'web.config', 'php.ini' ], true )
+			|| in_array( $ext, [ 'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'pht', 'phps', 'phar', 'inc', 'shtml', 'cgi', 'pl', 'py', 'sh' ], true ) ) {
+			return false;
+		}
+
 		$uploads = wp_normalize_path( (string) realpath( \GemSecurity\Paths::uploads() ) );
-		$dir     = wp_normalize_path( (string) realpath( dirname( (string) $path ) ) );
+		$dir     = wp_normalize_path( (string) realpath( dirname( $path ) ) );
 		return '' !== $uploads && '' !== $dir && 0 === strpos( trailingslashit( $dir ), trailingslashit( $uploads ) );
 	}
 

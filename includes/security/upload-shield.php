@@ -311,7 +311,7 @@ class UploadShield {
 	private static function legacy_dirs() {
 		return [
 			\GemSecurity\Paths::includes(),
-			WP_LANG_DIR,
+			\GemSecurity\Paths::content() . '/languages',
 			\GemSecurity\Paths::content() . '/upgrade',
 			\GemSecurity\Paths::content() . '/upgrade-temp-backup',
 		];

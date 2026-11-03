@@ -471,29 +471,36 @@ class Api {
 		// Temporary access. Gated on can_manage() so a user holding a grant can
 		// never manage (or extend) it.
 		if ( self::module( 'temp-access' ) ) {
-			$ta_perm = [ Rest\TempAccess::class, 'permission' ];
 			register_rest_route( $ns, '/temp-access', [
 				[
 					'methods'             => 'GET',
 					'callback'            => [ Rest\TempAccess::class, 'get' ],
-					'permission_callback' => $ta_perm,
+					'permission_callback' => static function () {
+						return current_user_can( 'manage_options' ) && Rest\TempAccess::permission();
+					},
 				],
 				[
 					'methods'             => 'POST',
 					'callback'            => [ Rest\TempAccess::class, 'create' ],
-					'permission_callback' => $ta_perm,
+					'permission_callback' => static function () {
+						return current_user_can( 'manage_options' ) && Rest\TempAccess::permission();
+					},
 				],
 			] );
 			register_rest_route( $ns, '/temp-access/users', [
 				'methods'             => 'GET',
 				'callback'            => [ Rest\TempAccess::class, 'users' ],
-				'permission_callback' => $ta_perm,
+				'permission_callback' => static function () {
+						return current_user_can( 'manage_options' ) && Rest\TempAccess::permission();
+					},
 			] );
 			foreach ( [ 'extend', 'revoke' ] as $ta_action ) {
 				register_rest_route( $ns, '/temp-access/' . $ta_action, [
 					'methods'             => 'POST',
 					'callback'            => [ Rest\TempAccess::class, $ta_action ],
-					'permission_callback' => $ta_perm,
+					'permission_callback' => static function () {
+						return current_user_can( 'manage_options' ) && Rest\TempAccess::permission();
+					},
 				] );
 			}
 		}
