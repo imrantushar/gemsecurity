@@ -326,19 +326,15 @@ final class SE_License_SDK_Promotions {
 	 * @return void
 	 */
 	public function print_promo_notice_scripts() {
-		?>
-		<script>
-			(
-				function( $ ) {
-					$( document ).on( 'click', '.se-sdk-promo .notice-dismiss', function( e ) {
-						e.preventDefault();
-						const {hash, nonce: _wpnonce} = $( this ).closest( '.se-sdk-promo' ).data();
-						wp.ajax.post( 'se_dismiss_promo', {dismissed: true, hash, _wpnonce} );
-					} );
-				}
-			)( jQuery );
-		</script>
-		<?php
+		wp_print_inline_script_tag(
+			"( function( $ ) {
+	$( document ).on( 'click', '.se-sdk-promo .notice-dismiss', function( e ) {
+		e.preventDefault();
+		const {hash, nonce: _wpnonce} = $( this ).closest( '.se-sdk-promo' ).data();
+		wp.ajax.post( 'se_dismiss_promo', {dismissed: true, hash, _wpnonce} );
+	} );
+} )( jQuery );"
+		);
 	}
 
 	/**
@@ -352,8 +348,8 @@ final class SE_License_SDK_Promotions {
 			return;
 		}
 		$did_print = true;
+		ob_start();
 		?>
-		<!--suppress CssUnusedSymbol -->
 		<style>
             .se-sdk-promo {
                 border: none;
@@ -481,6 +477,10 @@ final class SE_License_SDK_Promotions {
             }
 		</style>
 		<?php
+		$se_sdk_css = ob_get_clean();
+		wp_register_style( 'se-sdk-promo', false, [], null );
+		wp_enqueue_style( 'se-sdk-promo' );
+		wp_add_inline_style( 'se-sdk-promo', trim( str_replace( [ '<style>', '</style>' ], '', $se_sdk_css ) ) );
 	}
 
 	/**

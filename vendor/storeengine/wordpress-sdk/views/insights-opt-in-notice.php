@@ -41,7 +41,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		</div>
 	</div>
-	<style>
+	<?php ob_start(); ?><style>
         .se-sdk-insights-notice {
             display: flex;
             flex-direction: row;
@@ -184,3 +184,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         }
 	</style>
 <?php
+$se_sdk_css = ob_get_clean();
+wp_register_style( 'se-sdk-insights-notice', false, [], null );
+wp_enqueue_style( 'se-sdk-insights-notice' );
+wp_add_inline_style( 'se-sdk-insights-notice', trim( str_replace( [ '<style>', '</style>' ], '', $se_sdk_css ) ) );
