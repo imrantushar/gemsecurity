@@ -4,7 +4,7 @@ Tags: security, firewall, two factor authentication, malware scanner, login secu
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
@@ -137,6 +137,10 @@ The ones the in-plugin guides call out: a custom login URL (save the new address
 Yes. Everything described above works in the free plugin. Pro adds active threat protection, malware remediation and scale features.
 
 == Changelog ==
+
+= 1.2.2 - 05/11/2026 =
+* Fixed - The admin-bar styles are now added through WordPress's style functions instead of a `<style>` tag printed in the page head.
+* Changed - Updated the bundled StoreEngine SDK to 1.6.3. Its notices and license page now add their CSS and JS through WordPress's style and script functions.
 
 = 1.2.1 - 03/11/2026 =
 * Fixed - Two-factor code checks are now handled one at a time per user, so several codes sent in parallel can no longer get extra guesses. A code is only accepted from the sign-in form itself, not from the address bar.

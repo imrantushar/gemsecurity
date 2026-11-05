@@ -41,7 +41,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		</div>
 	</div>
-	<style>
+	<?php SE_License_SDK::add_inline_style( <<<'CSS'
         .se-sdk-insights-notice {
             display: flex;
             flex-direction: row;
@@ -182,5 +182,6 @@ if ( ! defined( 'ABSPATH' ) ) {
         .se-sdk-insights--opt-in-submit .buttons a.button-secondary:focus {
             box-shadow: 0 0 0 1px #fff, 0 0 0 2px #DEDEDE;
         }
-	</style>
+CSS
+	); ?>
 <?php

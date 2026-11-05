@@ -340,7 +340,7 @@ final class SE_License_SDK_License {
 					?>
 				</p>
 			</div>
-			<style>
+			<?php SE_License_SDK::add_inline_style( <<<'CSS'
                 .se-sdk-license-notice {
                     color: #141A24;
                     padding: 24px !important;
@@ -367,8 +367,8 @@ final class SE_License_SDK_License {
                 .se-sdk-license-notice a:focus {
                     box-shadow: 0 0 0 2px var(--se-sdk-primary-color);
                 }
-			</style>
-			<?php
+CSS
+			);
 		}
 	}
 
@@ -1134,9 +1134,7 @@ final class SE_License_SDK_License {
 	 * @return void
 	 */
 	private function licenses_style() {
-		?>
-		<!--suppress CssUnusedSymbol -->
-		<style>
+		SE_License_SDK::add_inline_style( <<<'CSS'
             .se-sdk-license-settings * {
                 box-sizing: border-box
             }
@@ -1473,8 +1471,8 @@ final class SE_License_SDK_License {
                     align-items: normal !important;
                 }
             }
-		</style>
-		<?php
+CSS
+		);
 	}
 
 	protected function render_last_checked_datetime() {

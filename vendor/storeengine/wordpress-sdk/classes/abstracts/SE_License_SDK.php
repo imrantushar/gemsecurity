@@ -41,6 +41,23 @@ abstract class SE_License_SDK {
 	private static $registered = [];
 
 	/**
+	 * Add CSS to the admin page through the WordPress style API.
+	 *
+	 * @param string $css Stylesheet body.
+	 *
+	 * @return void
+	 */
+	public static function add_inline_style( string $css ) {
+		// Source-less handle: CSS goes through wp_add_inline_style() as WordPress.org
+		// requires. Enqueued after the head it is printed with the late (footer) styles.
+		if ( ! wp_style_is( 'se-license-sdk', 'registered' ) ) {
+			wp_register_style( 'se-license-sdk', false, [], null );
+		}
+		wp_enqueue_style( 'se-license-sdk' );
+		wp_add_inline_style( 'se-license-sdk', $css );
+	}
+
+	/**
 	 * Get the absolute system path to the sdk directory, or a file therein
 	 *
 	 * @static
