@@ -95,8 +95,8 @@ class SiteGuard {
 		add_action( 'admin_post_' . self::TOGGLE_ACTION, [ $self, 'handle_toggle' ] );
 		// Styles for the admin-bar count pill (printed inline — a few rules
 		// isn't worth a separate stylesheet request on every page).
-		add_action( 'wp_head', [ $self, 'admin_bar_css' ], 1000 );
-		add_action( 'admin_head', [ $self, 'admin_bar_css' ], 1000 );
+		add_action( 'wp_enqueue_scripts', [ $self, 'admin_bar_css' ] );
+		add_action( 'admin_enqueue_scripts', [ $self, 'admin_bar_css' ] );
 		// Any settings change can move the score — bust the admin-bar cache
 		// so the next page render shows the current number, not a 5-min-stale one.
 		add_action( 'update_option_' . GEMSECURITY_SETTINGS_NAME, static function () {
@@ -768,15 +768,14 @@ class SiteGuard {
 	}
 
 	/**
-	 * Inline CSS for the admin-bar count pill. Only prints when the admin
-	 * bar is actually showing.
+	 * Inline CSS for the admin-bar count pill, attached to core's admin-bar
+	 * stylesheet. Only added when the admin bar is actually showing.
 	 */
 	public function admin_bar_css() {
 		if ( ! is_admin_bar_showing() || ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		?>
-<style id="gemsecurity-ab-css">
+		$css = <<<'CSS'
 #wpadminbar #wp-admin-bar-gemsecurity > .ab-item { display: flex; align-items: center; }
 #wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-count,
 #wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-score {
@@ -812,8 +811,9 @@ class SiteGuard {
 #wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-dot--off { background: #f87171; }
 #wpadminbar #wp-admin-bar-gemsecurity .gemsecurity-ab-action { margin-left: auto; padding: 1px 8px; border-radius: 10px; background: rgba(255,255,255,.14); font-size: 11px; font-weight: 600; }
 #wpadminbar #wp-admin-bar-gemsecurity-open > .ab-item { margin-top: 4px; border-top: 1px solid rgba(255,255,255,.12); color: #72aee6 !important; }
-</style>
-		<?php
+CSS;
+		wp_enqueue_style( 'admin-bar' );
+		wp_add_inline_style( 'admin-bar', $css );
 	}
 
 	public function handle_toggle() {
