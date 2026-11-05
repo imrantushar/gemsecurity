@@ -98,7 +98,8 @@ class CustomLogin {
 
 		$this->serving = true;
 		global $pagenow, $error, $interim_login, $action, $user_login;
-		$pagenow = 'wp-login.php';
+		// Intentional: wp-login.php is served from the custom URL, and core's login screen reads $pagenow.
+		$pagenow = 'wp-login.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		require_once ABSPATH . 'wp-login.php';
 		exit;
 	}

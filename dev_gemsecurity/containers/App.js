@@ -219,7 +219,7 @@ export default function App() {
 								<React.Fragment key={ item.key }>
 								<a
 									href={ href }
-									className={ `gs-subnav__item ${ item.key === resolvedPage ? 'is-active' : '' }` }
+									className={ `gs-subnav__item ${ item.key === resolvedPage ? ( item.key === SETTINGS_PAGE ? 'is-parent-active' : 'is-active' ) : '' }` }
 									onClick={ ( e ) => {
 										// Let modifier-clicks (new tab/window) behave normally;
 										// otherwise route client-side. No e.button gate — some
@@ -236,26 +236,31 @@ export default function App() {
 									<span>{ item.label }</span>
 									{ item.isPro && ! isPro() && <ProBadge /> }
 								</a>
-								{ item.key === SETTINGS_PAGE && getSettingsTabs( isPro() ).map( ( t ) => {
-									const tabHref = `${ href }&tab=${ t.id }`;
-									return (
-										<a
-											key={ t.id }
-											href={ tabHref }
-											className={ `gs-subnav__item gs-subnav__item--child ${ resolvedPage === SETTINGS_PAGE && settingsTab === t.id ? 'is-active' : '' }` }
-											onClick={ ( e ) => {
-												if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
-													return;
-												}
-												e.preventDefault();
-												navigate( tabHref );
-											} }
-										>
-											<Icon name={ t.icon } size={ 15 } />
-											<span>{ t.label }</span>
-										</a>
-									);
-								} ) }
+								{ item.key === SETTINGS_PAGE && (
+									<div className="gs-subnav__children" role="group" aria-label={ __( 'Settings sections', 'gemsecurity' ) }>
+										{ getSettingsTabs( isPro() ).map( ( t ) => {
+											const tabHref = `${ href }&tab=${ t.id }`;
+											const active = resolvedPage === SETTINGS_PAGE && settingsTab === t.id;
+											return (
+												<a
+													key={ t.id }
+													href={ tabHref }
+													aria-current={ active ? 'page' : undefined }
+													className={ `gs-subnav__child ${ active ? 'is-active' : '' }` }
+													onClick={ ( e ) => {
+														if ( e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ) {
+															return;
+														}
+														e.preventDefault();
+														navigate( tabHref );
+													} }
+												>
+													{ t.label }
+												</a>
+											);
+										} ) }
+									</div>
+								) }
 								</React.Fragment>
 							);
 						} ) }

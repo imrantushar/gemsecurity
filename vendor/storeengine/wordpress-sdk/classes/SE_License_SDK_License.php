@@ -340,7 +340,7 @@ final class SE_License_SDK_License {
 					?>
 				</p>
 			</div>
-			<style>
+			<?php ob_start(); ?><style>
                 .se-sdk-license-notice {
                     color: #141A24;
                     padding: 24px !important;
@@ -368,6 +368,7 @@ final class SE_License_SDK_License {
                     box-shadow: 0 0 0 2px var(--se-sdk-primary-color);
                 }
 			</style>
+			<?php $se_sdk_css = ob_get_clean(); wp_register_style( 'se-sdk-license-notice', false, [], null ); wp_enqueue_style( 'se-sdk-license-notice' ); wp_add_inline_style( 'se-sdk-license-notice', trim( str_replace( [ '<style>', '</style>' ], '', $se_sdk_css ) ) ); ?>
 			<?php
 		}
 	}
@@ -1134,8 +1135,8 @@ final class SE_License_SDK_License {
 	 * @return void
 	 */
 	private function licenses_style() {
+		ob_start();
 		?>
-		<!--suppress CssUnusedSymbol -->
 		<style>
             .se-sdk-license-settings * {
                 box-sizing: border-box
@@ -1474,6 +1475,7 @@ final class SE_License_SDK_License {
                 }
             }
 		</style>
+		<?php $se_sdk_css = ob_get_clean(); wp_register_style( 'se-sdk-license-page', false, [], null ); wp_enqueue_style( 'se-sdk-license-page' ); wp_add_inline_style( 'se-sdk-license-page', trim( str_replace( [ '<style>', '</style>' ], '', $se_sdk_css ) ) ); ?>
 		<?php
 	}
 
