@@ -158,8 +158,8 @@ class Registry {
 				'icon'          => 'key',
 				'category'      => 'access',
 				'page_slug'     => $slug . '-two-factor',
-				'classes'       => [ TwoFactor::class ],
-				'settings_keys' => [ 'two_factor_enabled' ],
+				'classes'       => [ TwoFactor::class, Passkeys::class ],
+				'settings_keys' => [ 'two_factor_enabled', 'passkeys_enabled' ],
 			],
 			'social-login' => [
 				'icon'          => 'users',

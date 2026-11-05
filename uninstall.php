@@ -49,6 +49,7 @@ $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LI
 $tables = [
 	'gemsecurity_logs',
 	'gemsecurity_bans',
+	'gemsecurity_passkeys',
 ];
 foreach ( $tables as $table ) {
 	$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . $table ); // phpcs:ignore WordPress.DB

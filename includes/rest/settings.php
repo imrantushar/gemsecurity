@@ -117,6 +117,11 @@ class Settings {
 			'two_factor_enabled'            => 'bool',
 			'two_factor_enforced_roles'     => 'slug_list',
 
+			// Passkeys.
+			'passkeys_enabled'              => 'bool',
+			'passkeys_roles'                => 'slug_list',
+			'passkeys_usernameless'         => 'bool',
+
 			// Social / OAuth login.
 			'social_login_enabled'          => 'bool',
 			'social_allow_registration'     => 'bool',
