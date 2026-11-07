@@ -14,6 +14,33 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 global $wpdb;
 
+// Scheduled events and the extended-protection mu-plugin are always removed:
+// they would keep running (or fail) with the plugin gone.
+foreach ( [
+	'gemsecurity_password_rotation',
+	'gemsecurity_prune_logs',
+	'gemsecurity_daily_scan',
+	'gemsecurity_weekly_digest',
+	'gemsecurity_admin_guard_sweep',
+	'gemsecurity_daily_report',
+	'gemsecurity_temp_access_sweep',
+] as $hook ) {
+	wp_clear_scheduled_hook( $hook );
+}
+$mu = WPMU_PLUGIN_DIR . '/gemsecurity-extended-protection.php';
+if ( file_exists( $mu ) ) {
+	wp_delete_file( $mu );
+}
+
+// Data is removed only when the admin turned on "Delete all data when the
+// plugin is deleted" (Settings → Maintenance & recovery, or the deactivation
+// popup, which both ask for a second confirmation). Otherwise everything is
+// kept so a reinstall picks up where it left off.
+$settings = get_option( 'gemsecurity_settings', [] );
+if ( ! is_array( $settings ) || empty( $settings['delete_data_on_uninstall'] ) ) {
+	return;
+}
+
 // Options.
 $options = [
 	'gemsecurity_settings',
@@ -89,23 +116,3 @@ foreach ( $meta_keys as $key ) {
 }
 // OAuth provider id meta (one per provider).
 $wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE '\_gemsec\_oauth\_%\_id'" ); // phpcs:ignore WordPress.DB
-
-// Scheduled events.
-$hooks = [
-	'gemsecurity_password_rotation',
-	'gemsecurity_prune_logs',
-	'gemsecurity_daily_scan',
-	'gemsecurity_weekly_digest',
-	'gemsecurity_admin_guard_sweep',
-	'gemsecurity_daily_report',
-	'gemsecurity_temp_access_sweep',
-];
-foreach ( $hooks as $hook ) {
-	wp_clear_scheduled_hook( $hook );
-}
-
-// Extended-protection mu-plugin.
-$mu = WPMU_PLUGIN_DIR . '/gemsecurity-extended-protection.php';
-if ( file_exists( $mu ) ) {
-	wp_delete_file( $mu );
-}

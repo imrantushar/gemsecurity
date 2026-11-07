@@ -112,6 +112,7 @@
 			plugin: modal.data('plugin'),
 			uninstallAction: modal.data('uninstall-action'),
 			supportAction: modal.data('support-action'),
+			dataRemovalAction: modal.data('data-removal-action'),
 			nonce: modal.data('nonce'),
 			supportUrl: modal.data('support-url'),
 			processingLabel: modal.data('processing-label') || 'Processing...'
@@ -157,6 +158,49 @@
 			// hidden again on the next open.
 			modal.find('.se-sdk-consent-details').prop('open', false);
 			modal.find('.reason-input').remove();
+			var removalBox = modal.find('.se-sdk-data-removal');
+			removalBox.prop('checked', String(removalBox.data('initial')) === '1');
+		}
+
+		/**
+		 * Save the "delete data on uninstall" choice (if it changed) before
+		 * deactivating. Turning it on asks for a second confirmation; if the
+		 * admin cancels, nothing is saved and the modal stays open.
+		 * Calls done(true) to continue, done(false) to stop.
+		 */
+		function saveDataRemoval(done) {
+			var box = modal.find('.se-sdk-data-removal');
+			if (!box.length || !config.dataRemovalAction) {
+				return done(true);
+			}
+			var wanted = box.is(':checked') ? '1' : '0';
+			if (wanted === String(box.data('initial'))) {
+				return done(true);
+			}
+			if (wanted === '1' && !window.confirm(box.data('confirm'))) {
+				return done(false);
+			}
+			$.ajax({
+				url: window.ajaxurl,
+				type: 'POST',
+				data: {
+					action: config.dataRemovalAction,
+					_wpnonce: config.nonce,
+					remove_data: wanted,
+					confirmed: wanted
+				}
+			}).done(function(response) {
+				if (response && response.success) {
+					box.data('initial', wanted);
+					done(true);
+				} else {
+					window.alert(response && response.data ? response.data : 'Could not save your data removal choice.');
+					done(false);
+				}
+			}).fail(function() {
+				window.alert('Could not save your data removal choice. Please try again.');
+				done(false);
+			});
 		}
 
 		function checkMessageValidity(event) {
@@ -225,6 +269,36 @@
 			modal.find('a.dont-bother-me').attr('href', deactivateLink).css('float', 'left');
 		});
 
+		function sendReason(buttonElem) {
+			var radio = modal.find('input.reason-type:checked');
+			var input = radio.length
+				? radio.closest('.reason-item').find('textarea, input[type="text"]')
+				: $();
+
+			// The modal discloses exactly what is sent (reason plus the listed
+			// site data), and "Skip & Deactivate" is the cancel path that sends
+			// nothing — so submitting here is informed consent.
+			var payload = {
+				reason_id: radio.length ? radio.val() : 'no-comment',
+				reason_info: input.length ? $.trim(input.val()) : ''
+			};
+
+			// Show spinner immediately so the click feels acknowledged,
+			// independent of whether we use beacon or fall back to AJAX.
+			setButtonLoading(buttonElem, config);
+
+			// Try sendBeacon first — browser delivers it even after we
+			// navigate away, so the user doesn't wait for the server.
+			if (sendFeedbackBeacon(payload, config)) {
+				window.location.href = deactivateLink;
+				return;
+			}
+
+			// Fallback: old-school AJAX with loader. Only hit on browsers
+			// without sendBeacon support (≤ IE / very old Safari).
+			ajaxSubmit(payload, buttonElem, deactivateLink, config);
+		}
+
 		modal.on('click', '.not-interested', function(event) {
 			preventDefault(event);
 			$(this).closest('.response').slideUp();
@@ -265,41 +339,27 @@
 			// User explicitly chose not to share — nothing useful to record.
 			// Show a brief spinner so the click feels acknowledged, then
 			// deactivate immediately (no server round-trip).
-			setButtonLoading($(this), config);
-			window.location.href = deactivateLink;
+			var skipButton = $(this);
+			saveDataRemoval(function(ok) {
+				if (!ok) {
+					return;
+				}
+				setButtonLoading(skipButton, config);
+				window.location.href = deactivateLink;
+			});
 		}).on('click', '.send-reason', function(event) {
 			preventDefault(event);
 			if ($(this).hasClass('disabled') || $(this).is(':disabled')) {
 				return;
 			}
-			var radio = modal.find('input.reason-type:checked');
-			var input = radio.length
-				? radio.closest('.reason-item').find('textarea, input[type="text"]')
-				: $();
-
-			// The modal discloses exactly what is sent (reason plus the listed
-			// site data), and "Skip & Deactivate" is the cancel path that sends
-			// nothing — so submitting here is informed consent.
-			var payload = {
-				reason_id: radio.length ? radio.val() : 'no-comment',
-				reason_info: input.length ? $.trim(input.val()) : ''
-			};
-
-			// Show spinner immediately so the click feels acknowledged,
-			// independent of whether we use beacon or fall back to AJAX.
-			setButtonLoading($(this), config);
-
-			// Try sendBeacon first — browser delivers it even after we
-			// navigate away, so the user doesn't wait for the server.
-			if (sendFeedbackBeacon(payload, config)) {
-				window.location.href = deactivateLink;
-				return;
-			}
-
-			// Fallback: old-school AJAX with loader. Only hit on browsers
-			// without sendBeacon support (≤ IE / very old Safari).
-			ajaxSubmit(payload, $(this), deactivateLink, config);
+			var sendButton = $(this);
+			saveDataRemoval(function(ok) {
+				if (ok) {
+					sendReason(sendButton);
+				}
+			});
 		}).on('click', '.send-ticket', function(event) {
+
 			preventDefault(event);
 			validMessage = [];
 			mui.each(checkMessageValidity);

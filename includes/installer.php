@@ -565,6 +565,7 @@ class Installer {
 
 			// Lockdown + backup.
 			'lockdown_enabled'             => false,
+			'delete_data_on_uninstall'     => false,
 			'lockdown_message'             => '',
 			'backup_before_updates'        => false,
 

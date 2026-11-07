@@ -88,9 +88,27 @@ final class StoreLicense {
 			'primary_color'       => '#2A3BEE',
 			'first_install_time'  => \GemSecurity\OptionStore::get_meta( 'first_install_time' ),
 			'optin_notice_delay'  => 3 * DAY_IN_SECONDS,
+			// "Also delete all data" checkbox in the deactivation popup. The
+			// SDK asks for a second confirmation before turning it on; the
+			// value lives in our own settings so uninstall.php can read it.
+			'data_removal'        => [
+				'get' => [ __CLASS__, 'is_data_removal_enabled' ],
+				'set' => [ __CLASS__, 'set_data_removal' ],
+			],
 		] );
 
 		add_filter( 'gemsecurity/assets/script_data', [ __CLASS__, 'add_script_data' ] );
+	}
+
+	public static function is_data_removal_enabled(): bool {
+		return (bool) \GemSecurity\Helper::get_setting( 'delete_data_on_uninstall', false );
+	}
+
+	public static function set_data_removal( bool $enable ): void {
+		$settings = get_option( GEMSECURITY_SETTINGS_NAME, [] );
+		$settings = is_array( $settings ) ? $settings : [];
+		$settings['delete_data_on_uninstall'] = $enable;
+		update_option( GEMSECURITY_SETTINGS_NAME, $settings );
 	}
 
 	/**

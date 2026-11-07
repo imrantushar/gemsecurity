@@ -445,6 +445,10 @@ final class SE_License_SDK_Client {
 			       ->set_ticket_template( $args['ticket_template'] ?? '' )
 			       ->set_ticket_recipient( $args['ticket_recipient'] ?? '' );
 
+			if ( ! empty( $args['data_removal'] ) && is_array( $args['data_removal'] ) ) {
+				$client->insights()->set_data_removal( $args['data_removal'] );
+			}
+
 			if ( ! empty( $args['first_install_time'] ) ) {
 				$client->insights()->set_first_install_time( $args['first_install_time'] );
 			}

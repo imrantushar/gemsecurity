@@ -236,6 +236,7 @@ class Settings {
 
 			// Lockdown + backup.
 			'lockdown_enabled'              => 'bool',
+			'delete_data_on_uninstall'      => 'bool',
 			'lockdown_message'              => 'textarea',
 			'backup_before_updates'         => 'bool',
 
