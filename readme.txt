@@ -1,6 +1,6 @@
-=== GemSecurity ===
+=== GemSecurity – Firewall, Malware Scanner, 2FA, Social Login & reCAPTCHA ===
 Contributors: kodezen, tusharimran
-Tags: security, firewall, two factor authentication, malware scanner, login security
+Tags: security, social login, recaptcha, firewall, two factor authentication
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
@@ -8,39 +8,162 @@ Stable tag: 1.2.2
 License: GPL-3.0+
 License URI: http://www.gnu.org/licenses/gpl-3.0.txt
 
-Firewall, 2FA, malware scanner and login security — one dashboard, one plugin, zero bloat.
+WordPress security with firewall, malware scanner, 2FA, social login, reCAPTCHA, hCaptcha, Turnstile and activity log in one lightweight plugin.
 
 == Description ==
 
-GemSecurity is an all-in-one security dashboard for WordPress with a fast, single-page admin (no page reloads). It hardens your site, blocks attacks, and gives you full visibility through an activity log and a live security score.
+**GemSecurity** is an all-in-one WordPress security plugin: a web application firewall, login protection, two-factor authentication, social login, reCAPTCHA / hCaptcha / Cloudflare Turnstile, a malware and vulnerability scanner, and a full activity log, all in one fast single-page dashboard.
 
-= Firewall & hardening =
-* IP blocklist with CIDR range support
-* One-click hardening: disable XML-RPC, file editor, author/REST user enumeration, hide WP version, disable application passwords
-* Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, HSTS, Content-Security-Policy
-* Web Application Firewall: SQLi / XSS / LFI / RCE inspection, request rate limiting, 404-flood throttling, and bad-bot blocking
+Every feature lives in a module you can switch on or off. A module that is off loads no code, so you only pay for what you use. A live security score tells you what still needs attention, and every page has a built-in "?" guide.
 
-= Login security =
-* Brute-force lockout with configurable thresholds
-* Admin-login email alerts and an absolute admin session timeout
-* Custom login URL (rename wp-login.php)
-* Login CAPTCHA — reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile
-* Two-Factor Authentication — authenticator-app TOTP and email OTP, with one-time backup codes
-* Social / OAuth login — Google, Facebook, GitHub and Twitter
+= Why GemSecurity? =
+* One plugin instead of five: security, firewall, 2FA, social login and CAPTCHA together
+* Lightweight and modular: disabled modules load nothing
+* Safe by default: administrators are never locked out by the firewall, risky options start off
+* Setup wizard and in-plugin help for every page
+* Light and dark admin theme
 
-= Scanning & monitoring =
+= Firewall & WAF (Web Application Firewall) =
+* Blocks SQL injection (SQLi), cross-site scripting (XSS), local file inclusion (LFI) and remote code execution (RCE) requests
+* IP blocklist with CIDR range support, plus an IP safelist that is never blocked or rate-limited
+* Request rate limiting and 404-flood throttling
+* Bad-bot and AI-crawler blocking, with search-engine bot verification
+* Site-wide file upload switch (Media, REST, sideload and XML-RPC)
+* Your own IP is refused in the blocklist so you cannot lock yourself out
+
+= Hardening =
+* Disable XML-RPC and the theme/plugin file editor
+* Stop author and REST API user enumeration
+* Hide the WordPress version
+* Application password governance and max-age
+* Generic login error messages
+* Optional protection of wp-config.php, debug.log and wp-admin/includes via .htaccess
+
+= Security headers =
+* X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+* HSTS (Strict-Transport-Security) and Content-Security-Policy (CSP)
+* Headers are added to REST API responses too
+
+= Login security & brute-force protection =
+* Limit login attempts with configurable brute-force lockouts
+* Custom login URL (hide / rename wp-login.php) with a public page picker and wp-config.php kill switch
+* Session limits, idle timeout and absolute admin session timeout
+* Admin-login email alerts
+* Login lockdown mode
+* Force logout and forced password resets by role, on demand or on a schedule
+
+= reCAPTCHA, hCaptcha & Cloudflare Turnstile =
+* Google reCAPTCHA v2 and v3, hCaptcha and Cloudflare Turnstile
+* Protects login, registration and lost-password forms
+* "Verify keys" test with the real widget before you save
+* A wrong secret key never locks everyone out; the problem is logged instead
+
+= Two-Factor Authentication (2FA) =
+* Authenticator app (TOTP) with QR code: Google Authenticator, Authy, Microsoft Authenticator and others
+* Email one-time codes (OTP)
+* One-time backup codes
+* Enforce 2FA per role, or for all roles
+* Works with front-end login forms, not only wp-login.php
+* 2FA secrets encrypted with AES-256-GCM
+
+= Social login =
+* One-click sign in with Google, Facebook, GitHub and X (Twitter)
+* Choose the role for new social accounts
+* Buttons appear only after a provider's keys are verified; broken providers switch off and alert you
+* Social sign-ins go through Admin Guard
+
+= Magic login (passwordless) =
+* Users can request a one-time sign-in link by email from the login form
+* Rate-limited, and the link only works in the browser that requested it
+
+= Password policy =
+* Minimum strength and length rules
+* Breached-password check with Have I Been Pwned (only a partial hash is sent)
+* Password rotation: force resets for passwords older than a set number of days
+
+= Admin Guard =
+* Administrator whitelist with automatic removal of rogue / unapproved admins
+* Hidden-admin detection
+* Preview who would be removed before anything happens
+
+= Temporary access =
+* Give an existing user a higher role for a limited time; their old role comes back automatically
+
+= Plugin Guard & supply-chain protection =
+* Verifies every plugin against official WordPress.org checksums
+* Trust list for premium, custom, theme and must-use plugins
+* Optional enforcement stops untrusted plugins before they load
+* Install Lock: block zip uploads, all installs or every file change, with a logged 15-minute timed unlock
+* Plugin lock: a separate unlock password plus emailed code guards deactivating GemSecurity
+
+= Upload Shield =
+* Refuses PHP and other executable files on every upload path
+* Detects PHP hidden in images and scripted SVG
+* Writes no-execute rules to uploads/.htaccess, with a live PHP-execution test and an nginx snippet
+* Bans the IP behind a refused executable upload
+
+= Malware & vulnerability scanner =
 * WordPress core file integrity check against official checksums
-* Uploads malware/PHP pattern scan
-* Known-vulnerability scanner for core, plugins and themes
-* Admin Guard — administrator whitelist with rogue-admin auto-remediation
-* Full activity log with retention and CSV export
-* Security dashboard — score, stats and trends
+* Compare a flagged core file line by line with the WordPress.org original
+* Uploads malware / PHP pattern scan
+* Suspicious .htaccess rule detection with one-click quarantine
+* Known-vulnerability scanner for WordPress core, plugins and themes
+* File-change detection and link scanner
+* Mark reviewed files as safe; they are reported again if they change
+* Code & database finder to search the whole install and database
+
+= Anti-spam =
+* Frictionless bot checks on comments and registration (no CAPTCHA needed)
+* Comment honeypot and heuristic spam filtering
+
+= API security =
+* REST API rate limiting
+* Application password controls
+
+= Activity log (audit log) =
+* Logs logins, user changes, role changes, plugin/theme changes, settings and content edits
+* Field-level diff for edits to live posts, with a link to the revision
+* SEO meta, template and featured image changes
+* Records how each event arrived (admin, REST, XML-RPC, AJAX, WP-CLI, cron), user agent and session
+* Filter by user or post, retention settings and CSV export
+
+= Alerts & notifications =
+* Email, Slack, Telegram and generic webhook alerts
+* Alerts include the IP's city, region, country and network
+* Daily report of administrators and active plugins, highlighting changes
+* Alert when GemSecurity is deactivated
+* Test buttons for every channel
+
+= Compliance & SIEM =
+* Send security events to your own SIEM collector or webhook
+
+= Security dashboard =
+* Live security score with grade and trends
+* "What needs your attention" list linking straight to each fix
+* Module manager to turn features on and off without reloading
+* First-run setup wizard with protection levels
 
 = Works with GemBackup (optional) =
 GemSecurity does not create backups itself. If the separate GemBackup plugin is active, GemSecurity can ask it for a backup before plugin/theme/core updates and can start a restore of its latest backup from the Incident Response page.
 
 = GemSecurity Pro =
-The optional GemSecurity Pro add-on is a separate plugin that adds these features (none of this code is in the free plugin): Threat Defense (escalating auto-bans, ban ledger, bot blocklist), Geolocation/country access control, a signature malware scanner with quarantine, database injection scan, plugin/theme integrity vs WordPress.org, a post-hack recovery toolkit, file-change baseline, a hardening pack, auto-update enforcement and settings import/export.
+GemSecurity Pro is a separate add-on plugin for sites that need active threat defense and malware cleanup. None of its code is in this free plugin; everything listed above stays free.
+
+* **Threat Defense** – escalating auto-bans for repeat attackers, a full ban ledger and a curated bad-bot blocklist
+* **Virtual patching** – CVE-targeted firewall rules that block known exploits for your installed plugin and theme versions, even before a fix is released
+* **Country blocking (geolocation)** – allow or block countries for the whole site or just the login page
+* **Signature malware scanner** – deep malware detection with one-click quarantine and restore
+* **Database injection scan** – finds spam links, hidden scripts and backdoors stored in posts, options and other tables
+* **Plugin & theme integrity** – compares every file with the original from WordPress.org
+* **Core repair** – reinstalls WordPress core and removes files that core does not ship, so implants do not survive a reinstall
+* **File-change baseline** – records a known-good snapshot and alerts on any added, changed or deleted file
+* **Post-hack recovery toolkit & Incident Response** – step-by-step cleanup, reset salts, sessions and passwords, restore quarantined files
+* **Payment page integrity (PCI DSS 4.0)** – watches the scripts loaded on checkout pages and flags card-skimmer injections
+* **Uptime & domain monitoring** – site uptime, SSL/TLS certificate expiry, DNS changes and SPF/DKIM/DMARC email health
+* **New-device login alerts** – emails users when an unrecognised device signs in, plus emergency one-time login links
+* **Hardening pack** – extra one-click hardening rules
+* **Auto-update enforcement** – keep chosen plugins, themes and core updated automatically
+* **Settings import / export** – copy your security setup between sites
 
 == External services ==
 

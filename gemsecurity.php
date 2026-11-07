@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name:		GemSecurity
+ * Plugin Name:		GemSecurity – Firewall, Malware Scanner, 2FA, Social Login & reCAPTCHA
  * Plugin URI:		https://github.com/imrantushar/gemsecurity
  * Description:		All-in-one WordPress security dashboard — firewall, login protection, malware scanner, and activity logs.
  * Version:			1.2.2
