@@ -703,3 +703,18 @@
 	align-items: center;
 	gap: 8px;
 }
+
+/* Plugin integrity: badge that expands the per-file list. */
+.gs-linkbtn {
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	color: var(--gs-primary, #2563eb);
+	font: inherit;
+	font-size: 12px;
+}
+.gs-integrity-expand > td {
+	background: var(--gs-surface-2, rgba(0, 0, 0, 0.02));
+	padding: 12px 16px;
+}

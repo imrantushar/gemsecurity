@@ -206,7 +206,9 @@ class Scanner {
 				$issues[] = [ 'file' => $file, 'issue' => 'missing' ];
 				continue;
 			}
-			if ( md5_file( $path ) !== $checksum ) {
+			// A reviewed change (marked safe for exactly these contents) is
+			// accepted; any further edit invalidates the mark and re-flags it.
+			if ( md5_file( $path ) !== $checksum && ! \GemSecurity\Security\SafeFiles::is_marked( $path ) ) {
 				$issues[] = [ 'file' => $file, 'issue' => 'modified' ];
 			}
 			if ( count( $issues ) >= 200 ) {
