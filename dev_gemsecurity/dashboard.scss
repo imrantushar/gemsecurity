@@ -580,6 +580,13 @@
 /* ---------------------------------------------------------------- */
 /* Modal + core-file diff                                            */
 /* ---------------------------------------------------------------- */
+.gs-modal .gs-modal__box.gs-modal__box--sm { max-width: 520px; }
+.gs-modal .gs-modal__box--sm .gs-modal__foot { justify-content: flex-end; }
+.gs-modal .gs-modal__form { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; }
+.gs-modal .gs-modal__note { margin: 0; font-size: 13px; color: var(--gs-muted, #78808f); }
+.gs-modal .gs-modal__form .gs-input { width: 100%; max-width: none !important; }
+.gs-modal .gs-modal__form .gs-field { margin: 0; }
+
 .gs-modal {
 	position: fixed;
 	inset: 0;
