@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 1.6.4 - 07-11-2026 =
+* Added - Products can pass `data_removal` (a `get` and `set` callback) to show "Also delete all data when I delete the plugin" in the deactivation modal. Turning it on always asks the admin to confirm a second time, and the server refuses to turn it on without that confirmation. The product keeps the setting and its uninstall.php reads it.
+
 = 1.6.3 - 05-11-2026 =
 * Fixed - CSS and JS for the license notice, license page, opt-in notice and promotions are now added with wp_add_inline_style() and wp_add_inline_script() instead of raw <style>/<script> tags, as WordPress.org review requires.
 

@@ -24,6 +24,8 @@ const KEYS = [
 	'lockdown_enabled',
 	'lockdown_message',
 	'backup_before_updates',
+	// Uninstall.
+	'delete_data_on_uninstall',
 ];
 
 export default function Settings() {
@@ -235,7 +237,7 @@ export default function Settings() {
 			{ tab === 'maintenance' && (
 			<Card
 				title={ __( 'Maintenance & recovery', 'gemsecurity' ) }
-				description={ __( 'Emergency lockdown and pre-update backups.', 'gemsecurity' ) }
+				description={ __( 'Emergency lockdown, pre-update backups and what happens to your data on uninstall.', 'gemsecurity' ) }
 			>
 				<Toggle
 					label={ __( 'Lockdown mode', 'gemsecurity' ) }
@@ -257,6 +259,18 @@ export default function Settings() {
 						onChange={ ( v ) => setField( 'backup_before_updates', v ) }
 					/>
 				) }
+				<Toggle
+					label={ __( 'Delete all data when the plugin is deleted', 'gemsecurity' ) }
+					description={ __( 'Off by default: deleting GemSecurity keeps your settings, logs and bans so a reinstall picks up where you left off. Turn on to remove every option, table and user setting GemSecurity created. Deactivating never deletes data.', 'gemsecurity' ) }
+					checked={ !! form.delete_data_on_uninstall }
+					onChange={ ( v ) => {
+						// Turning removal on asks a second time: it cannot be undone.
+						if ( v && ! window.confirm( __( 'Are you sure? When GemSecurity is deleted, all of its settings, logs, bans and 2FA setups will be permanently removed. This cannot be undone.', 'gemsecurity' ) ) ) {
+							return;
+						}
+						setField( 'delete_data_on_uninstall', v );
+					} }
+				/>
 			</Card>
 			) }
 

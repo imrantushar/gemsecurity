@@ -627,3 +627,25 @@ body.se-sdk-deactivation-modal-open {
 		padding: 16px !important;
 	}
 }
+
+.se-sdk-deactivation-modal--data-removal {
+	margin: 16px 0 0;
+	padding: 12px;
+	border: 1px solid var(--se-sdk-border-color);
+	border-radius: 6px;
+}
+.se-sdk-deactivation-modal--data-removal label {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	color: var(--se-sdk-danger-color);
+	font-weight: 500;
+}
+.se-sdk-deactivation-modal--data-removal input[type="checkbox"] {
+	margin-top: 2px;
+}
+.se-sdk-deactivation-modal--data-removal .se-sdk-data-removal-note {
+	margin: 6px 0 0 24px;
+	color: var(--se-sdk-muted-color);
+	font-size: 12px;
+}

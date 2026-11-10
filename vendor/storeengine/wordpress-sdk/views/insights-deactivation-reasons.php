@@ -53,6 +53,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php } ?>
 			</ul>
 
+			<?php if ( $this->has_data_removal() ) {
+				$removalOn = $this->is_data_removal_enabled();
+				$removalLabel = ! empty( $this->data_removal['label'] ) ? $this->data_removal['label'] : sprintf(
+					/* translators: %s: plugin name */
+					__( 'Also delete all %s data (settings, logs and database tables) when I delete the plugin', 'storeengine-sdk' ),
+					$this->client->getPackageName()
+				);
+				$removalConfirm = ! empty( $this->data_removal['confirm'] ) ? $this->data_removal['confirm'] : sprintf(
+					/* translators: %s: plugin name */
+					__( 'Are you sure? When %s is deleted, all of its settings, logs and data will be permanently removed. This cannot be undone.', 'storeengine-sdk' ),
+					$this->client->getPackageName()
+				);
+				?>
+				<div class="se-sdk-deactivation-modal--data-removal">
+					<label>
+						<input type="checkbox" class="se-sdk-data-removal" value="1" data-initial="<?php echo $removalOn ? '1' : '0'; ?>" data-confirm="<?php echo esc_attr( $removalConfirm ); ?>" <?php checked( $removalOn ); ?>>
+						<?php echo esc_html( $removalLabel ); ?>
+					</label>
+					<p class="se-sdk-data-removal-note"><?php esc_html_e( 'Deactivating never deletes data. Data is removed only when you delete the plugin.', 'storeengine-sdk' ); ?></p>
+				</div>
+			<?php } ?>
+
 			<div class="se-sdk-deactivation-modal--consent">
 				<details class="se-sdk-consent-details">
 					<summary class="se-sdk-consent-summary"><?php esc_html_e( 'What data do we collect?', 'storeengine-sdk' ); ?></summary>

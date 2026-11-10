@@ -3,6 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import api from '@Utils/api';
 import { Button, Badge, Loading } from '@Components/ui/Controls';
 import { useToast } from '@Components/ui/Toast';
+import { isPro, ProBadge, UpgradeButton } from '@Components/ui/Pro';
 
 /**
  * Line diff (longest common subsequence). Core files are well under a few
@@ -74,24 +75,29 @@ function collapse( rows ) {
 }
 
 /**
- * Popup for one flagged core file: what differs from the official release,
- * next to the official copy.
+ * Popup for one flagged file: what differs from the official copy.
+ *
+ * Free: modified WordPress core files, view only.
+ * Pro:  any flagged file with an official copy (core, WordPress.org plugins
+ *       and themes), plus Restore original / Mark as safe.
  *
  * @param {Object}   props
- * @param {string}   props.file    Root-relative path.
+ * @param {string}   props.file    Root-relative (or absolute) path.
  * @param {Function} props.onClose
- * @param {Function} props.onFixed Called with the fresh scan result.
+ * @param {Function} props.onFixed Called with the fresh scan result (or nothing).
  */
 export default function CoreFileModal( { file, onClose, onFixed } ) {
 	const toast = useToast();
+	const pro = isPro();
 	const [ info, setInfo ] = useState( null );
 	const [ error, setError ] = useState( '' );
+	const [ busy, setBusy ] = useState( '' );
 
 	useEffect( () => {
-		api.get( 'scan/core-file', { params: { file } } )
+		api.get( pro ? 'pro/compare' : 'scan/core-file', { params: { file } } )
 			.then( ( r ) => setInfo( r.data ) )
 			.catch( ( e ) => setError( e?.response?.data?.message || __( 'Could not load this file.', 'gemsecurity' ) ) );
-	}, [ file ] );
+	}, [ file, pro ] );
 
 	useEffect( () => {
 		const onKey = ( e ) => e.key === 'Escape' && onClose();
@@ -106,6 +112,46 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 		return collapse( diffLines( info.original, info.current ) );
 	}, [ info ] );
 
+	const changed = rows ? rows.filter( ( r ) => r.k === 'add' || r.k === 'del' ).length : 0;
+
+	const restore = async () => {
+		const warn = info.verified
+			? __( 'Replace this file with the official copy? The current file is moved to quarantine first, so this can be undone.', 'gemsecurity' )
+			: __( 'No checksum is published for this copy, so it could not be verified — it still comes directly from WordPress.org. Replace the file? The current one is moved to quarantine first.', 'gemsecurity' );
+		// eslint-disable-next-line no-alert
+		if ( ! window.confirm( warn ) ) {
+			return;
+		}
+		setBusy( 'restore' );
+		try {
+			const { data } = await api.post( 'pro/compare/restore', { file: info.file } );
+			toast( __( 'Official copy restored. The previous file is in quarantine.', 'gemsecurity' ), 'success' );
+			onFixed && onFixed( data.result );
+			onClose();
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not restore the file.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const markSafe = async () => {
+		setBusy( 'safe' );
+		try {
+			await api.post( 'safe-files', { path: info.file } );
+			toast( __( 'Marked as safe. It will be flagged again if it changes.', 'gemsecurity' ), 'success' );
+			// No result: the caller re-scans in its own way.
+			onFixed && onFixed( null );
+			onClose();
+		} catch ( e ) {
+			toast( e?.response?.data?.message || __( 'Could not mark that file.', 'gemsecurity' ), 'error' );
+		}
+		setBusy( '' );
+	};
+
+	const source = info && info.type && info.type !== 'unknown'
+		? ( info.type === 'core' ? `WordPress ${ info.version }` : `${ info.slug } ${ info.version } (${ info.type })` )
+		: ( info && info.version ? `WordPress ${ info.version }` : '' );
+
 	// Rendered in place, not in a portal: the plugin's styles and dark theme are
 	// scoped to its own wrapper, which a portal on <body> would sit outside of.
 	return (
@@ -113,8 +159,12 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 			<div className="gs-modal__box">
 				<div className="gs-modal__head">
 					<div>
-						<strong>{ file }</strong>
-						{ info && <span className="gs-muted"> · WordPress { info.version }</span> }
+						<strong>{ info?.file || file }</strong>
+						{ source && <span className="gs-muted"> · { source }</span> }
+						{ info && info.original && ( info.verified
+							? <> <Badge tone="success">{ __( 'Verified copy', 'gemsecurity' ) }</Badge></>
+							: pro && <> <Badge tone="warning">{ __( 'Unverified copy', 'gemsecurity' ) }</Badge></> ) }
+						{ info?.safe && <> <Badge tone="info">{ __( 'Marked safe', 'gemsecurity' ) }</Badge></> }
 					</div>
 					<button type="button" className="gs-modal__x" onClick={ onClose } aria-label={ __( 'Close', 'gemsecurity' ) }>×</button>
 				</div>
@@ -125,12 +175,14 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 
 					{ info && (
 						<>
-							{ ! info.exists && <p><Badge tone="warning">{ __( 'Missing', 'gemsecurity' ) }</Badge> { __( 'This core file is not on your site.', 'gemsecurity' ) }</p> }
+							{ ! info.exists && <p><Badge tone="warning">{ __( 'Missing', 'gemsecurity' ) }</Badge> { __( 'This file is not on your site.', 'gemsecurity' ) }</p> }
+							{ info.binary && <p className="gs-alert gs-alert--warning">{ __( 'This is a binary file, so no line-by-line comparison is shown.', 'gemsecurity' ) }</p> }
 							{ info.original_error && <p className="gs-alert gs-alert--warning">{ info.original_error }</p> }
-							{ rows && rows.length === 0 && <p className="gs-ok">{ __( 'This file now matches the official copy.', 'gemsecurity' ) }</p> }
+							{ rows && rows.length === 0 && <p className="gs-ok">{ __( 'This file matches the official copy exactly — it is safe.', 'gemsecurity' ) }</p> }
 							{ rows && rows.length > 0 && (
 								<>
 									<p className="gs-muted">
+										{ sprintf( /* translators: %d: changed lines. */ __( '%d changed line(s).', 'gemsecurity' ), changed ) }{ ' ' }
 										{ __( 'Red (+) lines are in your file but not in the official copy; green (−) lines are in the official copy but missing from yours.', 'gemsecurity' ) }
 									</p>
 									<pre className="gs-diff">
@@ -142,12 +194,28 @@ export default function CoreFileModal( { file, onClose, onFixed } ) {
 									</pre>
 								</>
 							) }
+							{ ! pro && (
+								<p className="gs-muted">
+									<ProBadge /> { __( 'Compare plugin and theme files too, restore the official copy in one click, or accept a reviewed change as safe.', 'gemsecurity' ) }
+								</p>
+							) }
 						</>
 					) }
 				</div>
 
 				{ info && (
 					<div className="gs-modal__foot">
+						{ pro && info.can_restore && (
+							<Button onClick={ restore } loading={ busy === 'restore' } disabled={ !! busy }>
+								{ info.exists ? __( 'Restore original', 'gemsecurity' ) : __( 'Restore missing file', 'gemsecurity' ) }
+							</Button>
+						) }
+						{ pro && info.can_mark_safe && ! info.safe && (
+							<Button variant="secondary" onClick={ markSafe } loading={ busy === 'safe' } disabled={ !! busy }>
+								{ info.identical ? __( 'Mark as safe', 'gemsecurity' ) : __( 'Accept changes as safe', 'gemsecurity' ) }
+							</Button>
+						) }
+						{ ! pro && <UpgradeButton>{ __( 'Unlock restore & mark safe', 'gemsecurity' ) }</UpgradeButton> }
 						<Button variant="secondary" onClick={ onClose }>{ __( 'Close', 'gemsecurity' ) }</Button>
 					</div>
 				) }

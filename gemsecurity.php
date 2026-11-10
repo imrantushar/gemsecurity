@@ -114,6 +114,14 @@ final class GemSecurity {
 			require_once $composer_autoload;
 		}
 
+		// Register our SDK copy directly. Composer skips a `files` entry it has
+		// already loaded from another plugin's vendor (same package hash), so
+		// without this our newer SDK never enters the version election.
+		$sdk_init = GEMSECURITY_ROOT_DIR_PATH . 'vendor/storeengine/wordpress-sdk/init.php';
+		if ( file_exists( $sdk_init ) ) {
+			require_once $sdk_init;
+		}
+
 		require_once GEMSECURITY_INCLUDES_DIR_PATH . 'autoload.php';
 
 		// License/insights SDK bootstrap (defers se_license_init to plugins_loaded).

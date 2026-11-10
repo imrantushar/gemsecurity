@@ -713,7 +713,7 @@ export default function Scanner() {
 						<tr key={ i }>
 							<td><code>{ c.file }</code></td>
 							<td><Badge tone={ c.issue === 'missing' ? 'warning' : 'danger' }>{ c.issue }</Badge></td>
-							<td><Button variant="secondary" onClick={ () => setCoreFile( c.file ) }>{ __( 'View & fix', 'gemsecurity' ) }</Button></td>
+							<td><Button variant="secondary" onClick={ () => setCoreFile( c.file ) }>{ isPro() ? __( 'Compare & fix', 'gemsecurity' ) : __( 'View changes', 'gemsecurity' ) }</Button></td>
 						</tr>
 					) }
 				/>
@@ -743,7 +743,7 @@ export default function Scanner() {
 							<td><code>{ f.file }</code></td>
 							<td>{ f.reason }</td>
 							<td><Badge tone={ f.severity === 'critical' ? 'danger' : 'warning' }>{ f.severity }</Badge></td>
-							<td><MarkSafe path={ f.file } onMarked={ runScan } /></td>
+							<td className="gs-row-actions">{ isPro() && <Button variant="secondary" onClick={ () => setCoreFile( f.file ) }>{ __( 'Compare', 'gemsecurity' ) }</Button> } <MarkSafe path={ f.file } onMarked={ runScan } /></td>
 						</tr>
 					) }
 				/>
@@ -774,7 +774,7 @@ export default function Scanner() {
 								<td><code>{ s.file }</code></td>
 								<td>{ s.reason }</td>
 								<td><Badge tone={ s.severity === 'critical' ? 'danger' : 'warning' }>{ s.severity }</Badge></td>
-								<td><MarkSafe path={ s.file } onMarked={ runScan } /></td>
+								<td className="gs-row-actions">{ isPro() && <Button variant="secondary" onClick={ () => setCoreFile( s.file ) }>{ __( 'Compare', 'gemsecurity' ) }</Button> } <MarkSafe path={ s.file } onMarked={ runScan } /></td>
 							</tr>
 						) }
 					/>
@@ -1130,7 +1130,7 @@ export default function Scanner() {
 
 	return (
 		<div className="gs-page">
-			{ coreFile && <CoreFileModal file={ coreFile } onClose={ () => setCoreFile( '' ) } onFixed={ setResult } /> }
+			{ coreFile && <CoreFileModal file={ coreFile } onClose={ () => setCoreFile( '' ) } onFixed={ ( r ) => ( r ? setResult( r ) : runScan() ) } /> }
 			<div className="gs-tabs" role="tablist">
 				<button
 					type="button"

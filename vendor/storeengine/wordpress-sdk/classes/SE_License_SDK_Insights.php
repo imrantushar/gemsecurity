@@ -74,6 +74,14 @@ final class SE_License_SDK_Insights {
 	protected $data_collection_list = [];
 
 	/**
+	 * Optional "delete my data on uninstall" switch shown in the deactivation
+	 * modal. Null when the product did not opt in.
+	 *
+	 * @var array{get: callable, set: callable, label?: string, confirm?: string}|null
+	 */
+	protected $data_removal = null;
+
+	/**
 	 * Initialize the class
 	 *
 	 * @param SE_License_SDK_Client|string $client The client.
@@ -204,6 +212,12 @@ final class SE_License_SDK_Insights {
 		add_action(
 				'wp_ajax_' . $this->client->getHookName( 'submit-uninstall-reason' ),
 				[ $this, 'uninstall_reason_submission' ]
+		);
+
+		// Data-removal choice from the deactivation modal.
+		add_action(
+				'wp_ajax_' . $this->client->getHookName( 'submit-data-removal' ),
+				[ $this, 'data_removal_submission' ]
 		);
 
 		// Ticket submission.
@@ -409,6 +423,56 @@ final class SE_License_SDK_Insights {
 		], $this->data_collection_list );
 
 		return array_unique( array_filter( $data ) );
+	}
+
+	/**
+	 * Let the deactivation modal offer "Also delete all data when the plugin
+	 * is deleted". The SDK stores nothing itself: the product owns the setting
+	 * (its uninstall.php reads it) and hands over a getter and a setter.
+	 * Turning the switch on always asks the admin to confirm a second time.
+	 *
+	 * @param array|null $args {
+	 *     @type callable $get     Returns bool: is data removal currently on.
+	 *     @type callable $set     Receives bool: save the new value.
+	 *     @type string   $label   Optional checkbox label.
+	 *     @type string   $confirm Optional second-confirmation message.
+	 * }
+	 */
+	public function set_data_removal( ?array $args ): SE_License_SDK_Insights {
+		$this->data_removal = ( $args && isset( $args['get'], $args['set'] ) && is_callable( $args['get'] ) && is_callable( $args['set'] ) ) ? $args : null;
+
+		return $this;
+	}
+
+	public function has_data_removal(): bool {
+		return null !== $this->data_removal;
+	}
+
+	public function is_data_removal_enabled(): bool {
+		return $this->data_removal && (bool) call_user_func( $this->data_removal['get'] );
+	}
+
+	/**
+	 * AJAX: save the data-removal choice made in the deactivation modal.
+	 */
+	public function data_removal_submission() {
+		check_ajax_referer( $this->client->getHookName( 'insight_action' ) );
+
+		if ( ! $this->data_removal || ! current_user_can( 'delete_plugins' ) ) {
+			wp_send_json_error( esc_html__( 'You are not allowed to do this.', 'storeengine-sdk' ), 403 );
+		}
+
+		$enable = isset( $_POST['remove_data'] ) && '1' === sanitize_text_field( wp_unslash( $_POST['remove_data'] ) );
+
+		// Turning removal on needs the explicit second confirmation from the
+		// modal; a bare request without it is refused.
+		if ( $enable && ( ! isset( $_POST['confirmed'] ) || '1' !== $_POST['confirmed'] ) ) {
+			wp_send_json_error( esc_html__( 'Please confirm that all data should be deleted.', 'storeengine-sdk' ), 400 );
+		}
+
+		call_user_func( $this->data_removal['set'], $enable );
+
+		wp_send_json_success( [ 'remove_data' => $this->is_data_removal_enabled() ] );
 	}
 
 	public function set_data_being_collected( ?array $items ): SE_License_SDK_Insights {
@@ -1233,6 +1297,7 @@ final class SE_License_SDK_Insights {
 			 data-slug="<?php echo esc_attr( $this->client->getSlug() ); ?>"
 			 data-plugin="<?php echo esc_attr( $this->client->getBasename() ); ?>"
 			 data-uninstall-action="<?php echo esc_attr( $this->client->getHookName( 'submit-uninstall-reason' ) ); ?>"
+			 data-data-removal-action="<?php echo esc_attr( $this->client->getHookName( 'submit-data-removal' ) ); ?>"
 			 data-support-action="<?php echo esc_attr( $this->client->getHookName( 'submit-support-ticket' ) ); ?>"
 			 data-nonce="<?php echo esc_attr( wp_create_nonce( $this->client->getHookName( 'insight_action' ) ) ); ?>"
 			 data-support-url="<?php echo esc_url( $this->supportURL ); ?>"
