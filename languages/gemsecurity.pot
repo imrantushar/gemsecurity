@@ -2,25 +2,21 @@
 # This file is distributed under the GPL-3.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: GemSecurity 1.2.2\n"
+"Project-Id-Version: GemSecurity – Firewall, Malware Scanner, 2FA, Social Login & reCAPTCHA 1.2.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/gemsecurity\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-05T15:20:02+00:00\n"
+"POT-Creation-Date: 2026-11-10T10:31:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
 
 #. Plugin Name of the plugin
 #: gemsecurity.php
-#: includes/admin/menu.php:142
-#: includes/security/site-guard.php:582
-#: assets/build/backend.1.2.2.js:19
-#: assets/build/backend.1.2.2.js:43
-msgid "GemSecurity"
+msgid "GemSecurity – Firewall, Malware Scanner, 2FA, Social Login & reCAPTCHA"
 msgstr ""
 
 #. Plugin URI of the plugin
@@ -47,6 +43,13 @@ msgstr ""
 #: assets/build/backend.1.2.2.js:19
 #: assets/build/setup.1.2.2.js:14
 msgid "PRO"
+msgstr ""
+
+#: includes/admin/menu.php:142
+#: includes/security/site-guard.php:582
+#: assets/build/backend.1.2.2.js:19
+#: assets/build/backend.1.2.2.js:43
+msgid "GemSecurity"
 msgstr ""
 
 #: includes/admin/setup.php:40
@@ -165,7 +168,7 @@ msgid "Nothing to report."
 msgstr ""
 
 #: includes/modules/admin-guard.php:133
-#: includes/modules/registry.php:464
+#: includes/modules/registry.php:468
 #: assets/build/backend.1.2.2.js:51
 msgid "Admin Guard"
 msgstr ""
@@ -2299,12 +2302,12 @@ msgid "Scanning"
 msgstr ""
 
 #: includes/modules/registry.php:345
-#: includes/modules/registry.php:488
+#: includes/modules/registry.php:492
 msgid "Logs"
 msgstr ""
 
 #: includes/modules/registry.php:346
-#: includes/modules/registry.php:500
+#: includes/modules/registry.php:504
 #: assets/build/backend.1.2.2.js:51
 msgid "Settings"
 msgstr ""
@@ -2399,94 +2402,102 @@ msgid "Give an existing user a role for a limited time; it is taken back automat
 msgstr ""
 
 #: includes/modules/registry.php:460
+msgid "Site Connect"
+msgstr ""
+
+#: includes/modules/registry.php:461
+msgid "A hosted approval screen that lets other sites and apps connect to a customer account."
+msgstr ""
+
+#: includes/modules/registry.php:464
 #: assets/build/backend.1.2.2.js:51
 msgid "Geolocation"
 msgstr ""
 
-#: includes/modules/registry.php:461
+#: includes/modules/registry.php:465
 msgid "Country access control and per-user location lock."
 msgstr ""
 
-#: includes/modules/registry.php:465
+#: includes/modules/registry.php:469
 msgid "Rogue-admin protection and hidden-administrator detection."
 msgstr ""
 
-#: includes/modules/registry.php:468
+#: includes/modules/registry.php:472
 msgid "API & Access"
 msgstr ""
 
-#: includes/modules/registry.php:469
+#: includes/modules/registry.php:473
 msgid "REST API rate limiting and application-password governance."
 msgstr ""
 
-#: includes/modules/registry.php:472
+#: includes/modules/registry.php:476
 #: assets/build/backend.1.2.2.js:43
 msgid "Plugin Guard"
 msgstr ""
 
-#: includes/modules/registry.php:473
+#: includes/modules/registry.php:477
 msgid "See which plugins and themes are verified on WordPress.org, trust your premium ones, and stop anything else — including hidden must-use plugins — from running or being installed."
 msgstr ""
 
-#: includes/modules/registry.php:476
+#: includes/modules/registry.php:480
 #: assets/build/backend.1.2.2.js:51
 msgid "Scanner"
 msgstr ""
 
-#: includes/modules/registry.php:477
+#: includes/modules/registry.php:481
 msgid "Integrity, file-change, link and vulnerability scanning, auto-update enforcement and the Pro malware suite."
 msgstr ""
 
-#: includes/modules/registry.php:480
+#: includes/modules/registry.php:484
 msgid "Payment Integrity"
 msgstr ""
 
-#: includes/modules/registry.php:481
+#: includes/modules/registry.php:485
 msgid "Monitor checkout-page scripts for Magecart-style tampering (PCI-DSS 4.0 §6.4.3 / §11.6.1)."
 msgstr ""
 
-#: includes/modules/registry.php:484
+#: includes/modules/registry.php:488
 msgid "Incident Response"
 msgstr ""
 
-#: includes/modules/registry.php:485
+#: includes/modules/registry.php:489
 msgid "Forensic timeline, file quarantine and one-click recovery for after a breach."
 msgstr ""
 
-#: includes/modules/registry.php:489
+#: includes/modules/registry.php:493
 msgid "Activity audit log and what gets recorded in it."
 msgstr ""
 
-#: includes/modules/registry.php:492
+#: includes/modules/registry.php:496
 #: assets/build/backend.1.2.2.js:51
 msgid "Monitoring"
 msgstr ""
 
-#: includes/modules/registry.php:493
+#: includes/modules/registry.php:497
 msgid "Uptime, TLS-certificate expiry, DNS-change and email-authentication (SPF/DMARC) monitoring."
 msgstr ""
 
-#: includes/modules/registry.php:496
+#: includes/modules/registry.php:500
 msgid "Notifications"
 msgstr ""
 
-#: includes/modules/registry.php:497
+#: includes/modules/registry.php:501
 msgid "Where alerts go, what raises one, and the reports sent on a schedule."
 msgstr ""
 
-#: includes/modules/registry.php:501
+#: includes/modules/registry.php:505
 msgid "Plugin-wide preferences: compliance/SIEM, lockdown, log retention and import/export."
 msgstr ""
 
-#: includes/modules/registry.php:725
+#: includes/modules/registry.php:729
 msgid "Unknown module."
 msgstr ""
 
-#: includes/modules/registry.php:730
+#: includes/modules/registry.php:734
 msgid "Core modules cannot be turned off."
 msgstr ""
 
-#: includes/modules/registry.php:733
+#: includes/modules/registry.php:737
 msgid "This module requires GemSecurity Pro."
 msgstr ""
 
@@ -8596,6 +8607,50 @@ msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
 msgid "Block the login"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "New customers"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "People without an account can create one on the connection screen."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Only existing accounts can connect."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Turn off"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Turn on"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Connected sites"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "No sites connected yet"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Disconnect this site? It will stop seeing this customer's products until they connect again."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Site disconnected."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Could not disconnect that site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Disconnect"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
