@@ -93,25 +93,29 @@ export default function SiteConnect() {
 	/* -------------------------------------------------------------------- */
 
 	return (
-		<>
+		<div className="gs-page">
 			<Card title={ __( 'New customers', 'gemsecurity' ) }>
-				<div style={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 } }>
+				<div className="gsc-admin__inline">
 					<span>{ signup ? __( 'People without an account can create one on the connection screen.', 'gemsecurity' ) : __( 'Only existing accounts can connect.', 'gemsecurity' ) }</span>
-					<Button onClick={ toggleSignup }>{ signup ? __( 'Turn off', 'gemsecurity' ) : __( 'Turn on', 'gemsecurity' ) }</Button>
+					<Button variant="secondary" onClick={ toggleSignup }>{ signup ? __( 'Turn off', 'gemsecurity' ) : __( 'Turn on', 'gemsecurity' ) }</Button>
 				</div>
 			</Card>
 
 			<Card title={ __( 'Customer connections', 'gemsecurity' ) } description={ __( 'Apps and sites holding a read-only token for one of this site\'s customers.', 'gemsecurity' ) }>
 				{ sites === null && <Loading /> }
 				{ sites && sites.length === 0 && <EmptyState title={ __( 'No sites connected yet', 'gemsecurity' ) } /> }
-				{ sites && sites.map( ( s ) => (
-					<ConnectionRow
-						key={ s.id }
-						title={ s.site }
-						sub={ `${ s.user } · ${ new Date( s.created * 1000 ).toLocaleDateString() }` }
-						right={ <Button variant="secondary" onClick={ () => revokeCustomer( s.id ) }>{ __( 'Disconnect', 'gemsecurity' ) }</Button> }
-					/>
-				) ) }
+				{ sites && sites.length > 0 && (
+					<div className="gsc-admin__list">
+						{ sites.map( ( s ) => (
+							<ConnectionRow
+								key={ s.id }
+								title={ s.site }
+								sub={ `${ s.user } · ${ new Date( s.created * 1000 ).toLocaleDateString() }` }
+								right={ <Button variant="secondary" onClick={ () => revokeCustomer( s.id ) }>{ __( 'Disconnect', 'gemsecurity' ) }</Button> }
+							/>
+						) ) }
+					</div>
+				) }
 			</Card>
 
 			<Card
@@ -126,40 +130,50 @@ export default function SiteConnect() {
 						description={ __( 'Pair this site with another to let one set of customers sign in to both.', 'gemsecurity' ) }
 					/>
 				) }
-				{ sso && sso.connections.map( ( c ) => (
-					<ConnectionRow
-						key={ c.id }
-						title={ c.name || c.url }
-						sub={ (
-							<>
-								<Badge tone={ c.direction === 'in' ? 'info' : 'success' }>
-									{ c.direction === 'in' ? __( 'Accepts sign-ins', 'gemsecurity' ) : __( 'Sends customers', 'gemsecurity' ) }
-								</Badge>
-								{ ' · ' }
-								{ sprintf( __( 'Added %s', 'gemsecurity' ), new Date( c.created * 1000 ).toLocaleDateString() ) }
-							</>
-						) }
-						right={ <Button variant="secondary" onClick={ () => removeSso( c.id ) }>{ __( 'Remove', 'gemsecurity' ) }</Button> }
-					/>
-				) ) }
+				{ sso && sso.connections.length > 0 && (
+					<div className="gsc-admin__list">
+						{ sso.connections.map( ( c ) => (
+							<ConnectionRow
+								key={ c.id }
+								title={ c.name || c.url }
+								sub={ (
+									<>
+										<Badge tone={ c.direction === 'in' ? 'info' : 'success' }>
+											{ c.direction === 'in' ? __( 'Accepts sign-ins', 'gemsecurity' ) : __( 'Sends customers', 'gemsecurity' ) }
+										</Badge>
+										{ ' · ' }
+										{ sprintf( __( 'Added %s', 'gemsecurity' ), new Date( c.created * 1000 ).toLocaleDateString() ) }
+									</>
+								) }
+								right={ <Button variant="secondary" onClick={ () => removeSso( c.id ) }>{ __( 'Remove', 'gemsecurity' ) }</Button> }
+							/>
+						) ) }
+					</div>
+				) }
 			</Card>
 
 			<Card title={ __( 'Who can use single sign-on', 'gemsecurity' ) } description={ __( 'Choose which roles may sign in through a connected site. A role must be on at BOTH ends for a user to pass through.', 'gemsecurity' ) }>
 				{ sso === null && <Loading /> }
-				{ sso?.roles?.map( ( r ) => (
-					<div key={ r.role } style={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid var(--gemsec-border, #e4e7ec)' } }>
-						<div>
-							<strong>{ r.name }</strong>
-							{ r.sensitive && <> { ' ' }<Badge tone="warning">{ __( 'Can manage this site', 'gemsecurity' ) }</Badge></> }
-							<div className="gs-muted" style={ { fontSize: 13 } }>
-								{ r.sensitive
-									? __( 'A compromised partner site could sign in as anyone with this role. Off by default.', 'gemsecurity' )
-									: __( 'Safe to leave on for customer-only roles.', 'gemsecurity' ) }
+				{ sso?.roles && (
+					<div className="gsc-admin__list">
+						{ sso.roles.map( ( r ) => (
+							<div key={ r.role } className="gsc-admin__row">
+								<div className="gsc-admin__row-main">
+									<div className="gsc-admin__row-title">
+										<strong>{ r.name }</strong>
+										{ r.sensitive && <Badge tone="warning">{ __( 'Can manage this site', 'gemsecurity' ) }</Badge> }
+									</div>
+									<div className="gsc-admin__row-sub">
+										{ r.sensitive
+											? __( 'A compromised partner site could sign in as anyone with this role. Off by default.', 'gemsecurity' )
+											: __( 'Safe to leave on for customer-only roles.', 'gemsecurity' ) }
+									</div>
+								</div>
+								<Toggle checked={ !! r.enabled } onChange={ ( v ) => toggleRole( r.role, v ) } />
 							</div>
-						</div>
-						<Toggle checked={ !! r.enabled } onChange={ ( v ) => toggleRole( r.role, v ) } />
+						) ) }
 					</div>
-				) ) }
+				) }
 			</Card>
 
 			{ addOpen && (
@@ -169,16 +183,16 @@ export default function SiteConnect() {
 					toast={ toast }
 				/>
 			) }
-		</>
+		</div>
 	);
 }
 
 function ConnectionRow( { title, sub, right } ) {
 	return (
-		<div style={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderTop: '1px solid var(--gemsec-border, #e4e7ec)' } }>
-			<div>
-				<strong>{ title }</strong>
-				<div style={ { fontSize: 13 } }>{ sub }</div>
+		<div className="gsc-admin__row">
+			<div className="gsc-admin__row-main">
+				<div className="gsc-admin__row-title"><strong>{ title }</strong></div>
+				<div className="gsc-admin__row-sub">{ sub }</div>
 			</div>
 			{ right }
 		</div>
@@ -242,7 +256,7 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 					<button type="button" className="gs-modal__x" onClick={ onClose } aria-label={ __( 'Close', 'gemsecurity' ) }>×</button>
 				</div>
 
-				<div className="gs-modal__tabs" style={ { display: 'flex', gap: 2, padding: '0 24px', borderBottom: '1px solid var(--gemsec-border, #e4e7ec)' } }>
+				<div className="gsc-admin__tabs">
 					<TabButton active={ tab === 'create' } onClick={ () => { setTab( 'create' ); setGenerated( '' ); } }>{ __( 'Create a code', 'gemsecurity' ) }</TabButton>
 					<TabButton active={ tab === 'paste' } onClick={ () => setTab( 'paste' ) }>{ __( 'Paste a code', 'gemsecurity' ) }</TabButton>
 				</div>
@@ -267,7 +281,7 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 						<p className="gs-modal__note">
 							{ __( 'Copy this code, open the other site\'s Site Connect page, pick "Paste a code" and paste it in. This code is shown only once.', 'gemsecurity' ) }
 						</p>
-						<textarea readOnly value={ generated } rows={ 4 } style={ { width: '100%', fontFamily: 'monospace', fontSize: 13, padding: 10, border: '1px solid var(--gemsec-border, #d0d5dd)', borderRadius: 8, resize: 'none' } } />
+						<textarea readOnly value={ generated } rows={ 4 } className="gsc-admin__code" />
 						<div className="gs-modal__foot">
 							<Button variant="secondary" type="button" onClick={ onClose }>{ __( 'Done', 'gemsecurity' ) }</Button>
 							<Button type="button" onClick={ copy }>{ __( 'Copy code', 'gemsecurity' ) }</Button>
@@ -281,7 +295,7 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 							{ __( 'Paste the code the other site gave you. This site will check the other end, then save the pairing.', 'gemsecurity' ) }
 						</p>
 						<Field label={ __( 'Pairing code', 'gemsecurity' ) }>
-							<textarea required value={ code } onChange={ ( e ) => setCode( e.target.value ) } rows={ 4 } style={ { width: '100%', fontFamily: 'monospace', fontSize: 13, padding: 10, border: '1px solid var(--gemsec-border, #d0d5dd)', borderRadius: 8, resize: 'none' } } />
+							<textarea required value={ code } onChange={ ( e ) => setCode( e.target.value ) } rows={ 4 } className="gsc-admin__code" />
 						</Field>
 						<div className="gs-modal__foot">
 							<Button variant="secondary" type="button" onClick={ onClose }>{ __( 'Cancel', 'gemsecurity' ) }</Button>
@@ -296,21 +310,7 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 
 function TabButton( { active, children, ...props } ) {
 	return (
-		<button
-			type="button"
-			{ ...props }
-			style={ {
-				background: 'none',
-				border: 0,
-				padding: '12px 14px',
-				fontSize: 14,
-				fontWeight: 600,
-				cursor: 'pointer',
-				color: active ? 'var(--gemsec-primary, #5b47e0)' : 'var(--gemsec-muted, #667085)',
-				borderBottom: active ? '2px solid var(--gemsec-primary, #5b47e0)' : '2px solid transparent',
-				marginBottom: -1,
-			} }
-		>
+		<button type="button" className={ `gsc-admin__tab${ active ? ' gsc-admin__tab--active' : '' }` } { ...props }>
 			{ children }
 		</button>
 	);
