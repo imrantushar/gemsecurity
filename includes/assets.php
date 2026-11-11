@@ -73,6 +73,7 @@ class Assets {
 			'home_url'         => untrailingslashit( home_url() ),
 			'site_name'        => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 			'site_icon'        => (string) get_site_icon_url( 128 ),
+			'uploads_disabled' => (bool) Helper::get_setting( 'uploads_disabled', false ),
 			'site_url'         => site_url(),
 			'route_path'       => wp_parse_url( admin_url(), PHP_URL_PATH ),
 			'menu'             => wp_json_encode( Helper::get_admin_menu_list() ),

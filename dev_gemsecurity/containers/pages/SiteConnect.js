@@ -267,7 +267,8 @@ function LogoPicker( { value, onChange, toast } ) {
 	const input = useRef( null );
 	const [ busy, setBusy ] = useState( false );
 	const [ drag, setDrag ] = useState( false );
-	const [ byUrl, setByUrl ] = useState( false );
+	// GemSecurity's own "Turn off file uploads" setting blocks this too; say so up front instead of failing.
+	const blocked = !! GS.uploads_disabled;
 
 	const upload = async ( file ) => {
 		if ( ! file ) {
@@ -302,26 +303,27 @@ function LogoPicker( { value, onChange, toast } ) {
 			className={ `gsc-pair__logo${ drag ? ' is-drag' : '' }` }
 			onDragOver={ ( e ) => { e.preventDefault(); setDrag( true ); } }
 			onDragLeave={ () => setDrag( false ) }
-			onDrop={ ( e ) => { e.preventDefault(); setDrag( false ); upload( e.dataTransfer.files?.[ 0 ] ); } }
+			onDrop={ ( e ) => { e.preventDefault(); setDrag( false ); if ( ! blocked ) { upload( e.dataTransfer.files?.[ 0 ] ); } } }
 		>
 			<div className="gsc-pair__logo-thumb">
 				{ value ? <img src={ value } alt="" /> : <span aria-hidden="true">+</span> }
 			</div>
 			<div className="gsc-pair__logo-body">
 				<div className="gsc-pair__logo-actions">
-					<Button variant="secondary" type="button" loading={ busy } onClick={ () => input.current?.click() }>
+					<Button variant="secondary" type="button" loading={ busy } disabled={ blocked } onClick={ () => input.current?.click() }>
 						{ value ? __( 'Replace', 'gemsecurity' ) : __( 'Upload logo', 'gemsecurity' ) }
 					</Button>
 					{ value && <Button variant="secondary" type="button" onClick={ () => onChange( '' ) }>{ __( 'Remove', 'gemsecurity' ) }</Button> }
 				</div>
-				{ byUrl ? (
-					<TextInput type="url" value={ value } onChange={ ( e ) => onChange( e.target.value ) } placeholder="https://example.com/logo.png" />
+				{ blocked ? (
+					<span className="gsc-pair__hint">
+						{ __( 'File uploads are turned off on this site.', 'gemsecurity' ) }{ ' ' }
+						<a href={ ( GS.admin_url || '' ) + 'admin.php?page=gemsecurity-firewall' }>{ __( 'Allow uploads in Firewall', 'gemsecurity' ) }</a>
+						{ __( ', add the logo, then turn them off again.', 'gemsecurity' ) }
+					</span>
 				) : (
-					<span className="gsc-pair__hint">{ __( 'Square PNG, JPG or WebP, up to 1 MB. Drop a file here or upload.', 'gemsecurity' ) }</span>
+					<span className="gsc-pair__hint">{ __( 'Square PNG, JPG, GIF or WebP, up to 1 MB. Drop a file here or click Upload.', 'gemsecurity' ) }</span>
 				) }
-				<button type="button" className="gsc-pair__link" onClick={ () => setByUrl( ! byUrl ) }>
-					{ byUrl ? __( 'Upload a file instead', 'gemsecurity' ) : __( 'Use an image address instead', 'gemsecurity' ) }
-				</button>
 			</div>
 			<input ref={ input } type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden onChange={ ( e ) => upload( e.target.files?.[ 0 ] ) } />
 		</div>
