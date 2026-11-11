@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-10T10:31:21+00:00\n"
+"POT-Creation-Date: 2026-11-10T13:45:43+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -4405,6 +4405,7 @@ msgstr ""
 
 #: assets/build/backend.1.2.2.js:21
 #: assets/build/backend.1.2.2.js:31
+#: assets/build/backend.1.2.2.js:43
 msgid "Close"
 msgstr ""
 
@@ -5144,6 +5145,7 @@ msgstr ""
 #: assets/build/backend.1.2.2.js:23
 #: assets/build/backend.1.2.2.js:31
 #: assets/build/backend.1.2.2.js:35
+#: assets/build/backend.1.2.2.js:45
 msgid "Remove"
 msgstr ""
 
@@ -6811,6 +6813,79 @@ msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
 msgid "The site is frozen: no installs, updates (including automatic and translation updates), deletes or code editing. Use for sites that should never change; remember to unlock for maintenance."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+#: assets/build/backend.1.2.2.js:45
+msgid "Add connection"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Connect another site"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Create a code"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Paste a code"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Pairing code ready — paste it on the other site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Could not create a code."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Enter the address of the other site. You will get a one-time code to paste on that site to finish the pairing."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Other site address"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Create code"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Copy this code, open the other site's Site Connect page, pick \"Paste a code\" and paste it in. This code is shown only once."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Done"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Code copied."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Copy code"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Connected."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Could not accept that code."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Paste the code the other site gave you. This site will check the other end, then save the pairing."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Pairing code"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Connect"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
@@ -8630,7 +8705,11 @@ msgid "Turn on"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
-msgid "Connected sites"
+msgid "Customer connections"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Apps and sites holding a read-only token for one of this site's customers."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
@@ -8651,6 +8730,71 @@ msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
 msgid "Disconnect"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Single sign-on sites"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Other sites your customers can sign in to without a second password. Each side keeps its own account; this just links them."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "No connections yet"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Pair this site with another to let one set of customers sign in to both."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Accepts sign-ins"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Sends customers"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+#, js-format
+msgid "Added %s"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Remove this connection? Sign-in through it will stop at once."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Connection removed."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Could not remove that connection."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Who can use single sign-on"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Choose which roles may sign in through a connected site. A role must be on at BOTH ends for a user to pass through."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Can manage this site"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "A compromised partner site could sign in as anyone with this role. Off by default."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Safe to leave on for customer-only roles."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Could not save that change."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
