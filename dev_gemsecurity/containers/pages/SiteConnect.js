@@ -64,6 +64,16 @@ export default function SiteConnect() {
 	/* SSO pairings                                                          */
 	/* -------------------------------------------------------------------- */
 
+	const makeDefault = async ( id ) => {
+		try {
+			await api.post( 'sso/default', { id } );
+			toast( __( 'Open Support now sends customers to this site.', 'gemsecurity' ), 'success' );
+			loadSso();
+		} catch ( err ) {
+			toast( err?.response?.data?.message || __( 'Could not change the support site.', 'gemsecurity' ), 'error' );
+		}
+	};
+
 	const removeSso = async ( id ) => {
 		// eslint-disable-next-line no-alert
 		if ( ! window.confirm( __( 'Remove this connection? Sign-in through it will stop at once.', 'gemsecurity' ) ) ) {
@@ -142,12 +152,16 @@ export default function SiteConnect() {
 										<Badge tone={ c.direction === 'in' ? 'info' : 'success' }>
 											{ c.direction === 'in' ? __( 'Accepts sign-ins', 'gemsecurity' ) : __( 'Sends customers', 'gemsecurity' ) }
 										</Badge>
+										{ c.is_default && <>{ ' ' }<Badge tone="info">{ __( 'Support site', 'gemsecurity' ) }</Badge></> }
 										{ ' · ' }
 										{ sprintf( __( 'Added %s', 'gemsecurity' ), new Date( c.created * 1000 ).toLocaleDateString() ) }
 									</>
 								) }
 								right={ (
 									<>
+										{ c.direction === 'out' && ! c.is_default && (
+											<><Button variant="secondary" onClick={ () => makeDefault( c.id ) } title={ __( 'Open Support buttons on connected sites (such as Kodezen Hub) send customers here.', 'gemsecurity' ) }>{ __( 'Use for support', 'gemsecurity' ) }</Button>{ ' ' }</>
+										) }
 										<Button variant="secondary" onClick={ () => setEditing( c ) }>{ __( 'Edit', 'gemsecurity' ) }</Button>
 										{ ' ' }
 										<Button variant="secondary" onClick={ () => removeSso( c.id ) }>{ __( 'Remove', 'gemsecurity' ) }</Button>
@@ -517,6 +531,7 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 function EditConnectionModal( { connection, onClose, onSaved, toast } ) {
 	const [ label, setLabel ] = useState( connection.label || '' );
 	const [ icon, setIcon ] = useState( connection.icon_override || '' );
+	const [ landing, setLanding ] = useState( connection.landing || '' );
 	const [ busy, setBusy ] = useState( false );
 
 	useEffect( () => {
@@ -529,7 +544,7 @@ function EditConnectionModal( { connection, onClose, onSaved, toast } ) {
 		e.preventDefault();
 		setBusy( true );
 		try {
-			await api.post( 'sso/connection/update', { id: connection.id, label, icon } );
+			await api.post( 'sso/connection/update', { id: connection.id, label, icon, landing } );
 			toast( __( 'Login button updated.', 'gemsecurity' ), 'success' );
 			onSaved();
 		} catch ( err ) {
@@ -568,6 +583,12 @@ function EditConnectionModal( { connection, onClose, onSaved, toast } ) {
 					</Field>
 
 					<ButtonPreview title={ previewName } logo={ previewIcon } />
+
+					{ connection.direction === 'in' && (
+						<Field label={ __( 'After sign-in, go to', 'gemsecurity' ) } description={ __( 'A page on this site, such as /community. Leave empty for the home page.', 'gemsecurity' ) }>
+							<TextInput value={ landing } onChange={ ( e ) => setLanding( e.target.value ) } placeholder="/community" />
+						</Field>
+					) }
 
 					<div className="gs-modal__foot">
 						<Button variant="secondary" type="button" onClick={ onClose }>{ __( 'Cancel', 'gemsecurity' ) }</Button>
