@@ -74,13 +74,13 @@ export default function SiteConnect() {
 		}
 	};
 
-	const removeSso = async ( id ) => {
+	const removeSso = async ( id, type ) => {
 		// eslint-disable-next-line no-alert
 		if ( ! window.confirm( __( 'Remove this connection? Sign-in through it will stop at once.', 'gemsecurity' ) ) ) {
 			return;
 		}
 		try {
-			await api.post( 'sso/remove', { id } );
+			await api.post( 'laravel' === type ? 'sso/laravel/remove' : 'sso/remove', { id } );
 			toast( __( 'Connection removed.', 'gemsecurity' ), 'success' );
 			loadSso();
 		} catch ( e ) {
@@ -149,8 +149,10 @@ export default function SiteConnect() {
 								title={ c.name || c.url }
 								sub={ (
 									<>
-										<Badge tone={ c.direction === 'in' ? 'info' : 'success' }>
-											{ c.direction === 'in' ? __( 'Accepts sign-ins', 'gemsecurity' ) : __( 'Sends customers', 'gemsecurity' ) }
+										<Badge tone={ c.type === 'laravel' || c.direction === 'in' ? 'info' : 'success' }>
+											{ c.type === 'laravel'
+												? __( 'Sign in with app', 'gemsecurity' )
+												: ( c.direction === 'in' ? __( 'Accepts sign-ins', 'gemsecurity' ) : __( 'Sends customers', 'gemsecurity' ) ) }
 										</Badge>
 										{ c.is_default && <>{ ' ' }<Badge tone="info">{ __( 'Support site', 'gemsecurity' ) }</Badge></> }
 										{ ' · ' }
@@ -162,9 +164,10 @@ export default function SiteConnect() {
 										{ c.direction === 'out' && ! c.is_default && (
 											<><Button variant="secondary" onClick={ () => makeDefault( c.id ) } title={ __( 'Open Support buttons on connected sites (such as Kodezen Hub) send customers here.', 'gemsecurity' ) }>{ __( 'Use for support', 'gemsecurity' ) }</Button>{ ' ' }</>
 										) }
-										<Button variant="secondary" onClick={ () => setEditing( c ) }>{ __( 'Edit', 'gemsecurity' ) }</Button>
-										{ ' ' }
-										<Button variant="secondary" onClick={ () => removeSso( c.id ) }>{ __( 'Remove', 'gemsecurity' ) }</Button>
+										{ c.type !== 'laravel' && (
+											<><Button variant="secondary" onClick={ () => setEditing( c ) }>{ __( 'Edit', 'gemsecurity' ) }</Button>{ ' ' }</>
+										) }
+										<Button variant="secondary" onClick={ () => removeSso( c.id, c.type ) }>{ __( 'Remove', 'gemsecurity' ) }</Button>
 									</>
 								) }
 							/>
@@ -349,7 +352,7 @@ function Steps( { steps, current } ) {
  *   Use a code       → paste → see who it connects to and how the button will look → connect.
  */
 function AddConnectionModal( { onClose, onAdded, toast } ) {
-	const [ mode, setMode ] = useState( null ); // null | 'create' | 'paste'
+	const [ mode, setMode ] = useState( null ); // null | 'create' | 'paste' | 'app'
 	const [ step, setStep ] = useState( 0 );
 	const [ url, setUrl ] = useState( '' );
 	const [ title, setTitle ] = useState( GS.site_name || '' );
@@ -359,6 +362,10 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 	const [ copied, setCopied ] = useState( false );
 	const [ busy, setBusy ] = useState( false );
 	const [ error, setError ] = useState( '' );
+	const [ appUrl, setAppUrl ] = useState( '' );
+	const [ appClient, setAppClient ] = useState( 'shop' );
+	const [ appSecret, setAppSecret ] = useState( '' );
+	const [ appName, setAppName ] = useState( '' );
 
 	useEffect( () => {
 		const onKey = ( e ) => e.key === 'Escape' && onClose();
@@ -399,6 +406,24 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 		}
 	};
 
+	const appUrlOk = /^https:\/\/[^\s/]+\.[^\s]+$/i.test( appUrl.trim() );
+	const callbackUri = `${ ( GS.home_url || window.location.origin ).replace( /\/$/, '' ) }/?se_cloud_sso=callback`;
+
+	const connectApp = async ( e ) => {
+		e.preventDefault();
+		setBusy( true );
+		setError( '' );
+		try {
+			await api.post( 'sso/laravel', { app_url: appUrl.trim(), client_id: appClient.trim(), client_secret: appSecret.trim(), name: appName.trim() } );
+			toast( __( 'Connected. The sign-in button is live.', 'gemsecurity' ), 'success' );
+			onAdded( true );
+		} catch ( err ) {
+			setError( err?.response?.data?.message || __( 'Could not save the connection.', 'gemsecurity' ) );
+		} finally {
+			setBusy( false );
+		}
+	};
+
 	const copy = () => {
 		navigator.clipboard?.writeText( generated );
 		setCopied( true );
@@ -415,7 +440,7 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 		}
 	};
 
-	const heading = { null: __( 'Add a single sign-on connection', 'gemsecurity' ), create: __( 'Share this site\'s sign-in', 'gemsecurity' ), paste: __( 'Connect with a pairing code', 'gemsecurity' ) }[ String( mode ) ];
+	const heading = { null: __( 'Add a single sign-on connection', 'gemsecurity' ), create: __( 'Share this site\'s sign-in', 'gemsecurity' ), paste: __( 'Connect with a pairing code', 'gemsecurity' ), app: __( 'Sign in with an app', 'gemsecurity' ) }[ String( mode ) ];
 
 	return (
 		<div className="gs-modal" role="dialog" aria-modal="true" aria-label={ heading } onMouseDown={ ( e ) => e.target === e.currentTarget && onClose() }>
@@ -440,6 +465,13 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 							<span>
 								<strong>{ __( 'I have a pairing code', 'gemsecurity' ) }</strong>
 								<span>{ __( 'Another site gave you a code. Paste it here to add its login button to this site.', 'gemsecurity' ) }</span>
+							</span>
+						</button>
+						<button type="button" className="gsc-pair__choice" onClick={ () => setMode( 'app' ) }>
+							<span className="gsc-pair__choice-icon" aria-hidden="true">⇄</span>
+							<span>
+								<strong>{ __( 'Sign in with an app (StoreEngine Cloud)', 'gemsecurity' ) }</strong>
+								<span>{ __( 'Customers have their account in an app, not on a WordPress site. Enter the app address, client ID and secret from the app instead of a code.', 'gemsecurity' ) }</span>
 							</span>
 						</button>
 					</div>
@@ -497,6 +529,31 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 							</div>
 						) }
 					</>
+				) }
+
+				{ mode === 'app' && (
+					<form className="gs-modal__form" onSubmit={ connectApp }>
+						<Field label={ __( 'App address', 'gemsecurity' ) } description={ __( 'The https:// address of the app, e.g. https://app.storeengine.cloud.', 'gemsecurity' ) }>
+							<TextInput type="url" required autoFocus value={ appUrl } onChange={ ( e ) => { setAppUrl( e.target.value ); setError( '' ); } } placeholder="https://app.storeengine.cloud" />
+						</Field>
+						<Field label={ __( 'Client ID', 'gemsecurity' ) } description={ __( 'StoreEngine Cloud uses "shop".', 'gemsecurity' ) }>
+							<TextInput required value={ appClient } onChange={ ( e ) => setAppClient( e.target.value ) } />
+						</Field>
+						<Field label={ __( 'Client secret', 'gemsecurity' ) } description={ __( 'At least 16 characters. In StoreEngine Cloud: Settings → Billing → Single sign-on. It is stored encrypted and not shown again.', 'gemsecurity' ) }>
+							<TextInput type="password" required autoComplete="new-password" value={ appSecret } onChange={ ( e ) => setAppSecret( e.target.value ) } />
+						</Field>
+						<Field label={ __( 'Button title (optional)', 'gemsecurity' ) } description={ __( 'Shown on the login button. Defaults to the app\'s address.', 'gemsecurity' ) }>
+							<TextInput maxLength={ 60 } value={ appName } onChange={ ( e ) => setAppName( e.target.value ) } placeholder="StoreEngine Cloud" />
+						</Field>
+						<div className="gsc-pair__peer">
+							{ __( 'The app must allow this redirect address, and only this one:', 'gemsecurity' ) }{ ' ' }<code>{ callbackUri }</code>
+						</div>
+						{ error && <div className="gsc-pair__error">{ error }</div> }
+						<div className="gs-modal__foot">
+							<Button variant="secondary" type="button" onClick={ back }>{ __( 'Back', 'gemsecurity' ) }</Button>
+							<Button type="submit" loading={ busy } disabled={ ! appUrlOk || ! appClient.trim() || appSecret.trim().length < 16 }>{ __( 'Connect', 'gemsecurity' ) }</Button>
+						</div>
+					</form>
 				) }
 
 				{ mode === 'paste' && (
