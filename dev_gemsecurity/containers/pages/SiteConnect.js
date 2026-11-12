@@ -470,7 +470,7 @@ function AddConnectionModal( { onClose, onAdded, toast } ) {
 						<button type="button" className="gsc-pair__choice" onClick={ () => setMode( 'app' ) }>
 							<span className="gsc-pair__choice-icon" aria-hidden="true">⇄</span>
 							<span>
-								<strong>{ __( 'Sign in with an app (StoreEngine Cloud)', 'gemsecurity' ) }</strong>
+								<strong>{ __( 'Sign in with an app', 'gemsecurity' ) }</strong>
 								<span>{ __( 'Customers have their account in an app, not on a WordPress site. Enter the app address, client ID and secret from the app instead of a code.', 'gemsecurity' ) }</span>
 							</span>
 						</button>
