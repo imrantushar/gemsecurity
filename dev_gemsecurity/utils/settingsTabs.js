@@ -8,7 +8,7 @@ export function getSettingsTabs( pro ) {
 	return [
 		{ id: 'general', label: __( 'General', 'gemsecurity' ), icon: 'cog' },
 		{ id: 'compliance', label: __( 'Compliance & SIEM', 'gemsecurity' ), icon: 'shield' },
-		{ id: 'maintenance', label: __( 'Maintenance & recovery', 'gemsecurity' ), icon: 'lock' },
+		{ id: 'maintenance', label: __( 'Maintenance', 'gemsecurity' ), icon: 'lock' },
 		...( pro ? [ { id: 'portability', label: __( 'Import / export', 'gemsecurity' ), icon: 'layers' } ] : [] ),
 	];
 }

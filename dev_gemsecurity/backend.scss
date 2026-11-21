@@ -584,7 +584,6 @@ html {
 	/* Settings page: the active section's cards stack in the panel; the sections
 	   themselves are the indented children under Settings in the sub-nav. */
 	.gs-settings__panel { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-	.gs-subnav__item--child { margin-left: 18px; padding: 7px 12px; font-size: 13px; }
 
 	/* Two-column card: heading and description on the left, the controls on the
 	   right. Collapses back to the stacked layout on narrow screens. */

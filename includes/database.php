@@ -78,6 +78,7 @@ class Database {
 		global $wpdb;
 		$wpdb->gemsecurity_logs = $wpdb->prefix . 'gemsecurity_logs';
 		$wpdb->gemsecurity_bans = $wpdb->prefix . 'gemsecurity_bans';
+		$wpdb->gemsecurity_passkeys = $wpdb->prefix . 'gemsecurity_passkeys';
 	}
 
 	/**

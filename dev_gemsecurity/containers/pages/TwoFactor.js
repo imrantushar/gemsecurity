@@ -188,7 +188,7 @@ function MyTwoFactor() {
 	);
 }
 
-const ENFORCE_KEYS = [ 'two_factor_enabled', 'two_factor_enforced_roles' ];
+const ENFORCE_KEYS = [ 'two_factor_enabled', 'two_factor_enforced_roles', 'passkeys_enabled', 'passkeys_roles', 'passkeys_usernameless' ];
 
 function Enforcement() {
 	const { form, setField, save, saving, dirty } = useSettingsForm( ENFORCE_KEYS );
@@ -204,6 +204,34 @@ function Enforcement() {
 					checked={ form.two_factor_enabled }
 					onChange={ ( v ) => setField( 'two_factor_enabled', v ) }
 				/>
+			</Card>
+
+			<Card title={ __( 'Passkeys', 'gemsecurity' ) } description={ __( 'Let people sign in with Face ID, Touch ID, Windows Hello or a security key. A passkey already proves who they are, so it replaces the second step.', 'gemsecurity' ) }>
+				<Toggle
+					label={ __( 'Enable passkey sign-in', 'gemsecurity' ) }
+					description={ __( 'Adds a "Sign in with a passkey" button to the login page and a Passkeys section to each profile. Requires HTTPS.', 'gemsecurity' ) }
+					checked={ form.passkeys_enabled }
+					onChange={ ( v ) => setField( 'passkeys_enabled', v ) }
+				/>
+				<Toggle
+					label={ __( 'Allow sign-in without typing a username', 'gemsecurity' ) }
+					description={ __( 'Stores the passkey on the device so the browser can offer it straight away. Applies to passkeys added from now on.', 'gemsecurity' ) }
+					checked={ form.passkeys_usernameless }
+					onChange={ ( v ) => setField( 'passkeys_usernameless', v ) }
+					disabled={ ! form.passkeys_enabled }
+				/>
+				<Field
+					label={ __( 'Roles that can use passkeys', 'gemsecurity' ) }
+					description={ __( 'Leave empty to allow every role.', 'gemsecurity' ) }
+				>
+					<MultiSelect
+						options={ toOptions( roles ) }
+						value={ form.passkeys_roles || [] }
+						onChange={ ( next ) => setField( 'passkeys_roles', next ) }
+						placeholder={ __( 'All roles', 'gemsecurity' ) }
+						disabled={ ! form.passkeys_enabled }
+					/>
+				</Field>
 			</Card>
 
 			<Card title={ __( 'Require two-factor by role', 'gemsecurity' ) } description={ __( 'Selected roles must pass a second step at login. Users without an app get an emailed code automatically.', 'gemsecurity' ) }>

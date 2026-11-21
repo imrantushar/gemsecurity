@@ -321,6 +321,28 @@ class Installer {
 			KEY expires_at (expires_at)
 		) {$charset_collate};";
 
+		// Passkeys (WebAuthn credentials). credential_id is base64url; 191 keeps
+		// the unique index inside the utf8mb4 limit on older MySQL.
+		$passkeys_table = $wpdb->prefix . 'gemsecurity_passkeys';
+		$sql .= "CREATE TABLE {$passkeys_table} (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id BIGINT(20) UNSIGNED NOT NULL,
+			credential_id VARCHAR(191) NOT NULL,
+			public_key TEXT NOT NULL,
+			alg INT(11) NOT NULL DEFAULT -7,
+			sign_count BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+			aaguid VARCHAR(36) DEFAULT NULL,
+			device_type VARCHAR(20) NOT NULL DEFAULT 'single_device',
+			backed_up TINYINT(1) NOT NULL DEFAULT 0,
+			transports VARCHAR(100) DEFAULT NULL,
+			name VARCHAR(100) NOT NULL DEFAULT '',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			last_used_at DATETIME DEFAULT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY credential_id (credential_id),
+			KEY user_id (user_id)
+		) {$charset_collate};";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
 
@@ -442,6 +464,11 @@ class Installer {
 			// Two-factor.
 			'two_factor_enabled'           => false,
 			'two_factor_enforced_roles'    => [],
+
+			// Passkeys (WebAuthn).
+			'passkeys_enabled'             => false,
+			'passkeys_roles'               => [],
+			'passkeys_usernameless'        => true,
 
 			// Social / OAuth login.
 			'social_login_enabled'         => false,
