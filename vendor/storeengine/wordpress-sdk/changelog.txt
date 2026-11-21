@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 1.6.3 - 05-11-2026 =
+* Fixed - CSS and JS for the license notice, license page, opt-in notice and promotions are now added with wp_add_inline_style() and wp_add_inline_script() instead of raw <style>/<script> tags, as WordPress.org review requires.
+
 = 1.6.2 - 01-10-2026 =
 * Fixed a security check in front of the license server (e.g. Cloudflare's "Just a moment…" bot challenge) deactivating valid licenses and blocking activation. A challenge page is served with an HTTP status (often 403) and HTML body, not the server's own answer, so the SDK read it as a definitive "license invalid" and deactivated the product. A challenge — detected by the `cf-mitigated` response header, or an HTML body carrying known interstitial markers — is now treated as a transport failure: the grace period keeps the last-known-good license active, activation reports a clear "try again later" message instead of an unknown error, and the failure breaker backs off so the edge isn't hammered.
 

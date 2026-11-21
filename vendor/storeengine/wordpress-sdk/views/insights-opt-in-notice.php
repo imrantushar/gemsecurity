@@ -41,7 +41,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		</div>
 	</div>
-	<?php ob_start(); ?><style>
+	<?php SE_License_SDK::add_inline_style( <<<'CSS'
         .se-sdk-insights-notice {
             display: flex;
             flex-direction: row;
@@ -182,9 +182,6 @@ if ( ! defined( 'ABSPATH' ) ) {
         .se-sdk-insights--opt-in-submit .buttons a.button-secondary:focus {
             box-shadow: 0 0 0 1px #fff, 0 0 0 2px #DEDEDE;
         }
-	</style>
+CSS
+	); ?>
 <?php
-$se_sdk_css = ob_get_clean();
-wp_register_style( 'se-sdk-insights-notice', false, [], null );
-wp_enqueue_style( 'se-sdk-insights-notice' );
-wp_add_inline_style( 'se-sdk-insights-notice', trim( str_replace( [ '<style>', '</style>' ], '', $se_sdk_css ) ) );

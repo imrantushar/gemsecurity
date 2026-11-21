@@ -456,6 +456,10 @@ class Registry {
 				'title' => __( 'Temporary Access', 'gemsecurity' ),
 				'desc'  => __( 'Give an existing user a role for a limited time; it is taken back automatically.', 'gemsecurity' ),
 			],
+			'site-connect' => [
+				'title' => __( 'Site Connect', 'gemsecurity' ),
+				'desc'  => __( 'A hosted approval screen that lets other sites and apps connect to a customer account.', 'gemsecurity' ),
+			],
 			'geolocation' => [
 				'title' => __( 'Geolocation', 'gemsecurity' ),
 				'desc'  => __( 'Country access control and per-user location lock.', 'gemsecurity' ),

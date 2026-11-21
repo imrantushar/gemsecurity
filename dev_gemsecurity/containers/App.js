@@ -36,6 +36,7 @@ import Scanner from '@Containers/pages/Scanner';
 import PluginGuard from '@Containers/pages/PluginGuard';
 import PaymentIntegrity from '@Containers/pages/PaymentIntegrity';
 import IncidentResponse from '@Containers/pages/IncidentResponse';
+import SiteConnect from '@Containers/pages/SiteConnect';
 import Logs from '@Containers/pages/Logs';
 import Monitoring from '@Containers/pages/Monitoring';
 import Notifications from '@Containers/pages/Notifications';
@@ -56,6 +57,7 @@ const PAGES = {
 	'gemsecurity-magic-login': MagicLogin,
 	'gemsecurity-temp-access': TempAccess,
 	'gemsecurity-geolocation': Geolocation,
+	'gemsecurity-site-connect': SiteConnect,
 	'gemsecurity-admin-guard': AdminGuard,
 	'gemsecurity-api-hardening': ApiHardening,
 	'gemsecurity-anti-spam': AntiSpam,

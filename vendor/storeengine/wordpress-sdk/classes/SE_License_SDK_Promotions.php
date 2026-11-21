@@ -84,9 +84,8 @@ final class SE_License_SDK_Promotions {
 		// only run if there is active promotions.
 		if ( count( $this->promotions ) ) {
 			add_action( 'admin_notices', [ $this, 'render_promo_notices' ] );
-			add_action( 'admin_print_styles', [ $this, 'print_promo_notice_styles' ], 99 );
+			add_action( 'admin_enqueue_scripts', [ $this, 'print_promo_notice_styles' ], 99 );
 			add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_promo_notice_scripts' ] );
-			add_action( 'admin_print_footer_scripts', [ $this, 'print_promo_notice_scripts' ] );
 			add_action( 'wp_ajax_se_dismiss_promo', [ $this, 'handle_promo_dismiss_request' ] );
 		}
 	}
@@ -319,22 +318,25 @@ final class SE_License_SDK_Promotions {
 	public function enqueue_promo_notice_scripts() {
 		wp_enqueue_script( 'wp-util' );
 		wp_enqueue_script( 'jquery' );
+		wp_add_inline_script( 'wp-util', $this->promo_notice_script() );
 	}
 
 	/**
 	 * Script for hiding promo on user click
-	 * @return void
+	 * @return string
 	 */
-	public function print_promo_notice_scripts() {
-		wp_print_inline_script_tag(
-			"( function( $ ) {
-	$( document ).on( 'click', '.se-sdk-promo .notice-dismiss', function( e ) {
-		e.preventDefault();
-		const {hash, nonce: _wpnonce} = $( this ).closest( '.se-sdk-promo' ).data();
-		wp.ajax.post( 'se_dismiss_promo', {dismissed: true, hash, _wpnonce} );
-	} );
-} )( jQuery );"
-		);
+	private function promo_notice_script() {
+		return <<<'JS'
+(
+	function( $ ) {
+		$( document ).on( 'click', '.se-sdk-promo .notice-dismiss', function( e ) {
+			e.preventDefault();
+			const {hash, nonce: _wpnonce} = $( this ).closest( '.se-sdk-promo' ).data();
+			wp.ajax.post( 'se_dismiss_promo', {dismissed: true, hash, _wpnonce} );
+		} );
+	}
+)( jQuery );
+JS;
 	}
 
 	/**
@@ -348,9 +350,7 @@ final class SE_License_SDK_Promotions {
 			return;
 		}
 		$did_print = true;
-		ob_start();
-		?>
-		<style>
+		SE_License_SDK::add_inline_style( <<<'CSS'
             .se-sdk-promo {
                 border: none;
                 padding: 15px;
@@ -475,12 +475,8 @@ final class SE_License_SDK_Promotions {
                     margin-top: 42px;
                 }
             }
-		</style>
-		<?php
-		$se_sdk_css = ob_get_clean();
-		wp_register_style( 'se-sdk-promo', false, [], null );
-		wp_enqueue_style( 'se-sdk-promo' );
-		wp_add_inline_style( 'se-sdk-promo', trim( str_replace( [ '<style>', '</style>' ], '', $se_sdk_css ) ) );
+CSS
+		);
 	}
 
 	/**
