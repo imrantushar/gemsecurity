@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-10T13:45:43+00:00\n"
+"POT-Creation-Date: 2026-11-12T10:41:14+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: gemsecurity\n"
@@ -4152,6 +4152,7 @@ msgid "GemSecurity plugin lock turned off."
 msgstr ""
 
 #: includes/security/site-guard.php:544
+#: assets/build/backend.1.2.2.js:43
 msgid "File uploads are turned off on this site."
 msgstr ""
 
@@ -5145,6 +5146,7 @@ msgstr ""
 #: assets/build/backend.1.2.2.js:23
 #: assets/build/backend.1.2.2.js:31
 #: assets/build/backend.1.2.2.js:35
+#: assets/build/backend.1.2.2.js:43
 #: assets/build/backend.1.2.2.js:45
 msgid "Remove"
 msgstr ""
@@ -5577,10 +5579,12 @@ msgid "Enter new credentials, turn it back on and verify them again."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:27
+#: assets/build/backend.1.2.2.js:43
 msgid "Client ID"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:27
+#: assets/build/backend.1.2.2.js:43
 msgid "Client secret"
 msgstr ""
 
@@ -5791,6 +5795,7 @@ msgid "Could not save."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:29
+#: assets/build/backend.1.2.2.js:43
 msgid "Save"
 msgstr ""
 
@@ -6816,68 +6821,93 @@ msgid "The site is frozen: no installs, updates (including automatic and transla
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-#: assets/build/backend.1.2.2.js:45
-msgid "Add connection"
+msgid "Login button preview"
+msgstr ""
+
+#. translators: %s: site name.
+#: assets/build/backend.1.2.2.js:43
+#, js-format
+msgid "Log in with %s"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Connect another site"
+msgid "Use a PNG, JPG, GIF or WebP image."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Create a code"
+msgid "The logo must be 1 MB or smaller."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Paste a code"
+msgid "Could not upload that image."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Pairing code ready — paste it on the other site."
+msgid "Replace"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Could not create a code."
+msgid "Upload logo"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Enter the address of the other site. You will get a one-time code to paste on that site to finish the pairing."
+msgid "Allow uploads in Firewall"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Other site address"
+msgid ", add the logo, then turn them off again."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Create code"
+msgid "Square PNG, JPG, GIF or WebP, up to 1 MB. Drop a file here or click Upload."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Copy this code, open the other site's Site Connect page, pick \"Paste a code\" and paste it in. This code is shown only once."
+msgid "Add a single sign-on connection"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Done"
+msgid "Share this site's sign-in"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Code copied."
+msgid "Connect with a pairing code"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Copy code"
+msgid "Sign in with an app"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Connected."
+msgid "A connection lets customers who have an account on one site sign in to the other with one click. Start on whichever site you are on now."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Could not accept that code."
+msgid "Customers sign in with this site"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
-msgid "Paste the code the other site gave you. This site will check the other end, then save the pairing."
+msgid "This site holds the customer accounts. Set the button title and logo, then get a code for the other site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "I have a pairing code"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Another site gave you a code. Paste it here to add its login button to this site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Customers have their account in an app, not on a WordPress site. Enter the app address, client ID and secret from the app instead of a code."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Other site"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Branding"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
@@ -6885,7 +6915,183 @@ msgid "Pairing code"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
+msgid "Address of the other site"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "The site where customers will see the login button, e.g. your support or community site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+#: assets/build/setup.1.2.2.js:14
+msgid "Back"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+#: assets/build/setup.1.2.2.js:15
+msgid "Continue"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Could not create a code."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Connection title"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Shown on the other site's button as \"Log in with …\"."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Logo"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Generate code"
+msgstr ""
+
+#. translators: %s: site address.
+#: assets/build/backend.1.2.2.js:43
+#, js-format
+msgid "Connection to %s created. Finish it on that site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Copied ✓"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Copy code"
+msgstr ""
+
+#. translators: %s: site address.
+#: assets/build/backend.1.2.2.js:43
+#, js-format
+msgid "Open GemSecurity → Site Connect on %s."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Click Add connection, then \"I have a pairing code\"."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Paste this code and click Connect."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Treat this code like a password: it is shown only once and contains the connection secret. Close without copying and you will need to remove the connection and start again."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Done"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Connected. The sign-in button is live."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Could not save the connection."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "App address"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "The https:// address of the app, e.g. https://app.storeengine.cloud."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "StoreEngine Cloud uses \"shop\"."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "At least 16 characters. In StoreEngine Cloud: Settings → Billing → Single sign-on. It is stored encrypted and not shown again."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Button title (optional)"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Shown on the login button. Defaults to the app's address."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "The app must allow this redirect address, and only this one:"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
 msgid "Connect"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Connected. The login button is live."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Could not accept that code."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "This site checks the other end before saving anything."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Paste the code here"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "This does not look like a pairing code. Copy it again from the other site."
+msgstr ""
+
+#. translators: %s: site address.
+#: assets/build/backend.1.2.2.js:43
+#, js-format
+msgid "Customers of %s will be able to sign in here."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "You can change the title and logo later with Edit."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Edit login button"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Login button"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Login button updated."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Could not save those changes."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Override how this connection appears on the login screen. Leave either field empty to use the other site's own title and icon."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Shown as \"Log in with …\". Leave empty to use the other site's name."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "Remove to fall back to the other site's own icon."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "After sign-in, go to"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:43
+msgid "A page on this site, such as /community. Leave empty for the home page."
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:43
@@ -8741,11 +8947,19 @@ msgid "Other sites your customers can sign in to without a second password. Each
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
+msgid "Add connection"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
 msgid "No connections yet"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
 msgid "Pair this site with another to let one set of customers sign in to both."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Sign in with app"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
@@ -8757,8 +8971,33 @@ msgid "Sends customers"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
+msgid "Support site"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
 #, js-format
 msgid "Added %s"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Open Support now sends customers to this site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Could not change the support site."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Open Support buttons on connected sites (such as Kodezen Hub) send customers here."
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+msgid "Use for support"
+msgstr ""
+
+#: assets/build/backend.1.2.2.js:45
+#: assets/build/setup.1.2.2.js:17
+msgid "Edit"
 msgstr ""
 
 #: assets/build/backend.1.2.2.js:45
@@ -10140,10 +10379,6 @@ msgid "Skip setup"
 msgstr ""
 
 #: assets/build/setup.1.2.2.js:14
-msgid "Back"
-msgstr ""
-
-#: assets/build/setup.1.2.2.js:14
 msgid "About"
 msgstr ""
 
@@ -10171,10 +10406,6 @@ msgstr ""
 #: assets/build/setup.1.2.2.js:15
 #, js-format
 msgid "Continue (%1$d/%2$d)"
-msgstr ""
-
-#: assets/build/setup.1.2.2.js:15
-msgid "Continue"
 msgstr ""
 
 #: assets/build/setup.1.2.2.js:15
@@ -10303,10 +10534,6 @@ msgstr ""
 
 #: assets/build/setup.1.2.2.js:17
 msgid "Email alerts are off"
-msgstr ""
-
-#: assets/build/setup.1.2.2.js:17
-msgid "Edit"
 msgstr ""
 
 #: assets/build/setup.1.2.2.js:17
